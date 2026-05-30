@@ -1,5 +1,5 @@
 # MeQR（中·英文正式名征集中）
-如果你是国内ACGN爱好者，请跳过以下的部分，直接阅读「来自开发者的碎碎念」
+如果你是中文互联网内ACGN爱好者，请先跳过以下的部分阅读「来自开发者的碎碎念」
 
 ## 简介 / Introduction
 
@@ -28,10 +28,6 @@ MeQR is an iOS app that helps you manage and display multiple QR codes. You can 
 - iOS 17+
 - 仅iPhone / iPhone only（暂未适配 iPad / iPad not yet supported）
 
-## 截图 / Screenshots
-
-*（请在这里添加应用截图 / Please add app screenshots here）*
-
 ## 安装 / Installation
 
 1. 克隆仓库 / Clone the repository:
@@ -43,7 +39,9 @@ MeQR is an iOS app that helps you manage and display multiple QR codes. You can 
 4. 编译并运行到真机或模拟器。Build and run on a physical device or simulator.
 
 ## 隐私 / Privacy
-MeQR 所有数据均存储在本地，不上传至任何服务器，无需网络权限。All data in MeQR is stored locally and is not uploaded to any server. No network permissions are required.
+MeQR 所有数据均存储在本地，不上传至任何服务器，无需网络权限。
+
+All data in MeQR is stored locally and is not uploaded to any server. No network permissions are required.
 
 
 ## 作者 / Author
@@ -52,7 +50,11 @@ MeQR 所有数据均存储在本地，不上传至任何服务器，无需网络
 
 # 来自开发者的碎碎念
 老师们好这里是重生！也是这个App的开发者！
+
 这个App其实是我用一周时间用Kimi开发出来的（笑）所以还有点buggy，但我也在修改了
+
 目前只支持iOS……绝对不是因为这个软件其实是为了让我能在线下扩列的时候展示用的（笑）后续应该会支持安卓！
-如果对这个项目感兴趣的话可以来扩列呀：QQID **Rebirth39** 可直搜
+
+如果对这个项目感兴趣的话可以来扩列呀：QQID **Rebirth39** 可直搜 
+
 感谢你读到这里:) 现在你可以上去读软件概要了
