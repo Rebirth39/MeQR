@@ -1,17 +1,12 @@
-//
-//  QRIDApp.swift
-//  QRID
-//
-//  Created by Lucas Li on 2026/5/22.
-//
-
 import SwiftUI
+import SwiftData
 
 @main
 struct QRIDApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainView()
         }
+        .modelContainer(for: QRProfile.self)
     }
 }
