@@ -1,0 +1,145 @@
+import SwiftUI
+import CoreImage.CIFilterBuiltins
+import Vision
+
+struct QRCodeGenerator {
+    static func generate(from string: String, foreground: Color, background: Color) -> UIImage? {
+        let context = CIContext()
+        let filter = CIFilter.qrCodeGenerator()
+        filter.message = Data(string.utf8)
+        filter.correctionLevel = "M"
+
+        guard let outputImage = filter.outputImage else { return nil }
+
+        // Apply foreground/background colors via CIFalseColor
+        let colorFilter = CIFilter.falseColor()
+        colorFilter.inputImage = outputImage
+        colorFilter.color0 = CIColor(color: UIColor(foreground))
+        colorFilter.color1 = CIColor(color: UIColor(background))
+
+        guard let coloredImage = colorFilter.outputImage else { return nil }
+
+        // Scale up for crisp display
+        let scale = 20.0
+        let transform = CGAffineTransform(scaleX: scale, y: scale)
+        let scaledImage = coloredImage.transformed(by: transform)
+
+        guard let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) else {
+            return nil
+        }
+        return UIImage(cgImage: cgImage)
+    }
+
+    /// Generates a QR code with transparent background
+    static func generateTransparent(from string: String, foreground: Color) -> UIImage? {
+        let context = CIContext()
+        let filter = CIFilter.qrCodeGenerator()
+        filter.message = Data(string.utf8)
+        filter.correctionLevel = "M"
+
+        guard let outputImage = filter.outputImage else { return nil }
+
+        // Scale up the RAW QR (black modules on white background)
+        let scale = 20.0
+        let transform = CGAffineTransform(scaleX: scale, y: scale)
+        let scaledQR = outputImage.transformed(by: transform)
+
+        guard let cgImage = context.createCGImage(scaledQR, from: scaledQR.extent) else {
+            return nil
+        }
+
+        let width = cgImage.width
+        let height = cgImage.height
+
+        // Create RGBA bitmap context
+        guard let bitmapContext = CGContext(
+            data: nil,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: width * 4,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return nil }
+
+        // Draw raw QR mask
+        bitmapContext.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+
+        guard let data = bitmapContext.data else { return nil }
+        let pixels = data.bindMemory(to: UInt8.self, capacity: width * height * 4)
+
+        let uiColor = UIColor(foreground)
+        var fr: CGFloat = 0, fg: CGFloat = 0, fb: CGFloat = 0, fa: CGFloat = 0
+        guard uiColor.getRed(&fr, green: &fg, blue: &fb, alpha: &fa) else { return nil }
+        let red = UInt8(fr * 255)
+        let green = UInt8(fg * 255)
+        let blue = UInt8(fb * 255)
+        let alpha = UInt8(fa * 255)
+
+        for y in 0..<height {
+            for x in 0..<width {
+                let offset = (y * width + x) * 4
+                let r = pixels[offset]
+                let g = pixels[offset + 1]
+                let b = pixels[offset + 2]
+
+                // Raw QR: black = module, white = background
+                // After scaling, edge pixels are gray
+                // Threshold at middle brightness
+                let brightness = (Int(r) + Int(g) + Int(b)) / 3
+
+                if brightness < 128 {
+                    // Dark pixel = QR module -> foreground color
+                    pixels[offset] = red
+                    pixels[offset + 1] = green
+                    pixels[offset + 2] = blue
+                    pixels[offset + 3] = alpha
+                } else {
+                    // Light pixel = background -> transparent
+                    pixels[offset] = 0
+                    pixels[offset + 1] = 0
+                    pixels[offset + 2] = 0
+                    pixels[offset + 3] = 0
+                }
+            }
+        }
+
+        guard let newCgImage = bitmapContext.makeImage() else { return nil }
+        return UIImage(cgImage: newCgImage)
+    }
+
+    /// Decodes a QR code from a UIImage and returns the payload string
+    static func decode(from image: UIImage) async throws -> String {
+        guard let cgImage = image.cgImage else {
+            throw QRDecodeError.invalidImage
+        }
+
+        let request = VNDetectBarcodesRequest()
+        request.symbologies = [.qr]
+
+        let handler = VNImageRequestHandler(cgImage: cgImage)
+        try handler.perform([request])
+
+        guard let results = request.results,
+              let first = results.first,
+              let payload = first.payloadStringValue else {
+            throw QRDecodeError.noQRCodeFound
+        }
+
+        return payload
+    }
+
+    enum QRDecodeError: Error, LocalizedError {
+        case invalidImage
+        case noQRCodeFound
+
+        var errorDescription: String? {
+            switch self {
+            case .invalidImage:
+                return "Could not process the image."
+            case .noQRCodeFound:
+                return "No QR code found in this image."
+            }
+        }
+    }
+}

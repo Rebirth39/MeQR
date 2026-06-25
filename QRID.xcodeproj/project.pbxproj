@@ -6,19 +6,95 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		B47513162FD52F8300DC3FE9 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B47513152FD52F8300DC3FE9 /* WidgetKit.framework */; };
+		B47513182FD52F8300DC3FE9 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B47513172FD52F8300DC3FE9 /* SwiftUI.framework */; };
+		B47513272FD52F8300DC3FE9 /* MeQRWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B47513132FD52F8300DC3FE9 /* MeQRWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		B47513252FD52F8300DC3FE9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B4BE7E3D2FC08BCF00F23520 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B47513122FD52F8300DC3FE9;
+			remoteInfo = MeQRWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A0000000000000000000000B /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				B47513272FD52F8300DC3FE9 /* MeQRWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		B47513132FD52F8300DC3FE9 /* MeQRWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MeQRWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		B47513152FD52F8300DC3FE9 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		B47513172FD52F8300DC3FE9 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		B4BE7E452FC08BCF00F23520 /* QRID.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QRID.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B4C0189E2FCF1AF200C395AD /* MeQRWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MeQRWidgetExtension.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		B475132B2FD52F8300DC3FE9 /* Exceptions for "MeQRWidget" folder in "MeQRWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = B47513122FD52F8300DC3FE9 /* MeQRWidgetExtension */;
+		};
+		B4C018A02FCF1B0100C395AD /* Exceptions for "QRID" folder in "QRID" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = B4BE7E442FC08BCF00F23520 /* QRID */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		A0000000000000000000000C /* MeQRWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = MeQRWidget;
+			sourceTree = "<group>";
+		};
+		B47513192FD52F8300DC3FE9 /* MeQRWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				B475132B2FD52F8300DC3FE9 /* Exceptions for "MeQRWidget" folder in "MeQRWidgetExtension" target */,
+			);
+			path = MeQRWidget;
+			sourceTree = "<group>";
+		};
 		B4BE7E472FC08BCF00F23520 /* QRID */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				B4C018A02FCF1B0100C395AD /* Exceptions for "QRID" folder in "QRID" target */,
+			);
 			path = QRID;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		B47513102FD52F8300DC3FE9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B47513182FD52F8300DC3FE9 /* SwiftUI.framework in Frameworks */,
+				B47513162FD52F8300DC3FE9 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B4BE7E422FC08BCF00F23520 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -29,11 +105,24 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		B47513142FD52F8300DC3FE9 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				B47513152FD52F8300DC3FE9 /* WidgetKit.framework */,
+				B47513172FD52F8300DC3FE9 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		B4BE7E3C2FC08BCF00F23520 = {
 			isa = PBXGroup;
 			children = (
+				B4C0189E2FCF1AF200C395AD /* MeQRWidgetExtension.entitlements */,
 				B4BE7E472FC08BCF00F23520 /* QRID */,
+				B47513192FD52F8300DC3FE9 /* MeQRWidget */,
+				B47513142FD52F8300DC3FE9 /* Frameworks */,
 				B4BE7E462FC08BCF00F23520 /* Products */,
+				B4C018632FCF1AB700C395AD /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -41,13 +130,44 @@
 			isa = PBXGroup;
 			children = (
 				B4BE7E452FC08BCF00F23520 /* QRID.app */,
+				B47513132FD52F8300DC3FE9 /* MeQRWidgetExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		B4C018632FCF1AB700C395AD /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				A0000000000000000000000C /* MeQRWidget */,
+			);
+			name = "Recovered References";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		B47513122FD52F8300DC3FE9 /* MeQRWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B47513282FD52F8300DC3FE9 /* Build configuration list for PBXNativeTarget "MeQRWidgetExtension" */;
+			buildPhases = (
+				B475130F2FD52F8300DC3FE9 /* Sources */,
+				B47513102FD52F8300DC3FE9 /* Frameworks */,
+				B47513112FD52F8300DC3FE9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				B47513192FD52F8300DC3FE9 /* MeQRWidget */,
+			);
+			name = MeQRWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = MeQRWidgetExtension;
+			productReference = B47513132FD52F8300DC3FE9 /* MeQRWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		B4BE7E442FC08BCF00F23520 /* QRID */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = B4BE7E502FC08BD100F23520 /* Build configuration list for PBXNativeTarget "QRID" */;
@@ -55,10 +175,12 @@
 				B4BE7E412FC08BCF00F23520 /* Sources */,
 				B4BE7E422FC08BCF00F23520 /* Frameworks */,
 				B4BE7E432FC08BCF00F23520 /* Resources */,
+				A0000000000000000000000B /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				B47513262FD52F8300DC3FE9 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				B4BE7E472FC08BCF00F23520 /* QRID */,
@@ -80,6 +202,9 @@
 				LastSwiftUpdateCheck = 2650;
 				LastUpgradeCheck = 2650;
 				TargetAttributes = {
+					B47513122FD52F8300DC3FE9 = {
+						CreatedOnToolsVersion = 26.5;
+					};
 					B4BE7E442FC08BCF00F23520 = {
 						CreatedOnToolsVersion = 26.5;
 					};
@@ -100,11 +225,19 @@
 			projectRoot = "";
 			targets = (
 				B4BE7E442FC08BCF00F23520 /* QRID */,
+				B47513122FD52F8300DC3FE9 /* MeQRWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		B47513112FD52F8300DC3FE9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B4BE7E432FC08BCF00F23520 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -115,6 +248,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		B475130F2FD52F8300DC3FE9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B4BE7E412FC08BCF00F23520 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -124,7 +264,77 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		B47513262FD52F8300DC3FE9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B47513122FD52F8300DC3FE9 /* MeQRWidgetExtension */;
+			targetProxy = B47513252FD52F8300DC3FE9 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		B47513292FD52F8300DC3FE9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = MeQRWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = M8YKNW3KQ5;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MeQRWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = MeQRWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lucasli.QRID.MeQRWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		B475132A2FD52F8300DC3FE9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = MeQRWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = M8YKNW3KQ5;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MeQRWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = MeQRWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lucasli.QRID.MeQRWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		B4BE7E4E2FC08BD100F23520 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -251,11 +461,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = QRID/QRID.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = M8YKNW3KQ5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = QRID/Info.plist;
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "MeQR needs access to save QR code cards to your photo library.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -283,11 +496,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = QRID/QRID.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = M8YKNW3KQ5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = QRID/Info.plist;
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "MeQR needs access to save QR code cards to your photo library.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -313,6 +529,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		B47513282FD52F8300DC3FE9 /* Build configuration list for PBXNativeTarget "MeQRWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B47513292FD52F8300DC3FE9 /* Debug */,
+				B475132A2FD52F8300DC3FE9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		B4BE7E402FC08BCF00F23520 /* Build configuration list for PBXProject "QRID" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
