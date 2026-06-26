@@ -175,6 +175,7 @@ enum BackupManager {
             try modelContext.save()
             return true
         } catch {
+            modelContext.rollback()
             print("Failed to import backup: \(error)")
             return false
         }

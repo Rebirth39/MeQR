@@ -439,6 +439,7 @@ struct EditClusterView: View {
             try modelContext.save()
             dismiss()
         } catch {
+            modelContext.rollback()
             saveError = error.localizedDescription
             showSaveError = true
         }

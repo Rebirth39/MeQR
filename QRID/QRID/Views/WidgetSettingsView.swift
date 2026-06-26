@@ -380,6 +380,7 @@ struct WidgetSettingsView: View {
             onDismiss?()
             dismiss()
         } catch {
+            modelContext.rollback()
             saveError = error.localizedDescription
             showSaveError = true
         }

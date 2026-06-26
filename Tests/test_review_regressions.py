@@ -37,6 +37,35 @@ def extract_computed_property_body(source: str, property_name: str) -> str:
     raise AssertionError(f"Could not find closing brace for {property_name!r}")
 
 
+def extract_function_body(source: str, function_name: str) -> str:
+    pattern = (
+        r"^\s*(?:@\w+(?:\([^)]*\))?\s+)*"
+        r"(?:(?:private|fileprivate|internal|public|open)\s+)?"
+        r"(?:(?:static|class)\s+)?func\s+"
+        + re.escape(function_name)
+        + r"\s*\("
+    )
+    header = re.search(pattern, source, flags=re.MULTILINE)
+    if header is None:
+        raise AssertionError(f"Could not find function {function_name!r}")
+
+    start = source.find("{", header.end())
+    if start == -1:
+        raise AssertionError(f"Could not find opening brace for {function_name!r}")
+
+    depth = 0
+    for index in range(start, len(source)):
+        char = source[index]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return source[start + 1 : index]
+
+    raise AssertionError(f"Could not find closing brace for {function_name!r}")
+
+
 class ReviewRegressionTests(unittest.TestCase):
     def test_swiftui_onchange_does_not_observe_swiftdata_model_arrays(self):
         app = read("QRID/QRID/QRIDApp.swift")
@@ -83,9 +112,14 @@ class ReviewRegressionTests(unittest.TestCase):
     def test_backup_import_uses_security_scoped_resource_and_pre_restore_backup(self):
         settings = read("QRID/QRID/Views/SettingsView.swift")
         backup = read("QRID/QRID/Helpers/BackupManager.swift")
+        import_body = extract_function_body(backup, "importBackup")
         self.assertIn("startAccessingSecurityScopedResource()", settings)
-        self.assertIn("writePreRestoreBackup", backup)
-        self.assertLess(backup.index("writePreRestoreBackup"), backup.index("modelContext.delete"))
+        self.assertIn("writePreRestoreBackup", import_body)
+        self.assertLess(import_body.index("writePreRestoreBackup"), import_body.index("modelContext.delete"))
+        self.assertRegex(
+            import_body,
+            r"catch\s*\{\s*modelContext\.rollback\(\)[\s\S]*?return false",
+        )
 
     def test_new_clusters_receive_explicit_sort_order(self):
         add_profile = read("QRID/QRID/Views/AddProfileView.swift")
@@ -101,8 +135,32 @@ class ReviewRegressionTests(unittest.TestCase):
     def test_transparent_qr_generation_preserves_quiet_zone(self):
         qr_generator = read("QRID/QRID/Helpers/QRCodeGenerator.swift")
         widget = read("MeQRWidget/MeQRWidget.swift")
-        self.assertIn("quietZone", qr_generator)
-        self.assertIn("quietZone", widget)
+        qr_body = extract_function_body(qr_generator, "generateTransparent")
+        widget_body = extract_function_body(widget, "generateQRImage")
+        for name, body in [("app QR", qr_body), ("widget QR", widget_body)]:
+            with self.subTest(target=name):
+                self.assertIn("quietZone", body)
+                self.assertNotIn("pixels[offset + 3] = 0", body)
+                self.assertIn("pixels[offset] = 255", body)
+                self.assertIn("pixels[offset + 1] = 255", body)
+                self.assertIn("pixels[offset + 2] = 255", body)
+                self.assertIn("pixels[offset + 3] = 255", body)
+
+    def test_failed_persistence_paths_roll_back_unsaved_changes(self):
+        cases = [
+            ("QRID/QRID/Helpers/BackupManager.swift", "importBackup"),
+            ("QRID/QRID/Views/EditProfileView.swift", "save"),
+            ("QRID/QRID/Views/EditClusterView.swift", "save"),
+            ("QRID/QRID/Views/WidgetSettingsView.swift", "save"),
+        ]
+        for path, function_name in cases:
+            with self.subTest(path=path):
+                body = extract_function_body(read(path), function_name)
+                self.assertRegex(
+                    body,
+                    r"catch\s*\{\s*modelContext\.rollback\(\)",
+                    msg=f"{path} should roll back in {function_name} catch path",
+                )
 
 
 if __name__ == "__main__":
