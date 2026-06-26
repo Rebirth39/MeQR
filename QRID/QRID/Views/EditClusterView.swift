@@ -431,6 +431,7 @@ struct EditClusterView: View {
         let newQRColorHex = cluster.qrColorHex ?? "#000000"
         for profile in sortedProfiles {
             profile.foregroundColorHex = newQRColorHex
+            profile.captureClusterFallback(from: cluster)
         }
         cluster.widgetProfileIndex = widgetProfileIndex
         cluster.widgetUseClusterBackground = widgetUseClusterBackground

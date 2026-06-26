@@ -3,6 +3,73 @@ import CoreImage.CIFilterBuiltins
 import Vision
 
 struct QRCodeGenerator {
+    static func trimQuietZoneForDisplay(_ image: UIImage) -> UIImage? {
+        guard let cgImage = image.cgImage else { return nil }
+
+        let width = cgImage.width
+        let height = cgImage.height
+        guard width > 32, height > 32 else { return image }
+
+        guard let bitmapContext = CGContext(
+            data: nil,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: width * 4,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return image }
+
+        bitmapContext.clear(CGRect(x: 0, y: 0, width: width, height: height))
+        bitmapContext.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+
+        guard let data = bitmapContext.data else { return image }
+        let pixels = data.bindMemory(to: UInt8.self, capacity: width * height * 4)
+
+        var minX = width
+        var minY = height
+        var maxX = -1
+        var maxY = -1
+
+        for y in 0..<height {
+            for x in 0..<width {
+                let alpha = pixels[(y * width + x) * 4 + 3]
+                guard alpha > 0 else { continue }
+
+                minX = min(minX, x)
+                minY = min(minY, y)
+                maxX = max(maxX, x)
+                maxY = max(maxY, y)
+            }
+        }
+
+        guard maxX >= minX, maxY >= minY else { return image }
+
+        let cropRect = CGRect(
+            x: minX,
+            y: minY,
+            width: maxX - minX + 1,
+            height: maxY - minY + 1
+        ).integral
+
+        guard let cropped = cgImage.cropping(to: cropRect) else { return image }
+        return UIImage(cgImage: cropped, scale: image.scale, orientation: image.imageOrientation)
+    }
+
+    static func quietZoneCompensationScale(for image: UIImage) -> CGFloat {
+        let finalWidth = image.size.width
+        guard finalWidth > 32 else { return 1.0 }
+
+        let contentRatio: CGFloat
+        if finalWidth > 224 {
+            contentRatio = 6.0 / 7.0
+        } else {
+            contentRatio = max((finalWidth - 32) / finalWidth, 0.01)
+        }
+
+        return 1.0 / contentRatio
+    }
+
     static func generate(from string: String, foreground: Color, background: Color) -> UIImage? {
         let context = CIContext()
         let filter = CIFilter.qrCodeGenerator()
@@ -30,7 +97,7 @@ struct QRCodeGenerator {
         return UIImage(cgImage: cgImage)
     }
 
-    /// Generates a QR code with colored modules and an opaque quiet zone for scan reliability.
+    /// Generates a QR code with colored modules on a transparent background.
     static func generateTransparent(from string: String, foreground: Color) -> UIImage? {
         let context = CIContext()
         let filter = CIFilter.qrCodeGenerator()
@@ -65,10 +132,7 @@ struct QRCodeGenerator {
             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
         ) else { return nil }
 
-        bitmapContext.setFillColor(UIColor.white.cgColor)
-        bitmapContext.fill(CGRect(x: 0, y: 0, width: finalWidth, height: finalHeight))
-
-        // Draw raw QR mask
+        bitmapContext.clear(CGRect(x: 0, y: 0, width: finalWidth, height: finalHeight))
         bitmapContext.draw(cgImage, in: CGRect(x: quietZone, y: quietZone, width: width, height: height))
 
         guard let data = bitmapContext.data else { return nil }
@@ -89,23 +153,18 @@ struct QRCodeGenerator {
                 let g = pixels[offset + 1]
                 let b = pixels[offset + 2]
 
-                // Raw QR: black = module, white = background
-                // After scaling, edge pixels are gray
-                // Threshold at middle brightness
                 let brightness = (Int(r) + Int(g) + Int(b)) / 3
 
                 if x >= quietZone && x < quietZone + width && y >= quietZone && y < quietZone + height && brightness < 128 {
-                    // Dark pixel = QR module -> foreground color
                     pixels[offset] = red
                     pixels[offset + 1] = green
                     pixels[offset + 2] = blue
                     pixels[offset + 3] = alpha
                 } else {
-                    // Preserve an opaque light background so the quiet zone remains scannable.
-                    pixels[offset] = 255
-                    pixels[offset + 1] = 255
-                    pixels[offset + 2] = 255
-                    pixels[offset + 3] = 255
+                    pixels[offset] = 0
+                    pixels[offset + 1] = 0
+                    pixels[offset + 2] = 0
+                    pixels[offset + 3] = 0
                 }
             }
         }

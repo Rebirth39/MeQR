@@ -169,6 +169,7 @@ enum BackupManager {
                         customPlatformName: profileBackup.customPlatformName,
                         cluster: cluster
                     )
+                    profile.attach(to: cluster)
                     modelContext.insert(profile)
                 }
             }

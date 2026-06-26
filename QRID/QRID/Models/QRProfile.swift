@@ -45,6 +45,23 @@ final class QRProfile {
         self.cornerRadius = 16
     }
 
+    func captureClusterFallback(from cluster: QRCluster) {
+        name = cluster.name
+        subtitle = cluster.subtitle
+        avatarImageData = cluster.avatarImageData
+        backgroundColorHex = cluster.backgroundColorHex
+        borderColorHex = cluster.borderColorHex
+        cornerRadius = cluster.cornerRadius
+    }
+
+    func attach(to cluster: QRCluster) {
+        self.cluster = cluster
+        captureClusterFallback(from: cluster)
+        if !cluster.profiles.contains(where: { $0.id == id }) {
+            cluster.profiles.append(self)
+        }
+    }
+
     // Computed pass-throughs — delegate to cluster when available, fall back to stored values for migration
 
     var displayName: String {

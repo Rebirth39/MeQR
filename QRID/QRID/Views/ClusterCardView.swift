@@ -55,6 +55,7 @@ struct ClusterCardView: View {
             if let profile = currentProfile {
                 qrImage(for: profile)
                     .frame(width: size, height: size, alignment: .leading)
+                    .clipped()
             } else {
                 Image(systemName: "qrcode")
                     .resizable()
@@ -113,9 +114,12 @@ struct ClusterCardView: View {
     private func qrImage(for profile: QRProfile) -> some View {
         let hasCustomBg = cluster.backgroundImageData != nil
         let qrColor = cluster.qrColor ?? profile.foregroundColor
-        let uiImage = hasCustomBg
+        let baseImage = hasCustomBg
             ? QRCodeGenerator.generateTransparent(from: profile.qrContent, foreground: qrColor)
             : QRCodeGenerator.generate(from: profile.qrContent, foreground: qrColor, background: profile.backgroundColor)
+        let uiImage = hasCustomBg
+            ? baseImage.flatMap(QRCodeGenerator.trimQuietZoneForDisplay)
+            : baseImage
         if let uiImage = uiImage {
             Image(uiImage: uiImage)
                 .resizable()

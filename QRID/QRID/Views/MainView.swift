@@ -13,7 +13,7 @@ struct MainView: View {
     @State private var showingEditQR = false
     @State private var showingDeleteOptions = false
     @State private var showingReorderClusters = false
-    @State private var showingSettings = false
+    @State private var showingAbout = false
     @State private var cardHeight: CGFloat = 460
     @State private var currentSelectedProfileIndex: Int = 0
     @State private var clusterIdBeforeReorder: PersistentIdentifier?
@@ -31,6 +31,26 @@ struct MainView: View {
 
     private var currentSelectedIndex: Int {
         min(currentSelectedProfileIndex, max(0, currentProfiles.count - 1))
+    }
+
+    private var navigationForegroundColor: Color {
+        navigationBackgroundIsDark ? .white : .black
+    }
+
+    private var navigationColorScheme: ColorScheme {
+        navigationBackgroundIsDark ? .dark : .light
+    }
+
+    private var navigationBackgroundIsDark: Bool {
+        guard let currentCluster else { return false }
+
+        if let data = currentCluster.backgroundImageData,
+           let image = UIImage(data: data),
+           let topLuminance = image.topAreaLuminance() {
+            return topLuminance < 0.5
+        }
+
+        return currentCluster.backgroundColor.isDarkForUI
     }
 
     var body: some View {
@@ -63,7 +83,7 @@ struct MainView: View {
                                 .contentShape(Rectangle())
                         }
                     }
-                    .foregroundStyle(currentCluster?.backgroundColor.uiContrastColor ?? .primary)
+                    .foregroundStyle(navigationForegroundColor)
                 }
                 ToolbarItem(placement: .topBarLeading) {
                     if !clusters.isEmpty {
@@ -84,27 +104,27 @@ struct MainView: View {
                             } label: {
                                 Label(L.reorderClusters, systemImage: "arrow.up.arrow.down")
                             }
-                            Button {
-                                showingSettings = true
-                            } label: {
-                                Label(L.settings, systemImage: "gear")
-                            }
                             Button(role: .destructive) {
                                 showingDeleteOptions = true
                             } label: {
                                 Label(L.deleteCluster, systemImage: "trash")
+                            }
+                            Button {
+                                showingAbout = true
+                            } label: {
+                                Label(L.aboutSoftware, systemImage: "info.circle")
                             }
                         } label: {
                             Image(systemName: "line.3.horizontal.circle")
                                 .font(.system(size: 18, weight: .medium))
                                 .frame(width: 44, height: 44)
                                 .contentShape(Rectangle())
-                                .foregroundStyle(currentCluster?.backgroundColor.uiContrastColor ?? .primary)
+                                .foregroundStyle(navigationForegroundColor)
                         }
                     }
                 }
             }
-            .toolbarColorScheme(.light, for: .navigationBar)
+            .toolbarColorScheme(navigationColorScheme, for: .navigationBar)
             .confirmationDialog(L.chooseAction, isPresented: $showingAdd) {
                 Button(L.newCluster) {
                     showAddNewCluster = true
@@ -133,8 +153,8 @@ struct MainView: View {
             .sheet(isPresented: $showingReorderClusters) {
                 ReorderClustersView()
             }
-            .sheet(isPresented: $showingSettings) {
-                SettingsView()
+            .sheet(isPresented: $showingAbout) {
+                AboutView()
             }
             .onChange(of: showingReorderClusters) { _, isShowing in
                 if !isShowing, let savedId = clusterIdBeforeReorder {
@@ -247,8 +267,6 @@ struct MainView: View {
                 } else {
                     Spacer(minLength: 32)
                 }
-
-                Spacer()
             }
             .frame(maxWidth: .infinity)
         }
@@ -438,8 +456,6 @@ struct ShareableCard: View {
                         .frame(height: cardHeight)
 
                     Spacer(minLength: 32)
-
-                    Spacer()
                 }
             }
             .frame(width: geo.size.width, height: geo.size.height)

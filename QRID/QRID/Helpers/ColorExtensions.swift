@@ -42,4 +42,49 @@ extension Color {
         let luminance = 0.299 * r + 0.587 * g + 0.114 * b
         return luminance > 0.5 ? .black : .white
     }
+
+    var isDarkForUI: Bool {
+        let uiColor = UIColor(self)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0
+        uiColor.getRed(&r, green: &g, blue: &b, alpha: nil)
+        let luminance = 0.299 * r + 0.587 * g + 0.114 * b
+        return luminance <= 0.5
+    }
+}
+
+extension UIImage {
+    func topAreaLuminance(sampleSize: Int = 24, heightRatio: CGFloat = 0.22) -> CGFloat? {
+        guard let cgImage else { return nil }
+
+        let cropHeight = max(1, Int(CGFloat(cgImage.height) * heightRatio))
+        let cropRect = CGRect(x: 0, y: 0, width: cgImage.width, height: cropHeight)
+        guard let croppedImage = cgImage.cropping(to: cropRect) else { return nil }
+
+        guard let bitmapContext = CGContext(
+            data: nil,
+            width: sampleSize,
+            height: sampleSize,
+            bitsPerComponent: 8,
+            bytesPerRow: sampleSize * 4,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return nil }
+
+        bitmapContext.interpolationQuality = .low
+        bitmapContext.draw(croppedImage, in: CGRect(x: 0, y: 0, width: sampleSize, height: sampleSize))
+
+        guard let data = bitmapContext.data else { return nil }
+        let pixels = data.bindMemory(to: UInt8.self, capacity: sampleSize * sampleSize * 4)
+
+        var luminance: CGFloat = 0
+        for index in 0..<(sampleSize * sampleSize) {
+            let offset = index * 4
+            let r = CGFloat(pixels[offset]) / 255
+            let g = CGFloat(pixels[offset + 1]) / 255
+            let b = CGFloat(pixels[offset + 2]) / 255
+            luminance += 0.299 * r + 0.587 * g + 0.114 * b
+        }
+
+        return luminance / CGFloat(sampleSize * sampleSize)
+    }
 }

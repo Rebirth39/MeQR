@@ -446,6 +446,7 @@ struct AddProfileView: View {
                 customPlatformName: customPlatformName.trimmingCharacters(in: .whitespaces).isEmpty ? nil : customPlatformName.trimmingCharacters(in: .whitespaces),
                 cluster: existingCluster
             )
+            profile.attach(to: existingCluster)
             modelContext.insert(profile)
         } else {
             // New clusters default QR color to black; change it later in Edit Cluster
@@ -468,11 +469,13 @@ struct AddProfileView: View {
                 customPlatformName: customPlatformName.trimmingCharacters(in: .whitespaces).isEmpty ? nil : customPlatformName.trimmingCharacters(in: .whitespaces),
                 cluster: cluster
             )
+            profile.attach(to: cluster)
             modelContext.insert(profile)
         }
 
         do {
             try modelContext.save()
+            try MigrationManager.performClusterMigrationIfNeeded(context: modelContext)
             do {
                 let persistedClusters = try modelContext.fetch(FetchDescriptor<QRCluster>(
                     sortBy: [SortDescriptor(\.sortOrder, order: .forward)]

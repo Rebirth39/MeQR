@@ -3,36 +3,39 @@ import SwiftData
 
 struct MigrationManager {
     static func performClusterMigrationIfNeeded(context: ModelContext) throws {
-        let key = "hasPerformedClusterMigration_v1"
-        guard !UserDefaults.standard.bool(forKey: key) else { return }
-
         let descriptor = FetchDescriptor<QRProfile>(predicate: #Predicate { $0.cluster == nil })
         let orphanProfiles = try context.fetch(descriptor)
+            .sorted { $0.createdAt < $1.createdAt }
 
-        guard !orphanProfiles.isEmpty else {
-            UserDefaults.standard.set(true, forKey: key)
-            return
-        }
+        guard !orphanProfiles.isEmpty else { return }
+
+        let existingClusters = try context.fetch(FetchDescriptor<QRCluster>(
+            sortBy: [SortDescriptor(\.sortOrder, order: .forward)]
+        ))
+        var nextSortOrder = (existingClusters.map(\.sortOrder).max() ?? -1) + 1
 
         // Group profiles by shared fields to detect which ones should be in the same cluster
         // For now, each existing profile becomes its own cluster (1:1 mapping)
-        for (index, profile) in orphanProfiles.enumerated() {
+        for profile in orphanProfiles {
+            let fallbackName = profile.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            let clusterName = fallbackName.isEmpty ? profile.platformDisplayName : fallbackName
             let cluster = QRCluster(
-                name: profile.name,
+                name: clusterName,
                 subtitle: profile.subtitle,
                 avatarImageData: profile.avatarImageData,
                 backgroundColorHex: profile.backgroundColorHex,
                 borderColorHex: profile.borderColorHex,
+                qrColorHex: profile.foregroundColorHex,
                 cornerRadius: profile.cornerRadius,
-                sortOrder: index
+                sortOrder: nextSortOrder
             )
+            nextSortOrder += 1
             context.insert(cluster)
-            profile.cluster = cluster
+            profile.attach(to: cluster)
         }
 
         do {
             try context.save()
-            UserDefaults.standard.set(true, forKey: key)
         } catch {
             context.rollback()
             throw error

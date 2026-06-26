@@ -83,6 +83,7 @@ struct L {
     static var customPlatformName: String { tr("平台名称", "Platform Name") }
     static var reorderClusters: String { tr("排序合集", "Reorder Clusters") }
     static var settings: String { tr("设置", "Settings") }
+    static var aboutSoftware: String { tr("关于软件", "About") }
     static var iCloudSync: String { tr("iCloud 同步", "iCloud Sync") }
     static var savedToPhotos: String { tr("已保存到相册", "Saved to Photos") }
 
@@ -94,6 +95,7 @@ struct L {
     static var useClusterBackgroundColor: String { tr("使用合集背景色", "Use Cluster Background") }
     static var useCustomBackground: String { tr("使用自定义背景", "Use Custom Background") }
     static var selectBackgroundImage: String { tr("选择背景图", "Select Background Image") }
+    static var changeBackgroundImage: String { tr("更换背景图", "Change Background Image") }
     static var removeBackground: String { tr("移除背景", "Remove Background") }
     static var opacity: String { tr("不透明度", "Opacity") }
 }
