@@ -73,20 +73,24 @@ class ReviewRegressionTests(unittest.TestCase):
         self.assertNotIn(".onChange(of: clusters)", app)
         self.assertNotIn(".onChange(of: clusters)", main)
 
-    def test_cluster_signatures_cover_exported_cluster_fields(self):
-        required_fields = [
-            "avatarImageData",
-            "backgroundImageData",
-            "cornerRadius",
-            "cardOpacity",
-            "widgetBackgroundImageData",
-        ]
-        for path in ["QRID/QRID/QRIDApp.swift", "QRID/QRID/Views/MainView.swift"]:
-            with self.subTest(path=path):
-                source = read(path)
-                signature_body = extract_computed_property_body(source, "clustersSignature")
-                for field in required_fields:
-                    self.assertIn(field, signature_body)
+    def test_live_model_change_observers_do_not_write_widget_or_backup_files(self):
+        app = read("QRID/QRID/QRIDApp.swift")
+        main = read("QRID/QRID/Views/MainView.swift")
+
+        self.assertNotIn(".onChange(of: clustersSignature)", app)
+        self.assertNotIn(".onChange(of: clustersSignature)", main)
+        self.assertNotIn("clustersSignature", app)
+        self.assertNotIn("clustersSignature", main)
+
+        for source in [app, main]:
+            self.assertNotRegex(
+                source,
+                r"\.onChange\(of:\s*clusters\)\s*\{[\s\S]*?WidgetDataHelper\.sync",
+            )
+            self.assertNotRegex(
+                source,
+                r"\.onChange\(of:\s*clusters\)\s*\{[\s\S]*?BackupManager\.writeAutoBackup",
+            )
 
     def test_widget_settings_does_not_overwrite_shared_json_with_single_cluster(self):
         widget_settings = read("QRID/QRID/Views/WidgetSettingsView.swift")
