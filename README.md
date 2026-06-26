@@ -24,8 +24,8 @@
 - Core Image / Core Graphics（二维码生成与裁剪 / QR code generation and image cropping）
 
 ## 兼容性 / Compatibility
-- iOS 17+
-- iPhone 和 iPad
+- iOS 26.5+
+- iPhone and iPad
 
 ## 安装 / Installation
 

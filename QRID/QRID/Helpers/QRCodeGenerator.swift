@@ -30,7 +30,7 @@ struct QRCodeGenerator {
         return UIImage(cgImage: cgImage)
     }
 
-    /// Generates a QR code with transparent background
+    /// Generates a QR code with colored modules and an opaque quiet zone for scan reliability.
     static func generateTransparent(from string: String, foreground: Color) -> UIImage? {
         let context = CIContext()
         let filter = CIFilter.qrCodeGenerator()
@@ -65,6 +65,9 @@ struct QRCodeGenerator {
             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
         ) else { return nil }
 
+        bitmapContext.setFillColor(UIColor.white.cgColor)
+        bitmapContext.fill(CGRect(x: 0, y: 0, width: finalWidth, height: finalHeight))
+
         // Draw raw QR mask
         bitmapContext.draw(cgImage, in: CGRect(x: quietZone, y: quietZone, width: width, height: height))
 
@@ -98,11 +101,11 @@ struct QRCodeGenerator {
                     pixels[offset + 2] = blue
                     pixels[offset + 3] = alpha
                 } else {
-                    // Light pixel = background -> transparent
-                    pixels[offset] = 0
-                    pixels[offset + 1] = 0
-                    pixels[offset + 2] = 0
-                    pixels[offset + 3] = 0
+                    // Preserve an opaque light background so the quiet zone remains scannable.
+                    pixels[offset] = 255
+                    pixels[offset + 1] = 255
+                    pixels[offset + 2] = 255
+                    pixels[offset + 3] = 255
                 }
             }
         }

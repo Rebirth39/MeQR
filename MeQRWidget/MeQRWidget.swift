@@ -337,6 +337,9 @@ struct MeQRWidgetEntryView: View {
             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
         ) else { return nil }
 
+        bitmapContext.setFillColor(UIColor.white.cgColor)
+        bitmapContext.fill(CGRect(x: 0, y: 0, width: finalWidth, height: finalHeight))
+
         bitmapContext.draw(cgImage, in: CGRect(x: quietZone, y: quietZone, width: width, height: height))
 
         guard let data = bitmapContext.data else { return nil }
@@ -360,11 +363,11 @@ struct MeQRWidgetEntryView: View {
                     pixels[offset + 2] = blue
                     pixels[offset + 3] = alpha
                 } else {
-                    // Transparent background so the widget background shows through
-                    pixels[offset] = 0
-                    pixels[offset + 1] = 0
-                    pixels[offset + 2] = 0
-                    pixels[offset + 3] = 0
+                    // Preserve an opaque light background so the quiet zone remains scannable.
+                    pixels[offset] = 255
+                    pixels[offset + 1] = 255
+                    pixels[offset + 2] = 255
+                    pixels[offset + 3] = 255
                 }
             }
         }
