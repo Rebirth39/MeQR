@@ -19,16 +19,6 @@ final class AppSettings {
     func toggleLanguage() {
         language = isChinese ? "en" : "zh"
     }
-
-    var iCloudSyncEnabled: Bool {
-        get {
-            UserDefaults.standard.bool(forKey: "icloud_sync_enabled")
-        }
-        set {
-            UserDefaults.standard.set(newValue, forKey: "icloud_sync_enabled")
-        }
-    }
-
     private init() {}
 }
 

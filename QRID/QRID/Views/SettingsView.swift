@@ -18,15 +18,6 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 Section {
-                    Toggle(isOn: settingsBinding) {
-                        Label(L.iCloudSync, systemImage: "icloud")
-                    }
-                } footer: {
-                    Text("开启后，你的合集数据将同步到你的 iCloud 账户，可在多台设备间保持同步。")
-                        .font(.caption)
-                }
-
-                Section {
                     Button {
                         exportBackup()
                     } label: {
@@ -81,13 +72,6 @@ struct SettingsView: View {
                 Text(importSuccess ? "备份恢复成功。" : "恢复失败，请检查备份文件格式。")
             }
         }
-    }
-
-    private var settingsBinding: Binding<Bool> {
-        Binding(
-            get: { settings.iCloudSyncEnabled },
-            set: { settings.iCloudSyncEnabled = $0 }
-        )
     }
 
     private func exportBackup() {

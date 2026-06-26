@@ -16,17 +16,16 @@
 - **拖拽排序 / Drag-to-Reorder**: 长按合集卡片，拖拽调整合集的展示顺序。Long-press a cluster card to drag and reorder clusters.
 - **分享卡片 / Share Card**: 将合集卡片保存为图片到相册，方便分享给他人。Save cluster cards as images to your photo library for easy sharing.
 
-
 ## 技术栈 / Tech Stack
 
 - SwiftUI
 - SwiftData（本地数据持久化 / Local data persistence）
 - PhotosUI（头像和背景图片选择 / Avatar and background image selection）
-- Core Graphics（二维码生成与裁剪 / QR code generation and image cropping）
+- Core Image / Core Graphics（二维码生成与裁剪 / QR code generation and image cropping）
 
 ## 兼容性 / Compatibility
 - iOS 17+
-- 仅iPhone / iPhone only（暂未适配 iPad / iPad not yet supported）
+- iPhone 和 iPad
 
 ## 安装 / Installation
 
@@ -36,7 +35,7 @@
    ```
 2. 在 Xcode 中打开 `QRID.xcodeproj`。Open `QRID.xcodeproj` in Xcode.
 3. 在 **Signing & Capabilities** 中选择你的 Apple Development Team，并将 Bundle Identifier 修改为你自己的。Select your Apple Development Team in **Signing & Capabilities**, and change the Bundle Identifier to your own.
-4. 编译并运行到真机或模拟器。Build and run on a physical device or simulator.
+4. 编译并运行到真机或模拟器；完整构建验证需要 Xcode。Build and run on a physical device or simulator; full build verification requires Xcode.
 
 ## 隐私 / Privacy
 喜劳转扩（原 MeQR）所有数据均存储在本地，不上传至任何服务器，无需网络权限。

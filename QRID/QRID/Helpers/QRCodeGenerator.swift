@@ -50,23 +50,26 @@ struct QRCodeGenerator {
 
         let width = cgImage.width
         let height = cgImage.height
+        let quietZone = max(16, width / 12)
+        let finalWidth = width + quietZone * 2
+        let finalHeight = height + quietZone * 2
 
         // Create RGBA bitmap context
         guard let bitmapContext = CGContext(
             data: nil,
-            width: width,
-            height: height,
+            width: finalWidth,
+            height: finalHeight,
             bitsPerComponent: 8,
-            bytesPerRow: width * 4,
+            bytesPerRow: finalWidth * 4,
             space: CGColorSpaceCreateDeviceRGB(),
             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
         ) else { return nil }
 
         // Draw raw QR mask
-        bitmapContext.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+        bitmapContext.draw(cgImage, in: CGRect(x: quietZone, y: quietZone, width: width, height: height))
 
         guard let data = bitmapContext.data else { return nil }
-        let pixels = data.bindMemory(to: UInt8.self, capacity: width * height * 4)
+        let pixels = data.bindMemory(to: UInt8.self, capacity: finalWidth * finalHeight * 4)
 
         let uiColor = UIColor(foreground)
         var fr: CGFloat = 0, fg: CGFloat = 0, fb: CGFloat = 0, fa: CGFloat = 0
@@ -76,9 +79,9 @@ struct QRCodeGenerator {
         let blue = UInt8(fb * 255)
         let alpha = UInt8(fa * 255)
 
-        for y in 0..<height {
-            for x in 0..<width {
-                let offset = (y * width + x) * 4
+        for y in 0..<finalHeight {
+            for x in 0..<finalWidth {
+                let offset = (y * finalWidth + x) * 4
                 let r = pixels[offset]
                 let g = pixels[offset + 1]
                 let b = pixels[offset + 2]
@@ -88,7 +91,7 @@ struct QRCodeGenerator {
                 // Threshold at middle brightness
                 let brightness = (Int(r) + Int(g) + Int(b)) / 3
 
-                if brightness < 128 {
+                if x >= quietZone && x < quietZone + width && y >= quietZone && y < quietZone + height && brightness < 128 {
                     // Dark pixel = QR module -> foreground color
                     pixels[offset] = red
                     pixels[offset + 1] = green

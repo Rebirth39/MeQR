@@ -323,35 +323,38 @@ struct MeQRWidgetEntryView: View {
 
         let width = cgImage.width
         let height = cgImage.height
+        let quietZone = max(16, width / 12)
+        let finalWidth = width + quietZone * 2
+        let finalHeight = height + quietZone * 2
 
         guard let bitmapContext = CGContext(
             data: nil,
-            width: width,
-            height: height,
+            width: finalWidth,
+            height: finalHeight,
             bitsPerComponent: 8,
-            bytesPerRow: width * 4,
+            bytesPerRow: finalWidth * 4,
             space: CGColorSpaceCreateDeviceRGB(),
             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
         ) else { return nil }
 
-        bitmapContext.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+        bitmapContext.draw(cgImage, in: CGRect(x: quietZone, y: quietZone, width: width, height: height))
 
         guard let data = bitmapContext.data else { return nil }
-        let pixels = data.bindMemory(to: UInt8.self, capacity: width * height * 4)
+        let pixels = data.bindMemory(to: UInt8.self, capacity: finalWidth * finalHeight * 4)
 
         let red = UInt8(fr * 255)
         let green = UInt8(fg * 255)
         let blue = UInt8(fb * 255)
         let alpha = UInt8(fa * 255)
 
-        for y in 0..<height {
-            for x in 0..<width {
-                let offset = (y * width + x) * 4
+        for y in 0..<finalHeight {
+            for x in 0..<finalWidth {
+                let offset = (y * finalWidth + x) * 4
                 let r = Int(pixels[offset])
                 let g = Int(pixels[offset + 1])
                 let b = Int(pixels[offset + 2])
                 let brightness = (r + g + b) / 3
-                if brightness < 128 {
+                if x >= quietZone && x < quietZone + width && y >= quietZone && y < quietZone + height && brightness < 128 {
                     pixels[offset] = red
                     pixels[offset + 1] = green
                     pixels[offset + 2] = blue
