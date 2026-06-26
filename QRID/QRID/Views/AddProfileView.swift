@@ -473,19 +473,16 @@ struct AddProfileView: View {
 
         do {
             try modelContext.save()
-            let savedClusters: [QRCluster]
             do {
-                let saved = try modelContext.fetch(FetchDescriptor<QRCluster>(
+                let persistedClusters = try modelContext.fetch(FetchDescriptor<QRCluster>(
                     sortBy: [SortDescriptor(\.sortOrder, order: .forward)]
                 ))
-                savedClusters = saved
-                saveError = "已保存，当前共有 \(saved.count) 个合集"
+                WidgetDataHelper.sync(clusters: persistedClusters)
+                BackupManager.writeAutoBackup(clusters: persistedClusters)
+                saveError = "已保存，当前共有 \(persistedClusters.count) 个合集"
             } catch {
-                savedClusters = clusters
                 saveError = "保存后读取失败：\(error.localizedDescription)"
             }
-            WidgetDataHelper.sync(clusters: savedClusters)
-            BackupManager.writeAutoBackup(clusters: savedClusters)
             showSaveError = true
         } catch {
             modelContext.rollback()

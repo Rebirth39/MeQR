@@ -143,6 +143,29 @@ class ReviewRegressionTests(unittest.TestCase):
                 self.assertLess(fetch.start(), widget_sync.start())
                 self.assertLess(widget_sync.start(), auto_backup.start())
 
+    def test_reorder_syncs_from_persisted_fetch_after_save(self):
+        body = extract_function_body(read("QRID/QRID/Views/ReorderClustersView.swift"), "move")
+        fetch = re.search(r"modelContext\.fetch\(FetchDescriptor<QRCluster>", body)
+        widget_sync = re.search(r"WidgetDataHelper\.sync\(clusters:\s*[^)]+\)", body)
+        auto_backup = re.search(r"BackupManager\.writeAutoBackup\(clusters:\s*[^)]+\)", body)
+        self.assertIsNotNone(fetch)
+        self.assertIsNotNone(widget_sync)
+        self.assertIsNotNone(auto_backup)
+        self.assertNotIn("try? modelContext.fetch", body)
+        self.assertNotIn("?? clusters", body)
+        self.assertLess(body.index("try modelContext.save()"), fetch.start())
+        self.assertLess(fetch.start(), widget_sync.start())
+        self.assertLess(widget_sync.start(), auto_backup.start())
+
+    def test_add_profile_does_not_sync_stale_query_after_post_save_fetch_failure(self):
+        body = extract_function_body(read("QRID/QRID/Views/AddProfileView.swift"), "save")
+        self.assertNotIn("savedClusters = clusters", body)
+        self.assertNotIn("?? clusters", body)
+        self.assertLess(
+            body.index("try modelContext.fetch(FetchDescriptor<QRCluster>"),
+            body.index("WidgetDataHelper.sync(clusters:"),
+        )
+
     def test_edit_cluster_profile_delete_rolls_back_and_dismisses_after_save(self):
         body = extract_function_body(read("QRID/QRID/Views/EditClusterView.swift"), "deleteProfiles")
         self.assertRegex(body, r"catch\s*\{\s*modelContext\.rollback\(\)")
@@ -172,6 +195,27 @@ class ReviewRegressionTests(unittest.TestCase):
             main,
             r"catch\s*\{[\s\S]*?saveError\s*=\s*error\.localizedDescription[\s\S]*?showSaveError\s*=\s*true",
         )
+
+    def test_main_view_migration_refreshes_persisted_outputs_before_lifecycle_sync(self):
+        main = read("QRID/QRID/Views/MainView.swift")
+        self.assertIn("private func syncPersistedOutputsFromStore() throws", main)
+        sync_body = extract_function_body(main, "syncPersistedOutputsFromStore")
+        migration_body = extract_function_body(main, "migrateClustersIfNeeded")
+        self.assertLess(
+            sync_body.index("let persistedClusters = try modelContext.fetch(FetchDescriptor<QRCluster>"),
+            sync_body.index("WidgetDataHelper.sync(clusters: persistedClusters)"),
+        )
+        self.assertLess(
+            sync_body.index("WidgetDataHelper.sync(clusters: persistedClusters)"),
+            sync_body.index("BackupManager.writeAutoBackup(clusters: persistedClusters)"),
+        )
+        self.assertIn("try MigrationManager.performClusterMigrationIfNeeded(context: modelContext)", migration_body)
+        self.assertIn("try syncPersistedOutputsFromStore()", migration_body)
+        self.assertLess(
+            migration_body.index("try MigrationManager.performClusterMigrationIfNeeded(context: modelContext)"),
+            migration_body.index("try syncPersistedOutputsFromStore()"),
+        )
+        self.assertNotIn(".onAppear {\n                WidgetDataHelper.sync(clusters: clusters)", main)
 
     def test_persistence_saves_are_not_silently_discarded(self):
         files = [

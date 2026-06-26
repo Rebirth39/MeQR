@@ -68,8 +68,11 @@ struct ReorderClustersView: View {
         }
         do {
             try modelContext.save()
-            WidgetDataHelper.sync(clusters: clusters)
-            BackupManager.writeAutoBackup(clusters: clusters)
+            let persistedClusters = try modelContext.fetch(FetchDescriptor<QRCluster>(
+                sortBy: [SortDescriptor(\.sortOrder, order: .forward)]
+            ))
+            WidgetDataHelper.sync(clusters: persistedClusters)
+            BackupManager.writeAutoBackup(clusters: persistedClusters)
         } catch {
             for cluster in reordered {
                 if let previousSortOrder = previousSortOrders[cluster.id] {

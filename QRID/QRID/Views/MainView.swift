@@ -43,10 +43,6 @@ struct MainView: View {
                 }
             }
             .navigationTitle(L.qrID)
-            .onAppear {
-                WidgetDataHelper.sync(clusters: clusters)
-                BackupManager.writeAutoBackup(clusters: clusters)
-            }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 12) {
@@ -171,12 +167,7 @@ struct MainView: View {
                 }
             }
             .onAppear {
-                do {
-                    try MigrationManager.performClusterMigrationIfNeeded(context: modelContext)
-                } catch {
-                    saveError = error.localizedDescription
-                    showSaveError = true
-                }
+                migrateClustersIfNeeded()
             }
             .alert(L.savedToPhotos, isPresented: $showSavedAlert) {
                 Button("OK", role: .cancel) {}
@@ -300,6 +291,24 @@ struct MainView: View {
     }
 
     // MARK: - Actions
+
+    private func syncPersistedOutputsFromStore() throws {
+        let persistedClusters = try modelContext.fetch(FetchDescriptor<QRCluster>(
+            sortBy: [SortDescriptor(\.sortOrder, order: .forward)]
+        ))
+        WidgetDataHelper.sync(clusters: persistedClusters)
+        BackupManager.writeAutoBackup(clusters: persistedClusters)
+    }
+
+    private func migrateClustersIfNeeded() {
+        do {
+            try MigrationManager.performClusterMigrationIfNeeded(context: modelContext)
+            try syncPersistedOutputsFromStore()
+        } catch {
+            saveError = error.localizedDescription
+            showSaveError = true
+        }
+    }
 
     private func deleteCurrentQR() {
         let impact = UIImpactFeedbackGenerator(style: .medium)
