@@ -17,6 +17,20 @@ class ReviewRegressionTests(unittest.TestCase):
         self.assertNotIn(".onChange(of: clusters)", app)
         self.assertNotIn(".onChange(of: clusters)", main)
 
+    def test_cluster_signatures_cover_exported_cluster_fields(self):
+        required_fields = [
+            "avatarImageData",
+            "backgroundImageData",
+            "cornerRadius",
+            "cardOpacity",
+            "widgetBackgroundImageData",
+        ]
+        for path in ["QRID/QRID/QRIDApp.swift", "QRID/QRID/Views/MainView.swift"]:
+            with self.subTest(path=path):
+                source = read(path)
+                for field in required_fields:
+                    self.assertIn(field, source)
+
     def test_widget_settings_does_not_overwrite_shared_json_with_single_cluster(self):
         widget_settings = read("QRID/QRID/Views/WidgetSettingsView.swift")
         self.assertNotIn("WidgetDataHelper.sync(clusters: [cluster])", widget_settings)
