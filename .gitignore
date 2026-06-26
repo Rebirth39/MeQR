@@ -13,3 +13,6 @@ DerivedData/
 
 # macOS
 .DS_Store
+
+# Codex/Superpowers scratch artifacts
+.superpowers/
