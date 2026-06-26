@@ -123,16 +123,55 @@ class ReviewRegressionTests(unittest.TestCase):
                 self.assertLess(widget_sync.start(), auto_backup.start())
 
     def test_delete_paths_sync_from_persisted_fetch_after_save(self):
-        main = read("QRID/QRID/Views/MainView.swift")
-        for function_name in ["deleteCurrentQR", "deleteCurrentCluster"]:
+        cases = [
+            ("QRID/QRID/Views/MainView.swift", "deleteCurrentQR"),
+            ("QRID/QRID/Views/MainView.swift", "deleteCurrentCluster"),
+            ("QRID/QRID/Views/EditClusterView.swift", "deleteProfiles"),
+        ]
+        for path, function_name in cases:
             with self.subTest(function_name=function_name):
-                body = extract_function_body(main, function_name)
+                body = extract_function_body(read(path), function_name)
                 fetch = re.search(r"modelContext\.fetch\(FetchDescriptor<QRCluster>", body)
                 widget_sync = re.search(r"WidgetDataHelper\.sync\(clusters:\s*[^)]+\)", body)
+                auto_backup = re.search(r"BackupManager\.writeAutoBackup\(clusters:\s*[^)]+\)", body)
                 self.assertIsNotNone(fetch)
                 self.assertIsNotNone(widget_sync)
+                self.assertIsNotNone(auto_backup)
+                self.assertNotIn("try? modelContext.fetch", body)
+                self.assertNotIn("?? clusters", body)
                 self.assertLess(body.index("try modelContext.save()"), fetch.start())
                 self.assertLess(fetch.start(), widget_sync.start())
+                self.assertLess(widget_sync.start(), auto_backup.start())
+
+    def test_edit_cluster_profile_delete_rolls_back_and_dismisses_after_save(self):
+        body = extract_function_body(read("QRID/QRID/Views/EditClusterView.swift"), "deleteProfiles")
+        self.assertRegex(body, r"catch\s*\{\s*modelContext\.rollback\(\)")
+        self.assertIn("shouldDismissAfterSave", body)
+        self.assertLess(body.index("try modelContext.save()"), body.index("dismiss()"))
+
+    def test_backup_restore_refreshes_widget_and_auto_backup_after_save(self):
+        body = extract_function_body(read("QRID/QRID/Helpers/BackupManager.swift"), "importBackup")
+        self.assertIn("WidgetDataHelper.sync(clusters:", body)
+        self.assertIn("writeAutoBackup(clusters:", body)
+        self.assertLess(body.index("try modelContext.save()"), body.index("modelContext.fetch(FetchDescriptor<QRCluster>"))
+        self.assertLess(body.index("modelContext.fetch(FetchDescriptor<QRCluster>"), body.index("WidgetDataHelper.sync(clusters:"))
+        self.assertLess(body.index("WidgetDataHelper.sync(clusters:"), body.index("writeAutoBackup(clusters:"))
+
+    def test_migration_failures_roll_back_and_surface_to_main_view(self):
+        migration = read("QRID/QRID/Helpers/MigrationManager.swift")
+        migration_body = extract_function_body(migration, "performClusterMigrationIfNeeded")
+        main = read("QRID/QRID/Views/MainView.swift")
+        self.assertRegex(
+            migration,
+            r"static func performClusterMigrationIfNeeded\(context:\s*ModelContext\)\s+throws",
+        )
+        self.assertRegex(migration_body, r"catch\s*\{\s*context\.rollback\(\)\s*throw error")
+        self.assertNotIn("print(\"Cluster migration", migration)
+        self.assertIn("try MigrationManager.performClusterMigrationIfNeeded(context: modelContext)", main)
+        self.assertRegex(
+            main,
+            r"catch\s*\{[\s\S]*?saveError\s*=\s*error\.localizedDescription[\s\S]*?showSaveError\s*=\s*true",
+        )
 
     def test_persistence_saves_are_not_silently_discarded(self):
         files = [

@@ -2,18 +2,12 @@ import Foundation
 import SwiftData
 
 struct MigrationManager {
-    static func performClusterMigrationIfNeeded(context: ModelContext) {
+    static func performClusterMigrationIfNeeded(context: ModelContext) throws {
         let key = "hasPerformedClusterMigration_v1"
         guard !UserDefaults.standard.bool(forKey: key) else { return }
 
         let descriptor = FetchDescriptor<QRProfile>(predicate: #Predicate { $0.cluster == nil })
-        let orphanProfiles: [QRProfile]
-        do {
-            orphanProfiles = try context.fetch(descriptor)
-        } catch {
-            print("Cluster migration fetch failed: \(error)")
-            return
-        }
+        let orphanProfiles = try context.fetch(descriptor)
 
         guard !orphanProfiles.isEmpty else {
             UserDefaults.standard.set(true, forKey: key)
@@ -40,7 +34,8 @@ struct MigrationManager {
             try context.save()
             UserDefaults.standard.set(true, forKey: key)
         } catch {
-            print("Cluster migration failed: \(error)")
+            context.rollback()
+            throw error
         }
     }
 }

@@ -480,14 +480,28 @@ struct EditClusterView: View {
 
     private func deleteProfiles(at offsets: IndexSet) {
         let profilesToDelete = offsets.map { sortedProfiles[$0] }
+        let remainingCount = sortedProfiles.count - profilesToDelete.count
+        let shouldDismissAfterSave = remainingCount == 0
         for profile in profilesToDelete {
             modelContext.delete(profile)
         }
-        // Use local count — SwiftData relationship arrays may not update until save()
-        let remainingCount = sortedProfiles.count - profilesToDelete.count
-        if remainingCount == 0 {
+        if shouldDismissAfterSave {
             modelContext.delete(cluster)
-            dismiss()
+        }
+        do {
+            try modelContext.save()
+            let persistedClusters = try modelContext.fetch(FetchDescriptor<QRCluster>(
+                sortBy: [SortDescriptor(\.sortOrder, order: .forward)]
+            ))
+            WidgetDataHelper.sync(clusters: persistedClusters)
+            BackupManager.writeAutoBackup(clusters: persistedClusters)
+            if shouldDismissAfterSave {
+                dismiss()
+            }
+        } catch {
+            modelContext.rollback()
+            saveError = error.localizedDescription
+            showSaveError = true
         }
     }
 }

@@ -171,7 +171,12 @@ struct MainView: View {
                 }
             }
             .onAppear {
-                MigrationManager.performClusterMigrationIfNeeded(context: modelContext)
+                do {
+                    try MigrationManager.performClusterMigrationIfNeeded(context: modelContext)
+                } catch {
+                    saveError = error.localizedDescription
+                    showSaveError = true
+                }
             }
             .alert(L.savedToPhotos, isPresented: $showSavedAlert) {
                 Button("OK", role: .cancel) {}
@@ -318,9 +323,9 @@ struct MainView: View {
         }
         do {
             try modelContext.save()
-            let persistedClusters = (try? modelContext.fetch(FetchDescriptor<QRCluster>(
+            let persistedClusters = try modelContext.fetch(FetchDescriptor<QRCluster>(
                 sortBy: [SortDescriptor(\.sortOrder, order: .forward)]
-            ))) ?? clusters
+            ))
             WidgetDataHelper.sync(clusters: persistedClusters)
             BackupManager.writeAutoBackup(clusters: persistedClusters)
         } catch {
@@ -344,9 +349,9 @@ struct MainView: View {
         currentSelectedProfileIndex = 0
         do {
             try modelContext.save()
-            let persistedClusters = (try? modelContext.fetch(FetchDescriptor<QRCluster>(
+            let persistedClusters = try modelContext.fetch(FetchDescriptor<QRCluster>(
                 sortBy: [SortDescriptor(\.sortOrder, order: .forward)]
-            ))) ?? clusters
+            ))
             WidgetDataHelper.sync(clusters: persistedClusters)
             BackupManager.writeAutoBackup(clusters: persistedClusters)
         } catch {

@@ -124,7 +124,8 @@ enum BackupManager {
             let data = try Data(contentsOf: url)
             let backup = try JSONDecoder().decode(Backup.self, from: data)
 
-            let existingClusters = try modelContext.fetch(FetchDescriptor<QRCluster>())
+            let existingDescriptor = FetchDescriptor<QRCluster>()
+            let existingClusters = try modelContext.fetch(existingDescriptor)
             if !existingClusters.isEmpty {
                 _ = try writePreRestoreBackup(clusters: existingClusters)
             }
@@ -173,6 +174,11 @@ enum BackupManager {
             }
 
             try modelContext.save()
+            let restoredClusters = try modelContext.fetch(FetchDescriptor<QRCluster>(
+                sortBy: [SortDescriptor(\.sortOrder, order: .forward)]
+            ))
+            WidgetDataHelper.sync(clusters: restoredClusters)
+            writeAutoBackup(clusters: restoredClusters)
             return true
         } catch {
             modelContext.rollback()
