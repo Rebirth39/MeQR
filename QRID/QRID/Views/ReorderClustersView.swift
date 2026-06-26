@@ -5,6 +5,8 @@ struct ReorderClustersView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \QRCluster.sortOrder, order: .forward) private var clusters: [QRCluster]
+    @State private var saveError: String?
+    @State private var showSaveError = false
 
     var body: some View {
         NavigationStack {
@@ -47,6 +49,11 @@ struct ReorderClustersView: View {
                     Button(L.done) { dismiss() }
                 }
             }
+            .alert("Could Not Save", isPresented: $showSaveError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(saveError ?? "Please try again.")
+            }
         }
     }
 
@@ -54,10 +61,21 @@ struct ReorderClustersView: View {
         let impact = UIImpactFeedbackGenerator(style: .light)
         impact.impactOccurred()
         var reordered = clusters
+        let previousSortOrders = Dictionary(uniqueKeysWithValues: clusters.map { ($0.id, $0.sortOrder) })
         reordered.move(fromOffsets: source, toOffset: destination)
         for (index, cluster) in reordered.enumerated() {
             cluster.sortOrder = index
         }
-        try? modelContext.save()
+        do {
+            try modelContext.save()
+        } catch {
+            for cluster in reordered {
+                if let previousSortOrder = previousSortOrders[cluster.id] {
+                    cluster.sortOrder = previousSortOrder
+                }
+            }
+            saveError = error.localizedDescription
+            showSaveError = true
+        }
     }
 }

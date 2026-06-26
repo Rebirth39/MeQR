@@ -7,7 +7,15 @@ struct MigrationManager {
         guard !UserDefaults.standard.bool(forKey: key) else { return }
 
         let descriptor = FetchDescriptor<QRProfile>(predicate: #Predicate { $0.cluster == nil })
-        guard let orphanProfiles = try? context.fetch(descriptor), !orphanProfiles.isEmpty else {
+        let orphanProfiles: [QRProfile]
+        do {
+            orphanProfiles = try context.fetch(descriptor)
+        } catch {
+            print("Cluster migration fetch failed: \(error)")
+            return
+        }
+
+        guard !orphanProfiles.isEmpty else {
             UserDefaults.standard.set(true, forKey: key)
             return
         }
@@ -28,7 +36,11 @@ struct MigrationManager {
             profile.cluster = cluster
         }
 
-        try? context.save()
-        UserDefaults.standard.set(true, forKey: key)
+        do {
+            try context.save()
+            UserDefaults.standard.set(true, forKey: key)
+        } catch {
+            print("Cluster migration failed: \(error)")
+        }
     }
 }

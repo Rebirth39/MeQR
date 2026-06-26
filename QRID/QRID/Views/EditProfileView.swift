@@ -15,6 +15,8 @@ struct EditProfileView: View {
     @State private var isDecoding = false
     @State private var decodeError: String?
     @State private var showDecodeError = false
+    @State private var saveError: String?
+    @State private var showSaveError = false
 
     var body: some View {
         NavigationStack {
@@ -54,6 +56,11 @@ struct EditProfileView: View {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text(decodeError ?? L.noQRFound)
+            }
+            .alert("Could Not Save", isPresented: $showSaveError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(saveError ?? "Please try again.")
             }
         }
     }
@@ -219,7 +226,12 @@ struct EditProfileView: View {
         profile.platformType = platformType
         profile.customPlatformName = customPlatformName.trimmingCharacters(in: .whitespaces).isEmpty ? nil : customPlatformName.trimmingCharacters(in: .whitespaces)
         profile.qrContent = qrContent.trimmingCharacters(in: .whitespaces)
-        try? modelContext.save()
-        dismiss()
+        do {
+            try modelContext.save()
+            dismiss()
+        } catch {
+            saveError = error.localizedDescription
+            showSaveError = true
+        }
     }
 }

@@ -30,6 +30,8 @@ struct EditClusterView: View {
     @State private var widgetBackgroundImage: UIImage?
     @State private var widgetUseCustomBackground: Bool = false
     @State private var showingWidgetSettings = false
+    @State private var saveError: String?
+    @State private var showSaveError = false
 
     private var sortedProfiles: [QRProfile] {
         cluster.profiles.sorted { $0.createdAt < $1.createdAt }
@@ -111,6 +113,11 @@ struct EditClusterView: View {
                     profiles: sortedProfiles,
                     onDismiss: { loadWidgetSettings() }
                 )
+            }
+            .alert("Could Not Save", isPresented: $showSaveError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(saveError ?? "Please try again.")
             }
         }
     }
@@ -428,8 +435,13 @@ struct EditClusterView: View {
         cluster.widgetUseClusterBackground = widgetUseClusterBackground
         cluster.widgetOpacity = widgetOpacity
         cluster.widgetBackgroundImageData = widgetUseCustomBackground ? resizedWidgetImageData(from: widgetBackgroundImage) : nil
-        try? modelContext.save()
-        dismiss()
+        do {
+            try modelContext.save()
+            dismiss()
+        } catch {
+            saveError = error.localizedDescription
+            showSaveError = true
+        }
     }
 
     private func loadWidgetSettings() {

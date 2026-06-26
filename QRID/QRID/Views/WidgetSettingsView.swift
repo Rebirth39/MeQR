@@ -27,6 +27,8 @@ struct WidgetSettingsView: View {
     @State private var widgetLargeOffsetX: Double = 0
     @State private var widgetLargeOffsetY: Double = 0
     @State private var selectedOffsetSize: Int = 0
+    @State private var saveError: String?
+    @State private var showSaveError = false
 
     var body: some View {
         NavigationStack {
@@ -71,6 +73,11 @@ struct WidgetSettingsView: View {
                         rawBackgroundImage = nil
                     }
                 )
+            }
+            .alert("Could Not Save", isPresented: $showSaveError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(saveError ?? "Please try again.")
             }
         }
     }
@@ -367,10 +374,15 @@ struct WidgetSettingsView: View {
         cluster.widgetMediumOffsetY = widgetMediumOffsetY
         cluster.widgetLargeOffsetX = widgetLargeOffsetX
         cluster.widgetLargeOffsetY = widgetLargeOffsetY
-        try? modelContext.save()
-        WidgetDataHelper.sync(clusters: clusters)
-        onDismiss?()
-        dismiss()
+        do {
+            try modelContext.save()
+            WidgetDataHelper.sync(clusters: clusters)
+            onDismiss?()
+            dismiss()
+        } catch {
+            saveError = error.localizedDescription
+            showSaveError = true
+        }
     }
 
     private func resizedWidgetImageData(from image: UIImage?) -> Data? {

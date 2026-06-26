@@ -77,6 +77,9 @@ class ReviewRegressionTests(unittest.TestCase):
                 source = read(path)
                 self.assertIsNone(re.search(r"try\?\s+(?:modelContext|context)\.save\(\)", source))
 
+        migration_manager = read("QRID/QRID/Helpers/MigrationManager.swift")
+        self.assertIsNone(re.search(r"try\?\s+(?:modelContext|context)\.fetch\(", migration_manager))
+
     def test_backup_import_uses_security_scoped_resource_and_pre_restore_backup(self):
         settings = read("QRID/QRID/Views/SettingsView.swift")
         backup = read("QRID/QRID/Helpers/BackupManager.swift")
