@@ -47,46 +47,48 @@ enum BackupManager {
         let customPlatformName: String?
     }
 
+    private static func makeClusterBackup(_ cluster: QRCluster) -> ClusterBackup {
+        ClusterBackup(
+            name: cluster.name,
+            subtitle: cluster.subtitle,
+            avatarImageData: cluster.avatarImageData,
+            backgroundImageData: cluster.backgroundImageData,
+            backgroundColorHex: cluster.backgroundColorHex,
+            borderColorHex: cluster.borderColorHex,
+            textColorHex: cluster.textColorHex,
+            qrColorHex: cluster.qrColorHex,
+            cornerRadius: cluster.cornerRadius,
+            cardOpacity: cluster.cardOpacity,
+            sortOrder: cluster.sortOrder,
+            widgetProfileIndex: cluster.widgetProfileIndex,
+            widgetUseClusterBackground: cluster.widgetUseClusterBackground,
+            widgetBackgroundImageData: cluster.widgetBackgroundImageData,
+            widgetOpacity: cluster.widgetOpacity,
+            widgetTextColorHex: cluster.widgetTextColorHex,
+            widgetSmallOffsetX: cluster.widgetSmallOffsetX,
+            widgetSmallOffsetY: cluster.widgetSmallOffsetY,
+            widgetMediumOffsetX: cluster.widgetMediumOffsetX,
+            widgetMediumOffsetY: cluster.widgetMediumOffsetY,
+            widgetLargeOffsetX: cluster.widgetLargeOffsetX,
+            widgetLargeOffsetY: cluster.widgetLargeOffsetY,
+            profiles: cluster.profiles.map { profile in
+                ProfileBackup(
+                    platformType: profile.platformType,
+                    qrContent: profile.qrContent,
+                    foregroundColorHex: profile.foregroundColorHex,
+                    customPlatformName: profile.customPlatformName
+                )
+            }
+        )
+    }
+
     // MARK: - Export
 
     static func exportBackup(clusters: [QRCluster]) -> URL? {
         let backup = Backup(
             version: 1,
             exportedAt: Date(),
-            clusters: clusters.map { cluster in
-                ClusterBackup(
-                    name: cluster.name,
-                    subtitle: cluster.subtitle,
-                    avatarImageData: cluster.avatarImageData,
-                    backgroundImageData: cluster.backgroundImageData,
-                    backgroundColorHex: cluster.backgroundColorHex,
-                    borderColorHex: cluster.borderColorHex,
-                    textColorHex: cluster.textColorHex,
-                    qrColorHex: cluster.qrColorHex,
-                    cornerRadius: cluster.cornerRadius,
-                    cardOpacity: cluster.cardOpacity,
-                    sortOrder: cluster.sortOrder,
-                    widgetProfileIndex: cluster.widgetProfileIndex,
-                    widgetUseClusterBackground: cluster.widgetUseClusterBackground,
-                    widgetBackgroundImageData: cluster.widgetBackgroundImageData,
-                    widgetOpacity: cluster.widgetOpacity,
-                    widgetTextColorHex: cluster.widgetTextColorHex,
-                    widgetSmallOffsetX: cluster.widgetSmallOffsetX,
-                    widgetSmallOffsetY: cluster.widgetSmallOffsetY,
-                    widgetMediumOffsetX: cluster.widgetMediumOffsetX,
-                    widgetMediumOffsetY: cluster.widgetMediumOffsetY,
-                    widgetLargeOffsetX: cluster.widgetLargeOffsetX,
-                    widgetLargeOffsetY: cluster.widgetLargeOffsetY,
-                    profiles: cluster.profiles.map { profile in
-                        ProfileBackup(
-                            platformType: profile.platformType,
-                            qrContent: profile.qrContent,
-                            foregroundColorHex: profile.foregroundColorHex,
-                            customPlatformName: profile.customPlatformName
-                        )
-                    }
-                )
-            }
+            clusters: clusters.map(makeClusterBackup)
         )
 
         do {
@@ -100,6 +102,21 @@ enum BackupManager {
         }
     }
 
+    static func writePreRestoreBackup(clusters: [QRCluster]) throws -> URL {
+        let backup = Backup(
+            version: 1,
+            exportedAt: Date(),
+            clusters: clusters.map(makeClusterBackup)
+        )
+        let data = try JSONEncoder().encode(backup)
+        let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let formatter = ISO8601DateFormatter()
+        let safeDate = formatter.string(from: Date()).replacingOccurrences(of: ":", with: "-")
+        let destination = documents.appendingPathComponent("MeQR-PreRestore-\(safeDate).json")
+        try data.write(to: destination, options: [.atomic, .completeFileProtection])
+        return destination
+    }
+
     // MARK: - Import
 
     static func importBackup(from url: URL, modelContext: ModelContext) -> Bool {
@@ -107,8 +124,11 @@ enum BackupManager {
             let data = try Data(contentsOf: url)
             let backup = try JSONDecoder().decode(Backup.self, from: data)
 
-            // Clear existing data
             let existingClusters = try modelContext.fetch(FetchDescriptor<QRCluster>())
+            if !existingClusters.isEmpty {
+                _ = try writePreRestoreBackup(clusters: existingClusters)
+            }
+
             for cluster in existingClusters {
                 modelContext.delete(cluster)
             }

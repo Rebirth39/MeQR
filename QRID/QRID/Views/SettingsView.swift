@@ -65,6 +65,12 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $showDocumentPicker) {
                 DocumentPicker { url in
+                    let didAccess = url.startAccessingSecurityScopedResource()
+                    defer {
+                        if didAccess {
+                            url.stopAccessingSecurityScopedResource()
+                        }
+                    }
                     importSuccess = BackupManager.importBackup(from: url, modelContext: modelContext)
                     showImportResult = true
                 }
