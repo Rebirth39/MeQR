@@ -5,6 +5,7 @@ import SwiftData
 struct EditProfileView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Query(sort: \QRCluster.sortOrder, order: .forward) private var clusters: [QRCluster]
 
     let profile: QRProfile
 
@@ -228,6 +229,8 @@ struct EditProfileView: View {
         profile.qrContent = qrContent.trimmingCharacters(in: .whitespaces)
         do {
             try modelContext.save()
+            WidgetDataHelper.sync(clusters: clusters)
+            BackupManager.writeAutoBackup(clusters: clusters)
             dismiss()
         } catch {
             modelContext.rollback()

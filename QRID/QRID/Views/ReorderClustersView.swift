@@ -68,12 +68,15 @@ struct ReorderClustersView: View {
         }
         do {
             try modelContext.save()
+            WidgetDataHelper.sync(clusters: clusters)
+            BackupManager.writeAutoBackup(clusters: clusters)
         } catch {
             for cluster in reordered {
                 if let previousSortOrder = previousSortOrders[cluster.id] {
                     cluster.sortOrder = previousSortOrder
                 }
             }
+            modelContext.rollback()
             saveError = error.localizedDescription
             showSaveError = true
         }

@@ -97,6 +97,43 @@ class ReviewRegressionTests(unittest.TestCase):
         self.assertNotIn("WidgetDataHelper.sync(clusters: [cluster])", widget_settings)
         self.assertRegex(widget_settings, r"WidgetDataHelper\.sync\(clusters:\s*clusters")
 
+    def test_successful_persistence_paths_refresh_widget_and_backup_outputs(self):
+        cases = [
+            ("QRID/QRID/Views/AddProfileView.swift", "save"),
+            ("QRID/QRID/Views/EditProfileView.swift", "save"),
+            ("QRID/QRID/Views/EditClusterView.swift", "save"),
+            ("QRID/QRID/Views/WidgetSettingsView.swift", "save"),
+            ("QRID/QRID/Views/ReorderClustersView.swift", "move"),
+            ("QRID/QRID/Views/MainView.swift", "deleteCurrentQR"),
+            ("QRID/QRID/Views/MainView.swift", "deleteCurrentCluster"),
+        ]
+        for path, function_name in cases:
+            with self.subTest(path=path):
+                source = read(path)
+                body = extract_function_body(source, function_name)
+                self.assertIn("@Query(sort: \\QRCluster.sortOrder", source)
+                widget_sync = re.search(r"WidgetDataHelper\.sync\(clusters:\s*[^)]+\)", body)
+                auto_backup = re.search(r"BackupManager\.writeAutoBackup\(clusters:\s*[^)]+\)", body)
+                self.assertIsNotNone(widget_sync)
+                self.assertIsNotNone(auto_backup)
+                self.assertLess(
+                    body.index("try modelContext.save()"),
+                    widget_sync.start(),
+                )
+                self.assertLess(widget_sync.start(), auto_backup.start())
+
+    def test_delete_paths_sync_from_persisted_fetch_after_save(self):
+        main = read("QRID/QRID/Views/MainView.swift")
+        for function_name in ["deleteCurrentQR", "deleteCurrentCluster"]:
+            with self.subTest(function_name=function_name):
+                body = extract_function_body(main, function_name)
+                fetch = re.search(r"modelContext\.fetch\(FetchDescriptor<QRCluster>", body)
+                widget_sync = re.search(r"WidgetDataHelper\.sync\(clusters:\s*[^)]+\)", body)
+                self.assertIsNotNone(fetch)
+                self.assertIsNotNone(widget_sync)
+                self.assertLess(body.index("try modelContext.save()"), fetch.start())
+                self.assertLess(fetch.start(), widget_sync.start())
+
     def test_persistence_saves_are_not_silently_discarded(self):
         files = [
             "QRID/QRID/Helpers/MigrationManager.swift",
@@ -153,6 +190,7 @@ class ReviewRegressionTests(unittest.TestCase):
     def test_failed_persistence_paths_roll_back_unsaved_changes(self):
         cases = [
             ("QRID/QRID/Helpers/BackupManager.swift", "importBackup"),
+            ("QRID/QRID/Views/AddProfileView.swift", "save"),
             ("QRID/QRID/Views/EditProfileView.swift", "save"),
             ("QRID/QRID/Views/EditClusterView.swift", "save"),
             ("QRID/QRID/Views/WidgetSettingsView.swift", "save"),

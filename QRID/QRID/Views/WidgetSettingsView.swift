@@ -377,6 +377,7 @@ struct WidgetSettingsView: View {
         do {
             try modelContext.save()
             WidgetDataHelper.sync(clusters: clusters)
+            BackupManager.writeAutoBackup(clusters: clusters)
             onDismiss?()
             dismiss()
         } catch {

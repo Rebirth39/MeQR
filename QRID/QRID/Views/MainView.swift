@@ -18,6 +18,8 @@ struct MainView: View {
     @State private var currentSelectedProfileIndex: Int = 0
     @State private var clusterIdBeforeReorder: PersistentIdentifier?
     @State private var showSavedAlert = false
+    @State private var saveError: String?
+    @State private var showSaveError = false
 
     private var currentCluster: QRCluster? {
         clusters[safe: currentPage]
@@ -174,6 +176,11 @@ struct MainView: View {
             .alert(L.savedToPhotos, isPresented: $showSavedAlert) {
                 Button("OK", role: .cancel) {}
             }
+            .alert("Could Not Save", isPresented: $showSaveError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(saveError ?? "Please try again.")
+            }
         }
     }
 
@@ -295,6 +302,8 @@ struct MainView: View {
         guard let cluster = currentCluster else { return }
         let profiles = cluster.profiles.sorted { $0.createdAt < $1.createdAt }
         guard !profiles.isEmpty else { return }
+        let previousPage = currentPage
+        let previousSelectedProfileIndex = currentSelectedProfileIndex
         let index = min(currentSelectedIndex, profiles.count - 1)
         let profileToDelete = profiles[index]
         modelContext.delete(profileToDelete)
@@ -302,9 +311,24 @@ struct MainView: View {
         let remainingCount = profiles.count - 1
         if remainingCount == 0 {
             modelContext.delete(cluster)
-            if currentPage > 0 { currentPage -= 1 }
+            let remainingClusterCount = clusters.count - 1
+            currentPage = min(currentPage, max(0, remainingClusterCount - 1))
         } else {
             currentSelectedProfileIndex = min(index, remainingCount - 1)
+        }
+        do {
+            try modelContext.save()
+            let persistedClusters = (try? modelContext.fetch(FetchDescriptor<QRCluster>(
+                sortBy: [SortDescriptor(\.sortOrder, order: .forward)]
+            ))) ?? clusters
+            WidgetDataHelper.sync(clusters: persistedClusters)
+            BackupManager.writeAutoBackup(clusters: persistedClusters)
+        } catch {
+            modelContext.rollback()
+            currentPage = previousPage
+            currentSelectedProfileIndex = previousSelectedProfileIndex
+            saveError = error.localizedDescription
+            showSaveError = true
         }
     }
 
@@ -312,9 +336,25 @@ struct MainView: View {
         let impact = UIImpactFeedbackGenerator(style: .heavy)
         impact.impactOccurred()
         guard let cluster = currentCluster else { return }
+        let previousPage = currentPage
+        let previousSelectedProfileIndex = currentSelectedProfileIndex
         modelContext.delete(cluster)
-        if currentPage >= clusters.count && currentPage > 0 {
-            currentPage = clusters.count - 1
+        let remainingClusterCount = clusters.count - 1
+        currentPage = min(currentPage, max(0, remainingClusterCount - 1))
+        currentSelectedProfileIndex = 0
+        do {
+            try modelContext.save()
+            let persistedClusters = (try? modelContext.fetch(FetchDescriptor<QRCluster>(
+                sortBy: [SortDescriptor(\.sortOrder, order: .forward)]
+            ))) ?? clusters
+            WidgetDataHelper.sync(clusters: persistedClusters)
+            BackupManager.writeAutoBackup(clusters: persistedClusters)
+        } catch {
+            modelContext.rollback()
+            currentPage = previousPage
+            currentSelectedProfileIndex = previousSelectedProfileIndex
+            saveError = error.localizedDescription
+            showSaveError = true
         }
     }
 
