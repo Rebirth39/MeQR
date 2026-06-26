@@ -10,6 +10,33 @@ def read(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8")
 
 
+def extract_computed_property_body(source: str, property_name: str) -> str:
+    pattern = (
+        r"^\s*(?:private\s+|fileprivate\s+)?var\s+"
+        + re.escape(property_name)
+        + r"\s*:[^=]+{"
+    )
+    header = re.search(pattern, source, flags=re.MULTILINE)
+    if header is None:
+        raise AssertionError(f"Could not find computed property {property_name!r}")
+
+    start = source.find("{", header.end() - 1)
+    if start == -1:
+        raise AssertionError(f"Could not find opening brace for {property_name!r}")
+
+    depth = 0
+    for index in range(start, len(source)):
+        char = source[index]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return source[start + 1 : index]
+
+    raise AssertionError(f"Could not find closing brace for {property_name!r}")
+
+
 class ReviewRegressionTests(unittest.TestCase):
     def test_swiftui_onchange_does_not_observe_swiftdata_model_arrays(self):
         app = read("QRID/QRID/QRIDApp.swift")
@@ -28,8 +55,9 @@ class ReviewRegressionTests(unittest.TestCase):
         for path in ["QRID/QRID/QRIDApp.swift", "QRID/QRID/Views/MainView.swift"]:
             with self.subTest(path=path):
                 source = read(path)
+                signature_body = extract_computed_property_body(source, "clustersSignature")
                 for field in required_fields:
-                    self.assertIn(field, source)
+                    self.assertIn(field, signature_body)
 
     def test_widget_settings_does_not_overwrite_shared_json_with_single_cluster(self):
         widget_settings = read("QRID/QRID/Views/WidgetSettingsView.swift")
