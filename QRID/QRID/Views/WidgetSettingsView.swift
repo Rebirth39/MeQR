@@ -6,6 +6,7 @@ import WidgetKit
 struct WidgetSettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Query(sort: \QRCluster.sortOrder, order: .forward) private var clusters: [QRCluster]
 
     let cluster: QRCluster
     let profiles: [QRProfile]
@@ -367,7 +368,7 @@ struct WidgetSettingsView: View {
         cluster.widgetLargeOffsetX = widgetLargeOffsetX
         cluster.widgetLargeOffsetY = widgetLargeOffsetY
         try? modelContext.save()
-        WidgetDataHelper.sync(clusters: [cluster])
+        WidgetDataHelper.sync(clusters: clusters)
         onDismiss?()
         dismiss()
     }

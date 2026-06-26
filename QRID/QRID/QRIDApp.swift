@@ -23,13 +23,43 @@ struct WidgetSyncView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Query(sort: \QRCluster.sortOrder) private var clusters: [QRCluster]
 
+    private var clustersSignature: [String] {
+        clusters.map { cluster in
+            let profiles = cluster.profiles.sorted { $0.createdAt < $1.createdAt }
+            let profileSignature = profiles
+                .map { "\($0.id.uuidString)|\($0.platformType)|\($0.qrContent)|\($0.foregroundColorHex)|\($0.customPlatformName ?? "")" }
+                .joined(separator: ";")
+            return [
+                cluster.id.uuidString,
+                cluster.name,
+                cluster.subtitle,
+                cluster.backgroundColorHex,
+                cluster.borderColorHex,
+                cluster.textColorHex ?? "",
+                cluster.qrColorHex ?? "",
+                String(cluster.sortOrder),
+                String(cluster.widgetProfileIndex ?? -1),
+                String(cluster.widgetUseClusterBackground ?? true),
+                String(cluster.widgetOpacity ?? 0.8),
+                cluster.widgetTextColorHex ?? "",
+                String(cluster.widgetSmallOffsetX ?? 0),
+                String(cluster.widgetSmallOffsetY ?? 0),
+                String(cluster.widgetMediumOffsetX ?? 0),
+                String(cluster.widgetMediumOffsetY ?? 0),
+                String(cluster.widgetLargeOffsetX ?? 0),
+                String(cluster.widgetLargeOffsetY ?? 0),
+                profileSignature
+            ].joined(separator: "|")
+        }
+    }
+
     var body: some View {
         Color.clear
             .onAppear {
                 WidgetDataHelper.sync(clusters: clusters)
             }
-            .onChange(of: clusters) { _, newClusters in
-                WidgetDataHelper.sync(clusters: newClusters)
+            .onChange(of: clustersSignature) { _, _ in
+                WidgetDataHelper.sync(clusters: clusters)
             }
             .onChange(of: scenePhase) { _, newValue in
                 if newValue == .active {

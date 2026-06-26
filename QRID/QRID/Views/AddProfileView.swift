@@ -5,6 +5,7 @@ import SwiftData
 struct AddProfileView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Query(sort: \QRCluster.sortOrder, order: .forward) private var clusters: [QRCluster]
 
     /// If set, we're adding a QR code to an existing cluster.
     /// If nil, we're creating a new cluster with its first QR code.
@@ -34,6 +35,10 @@ struct AddProfileView: View {
     @State private var showSaveError = false
 
     private var isAddingToExisting: Bool { addToCluster != nil }
+
+    private var nextSortOrder: Int {
+        (clusters.map(\.sortOrder).max() ?? -1) + 1
+    }
 
     var body: some View {
         NavigationStack {
@@ -452,7 +457,8 @@ struct AddProfileView: View {
                 backgroundColorHex: backgroundColor.toHex() ?? "#FFFFFF",
                 textColorHex: textColor.toHex() ?? "#000000",
                 qrColorHex: "#000000",
-                cornerRadius: cornerRadius
+                cornerRadius: cornerRadius,
+                sortOrder: nextSortOrder
             )
             modelContext.insert(cluster)
             let profile = QRProfile(
