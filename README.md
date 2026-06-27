@@ -13,6 +13,8 @@
 - **二维码统一颜色 / Unified QR Color**: 在合集级别设置所有二维码的颜色，无需逐个修改。Set a unified color for all QR codes at the cluster level without modifying each one individually.
 - **自定义样式 / Custom Styling**: 支持自定义背景颜色、文字颜色、卡片透明度、圆角半径，以及上传背景图片和头像。Supports custom background color, text color, card opacity, corner radius, and uploading background images and avatars.
 - **背景裁剪 / Background Crop**: 上传图片后支持手势缩放和拖动裁剪，确保背景显示效果最佳。Supports gesture zoom and pan cropping after uploading an image for the best background display.
+- **二维码导入 / QR Import**: 支持从已有二维码图片中识别并导入内容。Import QR content by decoding existing QR images.
+- **小组件支持 / Widget Support**: 支持桌面小组件和锁屏圆形小组件，并可自定义背景与显示内容。Supports Home Screen widgets and a circular lock screen widget with configurable background and display content.
 - **拖拽排序 / Drag-to-Reorder**: 长按合集卡片，拖拽调整合集的展示顺序。Long-press a cluster card to drag and reorder clusters.
 - **分享卡片 / Share Card**: 将合集卡片保存为图片到相册，方便分享给他人。Save cluster cards as images to your photo library for easy sharing.
 
@@ -20,12 +22,19 @@
 
 - SwiftUI
 - SwiftData（本地数据持久化 / Local data persistence）
+- WidgetKit（桌面 / 锁屏小组件 / Home Screen and Lock Screen widgets）
 - PhotosUI（头像和背景图片选择 / Avatar and background image selection）
 - Core Image / Core Graphics（二维码生成与裁剪 / QR code generation and image cropping）
 
 ## 兼容性 / Compatibility
-- iOS 26.5+
-- iPhone and iPad
+- iOS 17.0+
+- iPhone only
+
+## 当前状态 / Current Status
+
+- 当前版本以本地数据存储为主。The current version is local-first and stores data on device.
+- iCloud 同步 / 备份尚未正式上线。iCloud sync / backup is not live yet.
+- Widget Extension 已包含在项目中。The Widget Extension is included in the project.
 
 ## 安装 / Installation
 
@@ -35,12 +44,16 @@
    ```
 2. 在 Xcode 中打开 `QRID.xcodeproj`。Open `QRID.xcodeproj` in Xcode.
 3. 在 **Signing & Capabilities** 中选择你的 Apple Development Team，并将 Bundle Identifier 修改为你自己的。Select your Apple Development Team in **Signing & Capabilities**, and change the Bundle Identifier to your own.
-4. 编译并运行到真机或模拟器；完整构建验证需要 Xcode。Build and run on a physical device or simulator; full build verification requires Xcode.
+4. 如需使用小组件，请确认 App Group、Signing 与 Widget Extension 配置正确。If you want widget support, make sure App Group, signing, and the Widget Extension are configured correctly.
+5. 编译并运行到真机或模拟器；完整构建验证需要 Xcode。Build and run on a physical device or simulator; full build verification requires Xcode.
 
 ## 隐私 / Privacy
 喜劳转扩（原 MeQR）所有数据均存储在本地，不上传至任何服务器，无需网络权限。
 
 All data in 喜劳转扩 (formerly MeQR) is stored locally and is not uploaded to any server. No network permissions are required.
+
+Privacy Policy URL:
+https://rebirth39.github.io/MeQR/privacy.html
 
 
 ## 作者 / Author
