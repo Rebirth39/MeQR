@@ -18,6 +18,8 @@ struct AboutView: View {
     }
 
     private let githubURL = URL(string: "https://github.com/Rebirth39/MeQR")!
+    private let privacyPolicyURL = URL(string: "https://rebirth39.github.io/MeQR/privacy.html")!
+    private let mailURL = URL(string: "mailto:lucas_and_miku@icloud.com")!
 
 
     var body: some View {
@@ -58,6 +60,40 @@ struct AboutView: View {
                     }
                 } footer: {
                     Text("如果想看更多的软件介绍的话点一下上面的按钮可以跳到GitHub页面w")
+                }
+
+                Section {
+                    Link(destination: privacyPolicyURL) {
+                        HStack {
+                            Image(systemName: "hand.raised")
+                                .foregroundStyle(.primary)
+                            Text("隐私政策")
+                            Spacer()
+                            Image(systemName: "arrow.up.right.square")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                } footer: {
+                    Text("这个链接会跳到 GitHub 上公开放着的隐私政策页面。")
+                }
+
+                Section(L.contactDeveloper) {
+                    Link(destination: mailURL) {
+                        HStack {
+                            Text("邮箱")
+                            Spacer()
+                            Text("lucas_and_miku@icloud.com")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    HStack {
+                        Text("QQ")
+                        Spacer()
+                        Text("2137620096")
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
                 Section {

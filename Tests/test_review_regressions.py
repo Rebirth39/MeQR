@@ -257,14 +257,9 @@ class ReviewRegressionTests(unittest.TestCase):
         self.assertIsNone(re.search(r"try\?\s+(?:modelContext|context)\.fetch\(", migration_manager))
 
     def test_backup_ui_is_removed_but_pre_restore_backup_guard_remains(self):
-        settings = read("QRID/QRID/Views/SettingsView.swift")
         backup = read("QRID/QRID/Helpers/BackupManager.swift")
         import_body = extract_function_body(backup, "importBackup")
-        self.assertNotIn("startAccessingSecurityScopedResource()", settings)
-        self.assertNotIn("导出备份", settings)
-        self.assertNotIn("从备份恢复", settings)
-        self.assertNotIn("DocumentPicker", settings)
-        self.assertNotIn("ShareSheet", settings)
+        self.assertFalse((ROOT / "QRID/QRID/Views/SettingsView.swift").exists())
         self.assertIn("writePreRestoreBackup", import_body)
         self.assertLess(import_body.index("writePreRestoreBackup"), import_body.index("modelContext.delete"))
         self.assertRegex(
@@ -279,9 +274,20 @@ class ReviewRegressionTests(unittest.TestCase):
         self.assertRegex(add_profile, r"sortOrder:\s*nextSortOrder")
 
     def test_icloud_toggle_is_not_present_until_real_cloudkit_sync_exists(self):
-        settings = read("QRID/QRID/Views/SettingsView.swift")
-        self.assertNotIn("Toggle(isOn: settingsBinding)", settings)
-        self.assertNotIn("开启后，你的合集数据将同步到你的 iCloud 账户", settings)
+        about = read("QRID/QRID/Views/AboutView.swift")
+        self.assertNotIn("开启后，你的合集数据将同步到你的 iCloud 账户", about)
+        self.assertIn("https://rebirth39.github.io/MeQR/privacy.html", about)
+        self.assertIn("Text(\"隐私政策\")", about)
+
+    def test_privacy_policy_view_and_hosted_page_exist(self):
+        privacy_page = read("privacy.html")
+        self.assertIn("喜劳转扩 隐私政策", privacy_page)
+        self.assertIn("mailto:lucas_and_miku@icloud.com", privacy_page)
+        self.assertIn("这个 App 目前主要是本地使用的小工具。", privacy_page)
+
+    def test_unused_settings_and_embedded_privacy_views_are_removed(self):
+        self.assertFalse((ROOT / "QRID/QRID/Views/SettingsView.swift").exists())
+        self.assertFalse((ROOT / "QRID/QRID/Views/PrivacyPolicyView.swift").exists())
 
     def test_transparent_qr_generation_preserves_quiet_zone(self):
         qr_generator = read("QRID/QRID/Helpers/QRCodeGenerator.swift")

@@ -84,6 +84,9 @@ struct L {
     static var reorderClusters: String { tr("排序合集", "Reorder Clusters") }
     static var settings: String { tr("设置", "Settings") }
     static var aboutSoftware: String { tr("关于软件", "About") }
+    static var privacyPolicy: String { tr("隐私政策", "Privacy Policy") }
+    static var contactDeveloper: String { tr("联系开发者", "Contact Developer") }
+    static var developerInfo: String { tr("开发者信息", "Developer Info") }
     static var iCloudSync: String { tr("iCloud 同步", "iCloud Sync") }
     static var savedToPhotos: String { tr("已保存到相册", "Saved to Photos") }
 
