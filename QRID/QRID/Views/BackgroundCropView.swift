@@ -10,7 +10,7 @@ struct BackgroundCropView: View {
     @State private var offset: CGSize = .zero
     @State private var lastOffset: CGSize = .zero
 
-    private let minScale: CGFloat = 0.5
+    private let minScale: CGFloat = 1.0
     private let maxScale: CGFloat = 5.0
     private let outputWidth: CGFloat = 1080
 
@@ -36,8 +36,7 @@ struct BackgroundCropView: View {
                 ZStack {
                     Image(uiImage: sourceImage)
                         .resizable()
-                        .scaledToFill()
-                        .frame(width: size.width, height: size.height)
+                        .frame(width: displaySize.width, height: displaySize.height)
                         .scaleEffect(scale)
                         .offset(offset)
                         .position(x: geo.size.width / 2, y: geo.size.height / 2)
@@ -56,6 +55,7 @@ struct BackgroundCropView: View {
                             let delta = value / lastScale
                             lastScale = value
                             scale = min(max(scale * delta, minScale), maxScale)
+                            offset = clampOffset(offset)
                         }
                         .onEnded { _ in
                             lastScale = 1.0
@@ -65,12 +65,11 @@ struct BackgroundCropView: View {
                 .simultaneousGesture(
                     DragGesture()
                         .onChanged { value in
-                            let displaySize = fillDisplaySize(for: cropSize)
                             let proposed = CGSize(
                                 width: lastOffset.width + value.translation.width,
                                 height: lastOffset.height + value.translation.height
                             )
-                            offset = clampOffset(proposed, displaySize: displaySize, allowOverScroll: true)
+                            offset = clampOffset(proposed)
                         }
                         .onEnded { _ in
                             snapBack()
@@ -112,7 +111,8 @@ struct BackgroundCropView: View {
         }
     }
 
-    private func clampOffset(_ proposed: CGSize, displaySize: CGSize, allowOverScroll: Bool = false) -> CGSize {
+    private func clampOffset(_ proposed: CGSize) -> CGSize {
+        let displaySize = fillDisplaySize(for: cropSize)
         let size = cropSize
         let diffX = displaySize.width * scale - size.width
         let diffY = displaySize.height * scale - size.height
@@ -120,38 +120,18 @@ struct BackgroundCropView: View {
         let limitX: CGFloat = max(0, diffX / 2)
         let limitY: CGFloat = max(0, diffY / 2)
 
-        if allowOverScroll {
-            return CGSize(
-                width: rubberBand(proposed.width, limit: limitX),
-                height: rubberBand(proposed.height, limit: limitY)
-            )
-        } else {
-            return CGSize(
-                width: min(max(proposed.width, -limitX), limitX),
-                height: min(max(proposed.height, -limitY), limitY)
-            )
-        }
+        return CGSize(
+            width: min(max(proposed.width, -limitX), limitX),
+            height: min(max(proposed.height, -limitY), limitY)
+        )
     }
 
     private func snapBack() {
-        let displaySize = fillDisplaySize(for: cropSize)
-        let targetOffset = clampOffset(offset, displaySize: displaySize, allowOverScroll: false)
+        let targetOffset = clampOffset(offset)
         withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
             offset = targetOffset
         }
         lastOffset = targetOffset
-    }
-
-    private func rubberBand(_ value: CGFloat, limit: CGFloat) -> CGFloat {
-        if limit == 0 {
-            return value * 0.35
-        }
-        if abs(value) <= limit {
-            return value
-        }
-        let overshoot = abs(value) - limit
-        let resisted = overshoot * 0.65
-        return (value > 0 ? 1 : -1) * (limit + resisted)
     }
 
     private func cropImage() {

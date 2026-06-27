@@ -36,7 +36,6 @@ struct WidgetSettingsView: View {
                 qrSelectionSection
                 backgroundSection
                 opacitySection
-                previewSection
                 offsetSection
             }
             .navigationTitle(L.widgetSettings)
@@ -104,21 +103,11 @@ struct WidgetSettingsView: View {
             Toggle(L.useCustomBackground, isOn: $widgetUseCustomBackground)
 
             if widgetUseCustomBackground {
-                if let image = widgetBackgroundImage {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(height: 120)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                PhotosPicker(selection: $backgroundPhotosItem, matching: .images) {
+                    Label(widgetBackgroundImage == nil ? L.selectBackgroundImage : L.changeBackgroundImage, systemImage: "photo")
+                }
 
-                    Button {
-                        if let raw = widgetBackgroundImage {
-                            rawBackgroundImage = CroppableImage(image: raw)
-                        }
-                    } label: {
-                        Label(L.cropBackground, systemImage: "crop")
-                    }
-
+                if widgetBackgroundImage != nil {
                     Button {
                         widgetBackgroundImage = nil
                         backgroundPhotosItem = nil
@@ -126,10 +115,6 @@ struct WidgetSettingsView: View {
                         Label(L.removeBackground, systemImage: "trash")
                     }
                     .foregroundStyle(.red)
-                } else {
-                    PhotosPicker(selection: $backgroundPhotosItem, matching: .images) {
-                        Label(L.selectBackgroundImage, systemImage: "photo")
-                    }
                 }
             }
         }
@@ -305,23 +290,44 @@ struct WidgetSettingsView: View {
         }
     }
 
-    @ViewBuilder
     private func qrPreviewView(size: CGFloat) -> some View {
-        if let profile = selectedProfile,
-           let qrImage = QRCodeGenerator.generate(
-               from: profile.qrContent,
-               foreground: cluster.qrColor,
-               background: widgetUseClusterBackground ? cluster.backgroundColor : Color.white
-           ) {
-            Image(uiImage: qrImage)
-                .resizable()
-                .interpolation(.none)
-                .scaledToFit()
-                .frame(width: size, height: size)
+        let qrForeground = cluster.qrColor
+        let qrImage: UIImage?
+        if let profile = selectedProfile {
+            if widgetUseCustomBackground, widgetBackgroundImage != nil {
+                qrImage = QRCodeGenerator.generateTransparent(
+                    from: profile.qrContent,
+                    foreground: qrForeground
+                )
+            } else {
+                qrImage = QRCodeGenerator.generate(
+                    from: profile.qrContent,
+                    foreground: qrForeground,
+                    background: widgetUseClusterBackground ? cluster.backgroundColor : Color.white
+                )
+            }
         } else {
-            Image(systemName: "qrcode")
-                .font(.system(size: size))
-                .foregroundStyle(cluster.textColor.opacity(0.5))
+            qrImage = nil
+        }
+
+        return Group {
+            if let qrImage {
+                Image(uiImage: qrImage)
+                    .resizable()
+                    .interpolation(.none)
+                    .scaledToFit()
+                    .frame(width: size, height: size)
+                    .scaleEffect(
+                        widgetUseCustomBackground && widgetBackgroundImage != nil
+                            ? QRCodeGenerator.quietZoneCompensationScale(for: qrImage)
+                            : 1.0
+                    )
+                    .clipped()
+            } else {
+                Image(systemName: "qrcode")
+                    .font(.system(size: size))
+                    .foregroundStyle(cluster.textColor.opacity(0.5))
+            }
         }
     }
 

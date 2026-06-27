@@ -295,12 +295,24 @@ struct MeQRWidgetEntryView: View {
                     .interpolation(.none)
                     .scaledToFit()
                     .frame(width: size, height: size)
+                    .scaleEffect(qrQuietZoneCompensationScale(for: qrImage))
+                    .clipped()
             } else {
                 RoundedRectangle(cornerRadius: 4)
                     .fill(Color.gray.opacity(0.2))
                     .frame(width: size, height: size)
             }
         }
+    }
+
+    private func qrQuietZoneCompensationScale(for image: UIImage) -> CGFloat {
+        let finalWidth = image.size.width
+        guard finalWidth > 32 else { return 1.0 }
+
+        if finalWidth > 224 {
+            return 7.0 / 6.0
+        }
+        return finalWidth / max(finalWidth - 32, 1)
     }
 
     private func generateQRImage(content: String, colorHex: String) -> UIImage? {
@@ -337,8 +349,7 @@ struct MeQRWidgetEntryView: View {
             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
         ) else { return nil }
 
-        bitmapContext.setFillColor(UIColor.white.cgColor)
-        bitmapContext.fill(CGRect(x: 0, y: 0, width: finalWidth, height: finalHeight))
+        bitmapContext.clear(CGRect(x: 0, y: 0, width: finalWidth, height: finalHeight))
 
         bitmapContext.draw(cgImage, in: CGRect(x: quietZone, y: quietZone, width: width, height: height))
 
@@ -363,11 +374,10 @@ struct MeQRWidgetEntryView: View {
                     pixels[offset + 2] = blue
                     pixels[offset + 3] = alpha
                 } else {
-                    // Preserve an opaque light background so the quiet zone remains scannable.
-                    pixels[offset] = 255
-                    pixels[offset + 1] = 255
-                    pixels[offset + 2] = 255
-                    pixels[offset + 3] = 255
+                    pixels[offset] = 0
+                    pixels[offset + 1] = 0
+                    pixels[offset + 2] = 0
+                    pixels[offset + 3] = 0
                 }
             }
         }

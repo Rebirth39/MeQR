@@ -46,7 +46,6 @@ struct EditClusterView: View {
                 widgetSection
                 backgroundImageSection
                 qrCodesSection
-                previewSection
             }
             .navigationTitle(L.editCluster)
             .navigationBarTitleDisplayMode(.inline)
@@ -276,28 +275,16 @@ struct EditClusterView: View {
 
     private var backgroundImageSection: some View {
         Section(L.backgroundImage) {
-            if let image = backgroundImage {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(height: 120)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+            PhotosPicker(selection: $backgroundPhotosItem, matching: .images) {
+                Label(backgroundImage == nil ? L.useCustomImage : L.changeBackgroundImage, systemImage: "photo")
+            }
 
-                Button {
-                    rawBackgroundImage = CroppableImage(image: image)
-                } label: {
-                    Label(L.cropBackground, systemImage: "crop")
-                }
-
+            if backgroundImage != nil {
                 Button(L.removeBackgroundImage) {
                     backgroundImage = nil
                     backgroundPhotosItem = nil
                 }
                 .foregroundStyle(.red)
-            } else {
-                PhotosPicker(selection: $backgroundPhotosItem, matching: .images) {
-                    Label(L.useCustomImage, systemImage: "photo")
-                }
             }
         }
     }
@@ -338,38 +325,6 @@ struct EditClusterView: View {
         } header: {
             Text(L.qrCodesInCluster)
         }
-    }
-
-    // MARK: - Preview
-
-    private var previewSection: some View {
-        Section(L.preview) {
-            HStack {
-                Spacer()
-                previewCard
-                Spacer()
-            }
-            .listRowBackground(Color.clear)
-        }
-    }
-
-    private var previewCard: some View {
-        VStack(spacing: 12) {
-            avatarPreview
-                .frame(width: 44, height: 44)
-            Text(name.isEmpty ? L.preview : name)
-                .font(.caption.bold())
-                .foregroundStyle(textColor)
-            Text(subtitle.isEmpty ? "" : subtitle)
-                .font(.caption2)
-                .foregroundStyle(textColor.opacity(0.7))
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 16)
-        .background(
-            RoundedRectangle(cornerRadius: cornerRadius)
-                .fill(.white.opacity(cardOpacity))
-        )
     }
 
     // MARK: - Avatar Preview

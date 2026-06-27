@@ -128,14 +128,10 @@ struct AddProfileView: View {
             } message: {
                 Text(decodeError ?? L.noQRFound)
             }
-            .alert("保存结果", isPresented: $showSaveError) {
-                Button("OK", role: .cancel) {
-                    if saveError?.hasPrefix("已保存") == true {
-                        dismiss()
-                    }
-                }
+            .alert(L.tr("无法保存", "Could Not Save"), isPresented: $showSaveError) {
+                Button("OK", role: .cancel) {}
             } message: {
-                Text(saveError ?? "无法保存，请重试。")
+                Text(saveError ?? L.tr("无法保存，请重试。", "Please try again."))
             }
         }
     }
@@ -220,22 +216,16 @@ struct AddProfileView: View {
 
     private var backgroundImageSection: some View {
         Section(L.backgroundImage) {
-            if let image = backgroundImage {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(height: 120)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+            PhotosPicker(selection: $backgroundPhotosItem, matching: .images) {
+                Label(backgroundImage == nil ? L.useCustomImage : L.changeBackgroundImage, systemImage: "photo")
+            }
 
+            if backgroundImage != nil {
                 Button(L.removeBackgroundImage) {
                     backgroundImage = nil
                     backgroundPhotosItem = nil
                 }
                 .foregroundStyle(.red)
-            } else {
-                PhotosPicker(selection: $backgroundPhotosItem, matching: .images) {
-                    Label(L.useCustomImage, systemImage: "photo")
-                }
             }
         }
     }
@@ -476,17 +466,12 @@ struct AddProfileView: View {
         do {
             try modelContext.save()
             try MigrationManager.performClusterMigrationIfNeeded(context: modelContext)
-            do {
-                let persistedClusters = try modelContext.fetch(FetchDescriptor<QRCluster>(
-                    sortBy: [SortDescriptor(\.sortOrder, order: .forward)]
-                ))
-                WidgetDataHelper.sync(clusters: persistedClusters)
-                BackupManager.writeAutoBackup(clusters: persistedClusters)
-                saveError = "已保存，当前共有 \(persistedClusters.count) 个合集"
-            } catch {
-                saveError = "保存后读取失败：\(error.localizedDescription)"
-            }
-            showSaveError = true
+            let persistedClusters = try modelContext.fetch(FetchDescriptor<QRCluster>(
+                sortBy: [SortDescriptor(\.sortOrder, order: .forward)]
+            ))
+            WidgetDataHelper.sync(clusters: persistedClusters)
+            BackupManager.writeAutoBackup(clusters: persistedClusters)
+            dismiss()
         } catch {
             modelContext.rollback()
             saveError = "保存失败：\(error.localizedDescription)"

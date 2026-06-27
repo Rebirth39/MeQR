@@ -15,8 +15,10 @@ struct AvatarCropView: View {
     @State private var offset: CGSize = .zero
     @State private var lastOffset: CGSize = .zero
 
-    private let cropSize: CGFloat = 280
-    private let minScale: CGFloat = 0.5
+    private var cropSize: CGFloat {
+        min(UIScreen.main.bounds.width - 48, 320)
+    }
+    private let minScale: CGFloat = 1.0
     private let maxScale: CGFloat = 5.0
 
     var body: some View {
@@ -24,11 +26,12 @@ struct AvatarCropView: View {
             Color.black.ignoresSafeArea()
 
             GeometryReader { geo in
+                let displaySize = fillDisplaySize(for: cropSize)
+
                 ZStack {
                     Image(uiImage: sourceImage)
                         .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: cropSize * 2, height: cropSize * 2)
+                        .frame(width: displaySize.width, height: displaySize.height)
                         .scaleEffect(scale)
                         .offset(offset)
                         .position(x: geo.size.width / 2, y: geo.size.height / 2)
@@ -47,6 +50,7 @@ struct AvatarCropView: View {
                             let delta = value / lastScale
                             lastScale = value
                             scale = min(max(scale * delta, minScale), maxScale)
+                            offset = clampOffset(offset)
                         }
                         .onEnded { _ in
                             lastScale = 1.0
@@ -60,7 +64,7 @@ struct AvatarCropView: View {
                                 width: lastOffset.width + value.translation.width,
                                 height: lastOffset.height + value.translation.height
                             )
-                            offset = clampOffset(proposed, allowOverScroll: true)
+                            offset = clampOffset(proposed)
                         }
                         .onEnded { _ in
                             snapBack()
@@ -91,24 +95,20 @@ struct AvatarCropView: View {
         }
     }
 
-    private func displaySize() -> CGSize {
+    private func fillDisplaySize(for cropSize: CGFloat) -> CGSize {
         guard sourceImage.size.height > 0, sourceImage.size.width > 0 else {
-            return CGSize(width: cropSize * 2, height: cropSize * 2)
+            return CGSize(width: cropSize, height: cropSize)
         }
         let imageRatio = sourceImage.size.width / sourceImage.size.height
-        let frameSize = cropSize * 2
-        // .aspectRatio(.fit) inside a square frame
         if imageRatio >= 1 {
-            // Wide image: width fills the frame, height is scaled down
-            return CGSize(width: frameSize, height: frameSize / imageRatio)
+            return CGSize(width: cropSize * imageRatio, height: cropSize)
         } else {
-            // Tall image: height fills the frame, width is scaled down
-            return CGSize(width: frameSize * imageRatio, height: frameSize)
+            return CGSize(width: cropSize, height: cropSize / imageRatio)
         }
     }
 
-    private func clampOffset(_ proposed: CGSize, allowOverScroll: Bool = false) -> CGSize {
-        let size = displaySize()
+    private func clampOffset(_ proposed: CGSize) -> CGSize {
+        let size = fillDisplaySize(for: cropSize)
         let scaledWidth = size.width * scale
         let scaledHeight = size.height * scale
         let diffX = scaledWidth - cropSize
@@ -117,37 +117,18 @@ struct AvatarCropView: View {
         let limitX: CGFloat = max(0, diffX / 2)
         let limitY: CGFloat = max(0, diffY / 2)
 
-        if allowOverScroll {
-            return CGSize(
-                width: rubberBand(proposed.width, limit: limitX),
-                height: rubberBand(proposed.height, limit: limitY)
-            )
-        } else {
-            return CGSize(
-                width: min(max(proposed.width, -limitX), limitX),
-                height: min(max(proposed.height, -limitY), limitY)
-            )
-        }
+        return CGSize(
+            width: min(max(proposed.width, -limitX), limitX),
+            height: min(max(proposed.height, -limitY), limitY)
+        )
     }
 
     private func snapBack() {
-        let targetOffset = clampOffset(offset, allowOverScroll: false)
+        let targetOffset = clampOffset(offset)
         withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
             offset = targetOffset
         }
         lastOffset = targetOffset
-    }
-
-    private func rubberBand(_ value: CGFloat, limit: CGFloat) -> CGFloat {
-        if limit == 0 {
-            return value * 0.35
-        }
-        if abs(value) <= limit {
-            return value
-        }
-        let overshoot = abs(value) - limit
-        let resisted = overshoot * 0.65
-        return (value > 0 ? 1 : -1) * (limit + resisted)
     }
 
     private func cropImage() {
@@ -162,7 +143,7 @@ struct AvatarCropView: View {
             )
             circlePath.addClip()
 
-            let size = displaySize()
+            let size = fillDisplaySize(for: cropSize)
             let drawWidth = size.width * scale
             let drawHeight = size.height * scale
             let drawRect = CGRect(

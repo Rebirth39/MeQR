@@ -166,6 +166,20 @@ class ReviewRegressionTests(unittest.TestCase):
             body.index("WidgetDataHelper.sync(clusters:"),
         )
 
+    def test_add_profile_success_path_does_not_show_debug_cluster_count_alert(self):
+        source = read("QRID/QRID/Views/AddProfileView.swift")
+        body = extract_function_body(source, "save")
+        self.assertNotIn("已保存，当前共有", source)
+        self.assertNotIn(".alert(\"保存结果\"", source)
+        self.assertIn("dismiss()", body)
+        self.assertLess(body.index("BackupManager.writeAutoBackup(clusters: persistedClusters)"), body.index("dismiss()"))
+
+    def test_qrprofile_attach_does_not_mutate_both_sides_of_swiftdata_relationship(self):
+        body = extract_function_body(read("QRID/QRID/Models/QRProfile.swift"), "attach")
+        self.assertIn("self.cluster = cluster", body)
+        self.assertIn("captureClusterFallback(from: cluster)", body)
+        self.assertNotIn("cluster.profiles.append", body)
+
     def test_edit_cluster_profile_delete_rolls_back_and_dismisses_after_save(self):
         body = extract_function_body(read("QRID/QRID/Views/EditClusterView.swift"), "deleteProfiles")
         self.assertRegex(body, r"catch\s*\{\s*modelContext\.rollback\(\)")
@@ -217,6 +231,15 @@ class ReviewRegressionTests(unittest.TestCase):
         )
         self.assertNotIn(".onAppear {\n                WidgetDataHelper.sync(clusters: clusters)", main)
 
+    def test_app_uses_explicit_swiftdata_store_configuration(self):
+        app = read("QRID/QRID/QRIDApp.swift")
+        self.assertIn("let schema = Schema([QRCluster.self, QRProfile.self])", app)
+        self.assertIn("ModelConfiguration(", app)
+        self.assertIn("url: storeDirectoryURL.appendingPathComponent(\"QRID.store\")", app)
+        self.assertIn("cloudKitDatabase: .none", app)
+        self.assertIn(".modelContainer(sharedModelContainer)", app)
+        self.assertNotIn(".modelContainer(for: [QRCluster.self, QRProfile.self])", app)
+
     def test_persistence_saves_are_not_silently_discarded(self):
         files = [
             "QRID/QRID/Helpers/MigrationManager.swift",
@@ -233,11 +256,15 @@ class ReviewRegressionTests(unittest.TestCase):
         migration_manager = read("QRID/QRID/Helpers/MigrationManager.swift")
         self.assertIsNone(re.search(r"try\?\s+(?:modelContext|context)\.fetch\(", migration_manager))
 
-    def test_backup_import_uses_security_scoped_resource_and_pre_restore_backup(self):
+    def test_backup_ui_is_removed_but_pre_restore_backup_guard_remains(self):
         settings = read("QRID/QRID/Views/SettingsView.swift")
         backup = read("QRID/QRID/Helpers/BackupManager.swift")
         import_body = extract_function_body(backup, "importBackup")
-        self.assertIn("startAccessingSecurityScopedResource()", settings)
+        self.assertNotIn("startAccessingSecurityScopedResource()", settings)
+        self.assertNotIn("导出备份", settings)
+        self.assertNotIn("从备份恢复", settings)
+        self.assertNotIn("DocumentPicker", settings)
+        self.assertNotIn("ShareSheet", settings)
         self.assertIn("writePreRestoreBackup", import_body)
         self.assertLess(import_body.index("writePreRestoreBackup"), import_body.index("modelContext.delete"))
         self.assertRegex(
@@ -264,11 +291,12 @@ class ReviewRegressionTests(unittest.TestCase):
         for name, body in [("app QR", qr_body), ("widget QR", widget_body)]:
             with self.subTest(target=name):
                 self.assertIn("quietZone", body)
-                self.assertNotIn("pixels[offset + 3] = 0", body)
-                self.assertIn("pixels[offset] = 255", body)
-                self.assertIn("pixels[offset + 1] = 255", body)
-                self.assertIn("pixels[offset + 2] = 255", body)
-                self.assertIn("pixels[offset + 3] = 255", body)
+                self.assertIn("finalWidth = width + quietZone * 2", body)
+                self.assertIn("finalHeight = height + quietZone * 2", body)
+                self.assertIn("pixels[offset + 3] = 0", body)
+                self.assertNotIn("pixels[offset] = 255", body)
+                self.assertNotIn("pixels[offset + 1] = 255", body)
+                self.assertNotIn("pixels[offset + 2] = 255", body)
 
     def test_failed_persistence_paths_roll_back_unsaved_changes(self):
         cases = [

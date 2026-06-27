@@ -3,6 +3,32 @@ import SwiftData
 
 @main
 struct QRIDApp: App {
+    private let sharedModelContainer: ModelContainer = {
+        let schema = Schema([QRCluster.self, QRProfile.self])
+        let fileManager = FileManager.default
+
+        do {
+            let appSupportURL = try fileManager.url(
+                for: .applicationSupportDirectory,
+                in: .userDomainMask,
+                appropriateFor: nil,
+                create: true
+            )
+            let storeDirectoryURL = appSupportURL.appendingPathComponent("QRID", isDirectory: true)
+            try fileManager.createDirectory(at: storeDirectoryURL, withIntermediateDirectories: true)
+
+            let configuration = ModelConfiguration(
+                "QRID",
+                schema: schema,
+                url: storeDirectoryURL.appendingPathComponent("QRID.store"),
+                cloudKitDatabase: .none
+            )
+            return try ModelContainer(for: schema, configurations: [configuration])
+        } catch {
+            fatalError("Failed to create SwiftData model container: \(error)")
+        }
+    }()
+
     var body: some Scene {
         WindowGroup {
             MainView()
@@ -15,7 +41,7 @@ struct QRIDApp: App {
                     WidgetSyncView()
                 }
         }
-        .modelContainer(for: [QRCluster.self, QRProfile.self])
+        .modelContainer(sharedModelContainer)
     }
 }
 
