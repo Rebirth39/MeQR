@@ -20,6 +20,7 @@ struct AboutView: View {
     private let githubURL = URL(string: "https://github.com/Rebirth39/MeQR")!
     private let privacyPolicyURL = URL(string: "https://rebirth39.github.io/MeQR/privacy.html")!
     private let mailURL = URL(string: "mailto:lucas_and_miku@icloud.com")!
+    private let qqURL = URL(string: "https://qm.qq.com/q/ErpPGQuaAi")!
 
 
     var body: some View {
@@ -88,11 +89,13 @@ struct AboutView: View {
                         }
                     }
 
-                    HStack {
-                        Text("QQ")
-                        Spacer()
-                        Text("2137620096")
-                            .foregroundStyle(.secondary)
+                    Link(destination: qqURL) {
+                        HStack {
+                            Text("QID")
+                            Spacer()
+                            Text("Rebirth39")
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
 

@@ -284,6 +284,15 @@ class ReviewRegressionTests(unittest.TestCase):
         self.assertIn("喜劳转扩 隐私政策", privacy_page)
         self.assertIn("mailto:lucas_and_miku@icloud.com", privacy_page)
         self.assertIn("这个 App 目前主要是本地使用的小工具。", privacy_page)
+        self.assertIn("https://qm.qq.com/q/ErpPGQuaAi", privacy_page)
+        self.assertIn("Rebirth39", privacy_page)
+
+    def test_about_view_uses_qid_link_instead_of_raw_qq_number(self):
+        about = read("QRID/QRID/Views/AboutView.swift")
+        self.assertIn("https://qm.qq.com/q/ErpPGQuaAi", about)
+        self.assertIn('Text("QID")', about)
+        self.assertIn('Text("Rebirth39")', about)
+        self.assertNotIn("2137620096", about)
 
     def test_unused_settings_and_embedded_privacy_views_are_removed(self):
         self.assertFalse((ROOT / "QRID/QRID/Views/SettingsView.swift").exists())
