@@ -54,14 +54,14 @@ struct EditProfileView: View {
                 }
             }
             .alert(L.couldNotDecodeQR, isPresented: $showDecodeError) {
-                Button("OK", role: .cancel) {}
+                Button(L.ok, role: .cancel) {}
             } message: {
                 Text(decodeError ?? L.noQRFound)
             }
-            .alert("Could Not Save", isPresented: $showSaveError) {
-                Button("OK", role: .cancel) {}
+            .alert(L.couldNotSave, isPresented: $showSaveError) {
+                Button(L.ok, role: .cancel) {}
             } message: {
-                Text(saveError ?? "Please try again.")
+                Text(saveError ?? L.tryAgain)
             }
         }
     }

@@ -275,9 +275,12 @@ class ReviewRegressionTests(unittest.TestCase):
 
     def test_icloud_toggle_is_not_present_until_real_cloudkit_sync_exists(self):
         about = read("QRID/QRID/Views/AboutView.swift")
+        localization = read("QRID/QRID/Helpers/Localization.swift")
         self.assertNotIn("开启后，你的合集数据将同步到你的 iCloud 账户", about)
         self.assertIn("https://rebirth39.github.io/MeQR/privacy.html", about)
-        self.assertIn("Text(\"隐私政策\")", about)
+        self.assertIn("Text(L.privacyPolicy)", about)
+        self.assertIn("static var privacyPolicy", localization)
+        self.assertIn("\"隐私政策\"", localization)
 
     def test_privacy_policy_view_and_hosted_page_exist(self):
         privacy_page = read("privacy.html")
@@ -293,6 +296,24 @@ class ReviewRegressionTests(unittest.TestCase):
         self.assertIn('Text("QID")', about)
         self.assertIn('Text("Rebirth39")', about)
         self.assertNotIn("2137620096", about)
+
+    def test_system_language_walks_preferred_language_fallback_list(self):
+        settings = read("QRID/QRID/Helpers/AppSettings.swift")
+        body = extract_function_body(settings, "preferredSystemLanguage")
+        self.assertIn("for identifier in Locale.preferredLanguages", body)
+        self.assertIn("language(matching: identifier)", body)
+        self.assertRegex(body, r"return\s+\.en")
+        self.assertIn("didSet", settings)
+        self.assertIn("UserDefaults.standard.set(language", settings)
+
+    def test_system_language_prefers_script_before_region(self):
+        settings = read("QRID/QRID/Helpers/AppSettings.swift")
+        matcher = extract_function_body(settings, "language")
+        self.assertLess(matcher.index('normalized.contains("hans")'), matcher.index('normalized.contains("-hk")'))
+        self.assertLess(matcher.index('normalized.contains("hant")'), matcher.index('normalized.contains("-hk")'))
+        self.assertIn('return .zhHans', matcher)
+        self.assertIn('return .zhHantHK', matcher)
+        self.assertIn('return .zhHantTW', matcher)
 
     def test_unused_settings_and_embedded_privacy_views_are_removed(self):
         self.assertFalse((ROOT / "QRID/QRID/Views/SettingsView.swift").exists())

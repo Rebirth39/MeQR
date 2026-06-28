@@ -73,10 +73,10 @@ struct WidgetSettingsView: View {
                     }
                 )
             }
-            .alert("Could Not Save", isPresented: $showSaveError) {
-                Button("OK", role: .cancel) {}
+            .alert(L.couldNotSave, isPresented: $showSaveError) {
+                Button(L.ok, role: .cancel) {}
             } message: {
-                Text(saveError ?? "Please try again.")
+                Text(saveError ?? L.tryAgain)
             }
         }
     }
@@ -94,7 +94,7 @@ struct WidgetSettingsView: View {
                 }
             }
             Toggle(L.useClusterBackgroundColor, isOn: $widgetUseClusterBackground)
-            ColorPicker("文字颜色", selection: $widgetTextColor)
+            ColorPicker(L.textColor, selection: $widgetTextColor)
         }
     }
 
@@ -133,7 +133,7 @@ struct WidgetSettingsView: View {
     private var previewSection: some View {
         Section(L.preview) {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Widget Preview")
+                Text(L.widgetPreview)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
 
@@ -149,11 +149,11 @@ struct WidgetSettingsView: View {
     }
 
     private var offsetSection: some View {
-        Section("背景位置") {
-            Picker("尺寸", selection: $selectedOffsetSize) {
-                Text("小号").tag(0)
-                Text("中号").tag(1)
-                Text("大号").tag(2)
+        Section(L.widgetBackgroundPosition) {
+            Picker(L.widgetSize, selection: $selectedOffsetSize) {
+                Text(L.widgetSmall).tag(0)
+                Text(L.widgetMedium).tag(1)
+                Text(L.widgetLarge).tag(2)
             }
             .pickerStyle(.segmented)
 
@@ -161,19 +161,19 @@ struct WidgetSettingsView: View {
                 offsetSliders(
                     x: $widgetSmallOffsetX,
                     y: $widgetSmallOffsetY,
-                    label: "小号"
+                    label: L.widgetSmall
                 )
             } else if selectedOffsetSize == 1 {
                 offsetSliders(
                     x: $widgetMediumOffsetX,
                     y: $widgetMediumOffsetY,
-                    label: "中号"
+                    label: L.widgetMedium
                 )
             } else {
                 offsetSliders(
                     x: $widgetLargeOffsetX,
                     y: $widgetLargeOffsetY,
-                    label: "大号"
+                    label: L.widgetLarge
                 )
             }
         }
@@ -182,7 +182,7 @@ struct WidgetSettingsView: View {
     private func offsetSliders(x: Binding<Double>, y: Binding<Double>, label: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
-                Text("水平")
+                Text(L.horizontal)
                     .font(.caption)
                     .frame(width: 32, alignment: .leading)
                 Slider(value: x, in: -100...100, step: 1)
@@ -191,7 +191,7 @@ struct WidgetSettingsView: View {
                     .frame(width: 28, alignment: .trailing)
             }
             HStack(spacing: 6) {
-                Text("垂直")
+                Text(L.vertical)
                     .font(.caption)
                     .frame(width: 32, alignment: .leading)
                 Slider(value: y, in: -100...100, step: 1)

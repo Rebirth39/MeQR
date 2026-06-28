@@ -114,10 +114,10 @@ struct EditClusterView: View {
                     onDismiss: { loadWidgetSettings() }
                 )
             }
-            .alert("Could Not Save", isPresented: $showSaveError) {
-                Button("OK", role: .cancel) {}
+            .alert(L.couldNotSave, isPresented: $showSaveError) {
+                Button(L.ok, role: .cancel) {}
             } message: {
-                Text(saveError ?? "Please try again.")
+                Text(saveError ?? L.tryAgain)
             }
         }
     }
@@ -188,7 +188,7 @@ struct EditClusterView: View {
 
     private var widgetPreview: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Widget 预览")
+            Text(L.widgetPreview)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 

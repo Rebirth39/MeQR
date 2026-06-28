@@ -36,7 +36,7 @@ struct AboutView: View {
                         Text(appName)
                             .font(.title2.bold())
 
-                        Text("Version \(version) (Build \(build))")
+                        Text("\(L.versionBuild) \(version) (\(L.build) \(build))")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -52,7 +52,7 @@ struct AboutView: View {
                         HStack {
                             Image(systemName: "link")
                                 .foregroundStyle(.primary)
-                            Text("GitHub 项目页面")
+                            Text(L.githubProjectPage)
                             Spacer()
                             Image(systemName: "arrow.up.right.square")
                                 .font(.caption)
@@ -60,7 +60,7 @@ struct AboutView: View {
                         }
                     }
                 } footer: {
-                    Text("如果想看更多的软件介绍的话点一下上面的按钮可以跳到GitHub页面w")
+                    Text(L.githubFooter)
                 }
 
                 Section {
@@ -68,7 +68,7 @@ struct AboutView: View {
                         HStack {
                             Image(systemName: "hand.raised")
                                 .foregroundStyle(.primary)
-                            Text("隐私政策")
+                            Text(L.privacyPolicy)
                             Spacer()
                             Image(systemName: "arrow.up.right.square")
                                 .font(.caption)
@@ -76,13 +76,13 @@ struct AboutView: View {
                         }
                     }
                 } footer: {
-                    Text("这个链接会跳到 GitHub 上公开放着的隐私政策页面。")
+                    Text(L.privacyFooter)
                 }
 
                 Section(L.contactDeveloper) {
                     Link(destination: mailURL) {
                         HStack {
-                            Text("邮箱")
+                            Text(L.email)
                             Spacer()
                             Text("lucas_and_miku@icloud.com")
                                 .foregroundStyle(.secondary)
@@ -103,21 +103,21 @@ struct AboutView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("重生Rebirth")
                             .font(.system(size: 17, weight: .bold))
-                        Text("目前高中就读 初⚪︎未来重度依赖（）")
+                        Text(L.developerStudent)
                             .font(.system(size: 15))
-                        (Text("抱着玩一下的心态开发了这款软件") + Text("没想到后面功能越加越多").strikethrough())
+                        (Text(L.developerMadeForFun) + Text(" ") + Text(L.developerUnexpected).strikethrough())
                             .font(.system(size: 13.5))
                             .foregroundColor(.gray)
-                        Text("希望大家喜欢:)")
+                        Text(L.developerHope)
                             .font(.system(size: 13.5))
                             .foregroundColor(.gray)
                     }
                     .padding(.vertical, 4)
                 } header: {
-                    Text("开发者介绍")
+                    Text(L.developerIntro)
                 }
             }
-            .navigationTitle("关于软件")
+            .navigationTitle(L.aboutSoftware)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {

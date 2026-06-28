@@ -123,11 +123,11 @@ enum Platform: String, CaseIterable, Identifiable {
 
     var displayName: String {
         switch self {
-        case .wechat: return L.tr("微信", "WeChat")
+        case .wechat: return L.wechat
         case .qq: return "QQ"
         case .whatsapp: return "WhatsApp"
         case .instagram: return "Instagram"
-        case .twitter: return L.tr("X (推特)", "X (Twitter)")
+        case .twitter: return L.twitter
         case .tiktok: return "TikTok"
         case .snapchat: return "Snapchat"
         case .telegram: return "Telegram"
@@ -136,13 +136,13 @@ enum Platform: String, CaseIterable, Identifiable {
         case .github: return "GitHub"
         case .facebook: return "Facebook"
         case .youtube: return "YouTube"
-        case .email: return L.tr("邮箱", "Email")
-        case .phone: return L.tr("电话", "Phone")
-        case .custom: return L.tr("自定义", "Custom")
-        case .xiaohongshu: return L.tr("小红书", "Xiaohongshu")
-        case .bilibili: return L.tr("B站", "Bilibili")
-        case .douyin: return L.tr("抖音", "Douyin")
-        case .weibo: return L.tr("微博", "Weibo")
+        case .email: return L.emailPlatform
+        case .phone: return L.phone
+        case .custom: return L.custom
+        case .xiaohongshu: return L.xiaohongshu
+        case .bilibili: return L.bilibili
+        case .douyin: return L.douyin
+        case .weibo: return L.weibo
         }
     }
 

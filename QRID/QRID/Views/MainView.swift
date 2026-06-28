@@ -13,7 +13,7 @@ struct MainView: View {
     @State private var showingEditQR = false
     @State private var showingDeleteOptions = false
     @State private var showingReorderClusters = false
-    @State private var showingAbout = false
+    @State private var showingMoreSettings = false
     @State private var cardHeight: CGFloat = 460
     @State private var currentSelectedProfileIndex: Int = 0
     @State private var clusterIdBeforeReorder: PersistentIdentifier?
@@ -86,8 +86,8 @@ struct MainView: View {
                     .foregroundStyle(navigationForegroundColor)
                 }
                 ToolbarItem(placement: .topBarLeading) {
-                    if !clusters.isEmpty {
-                        Menu {
+                    Menu {
+                        if !clusters.isEmpty {
                             Button {
                                 showingEditCluster = true
                             } label: {
@@ -109,22 +109,24 @@ struct MainView: View {
                             } label: {
                                 Label(L.deleteCluster, systemImage: "trash")
                             }
-                            Button {
-                                showingAbout = true
-                            } label: {
-                                Label(L.aboutSoftware, systemImage: "info.circle")
-                            }
-                        } label: {
-                            Image(systemName: "line.3.horizontal.circle")
-                                .font(.system(size: 18, weight: .medium))
-                                .frame(width: 44, height: 44)
-                                .contentShape(Rectangle())
-                                .foregroundStyle(navigationForegroundColor)
+                            Divider()
                         }
+                        Button {
+                            showingMoreSettings = true
+                        } label: {
+                            Label(L.moreSettings, systemImage: "ellipsis.circle")
+                        }
+                    } label: {
+                        Image(systemName: "line.3.horizontal.circle")
+                            .font(.system(size: 18, weight: .medium))
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
+                            .foregroundStyle(navigationForegroundColor)
                     }
                 }
             }
             .toolbarColorScheme(navigationColorScheme, for: .navigationBar)
+            .onChange(of: settings.language) { _, _ in }
             .confirmationDialog(L.chooseAction, isPresented: $showingAdd) {
                 Button(L.newCluster) {
                     showAddNewCluster = true
@@ -153,8 +155,8 @@ struct MainView: View {
             .sheet(isPresented: $showingReorderClusters) {
                 ReorderClustersView()
             }
-            .sheet(isPresented: $showingAbout) {
-                AboutView()
+            .sheet(isPresented: $showingMoreSettings) {
+                MoreSettingsView()
             }
             .onChange(of: showingReorderClusters) { _, isShowing in
                 if !isShowing, let savedId = clusterIdBeforeReorder {
@@ -190,12 +192,12 @@ struct MainView: View {
                 migrateClustersIfNeeded()
             }
             .alert(L.savedToPhotos, isPresented: $showSavedAlert) {
-                Button("OK", role: .cancel) {}
+                Button(L.ok, role: .cancel) {}
             }
-            .alert("Could Not Save", isPresented: $showSaveError) {
-                Button("OK", role: .cancel) {}
+            .alert(L.couldNotSave, isPresented: $showSaveError) {
+                Button(L.ok, role: .cancel) {}
             } message: {
-                Text(saveError ?? "Please try again.")
+                Text(saveError ?? L.tryAgain)
             }
         }
     }

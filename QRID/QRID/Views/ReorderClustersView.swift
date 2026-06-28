@@ -38,7 +38,7 @@ struct ReorderClustersView: View {
                     }
                     .onMove(perform: move)
                 } footer: {
-                    Text(L.tr("长按合集排序", "Long press to reorder"))
+                    Text(L.longPressToReorder)
                         .font(.caption)
                 }
             }
@@ -49,10 +49,10 @@ struct ReorderClustersView: View {
                     Button(L.done) { dismiss() }
                 }
             }
-            .alert("Could Not Save", isPresented: $showSaveError) {
-                Button("OK", role: .cancel) {}
+            .alert(L.couldNotSave, isPresented: $showSaveError) {
+                Button(L.ok, role: .cancel) {}
             } message: {
-                Text(saveError ?? "Please try again.")
+                Text(saveError ?? L.tryAgain)
             }
         }
     }

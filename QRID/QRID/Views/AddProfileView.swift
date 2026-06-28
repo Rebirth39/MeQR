@@ -124,14 +124,14 @@ struct AddProfileView: View {
                 }
             }
             .alert(L.couldNotDecodeQR, isPresented: $showDecodeError) {
-                Button("OK", role: .cancel) {}
+                Button(L.ok, role: .cancel) {}
             } message: {
                 Text(decodeError ?? L.noQRFound)
             }
-            .alert(L.tr("无法保存", "Could Not Save"), isPresented: $showSaveError) {
-                Button("OK", role: .cancel) {}
+            .alert(L.couldNotSave, isPresented: $showSaveError) {
+                Button(L.ok, role: .cancel) {}
             } message: {
-                Text(saveError ?? L.tr("无法保存，请重试。", "Please try again."))
+                Text(saveError ?? L.tryAgain)
             }
         }
     }
