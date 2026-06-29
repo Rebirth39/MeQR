@@ -40,7 +40,7 @@
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
     }
 
-    h1, h2 {
+    h1, h2, h3 {
       margin: 0 0 12px;
       line-height: 1.25;
     }
@@ -54,8 +54,22 @@
       margin-top: 28px;
     }
 
+    h3 {
+      font-size: 17px;
+      margin-top: 22px;
+    }
+
     p {
       margin: 0 0 14px;
+    }
+
+    ul {
+      margin: 0 0 16px;
+      padding-left: 22px;
+    }
+
+    li {
+      margin: 0 0 8px;
     }
 
     .muted {
@@ -77,14 +91,59 @@
     <div class="panel">
       <h1>喜劳转扩 隐私政策</h1>
       <p class="muted">这是一份给 App Store 和普通用户都能看懂的版本，语气没那么端着，但该说清楚的都会说清楚。</p>
+      <p class="muted">Last updated: June 29, 2026</p>
 
-      <h2>隐私政策</h2>
+      <h2>隐私政策 / Privacy Policy</h2>
       <p>这个 App 目前主要是本地使用的小工具。</p>
-      <p>你在 App 里填写的二维码内容、合集名称、副标题、头像、背景图片，还有各种样式设置，默认都是保存在你的设备本地，不会上传到我的服务器，我这边也不会拿去做广告、统计或者别的奇怪用途。</p>
-      <p>如果你主动从相册选图片当头像、背景，或者拿图片导入二维码，App 只会读取你选中的内容来完成对应功能；如果你主动把卡片保存到相册，App 也只会申请“添加到照片库”的权限来保存图片。</p>
-      <p>目前这个 App 没有账号系统，也没有内置广告、第三方统计或用户追踪功能。</p>
+      <p>喜劳转扩（原 MeQR）是一个本地优先的二维码管理与展示工具。它的核心思路很简单：你把二维码、头像、背景和样式放进去，它帮你整理和展示；我不在后台偷偷开一桌数据自助餐。</p>
+      <p>MeQR / 喜劳转扩 is a local-first QR code management and display tool. The idea is simple: you put in QR codes, avatars, backgrounds, and styles; the app helps you organize and show them. Boring privacy is the feature.</p>
+
+      <h3>我们会处理哪些数据 / What the app handles</h3>
+      <p>你在 App 里创建或选择的内容可能包括：</p>
+      <ul>
+        <li>二维码内容、二维码图片或从图片中识别出来的二维码文本；</li>
+        <li>合集 / profile 的名称、副标题、介绍、排序和外观设置；</li>
+        <li>你主动选择的头像、背景图片、小组件背景图片；</li>
+        <li>为了让桌面 / 锁屏小组件显示内容而生成的本地小组件数据。</li>
+      </ul>
+      <p>This may include QR code contents, imported QR images, profile or cluster names, subtitles, descriptions, ordering, appearance settings, avatars, background images, widget background images, and local widget display data.</p>
+
+      <h3>数据保存在哪里 / Where the data stays</h3>
+      <p>默认情况下，这些数据保存在你的设备本地。它们不会上传到我的服务器，因为目前也没有一个“我的服务器”在那边等着接收它们。</p>
+      <p>By default, this data is stored locally on your device. It is not uploaded to my server, partly because the app is not designed to do that, and partly because there is no secret server throne waiting for your QR codes.</p>
+      <p>如果你使用系统备份、设备迁移、截图、相册、分享菜单或第三方 App，把内容带出了喜劳转扩，那些内容之后会由对应的系统功能或第三方服务处理。简单说：你主动分享出去的东西，就不再只待在这个 App 的小房间里了。</p>
+
+      <h3>相册权限 / Photos permission</h3>
+      <p>如果你主动从相册选图片当头像、背景，或者拿图片导入二维码，App 只会读取你选中的内容来完成对应功能。</p>
+      <p>如果你主动把卡片保存到相册，App 会请求“添加到照片库”的权限，用来把生成的分享图片保存进去。它不会因为拿到这个权限就开始翻你的相册找八卦。</p>
+      <p>If you choose images from Photos, the app uses the selected images for the feature you asked for. If you save a share card, the app asks for permission to add the generated image to your photo library.</p>
+
+      <h3>二维码识别、分享和导出 / QR import, sharing, and export</h3>
+      <p>从图片中识别二维码的处理在设备上完成。分享卡片、保存到相册、导出备份文件等操作，只有在你主动触发时才会发生。</p>
+      <p>QR decoding from selected images happens on device. Sharing, saving to Photos, or exporting backup files only happens when you choose to do it. No surprise confetti, no surprise upload.</p>
+
+      <h3>账号、广告、统计和追踪 / Accounts, ads, analytics, and tracking</h3>
+      <p>目前这个 App 没有账号系统，没有内置广告，没有第三方统计 SDK，也没有用户追踪功能。</p>
+      <p>The app currently has no account system, no in-app advertising, no third-party analytics SDK, and no user tracking.</p>
+
+      <h3>iCloud 和同步 / iCloud and sync</h3>
       <p>至于 iCloud 相关功能：我现在还没正式做完，也就是说现阶段不要默认理解成“你的数据会自动同步到云端”。如果以后真的加上了 iCloud 同步 / 备份，我会再把这份说明一起更新。</p>
+      <p>iCloud sync / backup is not live yet. If it is added later, this policy will be updated so the page does not pretend time froze here forever.</p>
+
+      <h3>数据删除 / Deleting your data</h3>
+      <p>你可以在 App 里删除对应的 profile、合集或二维码内容。卸载 App 通常也会移除 App 在设备上的本地数据。已经保存到相册、导出的备份文件、截图，或者你分享给别人的内容，需要你在对应位置自行删除。</p>
+      <p>You can delete profiles, clusters, and QR code entries inside the app. Uninstalling the app generally removes its local app data from the device. Images saved to Photos, exported backup files, screenshots, or anything you shared elsewhere need to be deleted from those places separately.</p>
+
+      <h3>儿童隐私 / Children's privacy</h3>
+      <p>这个 App 不是专门面向儿童设计的，也不会有意收集儿童的个人信息。更准确地说，它连成年人的信息也不想收集，大家都省点事。</p>
+      <p>The app is not specifically directed to children and does not knowingly collect personal information from children. More accurately, it is not trying to collect adults' personal information either.</p>
+
+      <h3>政策更新 / Changes to this policy</h3>
+      <p>如果之后加入了会影响隐私的新功能，比如正式的云同步、账号系统或需要联网的服务，我会更新这份隐私政策。</p>
+      <p>If future features change how data is handled, such as cloud sync, accounts, or network services, this policy will be updated.</p>
+
       <p>如果你对隐私相关内容有疑问，可以直接用下面的方式联系我。</p>
+      <p>If you have questions about privacy, you can contact me below.</p>
 
       <h2>开发者联系方式</h2>
       <p>邮箱：<a href="mailto:lucas_and_miku@icloud.com">lucas_and_miku@icloud.com</a></p>
