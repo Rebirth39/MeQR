@@ -3,9 +3,9 @@
 
 ## 简介 / Introduction
 
-喜劳转扩（原 MeQR）是一款 iOS 应用，帮助你管理和展示多个二维码。你可以将多个二维码归类到一个合集（Cluster）中，每个合集都有独立的名称、头像、背景和样式。无论是社交账号、支付码还是其他二维码，都可以一站式管理。
+喜劳转扩（原 MeQR）是一款二维码管理与展示工具，帮助你管理和展示多个二维码。你可以将多个二维码归类到一个合集（Cluster）中，每个合集都有独立的名称、头像、背景和样式。无论是社交账号、支付码还是其他二维码，都可以一站式管理。
 
-喜劳转扩 (formerly MeQR) is an iOS app that helps you manage and display multiple QR codes. You can group multiple QR codes into a single cluster, each with its own name, avatar, background, and style. Whether it's social media accounts, payment codes, or other QR codes, you can manage them all in one place.
+喜劳转扩 (formerly MeQR) is a QR code management and display tool that helps you manage and present multiple QR codes. You can group multiple QR codes into a single cluster, each with its own name, avatar, background, and style. Whether it's social media accounts, payment codes, or other QR codes, you can manage them all in one place.
 
 ## 功能 / Features
 
@@ -18,7 +18,14 @@
 - **拖拽排序 / Drag-to-Reorder**: 长按合集卡片，拖拽调整合集的展示顺序。Long-press a cluster card to drag and reorder clusters.
 - **分享卡片 / Share Card**: 将合集卡片保存为图片到相册，方便分享给他人。Save cluster cards as images to your photo library for easy sharing.
 
+## 平台 / Platforms
+
+- **iOS**: 主线版本位于 `main` 分支。The main iOS version lives on the `main` branch.
+- **Android**: 原生 Android 适配版本位于 `android-native` 分支的 `Android/` 目录，目前仍在早期适配中。The native Android adaptation lives in `Android/` on the `android-native` branch and is still in early adaptation.
+
 ## 技术栈 / Tech Stack
+
+### iOS
 
 - SwiftUI
 - SwiftData（本地数据持久化 / Local data persistence）
@@ -26,17 +33,35 @@
 - PhotosUI（头像和背景图片选择 / Avatar and background image selection）
 - Core Image / Core Graphics（二维码生成与裁剪 / QR code generation and image cropping）
 
+### Android
+
+- Native Android
+- Java
+- ZXing Core（二维码生成 / QR code generation）
+- Local JSON storage（本地数据存储 / Local data storage）
+
 ## 兼容性 / Compatibility
+
+### iOS
+
 - iOS 17.0+
 - iPhone only
+
+### Android
+
+- Android 8.0+ / API 26+
+- Android version is currently experimental
 
 ## 当前状态 / Current Status
 
 - 当前版本以本地数据存储为主。The current version is local-first and stores data on device.
 - iCloud 同步 / 备份尚未正式上线。iCloud sync / backup is not live yet.
 - Widget Extension 已包含在项目中。The Widget Extension is included in the project.
+- Android 版本正在原生适配中，和 iOS 主线分支分开维护。The Android version is being adapted natively and is maintained separately from the iOS main branch.
 
 ## 安装 / Installation
+
+### iOS
 
 1. 克隆仓库 / Clone the repository:
    ```bash
@@ -46,6 +71,21 @@
 3. 在 **Signing & Capabilities** 中选择你的 Apple Development Team，并将 Bundle Identifier 修改为你自己的。Select your Apple Development Team in **Signing & Capabilities**, and change the Bundle Identifier to your own.
 4. 如需使用小组件，请确认 App Group、Signing 与 Widget Extension 配置正确。If you want widget support, make sure App Group, signing, and the Widget Extension are configured correctly.
 5. 编译并运行到真机或模拟器；完整构建验证需要 Xcode。Build and run on a physical device or simulator; full build verification requires Xcode.
+
+### Android
+
+Android 版本位于单独分支：
+
+```bash
+git checkout android-native
+cd Android
+```
+
+然后用 Android Studio 打开 `Android/` 目录，或在配置好 Android SDK 后运行：
+
+```bash
+./gradlew assembleDebug
+```
 
 ## 隐私 / Privacy
 喜劳转扩（原 MeQR）所有数据均存储在本地，不上传至任何服务器，无需网络权限。
@@ -61,11 +101,11 @@ https://rebirth39.github.io/MeQR/privacy.html
 
 
 # 来自开发者的碎碎念
-老师们好这里是重生！也是这个App的开发者！
+老师们好这里是重生！也是这个软件的开发者！
 
-这个App其实是我用一周时间用Kimi开发出来的（笑）所以还有点buggy，但我也在修改了
+这个软件最开始其实是我用一周时间用 Kimi 开发出来的（笑）所以还有点 buggy，但我也在修改了
 
-目前只支持iOS……绝对不是因为这个软件其实是为了让我能在线下扩列的时候展示用的（笑）后续应该会支持安卓！
+目前 iOS 版是主线，Android 原生适配也已经开始了，单独放在 `android-native` 分支里……绝对不是因为这个软件其实是为了让我能在线下扩列的时候展示用的（笑）
 
 如果对这个项目感兴趣的话可以来扩列呀：QQID **Rebirth39** 可直搜 
 
