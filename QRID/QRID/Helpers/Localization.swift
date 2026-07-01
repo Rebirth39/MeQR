@@ -104,7 +104,7 @@ struct L {
     static var reorderClusters: String { tr("排序合集", "排序合集", "排序合集", "Reorder Clusters", "コレクションを並べ替え") }
     static var settings: String { tr("设置", "設定", "設定", "Settings", "設定") }
     static var aboutSoftware: String { tr("关于软件", "關於軟件", "關於 App", "About", "このアプリについて") }
-    static var privacyPolicy: String { tr("隐私政策", "私隱政策", "隱私權政策", "Privacy Policy", "プライバシーポリシー") }
+    static var privacyPolicy: String { tr("隐私政策", "私隱政策", "隱私權政策", "Privacy Policy (English)", "プライバシーポリシー（英語）") }
     static var contactDeveloper: String { tr("联系开发者", "聯絡開發者", "聯絡開發者", "Contact Developer", "開発者に連絡") }
     static var developerInfo: String { tr("开发者信息", "開發者資料", "開發者資訊", "Developer Info", "開発者情報") }
     static var iCloudSync: String { tr("iCloud 同步", "iCloud 同步", "iCloud 同步", "iCloud Sync", "iCloud同期") }

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AboutView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appSettings) private var appSettings
 
     private var appName: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
@@ -18,9 +19,13 @@ struct AboutView: View {
     }
 
     private let githubURL = URL(string: "https://github.com/Rebirth39/MeQR")!
-    private let privacyPolicyURL = URL(string: "https://rebirth39.github.io/MeQR/privacy.html")!
     private let mailURL = URL(string: "mailto:lucas_and_miku@icloud.com")!
     private let qqURL = URL(string: "https://qm.qq.com/q/ErpPGQuaAi")!
+
+    private var privacyPolicyURL: URL {
+        let path = appSettings.isChinese ? "privacy.html" : "privacy-en.html"
+        return URL(string: "https://rebirth39.github.io/MeQR/\(path)")!
+    }
 
 
     var body: some View {
