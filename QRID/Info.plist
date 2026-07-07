@@ -19,5 +19,7 @@
 	</array>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>NSCameraUsageDescription</key>
+	<string>用于扫描 MeQR 交换码，保存线下认识的人。</string>
 </dict>
 </plist>

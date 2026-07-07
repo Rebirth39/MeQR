@@ -14,6 +14,9 @@ struct MainView: View {
     @State private var showingDeleteOptions = false
     @State private var showingReorderClusters = false
     @State private var showingMoreSettings = false
+    @State private var showingMeQRProfileCode = false
+    @State private var showingMeQRScanner = false
+    @State private var showingEncounters = false
     @State private var cardHeight: CGFloat = 460
     @State private var currentSelectedProfileIndex: Int = 0
     @State private var clusterIdBeforeReorder: PersistentIdentifier?
@@ -66,13 +69,30 @@ struct MainView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 12) {
-                        Button {
-                            saveCardToPhotos()
-                        } label: {
-                            Image(systemName: "square.and.arrow.up")
-                                .font(.system(size: 18, weight: .medium))
-                                .frame(width: 44, height: 44)
-                                .contentShape(Rectangle())
+                        if !clusters.isEmpty {
+                            Menu {
+                                Button {
+                                    showingMeQRProfileCode = true
+                                } label: {
+                                    Label(L.meqrProfileCode, systemImage: "qrcode")
+                                }
+                                Button {
+                                    showingMeQRScanner = true
+                                } label: {
+                                    Label(L.scanMeQRCode, systemImage: "qrcode.viewfinder")
+                                }
+                                Button {
+                                    showingEncounters = true
+                                } label: {
+                                    Label(L.encounters, systemImage: "person.2.crop.square.stack")
+                                }
+                            } label: {
+                                Image(systemName: "square.and.arrow.up")
+                                    .font(.system(size: 18, weight: .medium))
+                                    .frame(width: 44, height: 44)
+                                    .contentShape(Rectangle())
+                            }
+                            .accessibilityLabel(L.meqrProfileCode)
                         }
                         Button {
                             showingAdd = true
@@ -157,6 +177,17 @@ struct MainView: View {
             }
             .sheet(isPresented: $showingMoreSettings) {
                 MoreSettingsView()
+            }
+            .sheet(isPresented: $showingMeQRProfileCode) {
+                if let cluster = currentCluster {
+                    MeQRProfileCodeView(cluster: cluster)
+                }
+            }
+            .sheet(isPresented: $showingMeQRScanner) {
+                MeQRScannerView()
+            }
+            .sheet(isPresented: $showingEncounters) {
+                EncountersView()
             }
             .onChange(of: showingReorderClusters) { _, isShowing in
                 if !isShowing, let savedId = clusterIdBeforeReorder {

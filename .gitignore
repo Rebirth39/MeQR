@@ -16,3 +16,10 @@ DerivedData/
 
 # Codex/Superpowers scratch artifacts
 .superpowers/
+
+# Local/private backend deployment files
+cloudbase/
+
+# Python test cache
+__pycache__/
+Tests/__pycache__/

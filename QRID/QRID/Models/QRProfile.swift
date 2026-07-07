@@ -115,11 +115,38 @@ final class QRProfile {
 
 enum Platform: String, CaseIterable, Identifiable {
     case wechat, qq, whatsapp, instagram, twitter, tiktok
-    case snapchat, telegram, discord, linkedin, github
-    case facebook, youtube, email, phone, custom
+    case snapchat, telegram, discord, reddit, threads, mastodon, bluesky
+    case linkedin, github, facebook, youtube, twitch, pinterest
+    case line, signal, testflight, paypal, venmo, cashapp, linktree
+    case email, phone, custom
     case xiaohongshu, bilibili, douyin, weibo
 
     var id: String { rawValue }
+
+    static var commonPlatforms: [Platform] {
+        [.wechat, .qq, .xiaohongshu, .bilibili, .instagram, .line, .github]
+    }
+
+    static var socialPlatforms: [Platform] {
+        [localizedShortVideoPlatform, .weibo, .whatsapp, .twitter, .snapchat, .facebook, .reddit, .threads, .twitch]
+    }
+
+    static var professionalPlatforms: [Platform] {
+        [.linkedin, .testflight]
+    }
+
+    static var selectablePlatforms: [Platform] {
+        commonPlatforms + socialPlatforms + professionalPlatforms + [.custom]
+    }
+
+    static var localizedShortVideoPlatform: Platform {
+        switch AppSettings.shared.resolvedLanguage {
+        case .zhHans, .zhHantHK:
+            return .douyin
+        case .system, .zhHantTW, .en, .ja:
+            return .tiktok
+        }
+    }
 
     var displayName: String {
         switch self {
@@ -128,20 +155,33 @@ enum Platform: String, CaseIterable, Identifiable {
         case .whatsapp: return "WhatsApp"
         case .instagram: return "Instagram"
         case .twitter: return L.twitter
-        case .tiktok: return "TikTok"
+        case .tiktok: return L.douyinTikTok
         case .snapchat: return "Snapchat"
         case .telegram: return "Telegram"
         case .discord: return "Discord"
+        case .reddit: return "Reddit"
+        case .threads: return "Threads"
+        case .mastodon: return "Mastodon"
+        case .bluesky: return "Bluesky"
         case .linkedin: return "LinkedIn"
         case .github: return "GitHub"
         case .facebook: return "Facebook"
         case .youtube: return "YouTube"
+        case .twitch: return "Twitch"
+        case .pinterest: return "Pinterest"
+        case .line: return "LINE"
+        case .signal: return "Signal"
+        case .testflight: return "TestFlight"
+        case .paypal: return "PayPal"
+        case .venmo: return "Venmo"
+        case .cashapp: return "Cash App"
+        case .linktree: return "Linktree"
         case .email: return L.emailPlatform
         case .phone: return L.phone
         case .custom: return L.custom
         case .xiaohongshu: return L.xiaohongshu
         case .bilibili: return L.bilibili
-        case .douyin: return L.douyin
+        case .douyin: return L.douyinTikTok
         case .weibo: return L.weibo
         }
     }
@@ -157,10 +197,23 @@ enum Platform: String, CaseIterable, Identifiable {
         case .snapchat: return "camera.viewfinder"
         case .telegram: return "paperplane.fill"
         case .discord: return "headphones"
+        case .reddit: return "bubble.left.and.text.bubble.right.fill"
+        case .threads: return "at"
+        case .mastodon: return "person.wave.2.fill"
+        case .bluesky: return "cloud.fill"
         case .linkedin: return "briefcase.fill"
         case .github: return "chevron.left.forwardslash.chevron.right"
         case .facebook: return "person.2.fill"
         case .youtube: return "play.rectangle.fill"
+        case .twitch: return "gamecontroller.fill"
+        case .pinterest: return "pin.fill"
+        case .line: return "message.circle.fill"
+        case .signal: return "lock.circle.fill"
+        case .testflight: return "airplane.circle.fill"
+        case .paypal: return "creditcard.fill"
+        case .venmo: return "dollarsign.circle.fill"
+        case .cashapp: return "dollarsign.square.fill"
+        case .linktree: return "link"
         case .email: return "envelope.fill"
         case .phone: return "phone.fill"
         case .custom: return "qrcode"
@@ -179,6 +232,49 @@ enum Platform: String, CaseIterable, Identifiable {
         return before && after
     }
 
+    private static func normalizedPlatformName(_ value: String) -> String {
+        value
+            .lowercased()
+            .filter { $0.isLetter || $0.isNumber }
+    }
+
+    static func matchingDisplayName(_ name: String) -> Platform? {
+        switch normalizedPlatformName(name) {
+        case "wechat", "weixin", "wx", "微信": return .wechat
+        case "qq": return .qq
+        case "whatsapp": return .whatsapp
+        case "instagram", "ig": return .instagram
+        case "twitter", "x": return .twitter
+        case "tiktok": return .tiktok
+        case "snapchat": return .snapchat
+        case "reddit": return .reddit
+        case "threads": return .threads
+        case "linkedin": return .linkedin
+        case "github": return .github
+        case "facebook", "fb": return .facebook
+        case "twitch": return .twitch
+        case "line": return .line
+        case "testflight", "tf": return .testflight
+        case "xiaohongshu", "xhs", "小红书", "小紅書": return .xiaohongshu
+        case "bilibili", "bili": return .bilibili
+        case "douyin", "抖音": return .douyin
+        case "weibo", "微博": return .weibo
+        default: return nil
+        }
+    }
+
+    static func resolvedSelection(platformType: String, customPlatformName: String) -> (platformType: String, customPlatformName: String?) {
+        let trimmedName = customPlatformName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let selected = Platform(rawValue: platformType), selected != .custom else {
+            let nameToMatch = trimmedName.isEmpty ? platformType : trimmedName
+            if let matched = matchingDisplayName(nameToMatch), matched != .custom {
+                return (matched.rawValue, nil)
+            }
+            return (Platform.custom.rawValue, trimmedName.isEmpty ? nil : trimmedName)
+        }
+        return (selected.rawValue, nil)
+    }
+
     /// Detects the platform from a QR code URL/content string.
     static func detect(from url: String) -> Platform? {
         let lower = url.lowercased()
@@ -189,12 +285,14 @@ enum Platform: String, CaseIterable, Identifiable {
         if lower.contains("twitter.com") || isDomain(lower, "x.com") { return .twitter }
         if lower.contains("tiktok.com") || lower.contains("vm.tiktok.com") { return .tiktok }
         if lower.contains("snapchat.com") { return .snapchat }
-        if lower.contains("t.me") || lower.contains("telegram.me") || lower.contains("telegram.org") { return .telegram }
-        if lower.contains("discord.com") || lower.contains("discord.gg") { return .discord }
+        if lower.contains("reddit.com") || lower.contains("redd.it") { return .reddit }
+        if lower.contains("threads.net") { return .threads }
         if lower.contains("linkedin.com") { return .linkedin }
         if lower.contains("github.com") { return .github }
         if lower.contains("facebook.com") || lower.contains("fb.com") || lower.contains("fb.me") { return .facebook }
-        if lower.contains("youtube.com") || lower.contains("youtu.be") { return .youtube }
+        if lower.contains("twitch.tv") { return .twitch }
+        if lower.contains("line.me") || lower.contains("lin.ee") { return .line }
+        if lower.contains("testflight.apple.com") { return .testflight }
         if lower.contains("xiaohongshu.com") || lower.contains("xhslink.com") { return .xiaohongshu }
         if lower.contains("bilibili.com") || lower.contains("b23.tv") { return .bilibili }
         if lower.contains("douyin.com") || lower.contains("iesdouyin.com") { return .douyin }
@@ -204,22 +302,18 @@ enum Platform: String, CaseIterable, Identifiable {
         if lower.contains("twitter") { return .twitter }
         if lower.contains("tiktok") { return .tiktok }
         if lower.contains("snapchat") { return .snapchat }
-        if lower.contains("telegram") { return .telegram }
-        if lower.contains("discord") { return .discord }
+        if lower.contains("reddit") { return .reddit }
+        if lower.contains("threads") { return .threads }
         if lower.contains("linkedin") { return .linkedin }
         if lower.contains("github") { return .github }
         if lower.contains("facebook") { return .facebook }
-        if lower.contains("youtube") { return .youtube }
         if lower.contains("whatsapp") { return .whatsapp }
+        if lower.contains("twitch") { return .twitch }
+        if lower.contains("testflight") { return .testflight }
         if lower.contains("xiaohongshu") || lower.contains("xhs") { return .xiaohongshu }
         if lower.contains("bilibili") { return .bilibili }
         if lower.contains("douyin") { return .douyin }
         if lower.contains("weibo") { return .weibo }
-        if lower.contains("mailto:") { return .email }
-        if !lower.hasPrefix("http://"), !lower.hasPrefix("https://"),
-           lower.contains("@"), lower.contains(".") {
-            return .email
-        }
         return nil
     }
 }

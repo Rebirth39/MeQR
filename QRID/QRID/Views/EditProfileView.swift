@@ -128,13 +128,16 @@ struct EditProfileView: View {
     private var detailsSection: some View {
         Section(L.details) {
             Picker(L.platform, selection: $platformType) {
-                ForEach(Platform.allCases) { platform in
-                    HStack {
-                        Image(systemName: platform.iconName)
-                        Text(platform.displayName)
-                    }
-                    .tag(platform.rawValue)
+                Section(L.commonPlatforms) {
+                    platformOptions(Platform.commonPlatforms)
                 }
+                Section(L.socialPlatforms) {
+                    platformOptions(Platform.socialPlatforms)
+                }
+                Section(L.professionalPlatforms) {
+                    platformOptions(Platform.professionalPlatforms)
+                }
+                platformOption(.custom)
             }
 
             if platformType == "custom" {
@@ -142,6 +145,21 @@ struct EditProfileView: View {
                     .textInputAutocapitalization(.words)
             }
         }
+    }
+
+    @ViewBuilder
+    private func platformOptions(_ platforms: [Platform]) -> some View {
+        ForEach(platforms) { platform in
+            platformOption(platform)
+        }
+    }
+
+    private func platformOption(_ platform: Platform) -> some View {
+        HStack {
+            Image(systemName: platform.iconName)
+            Text(platform.displayName)
+        }
+        .tag(platform.rawValue)
     }
 
     // MARK: - Preview
@@ -224,8 +242,12 @@ struct EditProfileView: View {
     }
 
     private func save() {
-        profile.platformType = platformType
-        profile.customPlatformName = customPlatformName.trimmingCharacters(in: .whitespaces).isEmpty ? nil : customPlatformName.trimmingCharacters(in: .whitespaces)
+        let resolvedPlatform = Platform.resolvedSelection(
+            platformType: platformType,
+            customPlatformName: customPlatformName
+        )
+        profile.platformType = resolvedPlatform.platformType
+        profile.customPlatformName = resolvedPlatform.customPlatformName
         profile.qrContent = qrContent.trimmingCharacters(in: .whitespaces)
         do {
             try modelContext.save()

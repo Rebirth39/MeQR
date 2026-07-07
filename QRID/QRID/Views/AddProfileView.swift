@@ -272,13 +272,16 @@ struct AddProfileView: View {
     private var qrDetailsSection: some View {
         Section(L.details) {
             Picker(L.platform, selection: $platformType) {
-                ForEach(Platform.allCases) { platform in
-                    HStack {
-                        Image(systemName: platform.iconName)
-                        Text(platform.displayName)
-                    }
-                    .tag(platform.rawValue)
+                Section(L.commonPlatforms) {
+                    platformOptions(Platform.commonPlatforms)
                 }
+                Section(L.socialPlatforms) {
+                    platformOptions(Platform.socialPlatforms)
+                }
+                Section(L.professionalPlatforms) {
+                    platformOptions(Platform.professionalPlatforms)
+                }
+                platformOption(.custom)
             }
 
             if platformType == "custom" {
@@ -286,6 +289,21 @@ struct AddProfileView: View {
                     .textInputAutocapitalization(.words)
             }
         }
+    }
+
+    @ViewBuilder
+    private func platformOptions(_ platforms: [Platform]) -> some View {
+        ForEach(platforms) { platform in
+            platformOption(platform)
+        }
+    }
+
+    private func platformOption(_ platform: Platform) -> some View {
+        HStack {
+            Image(systemName: platform.iconName)
+            Text(platform.displayName)
+        }
+        .tag(platform.rawValue)
     }
 
     // MARK: - Preview
@@ -427,13 +445,17 @@ struct AddProfileView: View {
             showSaveError = true
             return
         }
+        let resolvedPlatform = Platform.resolvedSelection(
+            platformType: platformType,
+            customPlatformName: customPlatformName
+        )
 
         if let existingCluster = addToCluster {
             let profile = QRProfile(
-                platformType: platformType,
+                platformType: resolvedPlatform.platformType,
                 qrContent: trimmedQR,
                 foregroundColorHex: existingCluster.qrColorHex ?? "#000000",
-                customPlatformName: customPlatformName.trimmingCharacters(in: .whitespaces).isEmpty ? nil : customPlatformName.trimmingCharacters(in: .whitespaces),
+                customPlatformName: resolvedPlatform.customPlatformName,
                 cluster: existingCluster
             )
             profile.attach(to: existingCluster)
@@ -453,10 +475,10 @@ struct AddProfileView: View {
             )
             modelContext.insert(cluster)
             let profile = QRProfile(
-                platformType: platformType,
+                platformType: resolvedPlatform.platformType,
                 qrContent: trimmedQR,
                 foregroundColorHex: "#000000",
-                customPlatformName: customPlatformName.trimmingCharacters(in: .whitespaces).isEmpty ? nil : customPlatformName.trimmingCharacters(in: .whitespaces),
+                customPlatformName: resolvedPlatform.customPlatformName,
                 cluster: cluster
             )
             profile.attach(to: cluster)

@@ -70,11 +70,11 @@ struct QRCodeGenerator {
         return 1.0 / contentRatio
     }
 
-    static func generate(from string: String, foreground: Color, background: Color) -> UIImage? {
+    static func generate(from string: String, foreground: Color, background: Color, correctionLevel: String = "M") -> UIImage? {
         let context = CIContext()
         let filter = CIFilter.qrCodeGenerator()
         filter.message = Data(string.utf8)
-        filter.correctionLevel = "M"
+        filter.correctionLevel = correctionLevel
 
         guard let outputImage = filter.outputImage else { return nil }
 

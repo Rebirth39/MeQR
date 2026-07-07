@@ -12,7 +12,7 @@ def read(path: str) -> str:
 
 def extract_computed_property_body(source: str, property_name: str) -> str:
     pattern = (
-        r"^\s*(?:private\s+|fileprivate\s+)?var\s+"
+        r"^\s*(?:private\s+|fileprivate\s+)?(?:static\s+)?var\s+"
         + re.escape(property_name)
         + r"\s*:[^=]+{"
     )
@@ -292,14 +292,17 @@ class ReviewRegressionTests(unittest.TestCase):
         english_privacy_page = read("privacy-en.html")
         self.assertIn("喜劳转扩 隐私政策", privacy_page)
         self.assertIn("mailto:lucas_and_miku@icloud.com", privacy_page)
-        self.assertIn("这个 App 目前主要是本地使用的小工具。", privacy_page)
+        self.assertIn("当你使用 MeQR 交换码的在线功能时", privacy_page)
+        self.assertIn("不会在后台读取你的相册", privacy_page)
+        self.assertNotIn("开发者的话", privacy_page)
         self.assertNotIn("Privacy Policy</h2>", privacy_page)
         self.assertIn("https://qm.qq.com/q/ErpPGQuaAi", privacy_page)
         self.assertIn("Rebirth39", privacy_page)
         self.assertIn("MeQR Privacy Policy", english_privacy_page)
         self.assertIn("Privacy Policy</h2>", english_privacy_page)
         self.assertIn("mailto:lucas_and_miku@icloud.com", english_privacy_page)
-        self.assertIn("no user tracking", english_privacy_page)
+        self.assertIn("online MeQR exchange-code feature", english_privacy_page)
+        self.assertIn("does not include advertising SDKs", english_privacy_page)
 
     def test_about_view_uses_qid_link_instead_of_raw_qq_number(self):
         about = read("QRID/QRID/Views/AboutView.swift")
@@ -325,6 +328,38 @@ class ReviewRegressionTests(unittest.TestCase):
         self.assertIn('return .zhHans', matcher)
         self.assertIn('return .zhHantHK', matcher)
         self.assertIn('return .zhHantTW', matcher)
+
+    def test_platform_picker_uses_curated_groups_and_case_insensitive_custom_names(self):
+        profile = read("QRID/QRID/Models/QRProfile.swift")
+        add_profile = read("QRID/QRID/Views/AddProfileView.swift")
+        edit_profile = read("QRID/QRID/Views/EditProfileView.swift")
+
+        self.assertIn("static var commonPlatforms: [Platform]", profile)
+        self.assertIn("[.wechat, .qq, .xiaohongshu, .bilibili, .instagram, .line, .github]", profile)
+        self.assertIn("[localizedShortVideoPlatform, .weibo, .whatsapp, .twitter, .snapchat, .facebook, .reddit, .threads, .twitch]", profile)
+        self.assertIn("[.linkedin, .testflight]", profile)
+        self.assertIn("case .zhHans, .zhHantHK:", profile)
+        self.assertIn("return .douyin", profile)
+        self.assertIn("case .system, .zhHantTW, .en, .ja:", profile)
+        self.assertIn("return .tiktok", profile)
+        self.assertIn('case "testflight", "tf": return .testflight', profile)
+        self.assertIn('if lower.contains("testflight.apple.com") { return .testflight }', profile)
+
+        for removed_visible_option in [
+            ".paypal", ".venmo", ".cashapp", ".email", ".phone",
+            ".telegram", ".discord", ".youtube", ".pinterest",
+            ".signal", ".mastodon", ".bluesky", ".linktree",
+        ]:
+            self.assertNotIn(removed_visible_option, extract_computed_property_body(profile, "selectablePlatforms"))
+
+        for source in [add_profile, edit_profile]:
+            self.assertIn("Section(L.commonPlatforms)", source)
+            self.assertIn("Section(L.socialPlatforms)", source)
+            self.assertIn("Section(L.professionalPlatforms)", source)
+            self.assertIn("platformOption(.custom)", source)
+            self.assertNotIn("ForEach(Platform.allCases)", source)
+        self.assertIn("Platform.resolvedSelection(", add_profile)
+        self.assertIn("Platform.resolvedSelection(", edit_profile)
 
     def test_unused_settings_and_embedded_privacy_views_are_removed(self):
         self.assertFalse((ROOT / "QRID/QRID/Views/SettingsView.swift").exists())
