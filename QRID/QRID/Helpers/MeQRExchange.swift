@@ -214,6 +214,17 @@ enum MeQRExchangeCodec {
         return data.base64URLEncodedString()
     }
 
+    static func encodeHybrid(remoteURL: String, offlineProfile: MeQRExchangeProfile) throws -> String {
+        let payload = try encodePayload(offlineProfile)
+        if var components = URLComponents(string: remoteURL) {
+            components.fragment = "\(offlineFragmentPrefix)\(payload)"
+            if let url = components.string {
+                return url
+            }
+        }
+        return "\(remoteURL)#\(offlineFragmentPrefix)\(payload)"
+    }
+
     static func decodePayload(_ payload: String) throws -> MeQRExchangeProfile {
         guard let data = Data(base64URLEncoded: payload) else {
             throw MeQRExchangeError.invalidCode

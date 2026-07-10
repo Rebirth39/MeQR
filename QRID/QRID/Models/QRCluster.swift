@@ -2,6 +2,45 @@ import Foundation
 import SwiftData
 import SwiftUI
 
+enum ClusterTemplateStyle: String, CaseIterable, Identifiable {
+    case standard
+    case polaroid
+    case conventionPass
+    case rhodesPass
+
+    var id: String { rawValue }
+
+    static var selectableCases: [ClusterTemplateStyle] {
+        [.standard, .conventionPass, .rhodesPass]
+    }
+
+    var displayName: String {
+        switch self {
+        case .standard:
+            return L.templateStandard
+        case .polaroid:
+            return L.templatePolaroid
+        case .conventionPass:
+            return L.templateConventionPass
+        case .rhodesPass:
+            return L.templateRhodesPass
+        }
+    }
+
+    var iconName: String {
+        switch self {
+        case .standard:
+            return "rectangle.inset.filled"
+        case .polaroid:
+            return "photo"
+        case .conventionPass:
+            return "lanyardcard"
+        case .rhodesPass:
+            return "lanyardcard.fill"
+        }
+    }
+}
+
 @Model
 final class QRCluster {
     var id: UUID
@@ -13,6 +52,9 @@ final class QRCluster {
     var borderColorHex: String
     var textColorHex: String?
     var qrColorHex: String?
+    var templateStyleRawValue: String?
+    var rhodesBannerImageData: Data?
+    var passSubtitle: String?
     var cornerRadius: Double
     var cardOpacity: Double?
     var createdAt: Date
@@ -41,6 +83,9 @@ final class QRCluster {
         borderColorHex: String = "#000000",
         textColorHex: String? = nil,
         qrColorHex: String? = nil,
+        templateStyleRawValue: String? = nil,
+        rhodesBannerImageData: Data? = nil,
+        passSubtitle: String? = nil,
         cornerRadius: Double = 16,
         cardOpacity: Double? = nil,
         sortOrder: Int = 0,
@@ -65,6 +110,9 @@ final class QRCluster {
         self.borderColorHex = borderColorHex
         self.textColorHex = textColorHex
         self.qrColorHex = qrColorHex
+        self.templateStyleRawValue = templateStyleRawValue
+        self.rhodesBannerImageData = rhodesBannerImageData
+        self.passSubtitle = passSubtitle
         self.cornerRadius = cornerRadius
         self.cardOpacity = cardOpacity
         self.createdAt = Date()
@@ -96,5 +144,18 @@ final class QRCluster {
 
     var qrColor: Color {
         Color(hex: qrColorHex ?? "#000000")
+    }
+
+    var templateStyle: ClusterTemplateStyle {
+        get {
+            let style = ClusterTemplateStyle(rawValue: templateStyleRawValue ?? "") ?? .standard
+            return style == .polaroid ? .standard : style
+        }
+        set { templateStyleRawValue = newValue.rawValue }
+    }
+
+    var passSubtitleText: String {
+        let trimmed = passSubtitle?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return trimmed.isEmpty ? L.passLabel : trimmed
     }
 }

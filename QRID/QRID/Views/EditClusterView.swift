@@ -15,6 +15,8 @@ struct EditClusterView: View {
     @State private var textColor: Color = .black
     @State private var backgroundColor: Color = .white
     @State private var qrColor: Color = .black
+    @State private var templateStyle: ClusterTemplateStyle = .standard
+    @State private var passSubtitle: String = ""
     @State private var cornerRadius: Double = 16
     @State private var cardOpacity: Double = 0.7
     @State private var avatarImage: UIImage?
@@ -23,6 +25,9 @@ struct EditClusterView: View {
     @State private var backgroundImage: UIImage?
     @State private var rawBackgroundImage: CroppableImage?
     @State private var backgroundPhotosItem: PhotosPickerItem?
+    @State private var rhodesBannerImage: UIImage?
+    @State private var rawRhodesBannerImage: CroppableImage?
+    @State private var rhodesBannerPhotosItem: PhotosPickerItem?
     @State private var showingAddQR = false
     @State private var editingProfile: QRProfile?
     @State private var widgetProfileIndex: Int = 0
@@ -38,10 +43,15 @@ struct EditClusterView: View {
         cluster.profiles.sorted { $0.createdAt < $1.createdAt }
     }
 
+    private var usesLandscapeBackground: Bool {
+        false
+    }
+
     var body: some View {
         NavigationStack {
             Form {
                 clusterInfoSection
+                templateSection
                 appearanceSection
                 widgetSection
                 backgroundImageSection
@@ -77,6 +87,15 @@ struct EditClusterView: View {
                     }
                 }
             }
+            .onChange(of: rhodesBannerPhotosItem) { _, newItem in
+                Task {
+                    guard let newItem else { return }
+                    if let data = try? await newItem.loadTransferable(type: Data.self),
+                       let image = UIImage(data: data) {
+                        rawRhodesBannerImage = CroppableImage(image: image)
+                    }
+                }
+            }
             .fullScreenCover(item: $rawAvatarImage) { item in
                 AvatarCropView(
                     sourceImage: item.image,
@@ -92,12 +111,26 @@ struct EditClusterView: View {
             .fullScreenCover(item: $rawBackgroundImage) { item in
                 BackgroundCropView(
                     sourceImage: item.image,
+                    cropAspectRatio: usesLandscapeBackground ? 16.0 / 9.0 : nil,
                     onDone: { cropped in
                         backgroundImage = cropped
                         rawBackgroundImage = nil
                     },
                     onCancel: {
                         rawBackgroundImage = nil
+                    }
+                )
+            }
+            .fullScreenCover(item: $rawRhodesBannerImage) { item in
+                BackgroundCropView(
+                    sourceImage: item.image,
+                    cropAspectRatio: 16.0 / 9.0,
+                    onDone: { cropped in
+                        rhodesBannerImage = cropped
+                        rawRhodesBannerImage = nil
+                    },
+                    onCancel: {
+                        rawRhodesBannerImage = nil
                     }
                 )
             }
@@ -147,6 +180,127 @@ struct EditClusterView: View {
     }
 
     // MARK: - Appearance
+
+    private var templateSection: some View {
+        Section {
+            Picker(L.cardTemplate, selection: $templateStyle) {
+                ForEach(ClusterTemplateStyle.selectableCases) { style in
+                    Label(style.displayName, systemImage: style.iconName)
+                        .tag(style)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            templatePreview
+
+            Text(L.templateHint)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            if templateStyle == .conventionPass || templateStyle == .rhodesPass {
+                TextField(L.passSubtitleLabel, text: $passSubtitle)
+                    .onChange(of: passSubtitle) { _, newValue in
+                        let limited = PassSubtitleLimiter.limited(newValue)
+                        if limited != newValue {
+                            passSubtitle = limited
+                        }
+                    }
+
+                Text(L.passSubtitleHint)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        } header: {
+            Text(L.cardTemplate)
+        }
+    }
+
+    private var templatePreview: some View {
+        HStack {
+            Spacer()
+            ZStack {
+                switch templateStyle {
+                case .standard, .polaroid:
+                    RoundedRectangle(cornerRadius: 18)
+                        .fill(backgroundColor.opacity(0.8))
+                    VStack(spacing: 8) {
+                        avatarPreview
+                            .frame(width: 34, height: 34)
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(textColor.opacity(0.7))
+                            .frame(width: 76, height: 8)
+                        Image(systemName: "qrcode")
+                            .font(.system(size: 42))
+                            .foregroundStyle(textColor.opacity(0.65))
+                    }
+
+                case .conventionPass:
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(backgroundColor.opacity(0.84))
+                    VStack(spacing: 8) {
+                        Capsule()
+                            .fill(textColor.opacity(0.8))
+                            .frame(width: 58, height: 8)
+                        avatarPreview
+                            .frame(width: 36, height: 36)
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(textColor.opacity(0.72))
+                            .frame(width: 86, height: 8)
+                        Image(systemName: "qrcode")
+                            .font(.system(size: 36))
+                            .foregroundStyle(textColor.opacity(0.62))
+                    }
+
+                case .rhodesPass:
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(.white.opacity(0.88))
+                    VStack(spacing: 0) {
+                        Rectangle()
+                            .fill(qrColor.opacity(0.75))
+                            .frame(height: 16)
+                            .overlay(alignment: .trailing) {
+                                Text("#01")
+                                    .font(.system(size: 7, weight: .black))
+                                    .foregroundStyle(.black.opacity(0.55))
+                                    .padding(.trailing, 8)
+                            }
+                        HStack(spacing: 6) {
+                            Rectangle()
+                                .fill(textColor.opacity(0.75))
+                                .frame(width: 12)
+                                .overlay {
+                                    Text("MEQR")
+                                        .font(.system(size: 6, weight: .black))
+                                        .foregroundStyle(backgroundColor.opacity(0.85))
+                                        .rotationEffect(.degrees(-90))
+                                }
+                            VStack(alignment: .leading, spacing: 7) {
+                                avatarPreview
+                                    .frame(width: 42, height: 42)
+                                RoundedRectangle(cornerRadius: 3)
+                                    .fill(textColor.opacity(0.72))
+                                    .frame(width: 72, height: 8)
+                                Image(systemName: "qrcode")
+                                    .font(.system(size: 34))
+                                    .foregroundStyle(qrColor.opacity(0.65))
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .padding(8)
+                    }
+                }
+            }
+            .frame(width: 150, height: 180)
+            .overlay(
+                RoundedRectangle(cornerRadius: 18)
+                    .stroke(.black.opacity(0.08), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.08), radius: 8, y: 4)
+            Spacer()
+        }
+        .padding(.vertical, 4)
+        .listRowBackground(Color.clear)
+    }
 
     private var appearanceSection: some View {
         Section(L.appearance) {
@@ -276,7 +430,13 @@ struct EditClusterView: View {
     private var backgroundImageSection: some View {
         Section(L.backgroundImage) {
             PhotosPicker(selection: $backgroundPhotosItem, matching: .images) {
-                Label(backgroundImage == nil ? L.useCustomImage : L.changeBackgroundImage, systemImage: "photo")
+                Label(backgroundImage == nil ? L.backgroundImage : L.changeBackgroundImage, systemImage: "photo")
+            }
+
+            if usesLandscapeBackground {
+                Text(L.landscapeBackgroundHint)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             if backgroundImage != nil {
@@ -285,6 +445,24 @@ struct EditClusterView: View {
                     backgroundPhotosItem = nil
                 }
                 .foregroundStyle(.red)
+            }
+
+            if templateStyle == .rhodesPass {
+                PhotosPicker(selection: $rhodesBannerPhotosItem, matching: .images) {
+                    Label(rhodesBannerImage == nil ? L.passBannerImage : L.changePassBannerImage, systemImage: "rectangle")
+                }
+
+                Text(L.passBannerHint)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                if rhodesBannerImage != nil {
+                    Button(L.removePassBanner) {
+                        rhodesBannerImage = nil
+                        rhodesBannerPhotosItem = nil
+                    }
+                    .foregroundStyle(.red)
+                }
             }
         }
     }
@@ -355,6 +533,8 @@ struct EditClusterView: View {
         textColor = cluster.textColor
         backgroundColor = cluster.backgroundColor
         qrColor = cluster.qrColor
+        templateStyle = cluster.templateStyle
+        passSubtitle = cluster.passSubtitleText
         cornerRadius = cluster.cornerRadius
         cardOpacity = cluster.cardOpacity ?? 0.7
         if let data = cluster.avatarImageData {
@@ -362,6 +542,9 @@ struct EditClusterView: View {
         }
         if let data = cluster.backgroundImageData {
             backgroundImage = UIImage(data: data)
+        }
+        if let data = cluster.rhodesBannerImageData {
+            rhodesBannerImage = UIImage(data: data)
         }
         widgetProfileIndex = cluster.widgetProfileIndex ?? 0
         widgetUseClusterBackground = cluster.widgetUseClusterBackground ?? true
@@ -377,9 +560,12 @@ struct EditClusterView: View {
         cluster.subtitle = subtitle.trimmingCharacters(in: .whitespaces)
         cluster.avatarImageData = avatarImage?.jpegData(compressionQuality: 0.9)
         cluster.backgroundImageData = backgroundImage?.jpegData(compressionQuality: 0.9)
+        cluster.rhodesBannerImageData = rhodesBannerImage?.jpegData(compressionQuality: 0.9)
         cluster.textColorHex = textColor.toHex() ?? "#000000"
         cluster.backgroundColorHex = backgroundColor.toHex() ?? "#FFFFFF"
         cluster.qrColorHex = qrColor.toHex() ?? "#000000"
+        cluster.templateStyle = templateStyle
+        cluster.passSubtitle = PassSubtitleLimiter.limited(passSubtitle)
         cluster.cornerRadius = cornerRadius
         cluster.cardOpacity = cardOpacity
 
@@ -459,5 +645,35 @@ struct EditClusterView: View {
             saveError = error.localizedDescription
             showSaveError = true
         }
+    }
+}
+
+private enum PassSubtitleLimiter {
+    private static let maxHalfWidthUnits = 20
+
+    static func limited(_ value: String) -> String {
+        let normalized = value
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
+            .replacingOccurrences(of: "\n", with: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        var units = 0
+        var result = ""
+
+        for character in normalized {
+            let nextUnits = units + halfWidthUnits(for: character)
+            if nextUnits > maxHalfWidthUnits {
+                break
+            }
+            result.append(character)
+            units = nextUnits
+        }
+
+        return result
+    }
+
+    private static func halfWidthUnits(for character: Character) -> Int {
+        character.unicodeScalars.allSatisfy(\.isASCII) ? 1 : 2
     }
 }

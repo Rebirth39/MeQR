@@ -23,6 +23,9 @@ enum BackupManager {
         let borderColorHex: String
         let textColorHex: String?
         let qrColorHex: String?
+        let templateStyleRawValue: String?
+        let rhodesBannerImageData: Data?
+        let passSubtitle: String?
         let cornerRadius: Double
         let cardOpacity: Double?
         let sortOrder: Int
@@ -57,6 +60,9 @@ enum BackupManager {
             borderColorHex: cluster.borderColorHex,
             textColorHex: cluster.textColorHex,
             qrColorHex: cluster.qrColorHex,
+            templateStyleRawValue: cluster.templateStyleRawValue,
+            rhodesBannerImageData: cluster.rhodesBannerImageData,
+            passSubtitle: cluster.passSubtitle,
             cornerRadius: cluster.cornerRadius,
             cardOpacity: cluster.cardOpacity,
             sortOrder: cluster.sortOrder,
@@ -144,6 +150,9 @@ enum BackupManager {
                     borderColorHex: clusterBackup.borderColorHex,
                     textColorHex: clusterBackup.textColorHex,
                     qrColorHex: clusterBackup.qrColorHex,
+                    templateStyleRawValue: clusterBackup.templateStyleRawValue,
+                    rhodesBannerImageData: clusterBackup.rhodesBannerImageData,
+                    passSubtitle: clusterBackup.passSubtitle,
                     cornerRadius: clusterBackup.cornerRadius,
                     cardOpacity: clusterBackup.cardOpacity,
                     sortOrder: clusterBackup.sortOrder,

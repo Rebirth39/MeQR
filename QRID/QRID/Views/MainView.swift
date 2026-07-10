@@ -17,7 +17,8 @@ struct MainView: View {
     @State private var showingMeQRProfileCode = false
     @State private var showingMeQRScanner = false
     @State private var showingEncounters = false
-    @State private var cardHeight: CGFloat = 460
+    @State private var showingEvents = false
+    @State private var cardHeight: CGFloat = 520
     @State private var currentSelectedProfileIndex: Int = 0
     @State private var clusterIdBeforeReorder: PersistentIdentifier?
     @State private var showSavedAlert = false
@@ -85,6 +86,11 @@ struct MainView: View {
                                     showingEncounters = true
                                 } label: {
                                     Label(L.encounters, systemImage: "person.2.crop.square.stack")
+                                }
+                                Button {
+                                    showingEvents = true
+                                } label: {
+                                    Label(L.events, systemImage: "calendar")
                                 }
                             } label: {
                                 Image(systemName: "square.and.arrow.up")
@@ -189,6 +195,9 @@ struct MainView: View {
             .sheet(isPresented: $showingEncounters) {
                 EncountersView()
             }
+            .sheet(isPresented: $showingEvents) {
+                EventCenterView()
+            }
             .onChange(of: showingReorderClusters) { _, isShowing in
                 if !isShowing, let savedId = clusterIdBeforeReorder {
                     if let newIndex = clusters.firstIndex(where: { $0.persistentModelID == savedId }) {
@@ -273,7 +282,6 @@ struct MainView: View {
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 .animation(.easeInOut(duration: 0.3), value: currentPage)
                 .frame(height: cardHeight)
-                .clipped()
                 .onChange(of: currentPage) { _, _ in
                     currentSelectedProfileIndex = 0
                 }
@@ -467,7 +475,7 @@ struct MainView: View {
 
 struct ShareableCard: View {
     let cluster: QRCluster
-    let cardHeight: CGFloat = 460
+    let cardHeight: CGFloat = 520
 
     var body: some View {
         GeometryReader { geo in

@@ -475,6 +475,7 @@ extension Color {
     }
 }
 
+#if MEQR_WIDGET_PREVIEWS
 #Preview(as: .systemSmall) {
     MeQRSmallWidget()
 } timeline: {
@@ -503,3 +504,4 @@ extension Color {
         )
     ])
 }
+#endif

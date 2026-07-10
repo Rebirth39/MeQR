@@ -2,6 +2,7 @@ import SwiftUI
 
 struct BackgroundCropView: View {
     let sourceImage: UIImage
+    var cropAspectRatio: CGFloat? = nil
     let onDone: (UIImage) -> Void
     let onCancel: () -> Void
 
@@ -21,7 +22,7 @@ struct BackgroundCropView: View {
 
     private var cropSize: CGSize {
         let width = UIScreen.main.bounds.width - 32
-        let height = width * screenRatio
+        let height = cropAspectRatio.map { width / $0 } ?? (width * screenRatio)
         return CGSize(width: width, height: min(height, UIScreen.main.bounds.height - 180))
     }
 

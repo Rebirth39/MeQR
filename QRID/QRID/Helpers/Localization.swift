@@ -35,6 +35,7 @@ struct L {
     static var meqrProfileCode: String { tr("MeQR 交换码", "MeQR 交換碼", "MeQR 交換碼", "MeQR Profile Code", "MeQR 交換コード") }
     static var scanMeQRCode: String { tr("扫 MeQR 交换码", "掃 MeQR 交換碼", "掃描 MeQR 交換碼", "Scan MeQR Code", "MeQRコードをスキャン") }
     static var encounters: String { tr("认识记录", "認識記錄", "認識紀錄", "Encounters", "出会った人") }
+    static var events: String { tr("线下活动", "線下活動", "線下活動", "Events", "イベント") }
 
     // Add/Edit Profile
     static var newQRCode: String { tr("新建二维码", "新增 QR Code", "新增 QR Code", "New QR Code", "新規QRコード") }
@@ -63,6 +64,20 @@ struct L {
     static var cornerRadius: String { tr("圆角", "圓角", "圓角", "Corner Radius", "角丸") }
     static var preview: String { tr("预览", "預覽", "預覽", "Preview", "プレビュー") }
     static var save: String { tr("保存", "儲存", "儲存", "Save", "保存") }
+    static var cardTemplate: String { tr("卡片模板", "卡片模板", "卡片模板", "Card Template", "カードテンプレート") }
+    static var templateStandard: String { tr("标准", "標準", "標準", "Standard", "標準") }
+    static var templatePolaroid: String { tr("拍立得", "拍立得", "拍立得", "Polaroid", "ポラロイド") }
+    static var templateConventionPass: String { tr("漫展通行证", "漫展通行證", "漫展通行證", "Convention Pass", "イベントパス") }
+    static var templateRhodesPass: String { tr("明日方舟通行证", "明日方舟通行證", "明日方舟通行證", "Arknights Pass", "アークナイツパス") }
+    static var passLabel: String { tr("通行证", "通行證", "通行證", "Pass", "パス") }
+    static var passSubtitleLabel: String { tr("通行证短标签", "通行證短標籤", "通行證短標籤", "Pass Short Label", "パス短いラベル") }
+    static var passSubtitleHint: String { tr("显示在名字下面，最多 10 个汉字。", "顯示在名字下面，最多 10 個漢字。", "顯示在名字下面，最多 10 個漢字。", "Shown under the name. Up to 10 CJK characters.", "名前の下に表示します。漢字10文字まで。") }
+    static var templateHint: String { tr("模板会改变名片排版；颜色、头像、背景图仍然可以自己调。", "模板會改變名片排版；顏色、頭像、背景圖仍然可以自己調。", "模板會改變名片排版；顏色、頭像、背景圖仍然可以自己調。", "Templates change the card layout. Colors, avatar, and background remain editable.", "テンプレートはレイアウトを変更します。色、アイコン、背景は編集できます。") }
+    static var landscapeBackgroundHint: String { tr("当前模板更适合横版背景图；选择图片时会用横向 banner 比例裁剪。", "目前模板更適合橫版背景圖；選擇圖片時會用橫向 banner 比例裁剪。", "目前模板更適合橫版背景圖；選擇圖片時會用橫向 banner 比例裁剪。", "This template works best with a landscape background. The crop frame uses a banner ratio.", "このテンプレートは横長の背景に向いています。横長バナー比率で切り抜きます。") }
+    static var passBannerImage: String { tr("横版头图", "橫版頭圖", "橫版頭圖", "Landscape Header Image", "横長ヘッダー画像") }
+    static var changePassBannerImage: String { tr("更换横版头图", "更換橫版頭圖", "更換橫版頭圖", "Change Landscape Header", "横長ヘッダーを変更") }
+    static var passBannerHint: String { tr("通行证可以单独选择一张横版头图做卡片 banner；背景图仍然可以用竖版图。", "通行證可以單獨選擇一張橫版頭圖做卡片 banner；背景圖仍然可以用豎版圖。", "通行證可以單獨選擇一張橫版頭圖做卡片 banner；背景圖仍然可以用直式圖。", "Pass can use a separate landscape header while the main background stays portrait.", "パスでは横長ヘッダー画像を別に選べます。背景は縦長のままで使えます。") }
+    static var removePassBanner: String { tr("移除横版头图", "移除橫版頭圖", "移除橫版頭圖", "Remove Landscape Header", "横長ヘッダーを削除") }
 
     // Crop View
     static var cropAvatar: String { tr("裁剪头像", "裁剪頭像", "裁剪頭像", "Crop Avatar", "アイコンを切り抜き") }
@@ -120,7 +135,11 @@ struct L {
     static var meqrCodeSettings: String { tr("交换码设置", "交換碼設定", "交換碼設定", "Code Settings", "交換コード設定") }
     static var meqrCodeUploading: String { tr("正在生成交换码...", "正在產生交換碼...", "正在產生交換碼...", "Preparing code...", "交換コードを準備中...") }
     static var meqrCodeLocalReady: String { tr("本地交换码：不会上传资料，扫码直接读取。", "本地交換碼：不會上傳資料，掃碼直接讀取。", "本地交換碼：不會上傳資料，掃碼直接讀取。", "Local code: no upload, scan to read directly.", "ローカルコード：アップロードせず、スキャンして直接読み取ります。") }
+    static var meqrCodeOnlineReady: String { tr("在线交换码：已上传到 MeQR 云端，离线备用码也已写入。", "線上交換碼：已上傳到 MeQR 雲端，離線備用碼也已寫入。", "線上交換碼：已上傳到 MeQR 雲端，離線備用碼也已寫入。", "Online code: uploaded to MeQR Cloud with an offline backup.", "オンラインコード：MeQRクラウドにアップロードし、オフライン予備も含めました。") }
+    static func meqrCodeUploadFailed(_ reason: String) -> String { tr("上传失败，已使用本地备用码。\(reason)", "上傳失敗，已使用本地備用碼。\(reason)", "上傳失敗，已使用本地備用碼。\(reason)", "Upload failed; using the local backup code. \(reason)", "アップロードに失敗したため、ローカル予備コードを使います。\(reason)") }
     static var meqrCodeStillPreparing: String { tr("交换码还在生成，等它一下。", "交換碼還在產生，等它一下。", "交換碼還在產生，等它一下。", "The code is still being prepared.", "交換コードを準備中です。") }
+    static var exchangeCardIntro: String { tr("展示文案", "展示文案", "展示文案", "Display Intro", "表示テキスト") }
+    static var exchangeCardIntroHint: String { tr("显示在交换码页面和名片里，最多 25 个汉字；英文数字按半个汉字算。", "顯示在交換碼頁面和名片裡，最多 25 個漢字；英文數字按半個漢字算。", "顯示在交換碼頁面和名片裡，最多 25 個漢字；英文數字按半個漢字算。", "Shown on the exchange page and profile card. Up to 25 CJK characters; Latin letters count as half.", "交換コード画面とプロフィールに表示します。漢字25文字まで、英数字は半分換算。") }
     static var includedPlatforms: String { tr("塞进交换码的平台", "放入交換碼的平台", "放進交換碼的平台", "Included Platforms", "交換コードに入れる平台") }
     static var offlineFallbackPlatform: String { tr("离线备用平台", "離線備用平台", "離線備用平台", "Offline Backup Platform", "オフライン予備平台") }
     static var offlineFallbackPlatformHint: String { tr("没网的时候只保这个平台，加上昵称和 25 个字以内的介绍。", "無網時只保留這個平台，加上暱稱和 25 字以內的介紹。", "沒網時只保留這個平台，加上暱稱和 25 字以內的介紹。", "When offline, MeQR keeps only this platform plus your name and a short intro.", "オフライン時は、この平台と名前、短い紹介だけを残します。") }
@@ -144,6 +163,21 @@ struct L {
     static var saveEncounter: String { tr("保存记录", "儲存記錄", "儲存紀錄", "Save Encounter", "記録を保存") }
     static var saved: String { tr("已保存", "已儲存", "已儲存", "Saved", "保存済み") }
     static var platformsFromMeQR: String { tr("交换的平台", "交換的平台", "交換的平台", "Shared Platforms", "共有された平台") }
+    static var activeEvent: String { tr("当前活动", "目前活動", "目前活動", "Active Event", "現在のイベント") }
+    static var noActiveEvent: String { tr("不绑定活动", "不綁定活動", "不綁定活動", "No Active Event", "イベントなし") }
+    static var noActiveEventHint: String { tr("扫码保存时只记录时间，不归到具体展子。", "掃碼儲存時只記錄時間，不歸到具體展子。", "掃描儲存時只記錄時間，不歸到具體活動。", "New scans will not be attached to an event.", "新しい記録をイベントに紐づけません。") }
+    static var chooseEventForEncounter: String { tr("选择展会后，新的认识记录会自动归档到这里。", "選擇展會後，新的認識記錄會自動歸檔到這裡。", "選擇活動後，新的認識紀錄會自動歸檔到這裡。", "Choose an event to file new encounters there.", "イベントを選ぶと新しい記録をそこに保存します。") }
+    static var eventName: String { tr("活动名称", "活動名稱", "活動名稱", "Event Name", "イベント名") }
+    static var eventVenue: String { tr("地点", "地點", "地點", "Venue", "会場") }
+    static var eventAddress: String { tr("地址", "地址", "地址", "Address", "住所") }
+    static var eventDate: String { tr("时间", "時間", "時間", "Date", "日時") }
+    static var eventDetails: String { tr("活动信息", "活動資訊", "活動資訊", "Details", "詳細") }
+    static var eventInfo: String { tr("活动信息", "活動資訊", "活動資訊", "Event Info", "イベント情報") }
+    static var customEvent: String { tr("自定义活动", "自訂活動", "自訂活動", "Custom Event", "カスタムイベント") }
+    static var loadingEvents: String { tr("正在拉取服务器上的近期展会...", "正在拉取伺服器上的近期展會...", "正在拉取伺服器上的近期活動...", "Loading recent events from the server...", "サーバーから最近のイベントを読み込み中...") }
+    static var eventsFooter: String { tr("服务器列表可以人工维护；Only 展或小聚会可以用右上角加号手动添加。", "伺服器列表可以人工維護；Only 展或小聚會可以用右上角加號手動加入。", "伺服器列表可以人工維護；Only 場或小聚會可以用右上角加號手動新增。", "Server events can be curated manually. Use plus for small custom events.", "サーバー側のイベント一覧を手動管理できます。小規模イベントは追加できます。") }
+    static var appleMaps: String { tr("Apple 地图", "Apple 地圖", "Apple 地圖", "Apple Maps", "Appleマップ") }
+    static var amap: String { tr("高德", "高德", "高德", "Amap", "高德") }
     static var noEncountersYet: String { tr("还没有认识记录", "還沒有認識記錄", "還沒有認識紀錄", "No Encounters Yet", "記録はまだありません") }
     static var noEncountersHint: String { tr("扫对方的 MeQR 交换码之后，会出现在这里。", "掃對方的 MeQR 交換碼之後，會出現在這裡。", "掃描對方的 MeQR 交換碼之後，會出現在這裡。", "People you save from MeQR codes will appear here.", "MeQRコードから保存した人がここに表示されます。") }
     static var searchEncounters: String { tr("搜索昵称、备注、标签", "搜尋暱稱、備註、標籤", "搜尋暱稱、備註、標籤", "Search names, notes, tags", "名前、メモ、タグを検索") }
@@ -153,6 +187,9 @@ struct L {
     static var metAt: String { tr("认识时间", "認識時間", "認識時間", "Met At", "会った日時") }
     static var note: String { tr("备注", "備註", "備註", "Note", "メモ") }
     static var tags: String { tr("标签", "標籤", "標籤", "Tags", "タグ") }
+    static var followStatus: String { tr("互关状态 / 返图进度", "互關狀態 / 返圖進度", "互關狀態 / 返圖進度", "Follow / photo status", "フォロー・返礼状況") }
+    static var needsPhotoReturn: String { tr("需要返图", "需要返圖", "需要返圖", "Needs photo return", "写真返却が必要") }
+    static var exchangedFreebie: String { tr("交换过无料", "交換過無料", "交換過無料配布", "Freebie exchanged", "無配交換済み") }
     static var notMeQRProfileCode: String { tr("这不是有效的 MeQR 交换码。", "這不是有效的 MeQR 交換碼。", "這不是有效的 MeQR 交換碼。", "This is not a valid MeQR profile code.", "有効なMeQR交換コードではありません。") }
     static var photoPermissionNeeded: String { tr("需要相册权限才能保存图片。", "需要相簿權限才能儲存圖片。", "需要照片權限才能儲存圖片。", "Photo permission is needed to save the image.", "画像を保存するには写真へのアクセスが必要です。") }
     static var cameraPermissionNeeded: String { tr("需要相机权限才能扫描 MeQR 交换码。", "需要相機權限才能掃描 MeQR 交換碼。", "需要相機權限才能掃描 MeQR 交換碼。", "Camera permission is needed to scan MeQR codes.", "MeQRコードをスキャンするにはカメラへのアクセスが必要です。") }

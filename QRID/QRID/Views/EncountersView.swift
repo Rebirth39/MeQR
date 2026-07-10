@@ -5,6 +5,7 @@ struct EncounterPreviewView: View {
 
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var store = EncounterStore.shared
+    @ObservedObject private var eventStore = EventStore.shared
     @State private var saved = false
 
     var body: some View {
@@ -24,6 +25,15 @@ struct EncounterPreviewView: View {
                         platformRow(platform)
                     }
                 }
+
+                if let activeEvent = eventStore.activeEvent {
+                    Section(L.activeEvent) {
+                        LabeledContent(L.eventName, value: activeEvent.title)
+                        if !activeEvent.venue.isEmpty {
+                            LabeledContent(L.eventVenue, value: activeEvent.venue)
+                        }
+                    }
+                }
             }
             .navigationTitle(L.meqrProfileFound)
             .navigationBarTitleDisplayMode(.inline)
@@ -33,7 +43,7 @@ struct EncounterPreviewView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(saved ? L.saved : L.saveEncounter) {
-                        store.add(profile)
+                        store.add(profile, event: eventStore.activeEvent)
                         saved = true
                         dismiss()
                     }
@@ -47,7 +57,9 @@ struct EncounterPreviewView: View {
 struct EncountersView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var store = EncounterStore.shared
+    @ObservedObject private var eventStore = EventStore.shared
     @State private var searchText = ""
+    @State private var showingEvents = false
 
     private var filteredRecords: [EncounterRecord] {
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
@@ -57,6 +69,8 @@ struct EncountersView: View {
                 || record.subtitle.lowercased().contains(query)
                 || record.note.lowercased().contains(query)
                 || record.tags.contains { $0.lowercased().contains(query) }
+                || (record.eventTitle ?? "").lowercased().contains(query)
+                || (record.eventVenue ?? "").lowercased().contains(query)
                 || record.profiles.contains { $0.platformName.lowercased().contains(query) || $0.qrContent.lowercased().contains(query) }
         }
     }
@@ -64,6 +78,32 @@ struct EncountersView: View {
     var body: some View {
         NavigationStack {
             List {
+                Section {
+                    Button {
+                        showingEvents = true
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "calendar.badge.clock")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundStyle(.tint)
+                                .frame(width: 28)
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(eventStore.activeEvent?.title ?? L.noActiveEvent)
+                                    .font(.headline)
+                                    .foregroundStyle(.primary)
+                                Text(eventStore.activeEvent?.dateSummary ?? L.chooseEventForEncounter)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+
                 if filteredRecords.isEmpty {
                     ContentUnavailableView(
                         searchText.isEmpty ? L.noEncountersYet : L.noSearchResults,
@@ -89,6 +129,17 @@ struct EncountersView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(L.done) { dismiss() }
                 }
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showingEvents = true
+                    } label: {
+                        Image(systemName: "calendar")
+                    }
+                    .accessibilityLabel(L.events)
+                }
+            }
+            .sheet(isPresented: $showingEvents) {
+                EventCenterView()
             }
         }
     }
@@ -117,6 +168,12 @@ struct EncountersView: View {
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
+                if let eventTitle = record.eventTitle, !eventTitle.isEmpty {
+                    Label(eventTitle, systemImage: "calendar")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
             }
         }
         .padding(.vertical, 3)
@@ -129,10 +186,12 @@ struct EncounterDetailView: View {
 
     @State private var record: EncounterRecord
     @State private var tagsText: String
+    @State private var followStatus: String
 
     init(record: EncounterRecord) {
         _record = State(initialValue: record)
         _tagsText = State(initialValue: record.tags.joined(separator: " "))
+        _followStatus = State(initialValue: record.followStatus ?? "")
     }
 
     var body: some View {
@@ -148,11 +207,28 @@ struct EncounterDetailView: View {
 
             Section(L.encounterInfo) {
                 LabeledContent(L.metAt, value: record.metAt.formatted(date: .abbreviated, time: .shortened))
+                if let eventTitle = record.eventTitle, !eventTitle.isEmpty {
+                    LabeledContent(L.eventName, value: eventTitle)
+                }
+                if let eventVenue = record.eventVenue, !eventVenue.isEmpty {
+                    LabeledContent(L.eventVenue, value: eventVenue)
+                }
                 TextField(L.note, text: $record.note, axis: .vertical)
                     .lineLimit(2...6)
                 TextField(L.tags, text: $tagsText)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
+                TextField(L.followStatus, text: $followStatus)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                Toggle(L.needsPhotoReturn, isOn: Binding(
+                    get: { record.needsPhotoReturn ?? false },
+                    set: { record.needsPhotoReturn = $0 }
+                ))
+                Toggle(L.exchangedFreebie, isOn: Binding(
+                    get: { record.exchangedFreebie ?? false },
+                    set: { record.exchangedFreebie = $0 }
+                ))
             }
 
             Section(L.platformsFromMeQR) {
@@ -174,8 +250,210 @@ struct EncounterDetailView: View {
         record.tags = tagsText
             .split(whereSeparator: { $0 == " " || $0 == "," || $0 == "，" || $0 == "#" })
             .map(String.init)
+        record.followStatus = followStatus.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : followStatus
         store.update(record)
         dismiss()
+    }
+}
+
+struct EventCenterView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
+    @ObservedObject private var eventStore = EventStore.shared
+    @State private var showingCustomEvent = false
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    Button {
+                        eventStore.setActiveEvent(nil)
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(L.noActiveEvent)
+                                    .font(.headline)
+                                    .foregroundStyle(.primary)
+                                Text(L.noActiveEventHint)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            if eventStore.activeEventID == nil {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(.tint)
+                            }
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                Section {
+                    ForEach(eventStore.events) { event in
+                        eventRow(event)
+                    }
+                    .onDelete(perform: deleteEvents)
+                } header: {
+                    Text(L.events)
+                } footer: {
+                    if eventStore.isRefreshing {
+                        Text(L.loadingEvents)
+                    } else if let refreshError = eventStore.refreshError {
+                        Text(refreshError)
+                    } else {
+                        Text(L.eventsFooter)
+                    }
+                }
+            }
+            .navigationTitle(L.events)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(L.done) { dismiss() }
+                }
+                ToolbarItemGroup(placement: .primaryAction) {
+                    Button {
+                        Task { await eventStore.refreshRemoteEvents() }
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                    .disabled(eventStore.isRefreshing)
+
+                    Button {
+                        showingCustomEvent = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
+            .task {
+                if eventStore.events.isEmpty {
+                    await eventStore.refreshRemoteEvents()
+                }
+            }
+            .sheet(isPresented: $showingCustomEvent) {
+                CustomEventView()
+            }
+        }
+    }
+
+    private func eventRow(_ event: MeQREvent) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Button {
+                eventStore.setActiveEvent(event)
+            } label: {
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: event.isCustom ? "mappin.and.ellipse" : "sparkles")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(.tint)
+                        .frame(width: 28)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(event.title)
+                            .font(.headline)
+                            .foregroundStyle(.primary)
+                        Text([event.dateSummary, event.venue].filter { !$0.isEmpty }.joined(separator: " · "))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        if !event.details.isEmpty {
+                            Text(event.details)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(3)
+                        }
+                    }
+                    Spacer()
+                    if eventStore.activeEventID == event.id {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(.tint)
+                    }
+                }
+            }
+            .buttonStyle(.plain)
+
+            if !event.navigationQuery.isEmpty {
+                HStack(spacing: 10) {
+                    Button {
+                        openURL(appleMapsURL(for: event))
+                    } label: {
+                        Label(L.appleMaps, systemImage: "map")
+                    }
+                    .buttonStyle(.bordered)
+
+                    Button {
+                        openURL(amapURL(for: event))
+                    } label: {
+                        Label(L.amap, systemImage: "location")
+                    }
+                    .buttonStyle(.bordered)
+                }
+                .controlSize(.small)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func deleteEvents(_ offsets: IndexSet) {
+        for offset in offsets {
+            let event = eventStore.events[offset]
+            eventStore.deleteCustomEvent(event)
+        }
+    }
+
+    private func appleMapsURL(for event: MeQREvent) -> URL {
+        if let latitude = event.latitude, let longitude = event.longitude {
+            return URL(string: "http://maps.apple.com/?ll=\(latitude),\(longitude)&q=\(event.title.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? event.title)")!
+        }
+        let query = event.navigationQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? event.navigationQuery
+        return URL(string: "http://maps.apple.com/?q=\(query)")!
+    }
+
+    private func amapURL(for event: MeQREvent) -> URL {
+        let name = event.title.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? event.title
+        if let latitude = event.latitude, let longitude = event.longitude {
+            return URL(string: "iosamap://path?sourceApplication=MeQR&dlat=\(latitude)&dlon=\(longitude)&dname=\(name)&dev=0&t=0")!
+        }
+        let query = event.navigationQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? event.navigationQuery
+        return URL(string: "iosamap://poi?sourceApplication=MeQR&keywords=\(query)")!
+    }
+}
+
+private struct CustomEventView: View {
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var eventStore = EventStore.shared
+    @State private var title = ""
+    @State private var venue = ""
+    @State private var address = ""
+    @State private var date = Date()
+    @State private var details = ""
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section(L.eventInfo) {
+                    TextField(L.eventName, text: $title)
+                    TextField(L.eventVenue, text: $venue)
+                    TextField(L.eventAddress, text: $address, axis: .vertical)
+                        .lineLimit(1...3)
+                    DatePicker(L.eventDate, selection: $date, displayedComponents: [.date, .hourAndMinute])
+                    TextField(L.eventDetails, text: $details, axis: .vertical)
+                        .lineLimit(2...5)
+                }
+            }
+            .navigationTitle(L.customEvent)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(L.cancel) { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(L.save) {
+                        eventStore.addCustomEvent(title: title, venue: venue, address: address, date: date, details: details)
+                        dismiss()
+                    }
+                    .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+        }
     }
 }
 
