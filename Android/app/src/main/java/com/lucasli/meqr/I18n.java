@@ -30,6 +30,14 @@ final class I18n {
         put("done", "完成", "完成", "完成", "Done", "完了");
         put("ok", "好", "好", "好", "OK", "OK");
         put("share", "分享", "分享", "分享", "Share", "共有");
+        put("meqrProfileCode", "MeQR 交换码", "MeQR 交換碼", "MeQR 交換碼", "MeQR Profile Code", "MeQR 交換コード");
+        put("saveMeQrCode", "保存交换码到相册", "儲存交換碼到相簿", "儲存交換碼到照片", "Save Code to Photos", "交換コードを写真に保存");
+        put("meqrCodeHint", "对方用 MeQR 扫这个码，就能看到你的这张扩列卡。", "對方用 MeQR 掃這個碼，就能看到你的這張擴列卡。", "對方用 MeQR 掃描這個碼，就能看到你的這張擴列卡。", "Someone can scan this with MeQR to read your profile.", "相手がMeQRでこのコードを読み取ると、あなたのプロフィールを表示できます。");
+        put("meqrLocalReady", "本地交换码：不会上传资料，扫码直接读取。", "本地交換碼：不會上傳資料，掃碼直接讀取。", "本地交換碼：不會上傳資料，掃碼直接讀取。", "Local code: no upload, scan to read directly.", "ローカルコード：アップロードせず、スキャンして直接読み取ります。");
+        put("meqrPreparingOnline", "正在生成在线交换码…", "正在產生線上交換碼…", "正在產生線上交換碼…", "Creating online exchange code…", "オンライン交換コードを作成中…");
+        put("meqrOnlineReady", "在线交换码已生成；没网时会用离线内容兜底。", "線上交換碼已產生；無網時會用離線內容備用。", "線上交換碼已產生；沒網時會用離線內容備用。", "Online code ready, with offline fallback inside.", "オンラインコード作成済み。オフライン時の予備情報も入っています。");
+        put("meqrOnlineFallback", "在线生成失败，已切换成本地离线交换码。", "線上產生失敗，已切換成本地離線交換碼。", "線上產生失敗，已切換成本地離線交換碼。", "Online upload failed; using the local offline code.", "オンライン作成に失敗したため、ローカルのオフラインコードを使用します。");
+        put("meqrCodeFailed", "交换码生成失败", "交換碼產生失敗", "交換碼產生失敗", "Could not create MeQR code.", "交換コードを作成できません。");
         put("saved", "已保存到相册", "已儲存到相簿", "已儲存到照片", "Saved to Photos", "写真に保存しました");
         put("saveFailed", "无法保存，请重试。", "無法儲存，請再試一次。", "無法儲存，請再試一次。", "Please try again.", "もう一度お試しください。");
         put("emptyTitle", "还没有二维码", "還沒有 QR Code", "還沒有 QR Code", "No QR Codes Yet", "QRコードがまだありません");
@@ -40,6 +48,9 @@ final class I18n {
         put("bio", "介绍", "介紹", "介紹", "Bio / Intro", "紹介");
         put("qrContent", "二维码内容", "QR Code 內容", "QR Code 內容", "QR Content", "QRコード内容");
         put("platform", "平台", "平台", "平台", "Platform", "プラットフォーム");
+        put("commonPlatforms", "常用软件", "常用軟件", "常用 App", "Common Apps", "よく使うアプリ");
+        put("socialPlatforms", "社交", "社交", "社群", "Social", "ソーシャル");
+        put("professionalPlatforms", "职业", "職業", "職業", "Professional", "仕事");
         put("customPlatform", "平台名称", "平台名稱", "平台名稱", "Platform Name", "プラットフォーム名");
         put("avatar", "头像", "頭像", "頭像", "Avatar", "アイコン");
         put("backgroundImage", "背景图", "背景圖", "背景圖", "Background Image", "背景画像");
@@ -62,7 +73,8 @@ final class I18n {
         put("followSystem", "跟随系统", "跟隨系統", "跟隨系統", "Follow System", "システムに合わせる");
         put("restartNotice", "部分新语言资源可能需要重启软件才能生效", "部分新語言資源可能需要重新啟動軟件才能生效", "部分新語言資源可能需要重新啟動軟體才能生效", "Some new language resources may require restarting the app to take effect.", "一部の新しい言語リソースは、アプリの再起動後に反映される場合があります。");
         put("about", "关于软件", "關於軟件", "關於 App", "About", "このアプリについて");
-        put("privacy", "隐私政策", "私隱政策", "隱私權政策", "Privacy Policy", "プライバシーポリシー");
+        put("privacy", "隐私政策", "私隱政策", "隱私權政策", "Privacy Policy (English)", "プライバシーポリシー（英語）");
+        put("version", "版本", "版本", "版本", "Version", "バージョン");
         put("github", "GitHub 项目页面", "GitHub 項目頁面", "GitHub 專案頁面", "GitHub Project", "GitHubプロジェクト");
         put("contact", "联系开发者", "聯絡開發者", "聯絡開發者", "Contact Developer", "開発者に連絡");
         put("developerIntro", "开发者介绍", "開發者介紹", "開發者介紹", "Developer Intro", "開発者紹介");
@@ -77,7 +89,7 @@ final class I18n {
         put("custom", "自定义", "自訂", "自訂", "Custom", "カスタム");
         put("xiaohongshu", "小红书", "小紅書", "小紅書", "Xiaohongshu", "小紅書");
         put("bilibili", "B站", "B站", "B站", "Bilibili", "Bilibili");
-        put("douyin", "抖音", "抖音", "抖音", "Douyin", "抖音");
+        put("douyinTikTok", "抖音", "抖音", "TikTok", "TikTok", "TikTok");
         put("weibo", "微博", "微博", "微博", "Weibo", "微博");
     }
 

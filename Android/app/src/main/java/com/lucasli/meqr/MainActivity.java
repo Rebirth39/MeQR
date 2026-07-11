@@ -6,6 +6,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
@@ -70,6 +71,7 @@ public final class MainActivity extends Activity {
     private MeQrProfile editingProfile;
     private EditSession editSession;
     private Bitmap pendingShareBitmap;
+    private Bitmap pendingMeQrBitmap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -338,7 +340,7 @@ public final class MainActivity extends Activity {
 
         form.addView(section(i18n.t("platform")));
         LinearLayout platformPanel = panel();
-        editSession.platformButton = rowButton(PlatformNames.displayName(editSession.profile.platform, i18n), "⌄");
+        editSession.platformButton = rowButton(editSession.profile.platformDisplayName(i18n), "⌄");
         editSession.platformButton.setOnClickListener(v -> showPlatformPicker());
         platformPanel.addView(editSession.platformButton, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(56)));
         platformPanel.addView(separator());
@@ -437,6 +439,13 @@ public final class MainActivity extends Activity {
         if ("custom".equals(profile.platform) && profile.customPlatformName.isEmpty()) {
             profile.platform = PlatformNames.detect(profile.qrContent);
         }
+        if ("custom".equals(profile.platform) && !profile.customPlatformName.isEmpty()) {
+            String matched = PlatformNames.matchingName(profile.customPlatformName, i18n);
+            if (matched != null) {
+                profile.platform = matched;
+                profile.customPlatformName = "";
+            }
+        }
         if (editingProfile == null) {
             profiles.add(profile);
         } else {
@@ -493,20 +502,37 @@ public final class MainActivity extends Activity {
     }
 
     private void showPlatformPicker() {
-        String[] labels = new String[PlatformNames.IDS.size()];
-        for (int i = 0; i < PlatformNames.IDS.size(); i++) {
-            labels[i] = PlatformNames.displayName(PlatformNames.IDS.get(i), i18n);
-        }
+        List<String> ids = new ArrayList<>();
+        List<String> labels = new ArrayList<>();
+        addPlatformGroup(ids, labels, i18n.t("commonPlatforms"), PlatformNames.COMMON_IDS);
+        addPlatformGroup(ids, labels, i18n.t("socialPlatforms"), PlatformNames.SOCIAL_IDS);
+        addPlatformGroup(ids, labels, i18n.t("professionalPlatforms"), PlatformNames.PROFESSIONAL_IDS);
+        ids.add("custom");
+        labels.add(PlatformNames.displayName("custom", i18n));
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle(i18n.t("platform"))
-                .setItems(labels, (choiceDialog, which) -> {
-                    editSession.profile.platform = PlatformNames.IDS.get(which);
-                    editSession.platformButton.setText(labels[which] + "   ⌄");
+                .setItems(labels.toArray(new String[0]), (choiceDialog, which) -> {
+                    String selected = ids.get(which);
+                    if (selected.isEmpty()) {
+                        showPlatformPicker();
+                        return;
+                    }
+                    editSession.profile.platform = PlatformNames.actualId(selected, i18n);
+                    editSession.platformButton.setText(PlatformNames.displayName(editSession.profile.platform, i18n) + "   ⌄");
                     editSession.customPlatformName.setVisibility("custom".equals(editSession.profile.platform) ? View.VISIBLE : View.GONE);
                     updatePreview();
                 })
                 .show();
         styleAlert(dialog);
+    }
+
+    private void addPlatformGroup(List<String> ids, List<String> labels, String title, List<String> groupIds) {
+        ids.add("");
+        labels.add("— " + title + " —");
+        for (String id : groupIds) {
+            ids.add(id);
+            labels.add(PlatformNames.displayName(id, i18n));
+        }
     }
 
     private void confirmDelete(MeQrProfile profile) {
@@ -661,6 +687,12 @@ public final class MainActivity extends Activity {
                     startActivity(Intent.createChooser(share, i18n.t("share")));
                 }
             }
+        } else if (requestCode == REQUEST_WRITE_PHOTOS && pendingMeQrBitmap != null) {
+            Bitmap bitmap = pendingMeQrBitmap;
+            pendingMeQrBitmap = null;
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                saveMeQrBitmap(bitmap);
+            }
         }
     }
 
@@ -699,6 +731,7 @@ public final class MainActivity extends Activity {
         }
         MeQrProfile profile = profiles.get(0);
         List<String> labels = new ArrayList<>();
+        labels.add(i18n.t("meqrProfileCode"));
         labels.add(i18n.t("edit"));
         labels.add(i18n.t("share"));
         if (profiles.size() > 1) {
@@ -711,7 +744,9 @@ public final class MainActivity extends Activity {
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setItems(labels.toArray(new String[0]), (choiceDialog, which) -> {
                     String choice = labels.get(which);
-                    if (choice.equals(i18n.t("edit"))) {
+                    if (choice.equals(i18n.t("meqrProfileCode"))) {
+                        showMeQrCode(profile);
+                    } else if (choice.equals(i18n.t("edit"))) {
                         showEditor(profile);
                     } else if (choice.equals(i18n.t("share"))) {
                         shareProfile(profile);
@@ -735,6 +770,12 @@ public final class MainActivity extends Activity {
         root.setPadding(dp(18), dp(12), dp(18), dp(12));
         root.setBackgroundColor(COLOR_BG);
         root.addView(heading(i18n.t("settings")));
+
+        if (!profiles.isEmpty()) {
+            Button meqr = actionButton(i18n.t("meqrProfileCode"));
+            meqr.setOnClickListener(v -> showMeQrCode(profiles.get(0)));
+            root.addView(meqr);
+        }
 
         Button language = actionButton(i18n.t("language") + ": " + i18n.languageDisplayName(i18n.languageMode()));
         language.setOnClickListener(v -> showLanguagePicker());
@@ -779,8 +820,15 @@ public final class MainActivity extends Activity {
         app.setGravity(Gravity.CENTER);
         root.addView(app);
 
+        TextView version = new TextView(this);
+        version.setText(i18n.t("version") + " " + appVersionName());
+        version.setTextColor(COLOR_MUTED);
+        version.setGravity(Gravity.CENTER);
+        version.setPadding(0, 0, 0, dp(12));
+        root.addView(version);
+
         root.addView(linkButton(i18n.t("github"), "https://github.com/Rebirth39/MeQR"));
-        root.addView(linkButton(i18n.t("privacy"), "https://rebirth39.github.io/MeQR/privacy.html"));
+        root.addView(linkButton(i18n.t("privacy"), privacyUrl()));
         root.addView(linkButton(i18n.t("email") + ": lucas_and_miku@icloud.com", "mailto:lucas_and_miku@icloud.com"));
         root.addView(linkButton("QID: Rebirth39", "https://qm.qq.com/q/ErpPGQuaAi"));
 
@@ -794,6 +842,115 @@ public final class MainActivity extends Activity {
 
         AlertDialog dialog = new AlertDialog.Builder(this).setView(root).setPositiveButton(i18n.t("done"), null).show();
         styleAlert(dialog);
+    }
+
+    private String appVersionName() {
+        try {
+            PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0);
+            return info.versionName == null ? "" : info.versionName;
+        } catch (PackageManager.NameNotFoundException exception) {
+            return "";
+        }
+    }
+
+    private String privacyUrl() {
+        String language = i18n.resolvedLanguage();
+        if (I18n.ZH_HANS.equals(language) || I18n.ZH_HANT_HK.equals(language) || I18n.ZH_HANT_TW.equals(language)) {
+            return "https://rebirth39.github.io/MeQR/privacy.html";
+        }
+        return "https://rebirth39.github.io/MeQR/privacy-en.html";
+    }
+
+    private void showMeQrCode(MeQrProfile profile) {
+        String fallbackPayload;
+        try {
+            fallbackPayload = MeQrExchangeCodec.offlinePayload(profile, i18n);
+        } catch (Exception exception) {
+            toast(i18n.t("meqrCodeFailed"));
+            return;
+        }
+        String fallbackCode = "meqr://profile?data=" + fallbackPayload;
+        final Bitmap[] currentCode = new Bitmap[]{QrCodeGenerator.generate(fallbackCode, Color.BLACK, 960)};
+
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setGravity(Gravity.CENTER_HORIZONTAL);
+        root.setPadding(dp(20), dp(14), dp(20), dp(12));
+        root.setBackgroundColor(COLOR_BG);
+
+        ImageView avatar = new ImageView(this);
+        Bitmap avatarBitmap = decodeBitmap(profile.avatarPath);
+        if (avatarBitmap != null) {
+            avatar.setImageBitmap(circleBitmap(avatarBitmap, dp(72)));
+        } else {
+            avatar.setImageBitmap(initialBitmap(profile.name, dp(72), Color.rgb(62, 62, 68), Color.WHITE));
+        }
+        root.addView(avatar, new LinearLayout.LayoutParams(dp(72), dp(72)));
+
+        TextView name = heading(profile.name == null || profile.name.trim().isEmpty() ? i18n.t("appName") : profile.name.trim());
+        name.setGravity(Gravity.CENTER);
+        name.setTextSize(21);
+        root.addView(name);
+
+        ImageView qr = new ImageView(this);
+        qr.setImageBitmap(currentCode[0]);
+        qr.setBackground(rounded(Color.WHITE, dp(24)));
+        qr.setPadding(dp(14), dp(14), dp(14), dp(14));
+        LinearLayout.LayoutParams qrParams = new LinearLayout.LayoutParams(dp(290), dp(290));
+        qrParams.setMargins(0, dp(8), 0, dp(14));
+        root.addView(qr, qrParams);
+
+        TextView mode = new TextView(this);
+        mode.setText(i18n.t("meqrPreparingOnline"));
+        mode.setTextColor(COLOR_MUTED);
+        mode.setTextSize(13);
+        mode.setGravity(Gravity.CENTER);
+        mode.setPadding(dp(8), 0, dp(8), dp(8));
+        root.addView(mode);
+
+        TextView hint = new TextView(this);
+        hint.setText(i18n.t("meqrCodeHint"));
+        hint.setTextColor(COLOR_MUTED);
+        hint.setTextSize(14);
+        hint.setGravity(Gravity.CENTER);
+        hint.setPadding(dp(8), 0, dp(8), dp(14));
+        root.addView(hint);
+
+        Button save = filledButton(i18n.t("saveMeQrCode"));
+        save.setOnClickListener(v -> saveMeQrBitmap(currentCode[0]));
+        root.addView(save, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52)));
+
+        AlertDialog dialog = new AlertDialog.Builder(this).setView(root).setPositiveButton(i18n.t("done"), null).show();
+        styleAlert(dialog);
+
+        new Thread(() -> {
+            try {
+                String remoteUrl = MeQrRemoteService.uploadProfile(MeQrExchangeCodec.onlineProfile(profile, i18n));
+                String hybridCode = MeQrExchangeCodec.hybridCode(remoteUrl, fallbackPayload);
+                Bitmap onlineBitmap = QrCodeGenerator.generate(hybridCode, Color.BLACK, 960);
+                runOnUiThread(() -> {
+                    currentCode[0] = onlineBitmap;
+                    qr.setImageBitmap(onlineBitmap);
+                    mode.setText(i18n.t("meqrOnlineReady"));
+                });
+            } catch (Exception exception) {
+                runOnUiThread(() -> mode.setText(i18n.t("meqrOnlineFallback")));
+            }
+        }).start();
+    }
+
+    private void saveMeQrBitmap(Bitmap bitmap) {
+        if (Build.VERSION.SDK_INT <= 28 && checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            pendingMeQrBitmap = bitmap;
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_WRITE_PHOTOS);
+            return;
+        }
+        Uri uri = saveBitmapToGallery(bitmap);
+        if (uri == null) {
+            toast(i18n.t("saveFailed"));
+        } else {
+            toast(i18n.t("saved"));
+        }
     }
 
     private Button linkButton(String text, String url) {
