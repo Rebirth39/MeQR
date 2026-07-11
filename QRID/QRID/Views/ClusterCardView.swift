@@ -22,7 +22,7 @@ struct ClusterCardView: View {
     var body: some View {
         Group {
             switch cluster.templateStyle {
-            case .standard, .polaroid:
+            case .standard:
                 standardCard
             case .conventionPass:
                 conventionPassCard
@@ -109,83 +109,6 @@ struct ClusterCardView: View {
         .background(
             RoundedRectangle(cornerRadius: cluster.cornerRadius)
                 .fill(cluster.backgroundColor.opacity(cluster.cardOpacity ?? 0.7))
-        )
-    }
-
-    private var polaroidCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top, spacing: 12) {
-                polaroidInfoPanel
-                    .frame(maxWidth: .infinity)
-                    .frame(maxHeight: .infinity)
-
-                qrSlot(side: min(size, 134))
-                    .padding(10)
-                    .background(.white, in: RoundedRectangle(cornerRadius: 12))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(.black.opacity(0.08), lineWidth: 1)
-                    )
-
-            }
-            .frame(height: 176)
-
-            if sortedProfiles.count > 1 {
-                platformPicker
-            }
-        }
-        .padding(12)
-        .frame(maxWidth: containerWidth - 20, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(.white.opacity(0.94))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(.black.opacity(0.08), lineWidth: 1)
-        )
-        .shadow(color: .black.opacity(0.14), radius: 16, y: 8)
-    }
-
-    private var polaroidInfoPanel: some View {
-        ZStack(alignment: .topLeading) {
-            templateImagePanel
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-
-            Rectangle()
-                .fill(.white.opacity(0.64))
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-
-            VStack(alignment: .leading, spacing: 9) {
-                avatarImage
-                    .frame(width: 54, height: 54)
-                    .overlay(Circle().stroke(.white.opacity(0.95), lineWidth: 3))
-                    .shadow(color: .black.opacity(0.12), radius: 6, y: 3)
-
-                Text(cluster.name)
-                    .font(.headline.bold())
-                    .foregroundStyle(.black.opacity(0.84))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.74)
-
-                if !cluster.subtitle.isEmpty {
-                    Text(cluster.subtitle)
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.black.opacity(0.62))
-                        .lineLimit(3)
-                } else if let profile = currentProfile {
-                    Label(profile.platformDisplayName, systemImage: profile.platform.iconName)
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.black.opacity(0.62))
-                }
-
-                Spacer(minLength: 0)
-            }
-            .padding(12)
-        }
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(.black.opacity(0.08), lineWidth: 1)
         )
     }
 
@@ -282,7 +205,7 @@ struct ClusterCardView: View {
             }
         }
         .frame(maxWidth: containerWidth - 32, alignment: .leading)
-        .background(.white.opacity(0.78), in: RoundedRectangle(cornerRadius: 14))
+        .background(.white.opacity(cluster.cardOpacity ?? 0.7), in: RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
                 .stroke(.white.opacity(0.70), lineWidth: 2)
@@ -324,10 +247,11 @@ struct ClusterCardView: View {
                 barcodeLines
                     .frame(width: 34, height: 92)
 
-                Text("PASS")
-                    .font(.system(size: 10, weight: .black, design: .monospaced))
-                    .rotationEffect(.degrees(-90))
-                    .frame(width: 62, height: 36)
+                Text(rhodesDateText)
+                    .font(.system(size: 18, weight: .black, design: .monospaced))
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(-2)
+                    .frame(width: 40, height: 46)
             }
             .foregroundStyle(.white.opacity(0.88))
         }
@@ -349,11 +273,6 @@ struct ClusterCardView: View {
         ZStack(alignment: .bottomLeading) {
             rhodesBannerPanel
                 .frame(height: 136)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(.black.opacity(0.08), lineWidth: 1)
-                )
 
             HStack(spacing: 9) {
                 avatarImage
@@ -381,6 +300,19 @@ struct ClusterCardView: View {
                 )
             )
         }
+        .frame(height: 136)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(.black.opacity(0.08), lineWidth: 1)
+        )
+    }
+
+    private var rhodesDateText: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "MM\ndd"
+        return formatter.string(from: Date())
     }
 
     private var rhodesDetailsRow: some View {
@@ -423,7 +355,7 @@ struct ClusterCardView: View {
             }
         }
         .frame(maxWidth: containerWidth - 32, alignment: .leading)
-        .background(.white.opacity(0.78), in: RoundedRectangle(cornerRadius: 14))
+        .background(.white.opacity(cluster.cardOpacity ?? 0.7), in: RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
                 .stroke(.white.opacity(0.70), lineWidth: 2)
@@ -485,6 +417,10 @@ struct ClusterCardView: View {
                     .foregroundStyle(cluster.textColor.opacity(0.55))
             }
 
+            if !cluster.tags.isEmpty {
+                cardTagChips
+            }
+
             VStack(alignment: .leading, spacing: 8) {
                 if cluster.subtitle.isEmpty {
                     Text(L.subtitleInfo)
@@ -511,6 +447,44 @@ struct ClusterCardView: View {
         }
     }
 
+    private var cardTagChips: some View {
+        CardTagFlowLayout(spacing: 7, rowSpacing: 6) {
+            ForEach(cluster.tags, id: \.self) { tag in
+                let tagStyle = cluster.tagColorStyle(for: tag)
+                let tagColor = Color(hex: tagStyle.leadingHex)
+                Text(tag)
+                    .font(.caption2.weight(.black))
+                    .lineLimit(1)
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 5)
+                    .foregroundStyle(tagColor.uiContrastColor.opacity(0.92))
+                    .background {
+                        cardTagBackground(for: tagStyle)
+                    }
+                    .overlay(
+                        Capsule()
+                            .stroke(.white.opacity(0.32), lineWidth: 1)
+                    )
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private func cardTagBackground(for style: CardTagColorStyle) -> some View {
+        if style.isMulticolor {
+            LinearGradient(
+                stops: tagGradientStops(for: style, opacity: 0.86),
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            .clipShape(Capsule())
+        } else {
+            Capsule()
+                .fill(Color(hex: style.leadingHex).opacity(0.86))
+        }
+    }
+
     private func flipPassCard() {
         let targetBack = !isShowingPassBack
         isPassFlipAnimating = true
@@ -523,36 +497,6 @@ struct ClusterCardView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.48) {
             isPassFlipAnimating = false
         }
-    }
-
-    private var polaroidPhotoPanel: some View {
-        ZStack {
-            Color.white
-
-            VStack(spacing: 10) {
-                avatarImage
-                    .frame(width: 72, height: 72)
-                    .overlay(Circle().stroke(cluster.qrColor.opacity(0.18), lineWidth: 6))
-                    .shadow(color: .black.opacity(0.10), radius: 8, y: 4)
-
-                HStack(spacing: 24) {
-                    Rectangle()
-                        .fill(cluster.textColor.opacity(0.12))
-                        .frame(width: 74, height: 2)
-                    Circle()
-                        .fill(cluster.qrColor.opacity(0.65))
-                        .frame(width: 7, height: 7)
-                    Rectangle()
-                        .fill(cluster.textColor.opacity(0.12))
-                        .frame(width: 74, height: 2)
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(.black.opacity(0.08), lineWidth: 1)
-        )
     }
 
     @ViewBuilder
@@ -728,6 +672,21 @@ struct ClusterCardView: View {
                 .buttonStyle(.plain)
             }
         }
+    }
+}
+
+private func tagGradientStops(for style: CardTagColorStyle, opacity: Double = 1) -> [Gradient.Stop] {
+    guard style.segmentHexes.count > 1 else { return [] }
+    let segmentCount = Double(style.segmentHexes.count)
+
+    return style.segmentHexes.enumerated().flatMap { index, hex in
+        let start = Double(index) / segmentCount
+        let end = Double(index + 1) / segmentCount
+        let color = Color(hex: hex).opacity(opacity)
+        return [
+            Gradient.Stop(color: color, location: start),
+            Gradient.Stop(color: color, location: end),
+        ]
     }
 }
 

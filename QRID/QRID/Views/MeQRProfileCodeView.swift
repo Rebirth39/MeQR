@@ -488,7 +488,7 @@ private struct MeQRExchangeCard: View {
     @ViewBuilder
     private var templateHeader: some View {
         switch templateStyle {
-        case .standard, .polaroid:
+        case .standard:
             EmptyView()
         case .conventionPass:
             HStack(spacing: 8) {
@@ -542,10 +542,11 @@ private struct MeQRExchangeCard: View {
                 }
                 .frame(width: 34, height: 86)
 
-                Text("PASS")
-                    .font(.system(size: 9, weight: .black, design: .monospaced))
-                    .rotationEffect(.degrees(-90))
-                    .frame(width: 58, height: 34)
+                Text(rhodesDateText)
+                    .font(.system(size: 18, weight: .black, design: .monospaced))
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(-2)
+                    .frame(width: 40, height: 46)
             }
             .foregroundStyle(.white.opacity(0.88))
         }
@@ -554,13 +555,20 @@ private struct MeQRExchangeCard: View {
         .clipped()
     }
 
+    private var rhodesDateText: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "MM\ndd"
+        return formatter.string(from: Date())
+    }
+
     private var rhodesQRSide: CGFloat {
         min(qrSide, max(132, cardWidth - 112))
     }
 
     private var cardCornerRadius: CGFloat {
         switch templateStyle {
-        case .standard, .polaroid:
+        case .standard:
             return 22
         case .conventionPass:
             return 24
@@ -571,7 +579,7 @@ private struct MeQRExchangeCard: View {
 
     private var cardBackground: Color {
         switch templateStyle {
-        case .standard, .polaroid:
+        case .standard:
             return .white.opacity(0.68)
         case .conventionPass:
             return .white.opacity(0.76)
@@ -582,7 +590,7 @@ private struct MeQRExchangeCard: View {
 
     private var cardStroke: Color {
         switch templateStyle {
-        case .standard, .polaroid:
+        case .standard:
             return .white.opacity(0.5)
         case .conventionPass:
             return .black.opacity(0.16)

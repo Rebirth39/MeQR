@@ -66,14 +66,12 @@ struct L {
     static var save: String { tr("保存", "儲存", "儲存", "Save", "保存") }
     static var cardTemplate: String { tr("卡片模板", "卡片模板", "卡片模板", "Card Template", "カードテンプレート") }
     static var templateStandard: String { tr("标准", "標準", "標準", "Standard", "標準") }
-    static var templatePolaroid: String { tr("拍立得", "拍立得", "拍立得", "Polaroid", "ポラロイド") }
     static var templateConventionPass: String { tr("漫展通行证", "漫展通行證", "漫展通行證", "Convention Pass", "イベントパス") }
     static var templateRhodesPass: String { tr("明日方舟通行证", "明日方舟通行證", "明日方舟通行證", "Arknights Pass", "アークナイツパス") }
     static var passLabel: String { tr("通行证", "通行證", "通行證", "Pass", "パス") }
     static var passSubtitleLabel: String { tr("通行证短标签", "通行證短標籤", "通行證短標籤", "Pass Short Label", "パス短いラベル") }
     static var passSubtitleHint: String { tr("显示在名字下面，最多 10 个汉字。", "顯示在名字下面，最多 10 個漢字。", "顯示在名字下面，最多 10 個漢字。", "Shown under the name. Up to 10 CJK characters.", "名前の下に表示します。漢字10文字まで。") }
     static var templateHint: String { tr("模板会改变名片排版；颜色、头像、背景图仍然可以自己调。", "模板會改變名片排版；顏色、頭像、背景圖仍然可以自己調。", "模板會改變名片排版；顏色、頭像、背景圖仍然可以自己調。", "Templates change the card layout. Colors, avatar, and background remain editable.", "テンプレートはレイアウトを変更します。色、アイコン、背景は編集できます。") }
-    static var landscapeBackgroundHint: String { tr("当前模板更适合横版背景图；选择图片时会用横向 banner 比例裁剪。", "目前模板更適合橫版背景圖；選擇圖片時會用橫向 banner 比例裁剪。", "目前模板更適合橫版背景圖；選擇圖片時會用橫向 banner 比例裁剪。", "This template works best with a landscape background. The crop frame uses a banner ratio.", "このテンプレートは横長の背景に向いています。横長バナー比率で切り抜きます。") }
     static var passBannerImage: String { tr("横版头图", "橫版頭圖", "橫版頭圖", "Landscape Header Image", "横長ヘッダー画像") }
     static var changePassBannerImage: String { tr("更换横版头图", "更換橫版頭圖", "更換橫版頭圖", "Change Landscape Header", "横長ヘッダーを変更") }
     static var passBannerHint: String { tr("通行证可以单独选择一张横版头图做卡片 banner；背景图仍然可以用竖版图。", "通行證可以單獨選擇一張橫版頭圖做卡片 banner；背景圖仍然可以用豎版圖。", "通行證可以單獨選擇一張橫版頭圖做卡片 banner；背景圖仍然可以用直式圖。", "Pass can use a separate landscape header while the main background stays portrait.", "パスでは横長ヘッダー画像を別に選べます。背景は縦長のままで使えます。") }
@@ -98,20 +96,20 @@ struct L {
     static var english: String { tr("English", "English", "English", "English", "英語") }
 
     // Cluster
-    static var newCluster: String { tr("新建合集", "新增合集", "新增合集", "New Cluster", "新規コレクション") }
-    static var addToExistingCluster: String { tr("添加到现有合集", "加入至現有合集", "新增到現有合集", "Add to Existing Cluster", "既存のコレクションに追加") }
-    static var editCluster: String { tr("编辑合集", "編輯合集", "編輯合集", "Edit Cluster", "コレクションを編集") }
-    static var deleteCluster: String { tr("删除合集", "刪除合集", "刪除合集", "Delete Cluster", "コレクションを削除") }
-    static var deleteClusterConfirm: String { tr("确定要删除整个合集及其所有二维码？", "確定要刪除整個合集及其中所有 QR Code？", "確定要刪除整個合集和裡面的所有 QR Code？", "Delete this cluster and all its QR codes?", "このコレクションとすべてのQRコードを削除しますか？") }
+    static var newCluster: String { tr("新建卡片", "新增卡片", "新增卡片", "New Card", "新規カード") }
+    static var addToExistingCluster: String { tr("添加到现有卡片", "加入至現有卡片", "新增到現有卡片", "Add to Existing Card", "既存のカードに追加") }
+    static var editCluster: String { tr("编辑卡片", "編輯卡片", "編輯卡片", "Edit Card", "カードを編集") }
+    static var deleteCluster: String { tr("删除卡片", "刪除卡片", "刪除卡片", "Delete Card", "カードを削除") }
+    static var deleteClusterConfirm: String { tr("确定要删除整张卡片及其所有二维码？", "確定要刪除整張卡片及其中所有 QR Code？", "確定要刪除整張卡片和裡面的所有 QR Code？", "Delete this card and all its QR codes?", "このカードとすべてのQRコードを削除しますか？") }
     static var deleteQRFromCluster: String { tr("删除这个二维码", "刪除這個 QR Code", "刪除這個 QR Code", "Delete This QR Code", "このQRコードを削除") }
     static var addQRToCluster: String { tr("添加二维码", "加入 QR Code", "新增 QR Code", "Add QR Code", "QRコードを追加") }
-    static var clusterInfo: String { tr("合集信息", "合集資料", "合集資訊", "Cluster Info", "コレクション情報") }
-    static var clusterName: String { tr("合集名称", "合集名稱", "合集名稱", "Cluster Name", "コレクション名") }
-    static var sharedFieldsNote: String { tr("以下信息由合集共享，编辑请前往合集设置", "以下資料由合集共用，請到合集設定編輯", "以下資訊由合集共用，請到合集設定編輯", "Shared by cluster. Edit in cluster settings.", "以下はコレクションで共有されます。編集はコレクション設定から行ってください。") }
+    static var clusterInfo: String { tr("卡片信息", "卡片資料", "卡片資訊", "Card Info", "カード情報") }
+    static var clusterName: String { tr("卡片名称", "卡片名稱", "卡片名稱", "Card Name", "カード名") }
+    static var sharedFieldsNote: String { tr("以下信息由卡片共享，编辑请前往卡片设置", "以下資料由卡片共用，請到卡片設定編輯", "以下資訊由卡片共用，請到卡片設定編輯", "Shared by card. Edit in card settings.", "以下はカードで共有されます。編集はカード設定から行ってください。") }
     static var chooseAction: String { tr("选择操作", "選擇操作", "選擇操作", "Choose Action", "操作を選択") }
-    static var qrCodesInCluster: String { tr("合集中的二维码", "合集中的 QR Code", "合集中的 QR Code", "QR Codes", "QRコード") }
-    static var noClustersYet: String { tr("还没有合集", "還沒有合集", "還沒有合集", "No Clusters Yet", "コレクションがまだありません") }
-    static var selectCluster: String { tr("选择合集", "選擇合集", "選擇合集", "Select Cluster", "コレクションを選択") }
+    static var qrCodesInCluster: String { tr("卡片中的二维码", "卡片中的 QR Code", "卡片中的 QR Code", "QR Codes", "QRコード") }
+    static var noClustersYet: String { tr("还没有卡片", "還沒有卡片", "還沒有卡片", "No Cards Yet", "カードがまだありません") }
+    static var selectCluster: String { tr("选择卡片", "選擇卡片", "選擇卡片", "Select Card", "カードを選択") }
     static var editQRInCluster: String { tr("编辑二维码", "編輯 QR Code", "編輯 QR Code", "Edit QR Code", "QRコードを編集") }
     static var singleQRCode: String { tr("单个二维码", "單個 QR Code", "單個 QR Code", "Single QR Code", "単体QRコード") }
 
@@ -122,13 +120,12 @@ struct L {
     static var removeBackgroundImage: String { tr("移除背景图片", "移除背景圖片", "移除背景圖片", "Remove Background Image", "背景画像を削除") }
     static var cardOpacity: String { tr("卡片不透明度", "卡片不透明度", "卡片不透明度", "Card Opacity", "カードの不透明度") }
     static var customPlatformName: String { tr("平台名称", "平台名稱", "平台名稱", "Platform Name", "プラットフォーム名") }
-    static var reorderClusters: String { tr("排序合集", "排序合集", "排序合集", "Reorder Clusters", "コレクションを並べ替え") }
+    static var reorderClusters: String { tr("排序卡片", "排序卡片", "排序卡片", "Reorder Cards", "カードを並べ替え") }
     static var settings: String { tr("设置", "設定", "設定", "Settings", "設定") }
     static var aboutSoftware: String { tr("关于软件", "關於軟件", "關於 App", "About", "このアプリについて") }
     static var privacyPolicy: String { tr("隐私政策", "私隱政策", "隱私權政策", "Privacy Policy (English)", "プライバシーポリシー（英語）") }
     static var contactDeveloper: String { tr("联系开发者", "聯絡開發者", "聯絡開發者", "Contact Developer", "開発者に連絡") }
     static var developerInfo: String { tr("开发者信息", "開發者資料", "開發者資訊", "Developer Info", "開発者情報") }
-    static var iCloudSync: String { tr("iCloud 同步", "iCloud 同步", "iCloud 同步", "iCloud Sync", "iCloud同期") }
     static var savedToPhotos: String { tr("已保存到相册", "已儲存到相簿", "已儲存到照片", "Saved to Photos", "写真に保存しました") }
     static var saveMeQRCode: String { tr("保存交换码到相册", "儲存交換碼到相簿", "儲存交換碼到照片", "Save Code to Photos", "交換コードを写真に保存") }
     static var meqrCodeHint: String { tr("对方用 MeQR 扫这个码，就能看到你的这张扩列卡并保存为认识记录。", "對方用 MeQR 掃這個碼，就能看到你的這張擴列卡並儲存為認識記錄。", "對方用 MeQR 掃描這個碼，就能看到你的這張擴列卡並儲存為認識紀錄。", "Someone can scan this with MeQR to save your profile as an encounter.", "相手がMeQRでこのコードを読み取ると、あなたのプロフィールを記録できます。") }
@@ -187,6 +184,8 @@ struct L {
     static var metAt: String { tr("认识时间", "認識時間", "認識時間", "Met At", "会った日時") }
     static var note: String { tr("备注", "備註", "備註", "Note", "メモ") }
     static var tags: String { tr("标签", "標籤", "標籤", "Tags", "タグ") }
+    static var tagColors: String { tr("标签颜色", "標籤顏色", "標籤顏色", "Tag Colors", "タグの色") }
+    static var cardTagsHint: String { tr("输入后按回车添加，最多 10 个；会显示在通行证背面。", "輸入後按 Return 加入，最多 10 個；會顯示在通行證背面。", "輸入後按 Return 新增，最多 10 個；會顯示在通行證背面。", "Press Return to add. Up to 10 tags, shown on the pass back.", "入力後Returnで追加。最大10個、パス裏面に表示します。") }
     static var followStatus: String { tr("互关状态 / 返图进度", "互關狀態 / 返圖進度", "互關狀態 / 返圖進度", "Follow / photo status", "フォロー・返礼状況") }
     static var needsPhotoReturn: String { tr("需要返图", "需要返圖", "需要返圖", "Needs photo return", "写真返却が必要") }
     static var exchangedFreebie: String { tr("交换过无料", "交換過無料", "交換過無料配布", "Freebie exchanged", "無配交換済み") }
@@ -195,14 +194,14 @@ struct L {
     static var cameraPermissionNeeded: String { tr("需要相机权限才能扫描 MeQR 交换码。", "需要相機權限才能掃描 MeQR 交換碼。", "需要相機權限才能掃描 MeQR 交換碼。", "Camera permission is needed to scan MeQR codes.", "MeQRコードをスキャンするにはカメラへのアクセスが必要です。") }
     static var couldNotSave: String { tr("无法保存", "無法儲存", "無法儲存", "Could Not Save", "保存できません") }
     static var tryAgain: String { tr("无法保存，请重试。", "無法儲存，請再試一次。", "無法儲存，請再試一次。", "Please try again.", "もう一度お試しください。") }
-    static var longPressToReorder: String { tr("长按合集排序", "長按合集排序", "長按合集排序", "Long press to reorder", "長押しして並べ替え") }
+    static var longPressToReorder: String { tr("长按卡片排序", "長按卡片排序", "長按卡片排序", "Long press to reorder", "長押しして並べ替え") }
 
     // Widget
     static var widgetSettings: String { tr("小组件设置", "小工具設定", "小工具設定", "Widget Settings", "ウィジェット設定") }
     static var widgetDisplay: String { tr("显示", "顯示", "顯示", "Display", "表示") }
     static var widgetBackground: String { tr("背景", "背景", "背景", "Background", "背景") }
     static var showQR: String { tr("显示 QR", "顯示 QR", "顯示 QR", "Show QR", "QRを表示") }
-    static var useClusterBackgroundColor: String { tr("使用合集背景色", "使用合集背景色", "使用合集背景色", "Use Cluster Background", "コレクションの背景色を使う") }
+    static var useClusterBackgroundColor: String { tr("使用卡片背景色", "使用卡片背景色", "使用卡片背景色", "Use Card Background", "カードの背景色を使う") }
     static var useCustomBackground: String { tr("使用自定义背景", "使用自訂背景", "使用自訂背景", "Use Custom Background", "カスタム背景を使う") }
     static var selectBackgroundImage: String { tr("选择背景图", "選擇背景圖", "選擇背景圖", "Select Background Image", "背景画像を選択") }
     static var changeBackgroundImage: String { tr("更换背景图", "更換背景圖", "更換背景圖", "Change Background Image", "背景画像を変更") }

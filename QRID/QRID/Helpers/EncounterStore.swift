@@ -139,10 +139,7 @@ final class EventStore: ObservableObject {
     }
 
     func refreshRemoteEvents() async {
-        isRefreshing = true
         refreshError = nil
-        defer { isRefreshing = false }
-
         if events.isEmpty {
             events = Self.defaultEvents
             save()

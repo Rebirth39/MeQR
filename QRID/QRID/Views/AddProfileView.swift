@@ -27,7 +27,14 @@ struct AddProfileView: View {
     @State private var backgroundPhotosItem: PhotosPickerItem?
     @State private var textColor = Color.black
     @State private var backgroundColor = Color.white
+    @State private var qrColor = Color.black
+    @State private var templateStyle: ClusterTemplateStyle = .standard
+    @State private var passSubtitle = ""
+    @State private var tagInput = ""
+    @State private var tagColorOverrides: [String: String] = [:]
     @State private var cornerRadius: Double = 16
+    @State private var isAppearanceExpanded = false
+    @State private var isBackgroundExpanded = false
     @State private var isDecoding = false
     @State private var decodeError: String?
     @State private var showDecodeError = false
@@ -45,6 +52,8 @@ struct AddProfileView: View {
             Form {
                 if !isAddingToExisting {
                     clusterInfoSection
+                    CardTagColorEditor(tagInput: tagInput, colorOverrides: $tagColorOverrides)
+                    templateSection
                     clusterAppearanceSection
                     backgroundImageSection
                 } else {
@@ -157,19 +166,65 @@ struct AddProfileView: View {
 
             TextField(L.subtitleInfo, text: $subtitle, axis: .vertical)
                 .lineLimit(1...3)
+
+            CardTagInputView(text: $tagInput)
         }
     }
 
     private var clusterAppearanceSection: some View {
-        Section(L.appearance) {
-            ColorPicker(L.textColor, selection: $textColor)
-            ColorPicker(L.backgroundColor, selection: $backgroundColor)
+        Section {
+            DisclosureGroup(L.appearance, isExpanded: $isAppearanceExpanded) {
+                ColorPicker(L.textColor, selection: $textColor)
+                ColorPicker(L.backgroundColor, selection: $backgroundColor)
+                ColorPicker(L.qrCodeColor, selection: $qrColor)
 
-            VStack(alignment: .leading, spacing: 8) {
-                Text("\(L.cornerRadius): \(Int(cornerRadius))")
-                    .font(.subheadline)
-                Slider(value: $cornerRadius, in: 0...40, step: 1)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("\(L.cornerRadius): \(Int(cornerRadius))")
+                        .font(.subheadline)
+                    Slider(value: $cornerRadius, in: 0...40, step: 1)
+                }
             }
+        }
+    }
+
+    private var templateSection: some View {
+        Section {
+            Picker(L.cardTemplate, selection: $templateStyle) {
+                ForEach(ClusterTemplateStyle.selectableCases) { style in
+                    Label(style.displayName, systemImage: style.iconName)
+                        .tag(style)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            ClusterTemplatePreview(
+                templateStyle: templateStyle,
+                backgroundColor: backgroundColor,
+                textColor: textColor,
+                qrColor: qrColor
+            ) {
+                avatarPreview
+            }
+
+            Text(L.templateHint)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            if templateStyle == .rhodesPass {
+                TextField(L.passSubtitleLabel, text: $passSubtitle)
+                    .onChange(of: passSubtitle) { _, newValue in
+                        let limited = PassSubtitleLimiter.limited(newValue)
+                        if limited != newValue {
+                            passSubtitle = limited
+                        }
+                    }
+
+                Text(L.passSubtitleHint)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        } header: {
+            Text(L.cardTemplate)
         }
     }
 
@@ -215,17 +270,19 @@ struct AddProfileView: View {
     // MARK: - QR Source
 
     private var backgroundImageSection: some View {
-        Section(L.backgroundImage) {
-            PhotosPicker(selection: $backgroundPhotosItem, matching: .images) {
-                Label(backgroundImage == nil ? L.useCustomImage : L.changeBackgroundImage, systemImage: "photo")
-            }
-
-            if backgroundImage != nil {
-                Button(L.removeBackgroundImage) {
-                    backgroundImage = nil
-                    backgroundPhotosItem = nil
+        Section {
+            DisclosureGroup(L.backgroundImage, isExpanded: $isBackgroundExpanded) {
+                PhotosPicker(selection: $backgroundPhotosItem, matching: .images) {
+                    Label(backgroundImage == nil ? L.useCustomImage : L.changeBackgroundImage, systemImage: "photo")
                 }
-                .foregroundStyle(.red)
+
+                if backgroundImage != nil {
+                    Button(L.removeBackgroundImage) {
+                        backgroundImage = nil
+                        backgroundPhotosItem = nil
+                    }
+                    .foregroundStyle(.red)
+                }
             }
         }
     }
@@ -436,7 +493,7 @@ struct AddProfileView: View {
         let trimmedQR = qrContent.trimmingCharacters(in: .whitespaces)
 
         if !isAddingToExisting && trimmedName.isEmpty {
-            saveError = "请输入合集名称。"
+            saveError = "请输入卡片名称。"
             showSaveError = true
             return
         }
@@ -461,7 +518,7 @@ struct AddProfileView: View {
             profile.attach(to: existingCluster)
             modelContext.insert(profile)
         } else {
-            // New clusters default QR color to black; change it later in Edit Cluster
+            let qrColorHex = qrColor.toHex() ?? "#000000"
             let cluster = QRCluster(
                 name: trimmedName,
                 subtitle: subtitle.trimmingCharacters(in: .whitespaces),
@@ -469,7 +526,14 @@ struct AddProfileView: View {
                 backgroundImageData: backgroundImage?.jpegData(compressionQuality: 0.9),
                 backgroundColorHex: backgroundColor.toHex() ?? "#FFFFFF",
                 textColorHex: textColor.toHex() ?? "#000000",
-                qrColorHex: "#000000",
+                qrColorHex: qrColorHex,
+                templateStyleRawValue: templateStyle.rawValue,
+                passSubtitle: PassSubtitleLimiter.limited(passSubtitle),
+                tagListRawValue: CardTagLimiter.normalizedRawValue(tagInput),
+                tagColorOverridesRawValue: CardTagColorPalette.rawValue(
+                    from: tagColorOverrides,
+                    tags: CardTagLimiter.tags(from: tagInput)
+                ),
                 cornerRadius: cornerRadius,
                 sortOrder: nextSortOrder
             )
@@ -477,7 +541,7 @@ struct AddProfileView: View {
             let profile = QRProfile(
                 platformType: resolvedPlatform.platformType,
                 qrContent: trimmedQR,
-                foregroundColorHex: "#000000",
+                foregroundColorHex: qrColorHex,
                 customPlatformName: resolvedPlatform.customPlatformName,
                 cluster: cluster
             )

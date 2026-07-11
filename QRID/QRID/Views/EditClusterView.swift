@@ -17,6 +17,8 @@ struct EditClusterView: View {
     @State private var qrColor: Color = .black
     @State private var templateStyle: ClusterTemplateStyle = .standard
     @State private var passSubtitle: String = ""
+    @State private var tagInput: String = ""
+    @State private var tagColorOverrides: [String: String] = [:]
     @State private var cornerRadius: Double = 16
     @State private var cardOpacity: Double = 0.7
     @State private var avatarImage: UIImage?
@@ -36,6 +38,9 @@ struct EditClusterView: View {
     @State private var widgetBackgroundImage: UIImage?
     @State private var widgetUseCustomBackground: Bool = false
     @State private var showingWidgetSettings = false
+    @State private var isAppearanceExpanded = false
+    @State private var isWidgetExpanded = false
+    @State private var isBackgroundExpanded = false
     @State private var saveError: String?
     @State private var showSaveError = false
 
@@ -43,14 +48,11 @@ struct EditClusterView: View {
         cluster.profiles.sorted { $0.createdAt < $1.createdAt }
     }
 
-    private var usesLandscapeBackground: Bool {
-        false
-    }
-
     var body: some View {
         NavigationStack {
             Form {
                 clusterInfoSection
+                CardTagColorEditor(tagInput: tagInput, colorOverrides: $tagColorOverrides)
                 templateSection
                 appearanceSection
                 widgetSection
@@ -111,7 +113,7 @@ struct EditClusterView: View {
             .fullScreenCover(item: $rawBackgroundImage) { item in
                 BackgroundCropView(
                     sourceImage: item.image,
-                    cropAspectRatio: usesLandscapeBackground ? 16.0 / 9.0 : nil,
+                    cropAspectRatio: nil,
                     onDone: { cropped in
                         backgroundImage = cropped
                         rawBackgroundImage = nil
@@ -176,6 +178,8 @@ struct EditClusterView: View {
 
             TextField(L.subtitleInfo, text: $subtitle, axis: .vertical)
                 .lineLimit(1...3)
+
+            CardTagInputView(text: $tagInput)
         }
     }
 
@@ -197,7 +201,7 @@ struct EditClusterView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
-            if templateStyle == .conventionPass || templateStyle == .rhodesPass {
+            if templateStyle == .rhodesPass {
                 TextField(L.passSubtitleLabel, text: $passSubtitle)
                     .onChange(of: passSubtitle) { _, newValue in
                         let limited = PassSubtitleLimiter.limited(newValue)
@@ -216,125 +220,53 @@ struct EditClusterView: View {
     }
 
     private var templatePreview: some View {
-        HStack {
-            Spacer()
-            ZStack {
-                switch templateStyle {
-                case .standard, .polaroid:
-                    RoundedRectangle(cornerRadius: 18)
-                        .fill(backgroundColor.opacity(0.8))
-                    VStack(spacing: 8) {
-                        avatarPreview
-                            .frame(width: 34, height: 34)
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(textColor.opacity(0.7))
-                            .frame(width: 76, height: 8)
-                        Image(systemName: "qrcode")
-                            .font(.system(size: 42))
-                            .foregroundStyle(textColor.opacity(0.65))
-                    }
-
-                case .conventionPass:
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(backgroundColor.opacity(0.84))
-                    VStack(spacing: 8) {
-                        Capsule()
-                            .fill(textColor.opacity(0.8))
-                            .frame(width: 58, height: 8)
-                        avatarPreview
-                            .frame(width: 36, height: 36)
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(textColor.opacity(0.72))
-                            .frame(width: 86, height: 8)
-                        Image(systemName: "qrcode")
-                            .font(.system(size: 36))
-                            .foregroundStyle(textColor.opacity(0.62))
-                    }
-
-                case .rhodesPass:
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(.white.opacity(0.88))
-                    VStack(spacing: 0) {
-                        Rectangle()
-                            .fill(qrColor.opacity(0.75))
-                            .frame(height: 16)
-                            .overlay(alignment: .trailing) {
-                                Text("#01")
-                                    .font(.system(size: 7, weight: .black))
-                                    .foregroundStyle(.black.opacity(0.55))
-                                    .padding(.trailing, 8)
-                            }
-                        HStack(spacing: 6) {
-                            Rectangle()
-                                .fill(textColor.opacity(0.75))
-                                .frame(width: 12)
-                                .overlay {
-                                    Text("MEQR")
-                                        .font(.system(size: 6, weight: .black))
-                                        .foregroundStyle(backgroundColor.opacity(0.85))
-                                        .rotationEffect(.degrees(-90))
-                                }
-                            VStack(alignment: .leading, spacing: 7) {
-                                avatarPreview
-                                    .frame(width: 42, height: 42)
-                                RoundedRectangle(cornerRadius: 3)
-                                    .fill(textColor.opacity(0.72))
-                                    .frame(width: 72, height: 8)
-                                Image(systemName: "qrcode")
-                                    .font(.system(size: 34))
-                                    .foregroundStyle(qrColor.opacity(0.65))
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        .padding(8)
-                    }
-                }
-            }
-            .frame(width: 150, height: 180)
-            .overlay(
-                RoundedRectangle(cornerRadius: 18)
-                    .stroke(.black.opacity(0.08), lineWidth: 1)
-            )
-            .shadow(color: .black.opacity(0.08), radius: 8, y: 4)
-            Spacer()
+        ClusterTemplatePreview(
+            templateStyle: templateStyle,
+            backgroundColor: backgroundColor,
+            textColor: textColor,
+            qrColor: qrColor
+        ) {
+            avatarPreview
         }
-        .padding(.vertical, 4)
-        .listRowBackground(Color.clear)
     }
 
     private var appearanceSection: some View {
-        Section(L.appearance) {
-            ColorPicker(L.textColor, selection: $textColor)
-            ColorPicker(L.backgroundColor, selection: $backgroundColor)
-            ColorPicker(L.qrCodeColor, selection: $qrColor)
+        Section {
+            DisclosureGroup(L.appearance, isExpanded: $isAppearanceExpanded) {
+                ColorPicker(L.textColor, selection: $textColor)
+                ColorPicker(L.backgroundColor, selection: $backgroundColor)
+                ColorPicker(L.qrCodeColor, selection: $qrColor)
 
-            VStack(alignment: .leading, spacing: 8) {
-                Text("\(L.cornerRadius): \(Int(cornerRadius))")
-                    .font(.subheadline)
-                Slider(value: $cornerRadius, in: 0...40, step: 1)
-            }
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("\(L.cornerRadius): \(Int(cornerRadius))")
+                        .font(.subheadline)
+                    Slider(value: $cornerRadius, in: 0...40, step: 1)
+                }
 
-            VStack(alignment: .leading, spacing: 8) {
-                Text("\(L.cardOpacity): \(Int(cardOpacity * 100))%")
-                    .font(.subheadline)
-                Slider(value: $cardOpacity, in: 0.2...1.0, step: 0.05)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("\(L.cardOpacity): \(Int(cardOpacity * 100))%")
+                        .font(.subheadline)
+                    Slider(value: $cardOpacity, in: 0.2...1.0, step: 0.05)
+                }
             }
         }
     }
 
     private var widgetSection: some View {
-        Section(L.widgetSettings) {
-            widgetPreview
+        Section {
+            DisclosureGroup(L.widgetSettings, isExpanded: $isWidgetExpanded) {
+                widgetPreview
 
-            Button {
-                showingWidgetSettings = true
-            } label: {
-                HStack {
-                    Text(L.widgetSettings)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                Button {
+                    showingWidgetSettings = true
+                } label: {
+                    HStack {
+                        Text(L.widgetSettings)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
         }
@@ -428,40 +360,36 @@ struct EditClusterView: View {
     }
 
     private var backgroundImageSection: some View {
-        Section(L.backgroundImage) {
-            PhotosPicker(selection: $backgroundPhotosItem, matching: .images) {
-                Label(backgroundImage == nil ? L.backgroundImage : L.changeBackgroundImage, systemImage: "photo")
-            }
-
-            if usesLandscapeBackground {
-                Text(L.landscapeBackgroundHint)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            if backgroundImage != nil {
-                Button(L.removeBackgroundImage) {
-                    backgroundImage = nil
-                    backgroundPhotosItem = nil
-                }
-                .foregroundStyle(.red)
-            }
-
-            if templateStyle == .rhodesPass {
-                PhotosPicker(selection: $rhodesBannerPhotosItem, matching: .images) {
-                    Label(rhodesBannerImage == nil ? L.passBannerImage : L.changePassBannerImage, systemImage: "rectangle")
+        Section {
+            DisclosureGroup(L.backgroundImage, isExpanded: $isBackgroundExpanded) {
+                PhotosPicker(selection: $backgroundPhotosItem, matching: .images) {
+                    Label(backgroundImage == nil ? L.backgroundImage : L.changeBackgroundImage, systemImage: "photo")
                 }
 
-                Text(L.passBannerHint)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                if rhodesBannerImage != nil {
-                    Button(L.removePassBanner) {
-                        rhodesBannerImage = nil
-                        rhodesBannerPhotosItem = nil
+                if backgroundImage != nil {
+                    Button(L.removeBackgroundImage) {
+                        backgroundImage = nil
+                        backgroundPhotosItem = nil
                     }
                     .foregroundStyle(.red)
+                }
+
+                if templateStyle == .rhodesPass {
+                    PhotosPicker(selection: $rhodesBannerPhotosItem, matching: .images) {
+                        Label(rhodesBannerImage == nil ? L.passBannerImage : L.changePassBannerImage, systemImage: "rectangle")
+                    }
+
+                    Text(L.passBannerHint)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    if rhodesBannerImage != nil {
+                        Button(L.removePassBanner) {
+                            rhodesBannerImage = nil
+                            rhodesBannerPhotosItem = nil
+                        }
+                        .foregroundStyle(.red)
+                    }
                 }
             }
         }
@@ -535,6 +463,8 @@ struct EditClusterView: View {
         qrColor = cluster.qrColor
         templateStyle = cluster.templateStyle
         passSubtitle = cluster.passSubtitleText
+        tagInput = cluster.tagListRawValue ?? ""
+        tagColorOverrides = cluster.tagColorOverrides
         cornerRadius = cluster.cornerRadius
         cardOpacity = cluster.cardOpacity ?? 0.7
         if let data = cluster.avatarImageData {
@@ -566,6 +496,11 @@ struct EditClusterView: View {
         cluster.qrColorHex = qrColor.toHex() ?? "#000000"
         cluster.templateStyle = templateStyle
         cluster.passSubtitle = PassSubtitleLimiter.limited(passSubtitle)
+        cluster.tagListRawValue = CardTagLimiter.normalizedRawValue(tagInput)
+        cluster.tagColorOverridesRawValue = CardTagColorPalette.rawValue(
+            from: tagColorOverrides,
+            tags: CardTagLimiter.tags(from: tagInput)
+        )
         cluster.cornerRadius = cornerRadius
         cluster.cardOpacity = cardOpacity
 
@@ -645,35 +580,5 @@ struct EditClusterView: View {
             saveError = error.localizedDescription
             showSaveError = true
         }
-    }
-}
-
-private enum PassSubtitleLimiter {
-    private static let maxHalfWidthUnits = 20
-
-    static func limited(_ value: String) -> String {
-        let normalized = value
-            .replacingOccurrences(of: "\r\n", with: "\n")
-            .replacingOccurrences(of: "\r", with: "\n")
-            .replacingOccurrences(of: "\n", with: " ")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-
-        var units = 0
-        var result = ""
-
-        for character in normalized {
-            let nextUnits = units + halfWidthUnits(for: character)
-            if nextUnits > maxHalfWidthUnits {
-                break
-            }
-            result.append(character)
-            units = nextUnits
-        }
-
-        return result
-    }
-
-    private static func halfWidthUnits(for character: Character) -> Int {
-        character.unicodeScalars.allSatisfy(\.isASCII) ? 1 : 2
     }
 }

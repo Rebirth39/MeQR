@@ -7,7 +7,6 @@ struct MainView: View {
     @Environment(\.appSettings) private var settings
     @Query(sort: \QRCluster.sortOrder, order: .forward) private var clusters: [QRCluster]
     @State private var currentPage = 0
-    @State private var showingAdd = false
     @State private var showingAddToExisting = false
     @State private var showingEditCluster = false
     @State private var showingEditQR = false
@@ -100,8 +99,19 @@ struct MainView: View {
                             }
                             .accessibilityLabel(L.meqrProfileCode)
                         }
-                        Button {
-                            showingAdd = true
+                        Menu {
+                            Button {
+                                showAddNewCluster = true
+                            } label: {
+                                Label(L.newCluster, systemImage: "plus.circle.fill")
+                            }
+                            if !clusters.isEmpty {
+                                Button {
+                                    showingAddToExisting = true
+                                } label: {
+                                    Label(L.addToExistingCluster, systemImage: "rectangle.stack.badge.plus")
+                                }
+                            }
                         } label: {
                             Image(systemName: "plus")
                                 .font(.system(size: 18, weight: .medium))
@@ -153,15 +163,6 @@ struct MainView: View {
             }
             .toolbarColorScheme(navigationColorScheme, for: .navigationBar)
             .onChange(of: settings.language) { _, _ in }
-            .confirmationDialog(L.chooseAction, isPresented: $showingAdd) {
-                Button(L.newCluster) {
-                    showAddNewCluster = true
-                }
-                Button(L.addToExistingCluster) {
-                    showingAddToExisting = true
-                }
-                Button(L.cancel, role: .cancel) {}
-            }
             .sheet(isPresented: $showAddNewCluster) {
                 AddProfileView()
             }
