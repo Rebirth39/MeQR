@@ -101,6 +101,21 @@ struct MeQRScannerView: View {
             return
         }
 
+        if MeQRRemoteService.canFetchProfile(from: payload) {
+            do {
+                decodedProfile = try await MeQRRemoteService.fetchProfile(from: payload)
+                return
+            } catch {
+                if let fallbackProfile = MeQRExchangeCodec.offlineFallback(from: payload) {
+                    decodedProfile = fallbackProfile
+                    return
+                }
+                errorMessage = error.localizedDescription
+                showError = true
+                return
+            }
+        }
+
         if let fallbackProfile = MeQRExchangeCodec.offlineFallback(from: payload) {
             decodedProfile = fallbackProfile
             return

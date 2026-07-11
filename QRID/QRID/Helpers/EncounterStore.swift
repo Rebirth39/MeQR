@@ -127,6 +127,7 @@ final class EventStore: ObservableObject {
 
     private let storageKey = "meqr_events_v1"
     private let activeEventStorageKey = "meqr_active_event_id_v1"
+    private let remoteEventsURL = URL(string: "https://meqr-api-bovpnioqev.cn-shanghai.fcapp.run/events")
 
     var activeEvent: MeQREvent? {
         guard let activeEventID else { return nil }
@@ -139,10 +140,25 @@ final class EventStore: ObservableObject {
     }
 
     func refreshRemoteEvents() async {
+        guard let remoteEventsURL else { return }
+        isRefreshing = true
         refreshError = nil
-        if events.isEmpty {
-            events = Self.defaultEvents
+        defer { isRefreshing = false }
+
+        do {
+            let (data, response) = try await URLSession.shared.data(from: remoteEventsURL)
+            if let httpResponse = response as? HTTPURLResponse,
+               !(200..<300).contains(httpResponse.statusCode) {
+                throw URLError(.badServerResponse)
+            }
+            let decoded = try JSONDecoder.meqrEvents.decode([MeQREvent].self, from: data)
+            mergeRemoteEvents(decoded)
             save()
+        } catch {
+            refreshError = error.localizedDescription
+            if events.isEmpty {
+                events = Self.defaultEvents
+            }
         }
     }
 

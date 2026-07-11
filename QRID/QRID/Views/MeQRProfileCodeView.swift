@@ -249,8 +249,29 @@ struct MeQRProfileCodeView: View {
             let exchangeSubtitle = displaySubtitle
             var localProfile = MeQRExchangeProfile(cluster: cluster, profiles: selectedProfiles, avatarMaxBytes: 0)
             localProfile.subtitle = exchangeSubtitle
+            var offlineFallback = MeQRExchangeProfile(offlineCluster: cluster, profile: offlineProfile)
+            offlineFallback.subtitle = exchangeSubtitle
             codeString = try MeQRExchangeCodec.encode(localProfile)
-            codeModeText = L.meqrCodeLocalReady
+            codeModeText = L.meqrCodeUploading
+
+            uploadTask = Task {
+                do {
+                    var onlineProfile = MeQRExchangeProfile(cluster: cluster, profiles: selectedProfiles, avatarMaxBytes: 640)
+                    onlineProfile.subtitle = exchangeSubtitle
+                    let remoteURL = try await MeQRRemoteService.uploadProfile(onlineProfile)
+                    let hybridCode = try MeQRExchangeCodec.encodeHybrid(remoteURL: remoteURL, offlineProfile: offlineFallback)
+                    await MainActor.run {
+                        guard !Task.isCancelled else { return }
+                        codeString = hybridCode
+                        codeModeText = L.meqrCodeOnlineReady
+                    }
+                } catch {
+                    await MainActor.run {
+                        guard !Task.isCancelled else { return }
+                        codeModeText = L.meqrCodeUploadFailed(error.localizedDescription)
+                    }
+                }
+            }
         } catch {
             saveError = error.localizedDescription
             showSaveError = true
