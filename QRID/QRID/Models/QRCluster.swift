@@ -163,7 +163,7 @@ final class QRCluster {
         CardTagLimiter.tags(from: tagListRawValue ?? "")
     }
 
-    var tagColorOverrides: [String: String] {
+    var tagColorOverrides: [String: CardTagColorOverride] {
         CardTagColorPalette.overrides(from: tagColorOverridesRawValue)
     }
 
@@ -282,6 +282,7 @@ enum CardTagIndex {
         Entry(name: .init(zhHans: "MORE MORE JUMP!", zhHantHK: "MORE MORE JUMP!", zhHantTW: "MORE MORE JUMP!", en: "MORE MORE JUMP!", ja: "MORE MORE JUMP!"), aliases: ["mmj", "more more jump", "moremorejump", "モモジャン", "桃跳"]),
         Entry(name: .init(zhHans: "Vivid BAD SQUAD", zhHantHK: "Vivid BAD SQUAD", zhHantTW: "Vivid BAD SQUAD", en: "Vivid BAD SQUAD", ja: "Vivid BAD SQUAD"), aliases: ["vbs", "vivid bad squad", "vividbadsquad", "ビビバス"]),
         Entry(name: .init(zhHans: "Wonderlands x Showtime", zhHantHK: "Wonderlands x Showtime", zhHantTW: "Wonderlands x Showtime", en: "Wonderlands x Showtime", ja: "ワンダーランズ x ショウタイム"), aliases: ["ws", "wxs", "wxS", "wonderlands x showtime", "wonderlandsxshowtime", "ワンダショ", "ワショ"]),
+        Entry(name: .init(zhHans: "Wonderlands x Showtime 拼色", zhHantHK: "Wonderlands x Showtime 拼色", zhHantTW: "Wonderlands x Showtime 拼色", en: "Wonderlands x Showtime Mix", ja: "ワンダショMIX"), aliases: ["wsmix", "ws mix", "ws多色", "ws拼色", "wxsmix", "wxs mix", "wxs多色", "wxs拼色", "ワンダショmix", "ワンダショ多色", "ワンダショ拼色"]),
         Entry(name: .init(zhHans: "25点，Nightcord见。", zhHantHK: "25點，Nightcord見。", zhHantTW: "25點，Nightcord見。", en: "Nightcord at 25:00", ja: "25時、ナイトコードで。"), aliases: ["25ji", "n25", "nightcord", "25時、ナイトコードで。", "25時", "25时", "25點", "25点", "ニーゴ"]),
         Entry(name: .init(zhHans: "星乃一歌", zhHantHK: "星乃一歌", zhHantTW: "星乃一歌", en: "Ichika Hoshino", ja: "星乃一歌"), aliases: ["一歌", "ichika", "hoshinoichika"]),
         Entry(name: .init(zhHans: "天马咲希", zhHantHK: "天馬咲希", zhHantTW: "天馬咲希", en: "Saki Tenma", ja: "天馬咲希"), aliases: ["咲希", "saki", "tenmasaki"]),
@@ -390,7 +391,27 @@ enum CardTagIndex {
         Entry(name: .init(zhHans: "偶像大师", zhHantHK: "偶像大師", zhHantTW: "偶像大師", en: "The Idolmaster", ja: "アイマス"), aliases: ["idolmaster", "theidolmaster", "imas", "アイマス"]),
         Entry(name: .init(zhHans: "赛马娘", zhHantHK: "賽馬娘", zhHantTW: "賽馬娘", en: "Uma Musume", ja: "ウマ娘"), aliases: ["umamusume", "马娘", "馬娘", "ウマ娘"]),
         Entry(name: .init(zhHans: "孤独摇滚", zhHantHK: "孤獨搖滾", zhHantTW: "孤獨搖滾", en: "Bocchi the Rock!", ja: "ぼっち・ざ・ろっく！"), aliases: ["bocchitherock", "孤摇", "孤搖", "ぼっちざろっく"]),
+        Entry(name: .init(zhHans: "结束乐队", zhHantHK: "結束樂隊", zhHantTW: "結束樂隊", en: "Kessoku Band", ja: "結束バンド"), aliases: ["kessokuband", "結束バンド", "结束band", "結束band"]),
         Entry(name: .init(zhHans: "后藤一里", zhHantHK: "後藤一里", zhHantTW: "後藤一里", en: "Hitori Gotoh", ja: "後藤ひとり"), aliases: ["波奇", "ぼっち", "hitorigotoh"]),
+        Entry(name: .init(zhHans: "伊地知虹夏", zhHantHK: "伊地知虹夏", zhHantTW: "伊地知虹夏", en: "Nijika Ijichi", ja: "伊地知虹夏"), aliases: ["虹夏", "nijika", "ijichinijika"]),
+        Entry(name: .init(zhHans: "山田凉", zhHantHK: "山田涼", zhHantTW: "山田涼", en: "Ryo Yamada", ja: "山田リョウ"), aliases: ["凉", "涼", "リョウ", "ryo", "yamadaryo"]),
+        Entry(name: .init(zhHans: "喜多郁代", zhHantHK: "喜多郁代", zhHantTW: "喜多郁代", en: "Ikuyo Kita", ja: "喜多郁代"), aliases: ["喜多", "喜多ちゃん", "kita", "ikuyokita"]),
+        Entry(name: .init(zhHans: "放学后茶会", zhHantHK: "放學後茶會", zhHantTW: "放學後茶會", en: "Ho-kago Tea Time", ja: "放課後ティータイム"), aliases: ["k-on", "kon", "けいおん", "轻音", "輕音", "轻音少女", "輕音少女", "轻音部", "輕音部", "htt", "hokagoteatime", "ho-kago tea time", "放学后tea time", "放學後tea time", "放課後tea time"]),
+        Entry(name: .init(zhHans: "平泽唯", zhHantHK: "平澤唯", zhHantTW: "平澤唯", en: "Yui Hirasawa", ja: "平沢唯"), aliases: ["唯", "yui", "hirasawayui"]),
+        Entry(name: .init(zhHans: "秋山澪", zhHantHK: "秋山澪", zhHantTW: "秋山澪", en: "Mio Akiyama", ja: "秋山澪"), aliases: ["澪", "mio", "akiyamamio"]),
+        Entry(name: .init(zhHans: "田井中律", zhHantHK: "田井中律", zhHantTW: "田井中律", en: "Ritsu Tainaka", ja: "田井中律"), aliases: ["tainakaritsu"]),
+        Entry(name: .init(zhHans: "琴吹紬", zhHantHK: "琴吹紬", zhHantTW: "琴吹紬", en: "Tsumugi Kotobuki", ja: "琴吹紬"), aliases: ["紬", "mugi", "tsumugi", "kotobukitsumugi"]),
+        Entry(name: .init(zhHans: "中野梓", zhHantHK: "中野梓", zhHantTW: "中野梓", en: "Azusa Nakano", ja: "中野梓"), aliases: ["梓", "azusa", "azunyan", "あずにゃん", "nakanoazusa"]),
+        Entry(name: .init(zhHans: "平泽忧", zhHantHK: "平澤憂", zhHantTW: "平澤憂", en: "Ui Hirasawa", ja: "平沢憂"), aliases: ["忧", "憂", "ui", "hirasawaui"]),
+        Entry(name: .init(zhHans: "真锅和", zhHantHK: "真鍋和", zhHantTW: "真鍋和", en: "Nodoka Manabe", ja: "真鍋和"), aliases: ["和", "nodoka", "manabenodoka"]),
+        Entry(name: .init(zhHans: "山中佐和子", zhHantHK: "山中佐和子", zhHantTW: "山中佐和子", en: "Sawako Yamanaka", ja: "山中さわ子"), aliases: ["佐和子", "さわ子", "sawako", "yamanakasawako"]),
+        Entry(name: .init(zhHans: "铃木纯", zhHantHK: "鈴木純", zhHantTW: "鈴木純", en: "Jun Suzuki", ja: "鈴木純"), aliases: ["纯", "純", "jun", "suzukijun"]),
+        Entry(name: .init(zhHans: "有刺无刺", zhHantHK: "有刺無刺", zhHantTW: "有刺無刺", en: "TOGENASHI TOGEARI", ja: "トゲナシトゲアリ"), aliases: ["gbc", "girlsbandcry", "ガルクラ", "ガールズバンドクライ", "ガールズバンドくらい", "togenashitogeari", "トゲトゲ", "tgtg", "刺"]),
+        Entry(name: .init(zhHans: "井芹仁菜", zhHantHK: "井芹仁菜", zhHantTW: "井芹仁菜", en: "Nina Iseri", ja: "井芹仁菜"), aliases: ["仁菜", "nina", "iserinina"]),
+        Entry(name: .init(zhHans: "河原木桃香", zhHantHK: "河原木桃香", zhHantTW: "河原木桃香", en: "Momoka Kawaragi", ja: "河原木桃香"), aliases: ["桃香", "momoka", "kawaragimomoka"]),
+        Entry(name: .init(zhHans: "安和昴", zhHantHK: "安和昴", zhHantTW: "安和昴", en: "Subaru Awa", ja: "安和すばる"), aliases: ["昴", "すばる", "subaru", "awasubaru"]),
+        Entry(name: .init(zhHans: "海老塚智", zhHantHK: "海老塚智", zhHantTW: "海老塚智", en: "Tomo Ebizuka", ja: "海老塚智"), aliases: ["智", "tomo", "ebizukatomo"]),
+        Entry(name: .init(zhHans: "卢帕", zhHantHK: "盧帕", zhHantTW: "盧帕", en: "Rupa", ja: "ルパ"), aliases: ["rupa", "ルパ"]),
         Entry(name: .init(zhHans: "东方Project", zhHantHK: "東方Project", zhHantTW: "東方Project", en: "Touhou Project", ja: "東方Project"), aliases: ["touhou", "touhouproject", "东方", "東方"]),
         Entry(name: .init(zhHans: "博丽灵梦", zhHantHK: "博麗靈夢", zhHantTW: "博麗靈夢", en: "Reimu Hakurei", ja: "博麗霊夢"), aliases: ["灵梦", "靈夢", "霊夢", "reimu"]),
         Entry(name: .init(zhHans: "雾雨魔理沙", zhHantHK: "霧雨魔理沙", zhHantTW: "霧雨魔理沙", en: "Marisa Kirisame", ja: "霧雨魔理沙"), aliases: ["魔理沙", "marisa"]),
@@ -513,6 +534,32 @@ enum CardTagColorPalette {
             ["#39C5BB", "#00A0E9", "#88DD44", "#FF9900", "#EE1166", "#884499"],
             ["projectsekai", "project sekai", "pjsk", "啤酒烧烤", "啤酒燒烤", "プロセカ", "世界计划", "世界計畫", "世界計画", "世嘉彩舞", "彩舞", "世界计划彩色舞台", "世界計畫彩色舞台"]
         ),
+        (
+            ["#FF9900", "#FFBB00", "#FF66BB", "#33DD99", "#BB88EE"],
+            ["Wonderlands x Showtime 拼色", "Wonderlands x Showtime Mix", "ワンダショMIX", "wonderlandsxshowtimemix", "wonderlands x showtime mix", "wsmix", "wxs mix", "wxs多色", "wxs拼色", "ws多色", "ws拼色", "ワンダショmix", "ワンダショ多色", "ワンダショ拼色"]
+        ),
+        (
+            ["#39C5BB", "#FFE211", "#FFB000", "#FF69B4", "#E44D98", "#0068B7"],
+            ["术力口", "ボカロ", "vocaloid", "vocalo", "VOCALOID"]
+        ),
+        (["#00A0E9", "#33AAEE", "#FFDD45", "#EE6666", "#BBDD22"], ["leoneed", "leo/need", "l/n", "ln", "レオニ", "Leo/need"]),
+        (["#88DD44", "#FFCCAA", "#99CCFF", "#FFAACC", "#99EEDD"], ["moremorejump", "MORE MORE JUMP!", "mmj", "モモジャン", "桃跳"]),
+        (["#EE1166", "#FF6699", "#00BBDD", "#FF7722", "#0077DD"], ["vividbadsquad", "vbs", "ビビバス", "Vivid BAD SQUAD"]),
+        (["#FF9900", "#FFBB00", "#FF66BB", "#33DD99", "#BB88EE"], ["wonderlandsxshowtime", "Wonderlands x Showtime", "ワンダーランズ x ショウタイム", "ワンダーランズ×ショウタイム", "ws", "wxs", "wxS", "ワンダショ", "ワショ"]),
+        (["#884499", "#BB6688", "#8889CC", "#CCAA88", "#DDAACC"], ["nightcord", "Nightcord at 25:00", "25点，Nightcord见。", "25點，Nightcord見。", "25時、ナイトコードで。", "n25", "25ji", "25時", "25时", "25點", "25点", "ニーゴ"]),
+        (["#FF3377", "#FF5522", "#3366CC", "#FF99CC", "#FFCC33", "#AA66CC"], ["poppinparty", "poppin'party", "ポピパ", "Poppin'Party"]),
+        (["#E53344", "#E5004F", "#55BB77", "#FF77AA", "#CC3333", "#FFCC66"], ["afterglow", "aglow", "美竹兰组", "美竹蘭組"]),
+        (["#33DDAA", "#FF66AA", "#66CCFF", "#FFEE99", "#88DD44", "#CC99FF"], ["pastelpalettes", "pastel*palettes", "pp", "パスパレ", "彩组", "彩組"]),
+        (["#3344AA", "#3344AA", "#66CCFF", "#DD2244", "#AA44DD", "#9999CC"], ["roselia", "roselia组"]),
+        (["#FFC02A", "#FFCC33", "#AA66CC", "#FF9933", "#66CCFF", "#996633"], ["hellohappyworld", "hhw", "ハロハピ", "hello happy world", "Hello Happy World!"]),
+        (["#33AADD", "#AABBFF", "#FF99CC", "#99DD66", "#FFCC66", "#6699CC"], ["morfonica", "モニカ", "Morfonica"]),
+        (["#66CC33", "#AA3333", "#77CC44", "#FF9933", "#FF77BB", "#66CCFF"], ["raiseasuilen", "raise a suilen", "ras", "RAISE A SUILEN"]),
+        (["#3381B0", "#77BBDD", "#FF8899", "#66CC99", "#DDBB66", "#4455AA"], ["mygo", "mygo!!!!!", "迷子", "MyGO!!!!!"]),
+        (["#881144", "#CC4466", "#884499", "#66AA66", "#336699", "#DDBB66"], ["avemujica", "母鸡卡", "Ave Mujica"]),
+        (["#7D4CFF", "#FF66AA", "#66CCFF", "#FFCC66", "#99DD66", "#CC99FF"], ["mugendaimewtype", "mugendai mewtype", "夢限大みゅーたいぷ", "梦限大", "夢限大", "Mugendai Mewtype"]),
+        (["#F4B6C2", "#FF99CC", "#FFD34E", "#5B8FE8", "#E94B4B"], ["kessokuband", "結束バンド", "结束乐队", "結束樂隊", "Kessoku Band"]),
+        (["#F2C94C", "#FF8FB3", "#5AA0E6", "#FFD23F", "#CFA7FF", "#61C28B"], ["htt", "hokagoteatime", "ho-kago tea time", "放学后茶会", "放學後茶會", "放課後ティータイム", "Ho-kago Tea Time"]),
+        (["#E60033", "#F05A8A", "#9B6DFF", "#FFD447", "#58A6FF", "#5EC26A"], ["togenashitogeari", "トゲナシトゲアリ", "有刺无刺", "有刺無刺", "TOGENASHI TOGEARI", "トゲトゲ", "刺"]),
     ]
 
     private nonisolated static let splitDefaults: [(leadingHex: String, trailingHex: String, keywords: [String])] = [
@@ -586,6 +633,24 @@ enum CardTagColorPalette {
         ("#7D4CFF", "#FFCC66", ["峰月律", "律", "Ritsu Minetsuki", "ritsu", "minetsukiritsu"]),
         ("#7D4CFF", "#99DD66", ["藤都子", "都子", "Miyako Fuji", "miyako", "fujimiyako"]),
         ("#7D4CFF", "#CC99FF", ["千石由乃", "千石ユノ", "由乃", "ユノ", "Yuno Sengoku", "yuno", "sengokuyuno"]),
+        ("#F4B6C2", "#FF99CC", ["后藤一里", "後藤ひとり", "波奇", "ぼっち", "Hitori Gotoh", "hitorigotoh"]),
+        ("#F4B6C2", "#FFD34E", ["伊地知虹夏", "虹夏", "Nijika Ijichi", "nijika", "ijichinijika"]),
+        ("#F4B6C2", "#5B8FE8", ["山田凉", "山田涼", "山田リョウ", "凉", "涼", "リョウ", "Ryo Yamada", "ryo", "yamadaryo"]),
+        ("#F4B6C2", "#E94B4B", ["喜多郁代", "喜多", "喜多ちゃん", "Ikuyo Kita", "kita", "ikuyokita"]),
+        ("#F2C94C", "#FF8FB3", ["平泽唯", "平澤唯", "平沢唯", "唯", "Yui Hirasawa", "yui", "hirasawayui"]),
+        ("#F2C94C", "#5AA0E6", ["秋山澪", "澪", "Mio Akiyama", "mio", "akiyamamio"]),
+        ("#F2C94C", "#FFD23F", ["田井中律", "Ritsu Tainaka", "tainakaritsu"]),
+        ("#F2C94C", "#CFA7FF", ["琴吹紬", "紬", "Tsumugi Kotobuki", "mugi", "tsumugi", "kotobukitsumugi"]),
+        ("#F2C94C", "#61C28B", ["中野梓", "梓", "Azusa Nakano", "azusa", "azunyan", "あずにゃん", "nakanoazusa"]),
+        ("#F2C94C", "#F5A6B8", ["平泽忧", "平澤憂", "平沢憂", "忧", "憂", "Ui Hirasawa", "ui", "hirasawaui"]),
+        ("#F2C94C", "#72BFA3", ["真锅和", "真鍋和", "和", "Nodoka Manabe", "nodoka", "manabenodoka"]),
+        ("#F2C94C", "#B990D8", ["山中佐和子", "山中さわ子", "佐和子", "さわ子", "Sawako Yamanaka", "sawako", "yamanakasawako"]),
+        ("#F2C94C", "#D59A5B", ["铃木纯", "鈴木純", "纯", "純", "Jun Suzuki", "jun", "suzukijun"]),
+        ("#E60033", "#F05A8A", ["井芹仁菜", "仁菜", "Nina Iseri", "nina", "iserinina"]),
+        ("#E60033", "#9B6DFF", ["河原木桃香", "桃香", "Momoka Kawaragi", "momoka", "kawaragimomoka"]),
+        ("#E60033", "#FFD447", ["安和昴", "安和すばる", "昴", "すばる", "Subaru Awa", "subaru", "awasubaru"]),
+        ("#E60033", "#58A6FF", ["海老塚智", "智", "Tomo Ebizuka", "tomo", "ebizukatomo"]),
+        ("#E60033", "#5EC26A", ["卢帕", "盧帕", "ルパ", "Rupa", "rupa"]),
     ]
 
     private nonisolated static let defaults: [(hex: String, keywords: [String])] = [
@@ -615,7 +680,9 @@ enum CardTagColorPalette {
         ("#F6B51D", ["ensemblestars", "enstars", "あんスタ", "偶像梦幻祭", "偶像夢幻祭", "es", "明星昴流", "冰鹰北斗", "氷鷹北斗", "游木真", "衣更真绪", "衣更真緒", "朔间零", "朔間零", "羽风薰", "羽風薫", "濑名泉", "瀬名泉", "月永雷欧", "月永レオ", "朱樱司", "朱桜司", "天城一彩", "天城燐音", "白鸟蓝良", "白鳥藍良"]),
         ("#F34E7B", ["idolmaster", "theidolmaster", "imas", "アイマス", "偶像大师", "偶像大師", "765", "灰姑娘", "cgss", "百万现场", "mltd", "闪耀色彩", "シャニマス", "天海春香", "如月千早", "星井美希", "岛村卯月", "島村卯月", "涩谷凛", "渋谷凛", "本田未央", "春日未来", "最上静香", "伊吹翼", "樱木真乃", "櫻木真乃", "风野灯织", "風野灯織", "八宫巡", "八宮めぐる"]),
         ("#8D5AC2", ["umamusume", "ウマ娘", "赛马娘", "賽馬娘", "马娘", "特别周", "スペシャルウィーク", "无声铃鹿", "サイレンススズカ", "东海帝王", "トウカイテイオー", "小栗帽", "オグリキャップ", "黄金船", "ゴールドシップ", "米浴", "ライスシャワー", "目白麦昆", "メジロマックイーン", "北部玄驹", "キタサンブラック", "里见光钻", "サトノダイヤモンド"]),
-        ("#F4B6C2", ["bocchitherock", "ぼっちざろっく", "孤独摇滚", "孤獨搖滾", "孤摇", "孤搖", "后藤一里", "後藤ひとり", "波奇", "ぼっち", "伊地知虹夏", "虹夏", "山田凉", "山田リョウ", "山田涼", "喜多郁代", "喜多ちゃん", "喜多"]),
+        ("#F4B6C2", ["bocchitherock", "ぼっちざろっく", "孤独摇滚", "孤獨搖滾", "孤摇", "孤搖", "kessokuband", "結束バンド", "结束乐队", "結束樂隊", "后藤一里", "後藤ひとり", "波奇", "ぼっち", "伊地知虹夏", "虹夏", "山田凉", "山田リョウ", "山田涼", "喜多郁代", "喜多ちゃん", "喜多"]),
+        ("#F2C94C", ["k-on", "kon", "けいおん", "けいおん！", "轻音少女", "輕音少女", "轻音部", "輕音部", "放学后茶会", "放學後茶會", "放課後ティータイム", "htt", "hokagoteatime", "ho-kago tea time", "平泽唯", "平澤唯", "平沢唯", "秋山澪", "田井中律", "琴吹紬", "中野梓", "平泽忧", "平澤憂", "真锅和", "真鍋和", "山中佐和子", "山中さわ子", "铃木纯", "鈴木純"]),
+        ("#E60033", ["girlsbandcry", "gbc", "ガールズバンドクライ", "ガールズバンドくらい", "ガルクラ", "少女乐队哭泣", "少女樂隊哭泣", "togenashitogeari", "トゲナシトゲアリ", "有刺无刺", "有刺無刺", "井芹仁菜", "河原木桃香", "安和昴", "安和すばる", "海老塚智", "卢帕", "盧帕", "ルパ"]),
         ("#E60012", ["touhou", "touhouproject", "东方project", "東方project", "东方", "東方", "博丽灵梦", "博麗霊夢", "灵梦", "霊夢", "雾雨魔理沙", "霧雨魔理沙", "魔理沙", "十六夜咲夜", "咲夜", "魂魄妖梦", "魂魄妖夢", "妖梦", "妖夢", "蕾米莉亚", "蕾米莉亞", "レミリア", "芙兰朵露", "芙蘭朵露", "フランドール", "琪露诺", "チルノ", "古明地恋", "古明地こいし"]),
         ("#7B4BC9", ["eva", "nge", "Evangelion", "エヴァンゲリオン", "新世纪福音战士", "新世紀福音戰士", "碇真嗣", "碇シンジ", "绫波丽", "綾波レイ", "明日香", "アスカ", "渚薰", "渚カヲル", "葛城美里", "葛城ミサト"]),
         ("#8CC7A1", ["frieren", "葬送的芙莉莲", "葬送的芙莉蓮", "葬送のフリーレン", "芙莉莲", "芙莉蓮", "フリーレン", "菲伦", "菲倫", "フェルン", "修塔尔克", "修塔爾克", "シュタルク", "辛美尔", "辛美爾", "ヒンメル", "阿乌拉", "阿烏拉", "アウラ"]),
@@ -630,73 +697,77 @@ enum CardTagColorPalette {
         ("#FFCB05", ["pokemon", "pokémon", "宝可梦", "寶可夢", "ポケモン", "精灵宝可梦", "神奇寶貝", "皮卡丘", "ピカチュウ", "小智", "サトシ", "喷火龙", "噴火龍", "リザードン", "伊布", "イーブイ", "梦幻", "夢幻", "ミュウ"]),
     ]
 
-    nonisolated static func colorHex(for tag: String, overrides: [String: String] = [:]) -> String {
-        let key = normalized(tag)
-        if let override = overrides[key], isValidHex(override) {
-            return override
-        }
-
-        for entry in multiDefaults {
-            if entry.keywords.contains(where: { key == normalized($0) }) {
-                return entry.hexes.first ?? fallbackHex
-            }
-        }
-
-        for entry in defaults {
-            if entry.keywords.contains(where: { key == normalized($0) }) {
-                return entry.hex
-            }
-        }
-
-        return fallbackHex
+    nonisolated static func colorHex(for tag: String, overrides: [String: CardTagColorOverride] = [:]) -> String {
+        colorStyle(for: tag, overrides: overrides).leadingHex
     }
 
-    nonisolated static func colorStyle(for tag: String, overrides: [String: String] = [:]) -> CardTagColorStyle {
+    nonisolated static func colorStyle(for tag: String, overrides: [String: CardTagColorOverride] = [:]) -> CardTagColorStyle {
         let key = normalized(tag)
-        if let override = overrides[key], isValidHex(override) {
-            return CardTagColorStyle(leadingHex: override, trailingHex: nil)
-        }
-
-        for entry in multiDefaults {
-            if entry.keywords.contains(where: { key == normalized($0) }) {
-                return CardTagColorStyle(segmentHexes: entry.hexes)
+        if let preset = presetStyle(for: tag) {
+            if overrides[key]?.mode == .solid {
+                return CardTagColorStyle(leadingHex: preset.solidHex, trailingHex: nil)
             }
+            return preset.style
         }
 
-        for entry in splitDefaults {
-            if entry.keywords.contains(where: { key == normalized($0) }) {
-                return CardTagColorStyle(leadingHex: entry.leadingHex, trailingHex: entry.trailingHex)
-            }
+        if let override = overrides[key],
+           override.mode == .custom {
+            return CardTagColorStyle(segmentHexes: normalizedHexes(override.hexes))
         }
 
-        return CardTagColorStyle(leadingHex: colorHex(for: tag), trailingHex: nil)
+        return CardTagColorStyle(leadingHex: defaultHex(for: tag), trailingHex: nil)
     }
 
-    nonisolated static func overrides(from rawValue: String?) -> [String: String] {
+    nonisolated static func overrides(from rawValue: String?) -> [String: CardTagColorOverride] {
         guard let rawValue,
-              let data = rawValue.data(using: .utf8),
-              let decoded = try? JSONDecoder().decode([String: String].self, from: data) else {
+              let data = rawValue.data(using: .utf8) else {
             return [:]
         }
 
-        return decoded.reduce(into: [:]) { result, pair in
+        if let decoded = try? JSONDecoder().decode([String: CardTagColorOverride].self, from: data) {
+            return decoded.reduce(into: [:]) { result, pair in
+                let key = normalized(pair.key)
+                guard !key.isEmpty else { return }
+                let normalizedOverride = normalized(pair.value)
+                if !normalizedOverride.hexes.isEmpty || normalizedOverride.mode != .custom {
+                    result[key] = normalizedOverride
+                }
+            }
+        }
+
+        guard let legacy = try? JSONDecoder().decode([String: String].self, from: data) else {
+            return [:]
+        }
+
+        return legacy.reduce(into: [:]) { result, pair in
             let key = normalized(pair.key)
             let value = normalizedHex(pair.value)
             if !key.isEmpty, let value {
-                result[key] = value
+                result[key] = CardTagColorOverride(mode: .custom, hexes: [value])
             }
         }
     }
 
-    nonisolated static func rawValue(from overrides: [String: String], tags: [String]) -> String? {
-        var normalizedOverrides: [String: String] = [:]
+    nonisolated static func rawValue(from overrides: [String: CardTagColorOverride], tags: [String]) -> String? {
+        var normalizedOverrides: [String: CardTagColorOverride] = [:]
         let validKeys = Set(tags.map(normalized))
 
-        for (tag, hex) in overrides {
+        for (tag, override) in overrides {
             let key = normalized(tag)
-            guard validKeys.contains(key), let normalizedHex = normalizedHex(hex) else { continue }
-            guard normalizedHex != colorHex(for: tag) else { continue }
-            normalizedOverrides[key] = normalizedHex
+            guard validKeys.contains(key) else { continue }
+
+            if presetStyle(for: tag) != nil {
+                if override.mode == .solid {
+                    normalizedOverrides[key] = CardTagColorOverride(mode: .solid, hexes: [])
+                }
+                continue
+            }
+
+            guard !isPresetColored(tag) else { continue }
+            let hexes = normalizedHexes(override.hexes)
+            if !hexes.isEmpty {
+                normalizedOverrides[key] = CardTagColorOverride(mode: .custom, hexes: hexes)
+            }
         }
 
         guard !normalizedOverrides.isEmpty,
@@ -711,6 +782,83 @@ enum CardTagColorPalette {
         CardTagIndex.normalizedKey(tag)
     }
 
+    nonisolated static func isPresetColored(_ tag: String) -> Bool {
+        presetStyle(for: tag) != nil || defaultHexMatch(for: tag) != nil
+    }
+
+    nonisolated static func hasPresetSplitStyle(for tag: String) -> Bool {
+        presetStyle(for: tag) != nil
+    }
+
+    nonisolated static func presetMode(for tag: String, overrides: [String: CardTagColorOverride]) -> CardTagColorOverride.Mode {
+        overrides[normalized(tag)]?.mode == .solid ? .solid : .preset
+    }
+
+    nonisolated static func presetSolidHex(for tag: String) -> String {
+        presetStyle(for: tag)?.solidHex ?? defaultHex(for: tag)
+    }
+
+    nonisolated static func customHexes(for tag: String, overrides: [String: CardTagColorOverride]) -> [String] {
+        let key = normalized(tag)
+        if let override = overrides[key], override.mode == .custom {
+            let hexes = normalizedHexes(override.hexes)
+            if !hexes.isEmpty { return hexes }
+        }
+        return [fallbackHex]
+    }
+
+    private nonisolated static func presetStyle(for tag: String) -> (style: CardTagColorStyle, solidHex: String)? {
+        let key = normalized(tag)
+
+        for entry in multiDefaults {
+            if entry.keywords.contains(where: { key == normalized($0) }) {
+                let hexes = normalizedPresetHexes(entry.hexes)
+                return (CardTagColorStyle(segmentHexes: hexes), hexes.first ?? fallbackHex)
+            }
+        }
+
+        for entry in splitDefaults {
+            if entry.keywords.contains(where: { key == normalized($0) }) {
+                let leadingHex = normalizedHex(entry.leadingHex) ?? fallbackHex
+                let trailingHex = normalizedHex(entry.trailingHex) ?? fallbackHex
+                return (CardTagColorStyle(segmentHexes: [leadingHex, trailingHex]), trailingHex)
+            }
+        }
+
+        return nil
+    }
+
+    private nonisolated static func defaultHex(for tag: String) -> String {
+        defaultHexMatch(for: tag) ?? fallbackHex
+    }
+
+    private nonisolated static func defaultHexMatch(for tag: String) -> String? {
+        let key = normalized(tag)
+        for entry in defaults {
+            if entry.keywords.contains(where: { key == normalized($0) }) {
+                return normalizedHex(entry.hex) ?? fallbackHex
+            }
+        }
+        return nil
+    }
+
+    private nonisolated static func normalized(_ override: CardTagColorOverride) -> CardTagColorOverride {
+        switch override.mode {
+        case .preset, .solid:
+            return CardTagColorOverride(mode: override.mode, hexes: [])
+        case .custom:
+            return CardTagColorOverride(mode: .custom, hexes: normalizedHexes(override.hexes))
+        }
+    }
+
+    private nonisolated static func normalizedHexes(_ values: [String]) -> [String] {
+        Array(values.compactMap(normalizedHex).prefix(3))
+    }
+
+    private nonisolated static func normalizedPresetHexes(_ values: [String]) -> [String] {
+        values.compactMap(normalizedHex)
+    }
+
     private nonisolated static func normalizedHex(_ value: String) -> String? {
         var hex = value.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
         if !hex.hasPrefix("#") {
@@ -722,6 +870,17 @@ enum CardTagColorPalette {
     private nonisolated static func isValidHex(_ value: String) -> Bool {
         value.range(of: #"^#[0-9A-Fa-f]{6}$"#, options: .regularExpression) != nil
     }
+}
+
+struct CardTagColorOverride: Codable, Equatable {
+    enum Mode: String, Codable {
+        case preset
+        case solid
+        case custom
+    }
+
+    var mode: Mode
+    var hexes: [String]
 }
 
 struct CardTagColorStyle {
@@ -739,19 +898,19 @@ struct CardTagColorStyle {
         self.segmentHexes = segmentHexes.isEmpty ? [CardTagColorPalette.fallbackHex] : segmentHexes
     }
 
-    var leadingHex: String {
+    nonisolated var leadingHex: String {
         segmentHexes.first ?? CardTagColorPalette.fallbackHex
     }
 
-    var trailingHex: String? {
+    nonisolated var trailingHex: String? {
         segmentHexes.dropFirst().first
     }
 
-    var isSplit: Bool {
+    nonisolated var isSplit: Bool {
         Set(segmentHexes).count > 1
     }
 
-    var isMulticolor: Bool {
+    nonisolated var isMulticolor: Bool {
         segmentHexes.count > 1 && isSplit
     }
 }

@@ -31,7 +31,7 @@ struct AddProfileView: View {
     @State private var templateStyle: ClusterTemplateStyle = .standard
     @State private var passSubtitle = ""
     @State private var tagInput = ""
-    @State private var tagColorOverrides: [String: String] = [:]
+    @State private var tagColorOverrides: [String: CardTagColorOverride] = [:]
     @State private var cornerRadius: Double = 16
     @State private var isAppearanceExpanded = false
     @State private var isBackgroundExpanded = false
@@ -167,7 +167,7 @@ struct AddProfileView: View {
             TextField(L.subtitleInfo, text: $subtitle, axis: .vertical)
                 .lineLimit(1...3)
 
-            CardTagInputView(text: $tagInput)
+            CardTagInputView(text: $tagInput, colorOverrides: tagColorOverrides)
         }
     }
 

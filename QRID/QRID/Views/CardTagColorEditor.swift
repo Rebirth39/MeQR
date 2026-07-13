@@ -2,7 +2,7 @@ import SwiftUI
 
 struct CardTagColorEditor: View {
     let tagInput: String
-    @Binding var colorOverrides: [String: String]
+    @Binding var colorOverrides: [String: CardTagColorOverride]
     @State private var isExpanded = false
 
     private var tags: [String] {
@@ -14,33 +14,127 @@ struct CardTagColorEditor: View {
             Section {
                 DisclosureGroup(L.tagColors, isExpanded: $isExpanded) {
                     ForEach(tags, id: \.self) { tag in
-                        ColorPicker(selection: colorBinding(for: tag), supportsOpacity: false) {
-                            HStack(spacing: 8) {
-                                colorPreview(for: tag)
-                                    .frame(width: 22, height: 12)
-                                Text(tag)
-                                    .lineLimit(1)
-                            }
-                        }
+                        tagColorRow(for: tag)
                     }
                 }
             }
         }
     }
 
-    private func colorBinding(for tag: String) -> Binding<Color> {
+    @ViewBuilder
+    private func tagColorRow(for tag: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                colorPreview(for: tag)
+                    .frame(width: 28, height: 14)
+                Text(tag)
+                    .lineLimit(1)
+                Spacer(minLength: 8)
+            }
+
+            if CardTagColorPalette.hasPresetSplitStyle(for: tag) {
+                Picker("", selection: presetModeBinding(for: tag)) {
+                    Text(L.tagColorMixed).tag(CardTagColorOverride.Mode.preset)
+                    Text(L.tagColorSolid).tag(CardTagColorOverride.Mode.solid)
+                }
+                .pickerStyle(.segmented)
+            } else if CardTagColorPalette.isPresetColored(tag) {
+                Text(L.tagColorPresetLocked)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                customColorControls(for: tag)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    @ViewBuilder
+    private func customColorControls(for tag: String) -> some View {
+        let hexes = customHexes(for: tag)
+        ForEach(hexes.indices, id: \.self) { index in
+            ColorPicker(selection: customColorBinding(for: tag, index: index), supportsOpacity: false) {
+                HStack(spacing: 8) {
+                    Text("\(L.tagColor) \(index + 1)")
+                    if hexes.count > 1 {
+                        Spacer()
+                        Button {
+                            removeCustomColor(for: tag, at: index)
+                        } label: {
+                            Image(systemName: "minus.circle")
+                                .foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(L.removeColor)
+                    }
+                }
+            }
+        }
+
+        if hexes.count < 3 {
+            Button {
+                addCustomColor(for: tag)
+            } label: {
+                Label(L.addColor, systemImage: "plus.circle")
+            }
+            .buttonStyle(.borderless)
+        }
+    }
+
+    private func presetModeBinding(for tag: String) -> Binding<CardTagColorOverride.Mode> {
         Binding {
-            color(for: tag)
-        } set: { newColor in
+            CardTagColorPalette.presetMode(for: tag, overrides: colorOverrides)
+        } set: { newMode in
             let key = CardTagColorPalette.normalized(tag)
-            if let hex = newColor.toHex() {
-                colorOverrides[key] = hex
+            if newMode == .solid {
+                colorOverrides[key] = CardTagColorOverride(mode: .solid, hexes: [])
+            } else {
+                colorOverrides.removeValue(forKey: key)
             }
         }
     }
 
-    private func color(for tag: String) -> Color {
-        Color(hex: CardTagColorPalette.colorHex(for: tag, overrides: colorOverrides))
+    private func customColorBinding(for tag: String, index: Int) -> Binding<Color> {
+        Binding {
+            let hexes = customHexes(for: tag)
+            let hex = hexes.indices.contains(index) ? hexes[index] : CardTagColorPalette.fallbackHex
+            return Color(hex: hex)
+        } set: { newColor in
+            if let hex = newColor.toHex() {
+                setCustomHex(hex, for: tag, at: index)
+            }
+        }
+    }
+
+    private func customHexes(for tag: String) -> [String] {
+        CardTagColorPalette.customHexes(for: tag, overrides: colorOverrides)
+    }
+
+    private func setCustomHex(_ hex: String, for tag: String, at index: Int) {
+        let key = CardTagColorPalette.normalized(tag)
+        var hexes = customHexes(for: tag)
+        while hexes.count <= index, hexes.count < 3 {
+            hexes.append(CardTagColorPalette.fallbackHex)
+        }
+        guard hexes.indices.contains(index) else { return }
+        hexes[index] = hex
+        colorOverrides[key] = CardTagColorOverride(mode: .custom, hexes: Array(hexes.prefix(3)))
+    }
+
+    private func addCustomColor(for tag: String) {
+        let key = CardTagColorPalette.normalized(tag)
+        var hexes = customHexes(for: tag)
+        guard hexes.count < 3 else { return }
+        hexes.append(hexes.last ?? CardTagColorPalette.fallbackHex)
+        colorOverrides[key] = CardTagColorOverride(mode: .custom, hexes: hexes)
+    }
+
+    private func removeCustomColor(for tag: String, at index: Int) {
+        let key = CardTagColorPalette.normalized(tag)
+        var hexes = customHexes(for: tag)
+        guard hexes.count > 1, hexes.indices.contains(index) else { return }
+        hexes.remove(at: index)
+        colorOverrides[key] = CardTagColorOverride(mode: .custom, hexes: hexes)
     }
 
     @ViewBuilder
@@ -62,6 +156,7 @@ struct CardTagColorEditor: View {
 
 struct CardTagInputView: View {
     @Binding var text: String
+    var colorOverrides: [String: CardTagColorOverride] = [:]
     @State private var draft = ""
 
     private var tags: [String] {
@@ -80,7 +175,7 @@ struct CardTagInputView: View {
             if !tags.isEmpty {
                 CardTagFlowLayout(spacing: 7, rowSpacing: 6) {
                     ForEach(tags, id: \.self) { tag in
-                        CardTagPreviewChip(tag: tag) {
+                        CardTagPreviewChip(tag: tag, colorOverrides: colorOverrides) {
                             removeTag(tag)
                         }
                     }
@@ -188,10 +283,11 @@ struct CardTagInputView: View {
 
 private struct CardTagPreviewChip: View {
     let tag: String
+    var colorOverrides: [String: CardTagColorOverride] = [:]
     let onRemove: () -> Void
 
     var body: some View {
-        let style = CardTagColorPalette.colorStyle(for: tag)
+        let style = CardTagColorPalette.colorStyle(for: tag, overrides: colorOverrides)
         let tagColor = Color(hex: style.leadingHex)
         HStack(spacing: 5) {
             Text(tag)

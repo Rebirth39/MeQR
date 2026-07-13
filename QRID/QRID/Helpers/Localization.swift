@@ -185,6 +185,12 @@ struct L {
     static var note: String { tr("备注", "備註", "備註", "Note", "メモ") }
     static var tags: String { tr("标签", "標籤", "標籤", "Tags", "タグ") }
     static var tagColors: String { tr("标签颜色", "標籤顏色", "標籤顏色", "Tag Colors", "タグの色") }
+    static var tagColor: String { tr("颜色", "顏色", "顏色", "Color", "色") }
+    static var tagColorMixed: String { tr("拼色", "拼色", "拼色", "Mixed", "多色") }
+    static var tagColorSolid: String { tr("纯色", "純色", "純色", "Solid", "単色") }
+    static var tagColorPresetLocked: String { tr("已使用内置颜色", "已使用內建顏色", "已使用內建顏色", "Using preset color", "プリセット色を使用中") }
+    static var addColor: String { tr("增加颜色", "增加顏色", "新增顏色", "Add Color", "色を追加") }
+    static var removeColor: String { tr("移除颜色", "移除顏色", "移除顏色", "Remove Color", "色を削除") }
     static var cardTagsHint: String { tr("输入后按回车添加，最多 10 个；会显示在通行证背面。", "輸入後按 Return 加入，最多 10 個；會顯示在通行證背面。", "輸入後按 Return 新增，最多 10 個；會顯示在通行證背面。", "Press Return to add. Up to 10 tags, shown on the pass back.", "入力後Returnで追加。最大10個、パス裏面に表示します。") }
     static var followStatus: String { tr("互关状态 / 返图进度", "互關狀態 / 返圖進度", "互關狀態 / 返圖進度", "Follow / photo status", "フォロー・返礼状況") }
     static var needsPhotoReturn: String { tr("需要返图", "需要返圖", "需要返圖", "Needs photo return", "写真返却が必要") }
