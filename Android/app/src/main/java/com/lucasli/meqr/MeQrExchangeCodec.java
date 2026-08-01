@@ -13,6 +13,7 @@ import java.util.UUID;
 
 final class MeQrExchangeCodec {
     private static final int ONLINE_AVATAR_TARGET_BYTES = 48 * 1024;
+    private static final String OFFLINE_FRAGMENT_PREFIX = "offline=";
 
     private MeQrExchangeCodec() {
     }
@@ -26,11 +27,89 @@ final class MeQrExchangeCodec {
     }
 
     static JSONObject onlineProfile(MeQrProfile profile, I18n i18n) throws Exception {
-        return profileJson(profile, i18n, 3, ONLINE_AVATAR_TARGET_BYTES);
+        return profileJson(profile, i18n, 10, ONLINE_AVATAR_TARGET_BYTES);
     }
 
     static String hybridCode(String remoteUrl, String offlinePayload) {
         return remoteUrl + "#offline=" + offlinePayload;
+    }
+
+    /** Decode a raw scanned string: meqr://profile?data=..., a bare payload, or a hybrid URL. */
+    static MeQrExchangeProfile decode(String raw) throws Exception {
+        String value = raw == null ? "" : raw.trim();
+        if (value.isEmpty()) {
+            throw new MeQrExchangeException();
+        }
+        if (value.startsWith("meqr://")) {
+            int query = value.indexOf('?');
+            if (query >= 0) {
+                for (String pair : value.substring(query + 1).split("&")) {
+                    String[] keyValue = pair.split("=", 2);
+                    if (keyValue.length == 2 && "data".equals(keyValue[0])) {
+                        return decodePayload(keyValue[1]);
+                    }
+                }
+            }
+            throw new MeQrExchangeException();
+        }
+        if (value.startsWith("http://") || value.startsWith("https://")) {
+            MeQrExchangeProfile fallback = offlineFallback(value);
+            if (fallback != null) {
+                return fallback;
+            }
+            throw new MeQrExchangeException();
+        }
+        return decodePayload(value);
+    }
+
+    static MeQrExchangeProfile decodePayload(String payload) throws Exception {
+        byte[] bytes = base64UrlDecode(payload);
+        if (bytes == null) {
+            throw new MeQrExchangeException();
+        }
+        return MeQrExchangeProfile.fromJson(new JSONObject(new String(bytes, StandardCharsets.UTF_8)));
+    }
+
+    static MeQrExchangeProfile offlineFallback(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        int fragmentIndex = raw.indexOf('#');
+        if (fragmentIndex < 0) {
+            return null;
+        }
+        String fragment = raw.substring(fragmentIndex + 1);
+        String payload = fragment.startsWith(OFFLINE_FRAGMENT_PREFIX)
+                ? fragment.substring(OFFLINE_FRAGMENT_PREFIX.length())
+                : fragment;
+        try {
+            return decodePayload(payload);
+        } catch (Exception exception) {
+            return null;
+        }
+    }
+
+    static boolean isRemoteUrl(String raw) {
+        if (raw == null || !(raw.startsWith("http://") || raw.startsWith("https://"))) {
+            return false;
+        }
+        try {
+            java.net.URL url = new java.net.URL(raw);
+            String host = url.getHost();
+            if (!MeQrRemoteService.API_HOST.equalsIgnoreCase(host)) {
+                return false;
+            }
+            return url.getPath().startsWith("/profiles/");
+        } catch (Exception exception) {
+            return false;
+        }
+    }
+
+    static final class MeQrExchangeException extends Exception {
+        private static final long serialVersionUID = 1L;
+
+        MeQrExchangeException() {
+        }
     }
 
     private static JSONObject profileJson(MeQrProfile profile, I18n i18n, int maxProfiles, int avatarTargetBytes) throws Exception {
@@ -46,12 +125,24 @@ final class MeQrExchangeCodec {
         }
 
         JSONArray platforms = new JSONArray();
-        JSONObject platform = new JSONObject();
-        platform.put("t", safe(profile.platform));
-        platform.put("n", safe(profile.platformDisplayName(i18n)));
-        platform.put("q", safe(profile.qrContent));
-        platforms.put(platform);
+        int itemLimit = Math.min(maxProfiles, profile.qrItems.size());
+        for (int i = 0; i < itemLimit; i++) {
+            MeQrItem item = profile.qrItems.get(i);
+            JSONObject platform = new JSONObject();
+            platform.put("t", safe(item.platform));
+            platform.put("n", safe(item.platformDisplayName(i18n)));
+            platform.put("q", safe(item.qrContent));
+            platforms.put(platform);
+        }
         root.put("p", platforms);
+        if (!profile.tags.isEmpty()) {
+            JSONArray tags = new JSONArray();
+            for (String tag : profile.tags) {
+                tags.put(tag);
+            }
+            root.put("g", tags);
+        }
+        root.put("m", profile.template);
         root.put("t", System.currentTimeMillis() / 1000L);
         return root;
     }
@@ -120,6 +211,10 @@ final class MeQrExchangeCodec {
     }
 
     private static String base64Url(byte[] bytes) {
-        return Base64.encodeToString(bytes, Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
+        return java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    private static byte[] base64UrlDecode(String value) {
+        return java.util.Base64.getUrlDecoder().decode(value);
     }
 }

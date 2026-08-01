@@ -31,11 +31,13 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -44,34 +46,51 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.zxing.Result;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 public final class MainActivity extends Activity {
     private static final int PICK_AVATAR = 1001;
     private static final int PICK_BACKGROUND = 1002;
+    private static final int PICK_QR_IMAGE = 1003;
+    private static final int PICK_SCAN_QR = 1004;
+    private static final int PICK_BANNER = 1005;
+    private static final int PICK_EXPORT_BACKUP = 1006;
+    private static final int PICK_IMPORT_BACKUP = 1007;
     private static final int REQUEST_WRITE_PHOTOS = 2001;
-    private static final int COLOR_BG = Color.rgb(17, 17, 18);
-    private static final int COLOR_PANEL = Color.rgb(43, 43, 46);
-    private static final int COLOR_PANEL_2 = Color.rgb(55, 55, 59);
-    private static final int COLOR_SURFACE = Color.rgb(31, 31, 34);
-    private static final int COLOR_TEXT = Color.WHITE;
-    private static final int COLOR_MUTED = Color.rgb(156, 156, 166);
-    private static final int COLOR_SEPARATOR = Color.rgb(67, 67, 72);
-    private static final int COLOR_BLUE = Color.rgb(10, 132, 255);
+    private static final int REQUEST_CAMERA = 2002;
+    private static final int COLOR_BG = Ui.BG;
+    private static final int COLOR_PANEL = Ui.SURFACE_2;
+    private static final int COLOR_PANEL_2 = Ui.SURFACE_2;
+    private static final int COLOR_SURFACE = Ui.SURFACE;
+    private static final int COLOR_TEXT = Ui.TEXT;
+    private static final int COLOR_MUTED = Ui.MUTED;
+    private static final int COLOR_SEPARATOR = Ui.BORDER;
+    private static final int COLOR_BLUE = Ui.TEAL;
+    private static final String ONBOARDING_VERSION = "android_profile_v1";
 
     private ProfileStore store;
+    private BackupManager backupManager;
     private I18n i18n;
+    private EncounterStore encounterStore;
+    private EventStore eventStore;
     private final List<MeQrProfile> profiles = new ArrayList<>();
     private LinearLayout list;
     private MeQrProfile editingProfile;
     private EditSession editSession;
     private Bitmap pendingShareBitmap;
     private Bitmap pendingMeQrBitmap;
+    private MeQrItem pendingQrItem;
+    private EditText pendingQrField;
+    private boolean scanningPhoto;
+    private boolean croppingBanner;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,15 +99,26 @@ public final class MainActivity extends Activity {
         getWindow().setNavigationBarColor(COLOR_BG);
         i18n = new I18n(this);
         store = new ProfileStore(this);
+        backupManager = new BackupManager(this);
+        encounterStore = new EncounterStore(this);
+        eventStore = new EventStore(this);
+        eventStore.refreshRemoteEvents();
         profiles.clear();
         profiles.addAll(store.load());
         renderMain();
+        if (profiles.isEmpty() && !getSharedPreferences("settings", MODE_PRIVATE).getBoolean(ONBOARDING_VERSION, false)) {
+            getWindow().getDecorView().post(this::showOnboarding);
+        }
     }
 
     private void renderMain() {
         boolean immersive = !profiles.isEmpty();
         FrameLayout shell = new FrameLayout(this);
-        shell.setBackgroundColor(immersive ? Color.WHITE : COLOR_BG);
+        if (immersive) {
+            shell.setBackgroundColor(Color.WHITE);
+        } else {
+            shell.setBackground(Ui.gradient(Ui.BG_TOP, Ui.BG, 0));
+        }
         if (immersive) {
             getWindow().setStatusBarColor(Color.TRANSPARENT);
             getWindow().setNavigationBarColor(Color.TRANSPARENT);
@@ -122,16 +152,23 @@ public final class MainActivity extends Activity {
         titleBlock.addView(title);
 
         TextView subtitle = new TextView(this);
-        subtitle.setText(profiles.isEmpty() ? i18n.t("emptyTitle") : profiles.size() + " profiles");
+        subtitle.setText(profiles.isEmpty() ? i18n.t("emptyTitle") : String.format(Locale.getDefault(), i18n.t("cardCount"), profiles.size()));
         subtitle.setTextSize(13);
         subtitle.setTextColor(immersive ? Color.argb(190, 0, 0, 0) : COLOR_MUTED);
         titleBlock.addView(subtitle);
         toolbar.addView(titleBlock, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
 
+        Button scan = immersive ? lightIconButton("▦") : iconButton("▦");
+        scan.setContentDescription(i18n.t("scanMeQr"));
+        scan.setOnClickListener(v -> showScan());
+        toolbar.addView(scan, new LinearLayout.LayoutParams(dp(44), dp(44)));
+
         Button settings = immersive ? lightIconButton("⋯") : iconButton("⋯");
         settings.setContentDescription(i18n.t("settings"));
         settings.setOnClickListener(v -> showMainMenu());
-        toolbar.addView(settings, new LinearLayout.LayoutParams(dp(58), dp(48)));
+        LinearLayout.LayoutParams settingsParams = new LinearLayout.LayoutParams(dp(44), dp(44));
+        settingsParams.setMargins(dp(8), 0, 0, 0);
+        toolbar.addView(settings, settingsParams);
         root.addView(toolbar);
 
         ScrollView scroll = new ScrollView(this);
@@ -165,7 +202,7 @@ public final class MainActivity extends Activity {
             empty.setBackground(rounded(COLOR_SURFACE, dp(28), Color.rgb(48, 48, 52), dp(1)));
 
             TextView icon = new TextView(this);
-            icon.setText("▦");
+            icon.setText("◉");
             icon.setTextSize(52);
             icon.setTextColor(COLOR_BLUE);
             icon.setGravity(Gravity.CENTER);
@@ -208,61 +245,51 @@ public final class MainActivity extends Activity {
     private LinearLayout profileHero(MeQrProfile profile, int index) {
         LinearLayout hero = new LinearLayout(this);
         hero.setOrientation(LinearLayout.VERTICAL);
-        hero.setPadding(dp(18), dp(18), dp(18), dp(14));
-        hero.setBackground(rounded(Color.argb(196, 255, 255, 255), dp(30), Color.argb(150, 255, 255, 255), dp(1)));
+        hero.setPadding(dp(10), dp(10), dp(10), dp(10));
+        hero.setBackground(rounded(Color.argb(218, 255, 255, 255), dp(18), Color.argb(170, 255, 255, 255), dp(1)));
         hero.setElevation(dp(6));
 
-        LinearLayout info = new LinearLayout(this);
-        info.setOrientation(LinearLayout.HORIZONTAL);
-        info.setGravity(Gravity.CENTER_VERTICAL);
-        info.setPadding(0, 0, 0, dp(8));
+        ImageView card = new ImageView(this);
+        card.setAdjustViewBounds(true);
+        card.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        card.setImageBitmap(CardRenderer.render(profile, i18n, 900));
+        card.setContentDescription(i18n.t("viewBack"));
+        hero.addView(card, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        ImageView avatar = new ImageView(this);
-        avatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        Bitmap avatarBitmap = decodeBitmap(profile.avatarPath);
-        if (avatarBitmap != null) {
-            avatar.setImageBitmap(circleBitmap(avatarBitmap, dp(74)));
-        } else {
-            avatar.setImageBitmap(initialBitmap(profile.name, dp(74), Color.argb(42, 0, 0, 0), Color.BLACK));
-        }
-        avatar.setBackground(rounded(Color.argb(40, 255, 255, 255), dp(22)));
-        info.addView(avatar, new LinearLayout.LayoutParams(dp(74), dp(74)));
-
-        LinearLayout texts = new LinearLayout(this);
-        texts.setOrientation(LinearLayout.VERTICAL);
-        texts.setPadding(dp(16), 0, 0, 0);
-        TextView name = new TextView(this);
-        name.setText(profile.name == null || profile.name.trim().isEmpty() ? i18n.t("appName") : profile.name.trim());
-        name.setTextColor(Color.BLACK);
-        name.setTextSize(24);
-        name.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        texts.addView(name);
-        if (profile.subtitle != null && !profile.subtitle.trim().isEmpty()) {
-            TextView subtitle = new TextView(this);
-            subtitle.setText(profile.subtitle.trim());
-            subtitle.setTextColor(Color.argb(190, 0, 0, 0));
-            subtitle.setTextSize(14);
-            subtitle.setMaxLines(4);
-            texts.addView(subtitle);
-        }
-        info.addView(texts, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
-        hero.addView(info);
-
-        ImageView qr = new ImageView(this);
-        qr.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        int qrColor = readableQrColor(CardRenderer.parseColor(profile.qrColor, Color.BLACK));
-        qr.setImageBitmap(QrCodeGenerator.generateTransparent(profile.qrContent, qrColor, 900));
-        LinearLayout.LayoutParams qrParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(310));
-        qrParams.setMargins(0, dp(4), 0, dp(4));
-        hero.addView(qr, qrParams);
-
-        LinearLayout chips = new LinearLayout(this);
-        chips.setOrientation(LinearLayout.HORIZONTAL);
-        chips.setGravity(Gravity.CENTER_VERTICAL);
-        chips.setPadding(0, dp(2), 0, dp(10));
-        TextView platform = chip(profile.platformDisplayName(i18n), Color.argb(235, 64, 196, 184), Color.BLACK);
-        chips.addView(platform);
-        hero.addView(chips);
+        LinearLayout actions = new LinearLayout(this);
+        actions.setOrientation(LinearLayout.HORIZONTAL);
+        actions.setGravity(Gravity.CENTER_VERTICAL);
+        actions.setPadding(0, dp(8), 0, 0);
+        boolean[] showingBack = new boolean[]{false};
+        Button side = lightActionButton(i18n.t("viewBack"));
+        Runnable toggleSide = () -> {
+            showingBack[0] = !showingBack[0];
+            card.setImageBitmap(showingBack[0]
+                    ? CardRenderer.renderBack(profile, i18n, 900)
+                    : CardRenderer.render(profile, i18n, 900));
+            side.setText(i18n.t(showingBack[0] ? "viewFront" : "viewBack"));
+            card.setContentDescription(i18n.t(showingBack[0] ? "viewFront" : "viewBack"));
+        };
+        side.setOnClickListener(v -> toggleSide.run());
+        card.setOnClickListener(v -> toggleSide.run());
+        actions.addView(side, new LinearLayout.LayoutParams(0, dp(44), 1.25f));
+        Button edit = lightActionButton(i18n.t("edit"));
+        edit.setOnClickListener(v -> showEditor(profile));
+        LinearLayout.LayoutParams editParams = new LinearLayout.LayoutParams(0, dp(44), 1);
+        editParams.setMargins(dp(8), 0, 0, 0);
+        actions.addView(edit, editParams);
+        Button share = lightActionButton(i18n.t("share"));
+        share.setOnClickListener(v -> shareProfile(profile));
+        LinearLayout.LayoutParams actionParams = new LinearLayout.LayoutParams(0, dp(44), 1);
+        actionParams.setMargins(dp(8), 0, 0, 0);
+        actions.addView(share, actionParams);
+        Button more = lightActionButton("⋯");
+        more.setContentDescription(i18n.t("settings"));
+        more.setOnClickListener(v -> showProfileMenu(profile, index));
+        LinearLayout.LayoutParams moreParams = new LinearLayout.LayoutParams(dp(44), dp(44));
+        moreParams.setMargins(dp(8), 0, 0, 0);
+        actions.addView(more, moreParams);
+        hero.addView(actions);
 
         return hero;
     }
@@ -283,9 +310,9 @@ public final class MainActivity extends Activity {
         topBar.setOrientation(LinearLayout.HORIZONTAL);
 
         Button cancel = iconButton("×");
-        cancel.setTextSize(28);
+        cancel.setTextSize(22);
         cancel.setOnClickListener(v -> dialog.dismiss());
-        topBar.addView(cancel, new LinearLayout.LayoutParams(dp(54), dp(48)));
+        topBar.addView(cancel, new LinearLayout.LayoutParams(dp(44), dp(44)));
 
         TextView title = new TextView(this);
         title.setText(existing == null ? i18n.t("newProfile") : i18n.t("editProfile"));
@@ -301,7 +328,7 @@ public final class MainActivity extends Activity {
             saveEdit();
             dialog.dismiss();
         });
-        topBar.addView(save, new LinearLayout.LayoutParams(dp(96), dp(48)));
+        topBar.addView(save, new LinearLayout.LayoutParams(dp(82), dp(44)));
         page.addView(topBar);
 
         ScrollView scroll = new ScrollView(this);
@@ -318,7 +345,7 @@ public final class MainActivity extends Activity {
         editSession.preview = new ImageView(this);
         editSession.preview.setAdjustViewBounds(true);
         editSession.preview.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        editSession.preview.setImageBitmap(CardRenderer.render(editSession.profile, i18n, 720));
+        editSession.preview.setImageBitmap(CardRenderer.render(editSession.profile, i18n, 720, editSession.selectedQrIndex));
         previewPanel.addView(editSession.preview, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(360)));
         form.addView(previewPanel);
 
@@ -331,24 +358,71 @@ public final class MainActivity extends Activity {
 
         editSession.subtitle = field(i18n.t("bio"), editSession.profile.subtitle, true);
         infoPanel.addView(editSession.subtitle);
-        infoPanel.addView(separator());
-
-        editSession.qrContent = field(i18n.t("qrContent"), editSession.profile.qrContent, true);
-        infoPanel.addView(editSession.qrContent);
-
         form.addView(infoPanel);
 
-        form.addView(section(i18n.t("platform")));
-        LinearLayout platformPanel = panel();
-        editSession.platformButton = rowButton(editSession.profile.platformDisplayName(i18n), "⌄");
-        editSession.platformButton.setOnClickListener(v -> showPlatformPicker());
-        platformPanel.addView(editSession.platformButton, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(56)));
-        platformPanel.addView(separator());
+        form.addView(section(i18n.t("template")));
+        LinearLayout templatePanel = panel();
+        LinearLayout templateControl = new LinearLayout(this);
+        templateControl.setOrientation(LinearLayout.HORIZONTAL);
+        templateControl.setPadding(dp(6), dp(6), dp(6), dp(6));
+        Button standard = templateButton(i18n.t("standardTemplate"), "standard".equals(editSession.profile.template));
+        Button rhodes = templateButton(i18n.t("rhodesTemplate"), "rhodes".equals(editSession.profile.template));
+        standard.setOnClickListener(v -> {
+            editSession.profile.template = "standard";
+            styleTemplateButtons(standard, rhodes);
+            updatePreview();
+        });
+        rhodes.setOnClickListener(v -> {
+            editSession.profile.template = "rhodes";
+            styleTemplateButtons(rhodes, standard);
+            updatePreview();
+        });
+        templateControl.addView(standard, new LinearLayout.LayoutParams(0, dp(48), 1));
+        LinearLayout.LayoutParams templateParams = new LinearLayout.LayoutParams(0, dp(48), 1);
+        templateParams.setMargins(dp(6), 0, 0, 0);
+        templateControl.addView(rhodes, templateParams);
+        templatePanel.addView(templateControl);
+        form.addView(templatePanel);
 
-        editSession.customPlatformName = field(i18n.t("customPlatform"), editSession.profile.customPlatformName, false);
-        editSession.customPlatformName.setVisibility("custom".equals(editSession.profile.platform) ? View.VISIBLE : View.GONE);
-        platformPanel.addView(editSession.customPlatformName);
-        form.addView(platformPanel);
+        form.addView(section(i18n.t("platformCards")));
+        editSession.qrItemsPanel = new LinearLayout(this);
+        editSession.qrItemsPanel.setOrientation(LinearLayout.VERTICAL);
+        form.addView(editSession.qrItemsPanel);
+        rebuildQrItemsPanel();
+        Button addPlatform = filledButton("＋ " + i18n.t("addPlatform"));
+        addPlatform.setOnClickListener(v -> {
+            editSession.profile.qrItems.add(new MeQrItem());
+            editSession.selectedQrIndex = editSession.profile.qrItems.size() - 1;
+            rebuildQrItemsPanel();
+            updatePreview();
+        });
+        LinearLayout.LayoutParams addPlatformParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52));
+        addPlatformParams.setMargins(0, dp(10), 0, 0);
+        form.addView(addPlatform, addPlatformParams);
+
+        form.addView(section(i18n.t("tags")));
+        LinearLayout tagsPanel = panel();
+        editSession.tags = field(i18n.t("tagsHint"), joinTags(editSession.profile.tags), true);
+        editSession.tags.setMinLines(3);
+        tagsPanel.addView(editSession.tags);
+        tagsPanel.addView(separator());
+        Button tagLibrary = actionButton("⌕  " + i18n.t("tagLibrary"));
+        tagLibrary.setOnClickListener(v -> showTagLibrary());
+        tagsPanel.addView(tagLibrary, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46)));
+        form.addView(tagsPanel);
+
+        form.addView(section(i18n.t("tagColors")));
+        editSession.tagColorPanel = new LinearLayout(this);
+        editSession.tagColorPanel.setOrientation(LinearLayout.VERTICAL);
+        form.addView(editSession.tagColorPanel);
+        editSession.tags.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                rebuildTagColorPanel();
+            }
+            @Override public void afterTextChanged(Editable s) { }
+        });
+        rebuildTagColorPanel();
 
         form.addView(section(i18n.t("avatar")));
         LinearLayout avatarPanel = panel();
@@ -378,6 +452,18 @@ public final class MainActivity extends Activity {
             toast(i18n.t("done"));
         });
         backgroundPanel.addView(removeBackground, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
+        backgroundPanel.addView(separator());
+        Button banner = actionButton(editSession.profile.bannerPath.isEmpty() ? i18n.t("bannerImage") + " · " + i18n.t("chooseImage") : i18n.t("bannerImage") + " · " + i18n.t("removeImage") + " / " + i18n.t("chooseImage"));
+        banner.setOnClickListener(v -> chooseImage(PICK_BANNER));
+        backgroundPanel.addView(banner, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52)));
+        backgroundPanel.addView(separator());
+        Button removeBanner = quietButton(i18n.t("removeImage") + " · " + i18n.t("bannerImage"));
+        removeBanner.setOnClickListener(v -> {
+            editSession.profile.bannerPath = "";
+            updatePreview();
+            toast(i18n.t("done"));
+        });
+        backgroundPanel.addView(removeBanner, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
         form.addView(backgroundPanel);
 
         form.addView(section(i18n.t("appearance")));
@@ -436,16 +522,19 @@ public final class MainActivity extends Activity {
     private void saveEdit() {
         MeQrProfile profile = editSession.profile;
         applyEditFields(profile);
-        if ("custom".equals(profile.platform) && profile.customPlatformName.isEmpty()) {
-            profile.platform = PlatformNames.detect(profile.qrContent);
-        }
-        if ("custom".equals(profile.platform) && !profile.customPlatformName.isEmpty()) {
-            String matched = PlatformNames.matchingName(profile.customPlatformName, i18n);
-            if (matched != null) {
-                profile.platform = matched;
-                profile.customPlatformName = "";
+        for (MeQrItem item : profile.qrItems) {
+            if ("custom".equals(item.platform) && item.customPlatformName.trim().isEmpty()) {
+                item.platform = PlatformNames.detect(item.qrContent);
+            }
+            if ("custom".equals(item.platform) && !item.customPlatformName.trim().isEmpty()) {
+                String matched = PlatformNames.matchingName(item.customPlatformName, i18n);
+                if (matched != null) {
+                    item.platform = matched;
+                    item.customPlatformName = "";
+                }
             }
         }
+        profile.syncLegacyFields();
         if (editingProfile == null) {
             profiles.add(profile);
         } else {
@@ -460,12 +549,355 @@ public final class MainActivity extends Activity {
     private void applyEditFields(MeQrProfile profile) {
         profile.name = value(editSession.name, i18n.t("appName"));
         profile.subtitle = value(editSession.subtitle, "");
-        profile.qrContent = value(editSession.qrContent, "");
-        profile.customPlatformName = value(editSession.customPlatformName, "");
         profile.textColor = value(editSession.textColor, "#111111");
         profile.qrColor = value(editSession.qrColor, "#111111");
         profile.backgroundColor = value(editSession.backgroundColor, "#FFFFFF");
         profile.borderColor = value(editSession.borderColor, "#111111");
+        profile.tags.clear();
+        if (editSession.tags != null) {
+            profile.tags.addAll(parseTags(editSession.tags.getText().toString()));
+        }
+        pruneTagOverrides(profile);
+        profile.syncLegacyFields();
+    }
+
+    private void rebuildTagColorPanel() {
+        if (editSession == null || editSession.tagColorPanel == null || editSession.tags == null) {
+            return;
+        }
+        editSession.tagColorPanel.removeAllViews();
+        List<String> tags = parseTags(editSession.tags.getText().toString());
+        if (tags.isEmpty()) {
+            TextView hint = Ui.text(this, i18n.t("tagColorsHint"), COLOR_MUTED, 13);
+            hint.setPadding(dp(4), 0, 0, 0);
+            editSession.tagColorPanel.addView(hint);
+            return;
+        }
+        LinearLayout panel = panel();
+        for (int i = 0; i < tags.size(); i++) {
+            String tag = tags.get(i);
+            if (i > 0) {
+                panel.addView(separator());
+            }
+            addTagColorRow(panel, tag);
+        }
+        editSession.tagColorPanel.addView(panel);
+    }
+
+    private void addTagColorRow(LinearLayout parent, String tag) {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setPadding(dp(12), dp(5), dp(8), dp(5));
+
+        TextView label = Ui.boldText(this, "# " + tag, COLOR_TEXT, 15);
+        row.addView(label, new LinearLayout.LayoutParams(0, dp(48), 1));
+
+        View swatch = new View(this);
+        int[] colors = CardTagColorPalette.colorsFor(tag, editSession.profile.tagColorOverrides.get(tag));
+        swatch.setBackground(tagColorDrawable(colors, dp(10)));
+        LinearLayout.LayoutParams swatchParams = new LinearLayout.LayoutParams(dp(58), dp(24));
+        swatchParams.setMargins(dp(8), 0, dp(8), 0);
+        row.addView(swatch, swatchParams);
+
+        Button edit = smallButton(colors.length > 1 ? i18n.t("mixedColor") : i18n.t("solidColor"));
+        edit.setTextColor(Ui.SKY);
+        edit.setBackground(rounded(Color.argb(22, 161, 209, 234), dp(9), Color.argb(90, 161, 209, 234), dp(1)));
+        edit.setOnClickListener(v -> showTagColorEditor(tag));
+        row.addView(edit, new LinearLayout.LayoutParams(dp(72), dp(36)));
+
+        parent.addView(row, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(56)));
+    }
+
+    private void showTagLibrary() {
+        if (editSession == null || editSession.tags == null) {
+            return;
+        }
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(16), dp(12), dp(16), dp(12));
+        root.setBackgroundColor(COLOR_BG);
+
+        EditText search = field(i18n.t("searchTags"), "", false);
+        search.setBackground(rounded(COLOR_PANEL, dp(12), COLOR_SEPARATOR, dp(1)));
+        root.addView(search, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
+
+        TextView hint = Ui.text(this, i18n.t("tagLibraryHint"), COLOR_MUTED, 12);
+        hint.setPadding(dp(4), dp(9), dp(4), dp(8));
+        root.addView(hint);
+
+        ScrollView scroll = new ScrollView(this);
+        LinearLayout results = new LinearLayout(this);
+        results.setOrientation(LinearLayout.VERTICAL);
+        scroll.addView(results);
+        root.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(430)));
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle(i18n.t("tagLibrary"))
+                .setView(root)
+                .setNegativeButton(i18n.t("done"), null)
+                .create();
+        Runnable refresh = () -> rebuildTagLibraryResults(results, search.getText().toString(), dialog);
+        search.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { refresh.run(); }
+            @Override public void afterTextChanged(Editable s) { }
+        });
+        dialog.setOnShowListener(ignored -> refresh.run());
+        dialog.show();
+        styleAlert(dialog);
+    }
+
+    private void rebuildTagLibraryResults(LinearLayout results, String query, AlertDialog dialog) {
+        results.removeAllViews();
+        List<String> existing = parseTags(editSession.tags.getText().toString());
+        List<String> matches = CardTagIndex.suggestions(query, i18n, existing, 60);
+        if (matches.isEmpty()) {
+            TextView empty = Ui.text(this, existing.size() >= 10 ? i18n.t("tagLimitReached") : i18n.t("searchTags"), COLOR_MUTED, 14);
+            empty.setGravity(Gravity.CENTER);
+            results.addView(empty, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(84)));
+            return;
+        }
+        for (int index = 0; index < matches.size(); index++) {
+            String tag = matches.get(index);
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(dp(10), 0, dp(8), 0);
+            row.setBackground(rounded(COLOR_PANEL, dp(11), COLOR_SEPARATOR, dp(1)));
+
+            View swatch = new View(this);
+            swatch.setBackground(tagColorDrawable(CardTagColorPalette.colorsFor(tag, null), dp(9)));
+            row.addView(swatch, new LinearLayout.LayoutParams(dp(42), dp(20)));
+
+            TextView name = Ui.boldText(this, tag, COLOR_TEXT, 15);
+            name.setPadding(dp(12), 0, dp(8), 0);
+            row.addView(name, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+
+            TextView add = Ui.boldText(this, "+", Ui.TEAL, 21);
+            add.setGravity(Gravity.CENTER);
+            row.addView(add, new LinearLayout.LayoutParams(dp(36), dp(36)));
+            row.setOnClickListener(v -> {
+                if (appendTag(tag)) {
+                    rebuildTagLibraryResults(results, query, dialog);
+                }
+            });
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48));
+            params.setMargins(0, 0, 0, dp(6));
+            results.addView(row, params);
+        }
+    }
+
+    private boolean appendTag(String tag) {
+        List<String> tags = parseTags(editSession.tags.getText().toString());
+        if (tags.size() >= 10) {
+            toast(i18n.t("tagLimitReached"));
+            return false;
+        }
+        String key = CardTagIndex.canonicalKey(tag);
+        for (String existing : tags) {
+            if (CardTagIndex.canonicalKey(existing).equals(key)) {
+                return false;
+            }
+        }
+        tags.add(MeQrProfile.normalizeTag(tag));
+        editSession.tags.setText(joinTags(tags));
+        editSession.tags.setSelection(editSession.tags.length());
+        return true;
+    }
+
+    private void showTagColorEditor(String tag) {
+        String existingOverride = editSession.profile.tagColorOverrides.get(tag);
+        boolean[] usePreset = new boolean[]{existingOverride == null && CardTagColorPalette.hasPresetMulti(tag)};
+        int[] initial = CardTagColorPalette.colorsFor(tag, existingOverride);
+        List<String> colors = new ArrayList<>();
+        for (int index = 0; index < Math.min(initial.length, 3); index++) {
+            colors.add(CardTagColorPalette.hex(initial[index]));
+        }
+
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(16), dp(8), dp(16), dp(8));
+        root.setBackgroundColor(COLOR_BG);
+
+        TextView preview = Ui.boldText(this, "# " + tag, Color.WHITE, 14);
+        preview.setGravity(Gravity.CENTER);
+        root.addView(preview, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(40)));
+
+        LinearLayout colorRows = new LinearLayout(this);
+        colorRows.setOrientation(LinearLayout.VERTICAL);
+        root.addView(colorRows);
+
+        if (CardTagColorPalette.hasPresetMulti(tag)) {
+            Button restore = actionButton("↺  " + i18n.t("builtInMix"));
+            restore.setOnClickListener(v -> {
+                usePreset[0] = true;
+                int[] preset = CardTagColorPalette.colorsFor(tag, null);
+                colors.clear();
+                for (int index = 0; index < Math.min(preset.length, 3); index++) {
+                    colors.add(CardTagColorPalette.hex(preset[index]));
+                }
+                rebuildTagColorEditorRows(colorRows, colors, tag, usePreset, preview);
+            });
+            root.addView(restore, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(44)));
+        }
+
+        rebuildTagColorEditorRows(colorRows, colors, tag, usePreset, preview);
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle(i18n.t("editTagColors"))
+                .setView(root)
+                .setNegativeButton(i18n.t("cancel"), null)
+                .setPositiveButton(i18n.t("save"), (choiceDialog, which) -> {
+                    if (usePreset[0]) {
+                        editSession.profile.tagColorOverrides.remove(tag);
+                    } else {
+                        String encoded = CardTagColorPalette.encodeColors(colors);
+                        if (!encoded.isEmpty()) {
+                            editSession.profile.tagColorOverrides.put(tag, encoded);
+                        }
+                    }
+                    rebuildTagColorPanel();
+                    updatePreview();
+                })
+                .show();
+        styleAlert(dialog);
+    }
+
+    private void rebuildTagColorEditorRows(LinearLayout container, List<String> colors, String tag,
+                                           boolean[] usePreset, TextView preview) {
+        container.removeAllViews();
+        int[] previewColors = usePreset[0]
+                ? CardTagColorPalette.colorsFor(tag, null)
+                : CardTagColorPalette.colorsFor(tag, CardTagColorPalette.encodeColors(colors));
+        preview.setBackground(tagColorDrawable(previewColors, dp(12)));
+
+        for (int index = 0; index < colors.size(); index++) {
+            int colorIndex = index;
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+
+            TextView label = Ui.text(this, i18n.t("color") + " " + (index + 1), COLOR_TEXT, 14);
+            row.addView(label, new LinearLayout.LayoutParams(dp(72), dp(48)));
+
+            EditText field = new EditText(this);
+            field.setText(colors.get(index));
+            field.setSingleLine(true);
+            field.setTextColor(COLOR_TEXT);
+            field.setTextSize(14);
+            field.setGravity(Gravity.CENTER);
+            field.setBackground(rounded(COLOR_PANEL, dp(10), COLOR_SEPARATOR, dp(1)));
+            row.addView(field, new LinearLayout.LayoutParams(0, dp(42), 1));
+
+            View swatch = new View(this);
+            swatch.setBackground(rounded(CardTagColorPalette.parseHex(colors.get(index), Ui.TEAL), dp(10), Color.WHITE, dp(1)));
+            LinearLayout.LayoutParams swatchParams = new LinearLayout.LayoutParams(dp(36), dp(36));
+            swatchParams.setMargins(dp(8), 0, 0, 0);
+            row.addView(swatch, swatchParams);
+            swatch.setOnClickListener(v -> showPresetColorPicker(selected -> field.setText(selected)));
+
+            if (colors.size() > 1) {
+                Button remove = iconButton("×");
+                remove.setTextSize(16);
+                remove.setOnClickListener(v -> {
+                    colors.remove(colorIndex);
+                    usePreset[0] = false;
+                    rebuildTagColorEditorRows(container, colors, tag, usePreset, preview);
+                });
+                LinearLayout.LayoutParams removeParams = new LinearLayout.LayoutParams(dp(36), dp(36));
+                removeParams.setMargins(dp(7), 0, 0, 0);
+                row.addView(remove, removeParams);
+            }
+
+            field.addTextChangedListener(new TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    String normalized = CardTagColorPalette.normalizedHex(s.toString());
+                    if (normalized != null) {
+                        colors.set(colorIndex, normalized);
+                        usePreset[0] = false;
+                        swatch.setBackground(rounded(Color.parseColor(normalized), dp(10), Color.WHITE, dp(1)));
+                        preview.setBackground(tagColorDrawable(CardTagColorPalette.colorsFor(tag,
+                                CardTagColorPalette.encodeColors(colors)), dp(12)));
+                    }
+                }
+                @Override public void afterTextChanged(Editable s) { }
+            });
+            container.addView(row, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52)));
+        }
+
+        if (colors.size() < 3) {
+            Button add = actionButton("＋  " + i18n.t("addColor"));
+            add.setOnClickListener(v -> {
+                colors.add(colors.isEmpty() ? "#39C5BB" : colors.get(colors.size() - 1));
+                usePreset[0] = false;
+                rebuildTagColorEditorRows(container, colors, tag, usePreset, preview);
+            });
+            container.addView(add, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(42)));
+        }
+    }
+
+    private void showPresetColorPicker(ColorChoice choice) {
+        int[] palette = {0xFF39C5BB, 0xFF3381B0, 0xFFA1D1EA, 0xFF00A0E9, 0xFF88DD44, 0xFFFF9900,
+                0xFFEE1166, 0xFF884499, 0xFFFF66AA, 0xFF66CC99, 0xFFFFCC66, 0xFF6F7582};
+        GridLayout grid = new GridLayout(this);
+        grid.setColumnCount(4);
+        grid.setPadding(dp(16), dp(10), dp(16), dp(10));
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle(i18n.t("choosePresetColor"))
+                .setView(grid)
+                .setNegativeButton(i18n.t("cancel"), null)
+                .create();
+        for (int color : palette) {
+            View swatch = new View(this);
+            swatch.setBackground(rounded(color, dp(12), Color.WHITE, dp(2)));
+            swatch.setOnClickListener(v -> {
+                choice.onColor(CardTagColorPalette.hex(color));
+                dialog.dismiss();
+            });
+            GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+            params.width = dp(52);
+            params.height = dp(52);
+            params.setMargins(dp(7), dp(7), dp(7), dp(7));
+            grid.addView(swatch, params);
+        }
+        dialog.show();
+        styleAlert(dialog);
+    }
+
+    private GradientDrawable tagColorDrawable(int[] colors, int radius) {
+        int[] safeColors = colors == null || colors.length == 0 ? new int[]{Ui.TEAL} : colors;
+        GradientDrawable drawable = safeColors.length == 1
+                ? rounded(safeColors[0], radius, Color.argb(100, 255, 255, 255), dp(1))
+                : new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, safeColors);
+        drawable.setCornerRadius(radius);
+        drawable.setStroke(dp(1), Color.argb(100, 255, 255, 255));
+        return drawable;
+    }
+
+    private List<String> parseTags(String raw) {
+        List<String> tags = new ArrayList<>();
+        List<String> keys = new ArrayList<>();
+        if (raw == null || raw.isEmpty()) {
+            return tags;
+        }
+        for (String part : raw.split("[\\n\\r,，]+", -1)) {
+            String tag = MeQrProfile.normalizeTag(part);
+            String key = CardTagIndex.canonicalKey(tag);
+            if (!tag.isEmpty() && !keys.contains(key)) {
+                tags.add(tag);
+                keys.add(key);
+            }
+            if (tags.size() >= 10) {
+                break;
+            }
+        }
+        return tags;
+    }
+
+    private void pruneTagOverrides(MeQrProfile profile) {
+        profile.tagColorOverrides.keySet().removeIf(tag -> !profile.tags.contains(tag));
     }
 
     private void updatePreview() {
@@ -473,7 +905,7 @@ public final class MainActivity extends Activity {
             return;
         }
         applyEditFields(editSession.profile);
-        editSession.preview.setImageBitmap(CardRenderer.render(editSession.profile, i18n, 720));
+        editSession.preview.setImageBitmap(CardRenderer.render(editSession.profile, i18n, 720, editSession.selectedQrIndex));
     }
 
     private void attachPreviewUpdates() {
@@ -493,15 +925,14 @@ public final class MainActivity extends Activity {
         };
         editSession.name.addTextChangedListener(watcher);
         editSession.subtitle.addTextChangedListener(watcher);
-        editSession.qrContent.addTextChangedListener(watcher);
-        editSession.customPlatformName.addTextChangedListener(watcher);
+        editSession.tags.addTextChangedListener(watcher);
         editSession.textColor.addTextChangedListener(watcher);
         editSession.qrColor.addTextChangedListener(watcher);
         editSession.backgroundColor.addTextChangedListener(watcher);
         editSession.borderColor.addTextChangedListener(watcher);
     }
 
-    private void showPlatformPicker() {
+    private void showPlatformPicker(MeQrItem item, Button platformButton, EditText customPlatformName) {
         List<String> ids = new ArrayList<>();
         List<String> labels = new ArrayList<>();
         addPlatformGroup(ids, labels, i18n.t("commonPlatforms"), PlatformNames.COMMON_IDS);
@@ -514,16 +945,121 @@ public final class MainActivity extends Activity {
                 .setItems(labels.toArray(new String[0]), (choiceDialog, which) -> {
                     String selected = ids.get(which);
                     if (selected.isEmpty()) {
-                        showPlatformPicker();
+                        showPlatformPicker(item, platformButton, customPlatformName);
                         return;
                     }
-                    editSession.profile.platform = PlatformNames.actualId(selected, i18n);
-                    editSession.platformButton.setText(PlatformNames.displayName(editSession.profile.platform, i18n) + "   ⌄");
-                    editSession.customPlatformName.setVisibility("custom".equals(editSession.profile.platform) ? View.VISIBLE : View.GONE);
+                    item.platform = PlatformNames.actualId(selected, i18n);
+                    platformButton.setText(PlatformNames.displayName(item.platform, i18n) + "   ⌄");
+                    customPlatformName.setVisibility("custom".equals(item.platform) ? View.VISIBLE : View.GONE);
                     updatePreview();
                 })
                 .show();
         styleAlert(dialog);
+    }
+
+    private void rebuildQrItemsPanel() {
+        if (editSession == null || editSession.qrItemsPanel == null) {
+            return;
+        }
+        LinearLayout container = editSession.qrItemsPanel;
+        container.removeAllViews();
+        for (int index = 0; index < editSession.profile.qrItems.size(); index++) {
+            MeQrItem item = editSession.profile.qrItems.get(index);
+            LinearLayout card = panel();
+
+            LinearLayout header = new LinearLayout(this);
+            header.setOrientation(LinearLayout.HORIZONTAL);
+            header.setGravity(Gravity.CENTER_VERTICAL);
+            header.setPadding(dp(14), dp(8), dp(8), dp(4));
+            TextView number = new TextView(this);
+            number.setText(String.format(Locale.getDefault(), "%02d  %s", index + 1, item.platformDisplayName(i18n)));
+            number.setTextColor(COLOR_TEXT);
+            number.setTextSize(15);
+            number.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            header.addView(number, new LinearLayout.LayoutParams(0, dp(42), 1));
+            if (index > 0) {
+                Button up = smallButton("↑");
+                int itemIndex = index;
+                up.setOnClickListener(v -> moveQrItem(itemIndex, -1));
+                header.addView(up, new LinearLayout.LayoutParams(dp(44), dp(40)));
+            }
+            if (index < editSession.profile.qrItems.size() - 1) {
+                Button down = smallButton("↓");
+                int itemIndex = index;
+                down.setOnClickListener(v -> moveQrItem(itemIndex, 1));
+                header.addView(down, new LinearLayout.LayoutParams(dp(44), dp(40)));
+            }
+            Button remove = smallButton("×");
+            remove.setEnabled(editSession.profile.qrItems.size() > 1);
+            remove.setAlpha(remove.isEnabled() ? 1f : 0.35f);
+            int itemIndex = index;
+            remove.setOnClickListener(v -> removeQrItem(itemIndex));
+            header.addView(remove, new LinearLayout.LayoutParams(dp(44), dp(40)));
+            card.addView(header);
+            card.addView(separator());
+
+            Button platform = rowButton(item.platformDisplayName(i18n), "⌄");
+            EditText custom = field(i18n.t("customPlatform"), item.customPlatformName, false);
+            custom.setVisibility("custom".equals(item.platform) ? View.VISIBLE : View.GONE);
+            platform.setOnClickListener(v -> showPlatformPicker(item, platform, custom));
+            card.addView(platform, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(54)));
+            card.addView(custom);
+            card.addView(separator());
+
+            EditText qrContent = field(i18n.t("qrContent"), item.qrContent, true);
+            qrContent.setMinLines(2);
+            card.addView(qrContent);
+            card.addView(separator());
+            Button importQr = actionButton(i18n.t("importQrImage"));
+            importQr.setOnClickListener(v -> {
+                pendingQrItem = item;
+                pendingQrField = qrContent;
+                editSession.selectedQrIndex = editSession.profile.qrItems.indexOf(item);
+                chooseImage(PICK_QR_IMAGE);
+            });
+            card.addView(importQr, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
+
+            TextWatcher itemWatcher = new TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence value, int start, int count, int after) { }
+                @Override public void onTextChanged(CharSequence value, int start, int before, int count) {
+                    item.qrContent = qrContent.getText().toString();
+                    item.customPlatformName = custom.getText().toString();
+                    updatePreview();
+                }
+                @Override public void afterTextChanged(Editable value) { }
+            };
+            qrContent.addTextChangedListener(itemWatcher);
+            custom.addTextChangedListener(itemWatcher);
+            card.setOnClickListener(v -> {
+                editSession.selectedQrIndex = editSession.profile.qrItems.indexOf(item);
+                updatePreview();
+            });
+
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            params.setMargins(0, 0, 0, dp(10));
+            container.addView(card, params);
+        }
+    }
+
+    private void moveQrItem(int index, int delta) {
+        int target = index + delta;
+        if (target < 0 || target >= editSession.profile.qrItems.size()) {
+            return;
+        }
+        Collections.swap(editSession.profile.qrItems, index, target);
+        editSession.selectedQrIndex = target;
+        rebuildQrItemsPanel();
+        updatePreview();
+    }
+
+    private void removeQrItem(int index) {
+        if (editSession.profile.qrItems.size() <= 1) {
+            return;
+        }
+        editSession.profile.qrItems.remove(index);
+        editSession.selectedQrIndex = Math.max(0, Math.min(editSession.selectedQrIndex, editSession.profile.qrItems.size() - 1));
+        rebuildQrItemsPanel();
+        updatePreview();
     }
 
     private void addPlatformGroup(List<String> ids, List<String> labels, String title, List<String> groupIds) {
@@ -575,11 +1111,19 @@ public final class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode != RESULT_OK || data == null || data.getData() == null || editSession == null) {
+        if (resultCode != RESULT_OK || data == null || data.getData() == null) {
+            return;
+        }
+        Uri uri = data.getData();
+        if (requestCode == PICK_EXPORT_BACKUP) {
+            exportBackup(uri);
+            return;
+        }
+        if (requestCode == PICK_IMPORT_BACKUP) {
+            confirmImportBackup(uri);
             return;
         }
         try {
-            Uri uri = data.getData();
             Bitmap source;
             try (InputStream input = getContentResolver().openInputStream(uri)) {
                 source = BitmapFactory.decodeStream(input);
@@ -588,13 +1132,75 @@ public final class MainActivity extends Activity {
                 toast(i18n.t("saveFailed"));
                 return;
             }
-            showCropper(source, requestCode == PICK_AVATAR);
+            if (requestCode == PICK_SCAN_QR) {
+                decodeScanImage(source);
+            } else if (requestCode == PICK_QR_IMAGE && editSession != null) {
+                decodeQrImage(source);
+            } else if (requestCode == PICK_BANNER && editSession != null) {
+                croppingBanner = true;
+                showCropper(source, CropMode.BANNER);
+            } else if (requestCode == PICK_BACKGROUND && editSession != null) {
+                croppingBanner = false;
+                showCropper(source, CropMode.BACKGROUND);
+            } else if (requestCode == PICK_AVATAR && editSession != null) {
+                croppingBanner = false;
+                showCropper(source, CropMode.AVATAR);
+            }
         } catch (IOException exception) {
             toast(exception.getMessage());
         }
     }
 
-    private void showCropper(Bitmap source, boolean avatar) {
+    private void exportBackup(Uri uri) {
+        new Thread(() -> {
+            try {
+                backupManager.exportBackup(uri);
+                runOnUiThread(() -> toast(i18n.t("backupDone")));
+            } catch (Exception exception) {
+                runOnUiThread(() -> toast(i18n.t("backupFailed")));
+            }
+        }).start();
+    }
+
+    private void confirmImportBackup(Uri uri) {
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle(i18n.t("restoreData"))
+                .setMessage(i18n.t("restoreConfirm"))
+                .setPositiveButton(i18n.t("restore"), (d, which) -> {
+                    new Thread(() -> {
+                        try {
+                            List<MeQrProfile> restored = backupManager.importBackup(uri);
+                            runOnUiThread(() -> {
+                                profiles.clear();
+                                profiles.addAll(restored);
+                                try {
+                                    store.save(profiles);
+                                } catch (IOException exception) {
+                                    toast(exception.getMessage());
+                                }
+                                renderMain();
+                                toast(i18n.t("restoreDone"));
+                            });
+                        } catch (Exception exception) {
+                            runOnUiThread(() -> toast(i18n.t("restoreFailed")));
+                        }
+                    }).start();
+                })
+                .setNegativeButton(i18n.t("cancel"), null)
+                .show();
+        styleAlert(dialog);
+    }
+
+    private void decodeScanImage(Bitmap bitmap) {
+        scanningPhoto = true;
+        try {
+            decodeQrImage(bitmap);
+        } finally {
+            scanningPhoto = false;
+        }
+    }
+
+    private void showCropper(Bitmap source, CropMode mode) {
         Dialog dialog = new Dialog(this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
@@ -613,24 +1219,28 @@ public final class MainActivity extends Activity {
         topBar.addView(cancel, new LinearLayout.LayoutParams(dp(54), dp(48)));
 
         TextView title = new TextView(this);
-        title.setText(avatar ? i18n.t("avatar") : i18n.t("backgroundImage"));
+        title.setText(mode == CropMode.AVATAR ? i18n.t("avatar")
+                : mode == CropMode.BANNER ? i18n.t("bannerImage") : i18n.t("backgroundImage"));
         title.setTextColor(Color.WHITE);
         title.setTextSize(22);
         title.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         title.setPadding(dp(14), 0, 0, 0);
         topBar.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
 
-        CropImageView cropView = new CropImageView(this, source, avatar);
+        CropImageView cropView = new CropImageView(this, source, mode);
         Button save = filledButton(i18n.t("save"));
         save.setOnClickListener(v -> {
             try {
                 Bitmap cropped = cropView.crop();
-                if (avatar) {
+                if (mode == CropMode.AVATAR) {
                     editSession.profile.avatarPath = store.saveBitmap(cropped, "avatar");
+                } else if (mode == CropMode.BANNER) {
+                    editSession.profile.bannerPath = store.saveBitmap(cropped, "banner");
                 } else {
                     editSession.profile.backgroundPath = store.saveBitmap(cropped, "background");
                 }
                 updatePreview();
+                croppingBanner = false;
                 toast(i18n.t("done"));
                 dialog.dismiss();
             } catch (IOException exception) {
@@ -647,6 +1257,35 @@ public final class MainActivity extends Activity {
         if (window != null) {
             window.setBackgroundDrawable(new ColorDrawable(Color.BLACK));
             window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        }
+    }
+
+    private void decodeQrImage(Bitmap bitmap) {
+        try {
+            Result result = QrImageDecoder.decode(bitmap);
+            if (scanningPhoto) {
+                handleMeQrPayload(result.getText());
+                return;
+            }
+            if (pendingQrItem != null) {
+                pendingQrItem.qrContent = result.getText();
+                String detected = PlatformNames.detect(result.getText());
+                if (!"custom".equals(detected)) {
+                    pendingQrItem.platform = detected;
+                    pendingQrItem.customPlatformName = "";
+                }
+            }
+            if (pendingQrField != null) {
+                pendingQrField.setText(result.getText());
+            }
+            rebuildQrItemsPanel();
+            updatePreview();
+            toast(i18n.t("done"));
+        } catch (Exception exception) {
+            toast(i18n.t("qrDecodeFailed"));
+        } finally {
+            pendingQrItem = null;
+            pendingQrField = null;
         }
     }
 
@@ -673,7 +1312,13 @@ public final class MainActivity extends Activity {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_WRITE_PHOTOS && pendingShareBitmap != null) {
+        if (requestCode == REQUEST_CAMERA) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                openScanner();
+            } else {
+                toast(i18n.t("cameraPermissionNeeded"));
+            }
+        } else if (requestCode == REQUEST_WRITE_PHOTOS && pendingShareBitmap != null) {
             Bitmap bitmap = pendingShareBitmap;
             pendingShareBitmap = null;
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -730,38 +1375,150 @@ public final class MainActivity extends Activity {
             return;
         }
         MeQrProfile profile = profiles.get(0);
-        List<String> labels = new ArrayList<>();
-        labels.add(i18n.t("meqrProfileCode"));
-        labels.add(i18n.t("edit"));
-        labels.add(i18n.t("share"));
+        List<ActionSheetItem> actions = new ArrayList<>();
+        actions.add(new ActionSheetItem("▦", i18n.t("scanMeQr"), false, this::showScan));
+        actions.add(new ActionSheetItem("◎", i18n.t("encounters"), false, this::showEncounters));
+        actions.add(new ActionSheetItem("QR", i18n.t("meqrProfileCode"), false, () -> showMeQrCode(profile)));
+        actions.add(new ActionSheetItem("✎", i18n.t("edit"), false, () -> showEditor(profile)));
+        actions.add(new ActionSheetItem("↗", i18n.t("share"), false, () -> shareProfile(profile)));
         if (profiles.size() > 1) {
-            labels.add("↑ " + i18n.t("moveUp"));
-            labels.add("↓ " + i18n.t("moveDown"));
+            actions.add(new ActionSheetItem("↑", i18n.t("moveUp"), false, () -> moveProfile(0, -1)));
+            actions.add(new ActionSheetItem("↓", i18n.t("moveDown"), false, () -> moveProfile(0, 1)));
         }
-        labels.add(i18n.t("delete"));
-        labels.add(i18n.t("settings"));
+        actions.add(new ActionSheetItem("×", i18n.t("delete"), true, () -> confirmDelete(profile)));
+        actions.add(new ActionSheetItem("⚙", i18n.t("settings"), false, this::showSettings));
+        showActionSheet(i18n.t("appName"), actions);
+    }
 
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setItems(labels.toArray(new String[0]), (choiceDialog, which) -> {
-                    String choice = labels.get(which);
-                    if (choice.equals(i18n.t("meqrProfileCode"))) {
-                        showMeQrCode(profile);
-                    } else if (choice.equals(i18n.t("edit"))) {
-                        showEditor(profile);
-                    } else if (choice.equals(i18n.t("share"))) {
-                        shareProfile(profile);
-                    } else if (choice.startsWith("↑")) {
-                        moveProfile(0, -1);
-                    } else if (choice.startsWith("↓")) {
-                        moveProfile(0, 1);
-                    } else if (choice.equals(i18n.t("delete"))) {
-                        confirmDelete(profile);
-                    } else {
-                        showSettings();
-                    }
-                })
-                .show();
-        styleAlert(dialog);
+    private void showProfileMenu(MeQrProfile profile, int index) {
+        List<ActionSheetItem> actions = new ArrayList<>();
+        actions.add(new ActionSheetItem("QR", i18n.t("meqrProfileCode"), false, () -> showMeQrCode(profile)));
+        if (index > 0) {
+            actions.add(new ActionSheetItem("↑", i18n.t("moveUp"), false, () -> moveProfile(index, -1)));
+        }
+        if (index < profiles.size() - 1) {
+            actions.add(new ActionSheetItem("↓", i18n.t("moveDown"), false, () -> moveProfile(index, 1)));
+        }
+        actions.add(new ActionSheetItem("×", i18n.t("delete"), true, () -> confirmDelete(profile)));
+        showActionSheet(profile.name, actions);
+    }
+
+    private void showActionSheet(String titleText, List<ActionSheetItem> actions) {
+        Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setCanceledOnTouchOutside(true);
+
+        LinearLayout sheet = new LinearLayout(this);
+        sheet.setOrientation(LinearLayout.VERTICAL);
+        sheet.setPadding(dp(16), dp(10), dp(16), Math.max(dp(18), navigationBottom() + dp(8)));
+        sheet.setBackground(topRounded(COLOR_SURFACE, dp(20)));
+
+        View handle = new View(this);
+        handle.setBackground(rounded(Color.rgb(78, 89, 104), dp(2)));
+        LinearLayout.LayoutParams handleParams = new LinearLayout.LayoutParams(dp(38), dp(4));
+        handleParams.gravity = Gravity.CENTER_HORIZONTAL;
+        handleParams.setMargins(0, 0, 0, dp(12));
+        sheet.addView(handle, handleParams);
+
+        TextView title = new TextView(this);
+        title.setText(titleText == null || titleText.trim().isEmpty() ? i18n.t("appName") : titleText);
+        title.setTextColor(COLOR_TEXT);
+        title.setTextSize(18);
+        title.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        title.setIncludeFontPadding(false);
+        title.setPadding(dp(6), dp(2), dp(6), dp(12));
+        sheet.addView(title);
+
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(false);
+        scroll.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
+        LinearLayout rows = new LinearLayout(this);
+        rows.setOrientation(LinearLayout.VERTICAL);
+        rows.setBackground(rounded(COLOR_PANEL, dp(14), COLOR_SEPARATOR, dp(1)));
+        for (int index = 0; index < actions.size(); index++) {
+            ActionSheetItem item = actions.get(index);
+            LinearLayout row = actionSheetRow(item, dialog);
+            rows.addView(row, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(58)));
+            if (index < actions.size() - 1) {
+                rows.addView(separator());
+            }
+        }
+        scroll.addView(rows, new ScrollView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        int screenHeight = getResources().getDisplayMetrics().heightPixels;
+        int reservedHeight = statusTop() + navigationBottom() + dp(156);
+        int maximumRowsHeight = Math.min(dp(530), Math.max(dp(174), screenHeight - reservedHeight));
+        int desiredRowsHeight = actions.size() * dp(58) + Math.max(0, actions.size() - 1) * dp(1);
+        sheet.addView(scroll, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, Math.min(desiredRowsHeight, maximumRowsHeight)));
+
+        Button cancel = quietButton(i18n.t("cancel"));
+        cancel.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        cancel.setOnClickListener(v -> dialog.dismiss());
+        LinearLayout.LayoutParams cancelParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46));
+        cancelParams.setMargins(0, dp(10), 0, 0);
+        sheet.addView(cancel, cancelParams);
+
+        dialog.setContentView(sheet);
+        Window window = dialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+            WindowManager.LayoutParams attributes = window.getAttributes();
+            attributes.gravity = Gravity.BOTTOM;
+            attributes.width = ViewGroup.LayoutParams.MATCH_PARENT;
+            attributes.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            attributes.dimAmount = 0.58f;
+            window.setAttributes(attributes);
+        }
+        dialog.show();
+        if (window != null) {
+            window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+    }
+
+    private LinearLayout actionSheetRow(ActionSheetItem item, Dialog dialog) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(dp(10), 0, dp(12), 0);
+        row.setMinimumHeight(dp(58));
+        row.setClickable(true);
+        row.setFocusable(true);
+        row.setOnClickListener(v -> {
+            dialog.dismiss();
+            item.action.run();
+        });
+
+        int textColor = item.destructive ? Color.rgb(255, 116, 116) : COLOR_TEXT;
+        TextView icon = new TextView(this);
+        icon.setText(item.icon);
+        icon.setTextColor(item.destructive ? Color.rgb(255, 116, 116) : Ui.SKY);
+        icon.setTextSize(item.icon.length() > 1 ? 12 : 20);
+        icon.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        icon.setGravity(Gravity.CENTER);
+        icon.setIncludeFontPadding(false);
+        icon.setBackground(rounded(item.destructive ? Color.argb(30, 255, 116, 116) : Color.argb(30, 161, 209, 234), dp(10)));
+        row.addView(icon, new LinearLayout.LayoutParams(dp(36), dp(36)));
+
+        TextView label = new TextView(this);
+        label.setText(item.label);
+        label.setTextColor(textColor);
+        label.setTextSize(16);
+        label.setSingleLine(true);
+        label.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        label.setIncludeFontPadding(false);
+        label.setPadding(dp(14), 0, 0, 0);
+        row.addView(label, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+
+        TextView trailing = new TextView(this);
+        trailing.setText("›");
+        trailing.setTextColor(item.destructive ? Color.argb(160, 255, 116, 116) : COLOR_MUTED);
+        trailing.setTextSize(24);
+        trailing.setGravity(Gravity.CENTER);
+        trailing.setIncludeFontPadding(false);
+        row.addView(trailing, new LinearLayout.LayoutParams(dp(24), dp(36)));
+        return row;
     }
 
     private void showSettings() {
@@ -770,6 +1527,14 @@ public final class MainActivity extends Activity {
         root.setPadding(dp(18), dp(12), dp(18), dp(12));
         root.setBackgroundColor(COLOR_BG);
         root.addView(heading(i18n.t("settings")));
+
+        Button scan = actionButton("◉ " + i18n.t("scanMeQr"));
+        scan.setOnClickListener(v -> showScan());
+        root.addView(scan);
+
+        Button encounters = actionButton("◈ " + i18n.t("encounters"));
+        encounters.setOnClickListener(v -> showEncounters());
+        root.addView(encounters);
 
         if (!profiles.isEmpty()) {
             Button meqr = actionButton(i18n.t("meqrProfileCode"));
@@ -787,12 +1552,453 @@ public final class MainActivity extends Activity {
         notice.setPadding(0, dp(4), 0, dp(10));
         root.addView(notice);
 
+        Button replay = actionButton(i18n.t("replaySetup"));
+        replay.setOnClickListener(v -> showOnboarding());
+        root.addView(replay);
+
         Button about = actionButton(i18n.t("about"));
         about.setOnClickListener(v -> showAbout());
         root.addView(about);
 
+        Button backup = actionButton("⤓ " + i18n.t("backupData"));
+        backup.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("application/zip");
+            intent.putExtra(Intent.EXTRA_TITLE, "MeQR-Backup-" + new java.text.SimpleDateFormat("yyyyMMdd-HHmm", Locale.US).format(new java.util.Date()) + ".zip");
+            startActivityForResult(intent, PICK_EXPORT_BACKUP);
+        });
+        root.addView(backup);
+
+        Button restore = actionButton("⤒ " + i18n.t("restoreData"));
+        restore.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("application/zip");
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivityForResult(intent, PICK_IMPORT_BACKUP);
+        });
+        root.addView(restore);
+
         AlertDialog dialog = new AlertDialog.Builder(this).setView(root).setPositiveButton(i18n.t("done"), null).show();
         styleAlert(dialog);
+    }
+
+    private void showOnboarding() {
+        MeQrProfile draft = new MeQrProfile();
+        draft.name = "";
+        draft.backgroundColor = "#F4FBFA";
+        draft.borderColor = "#39C5BB";
+        draft.textColor = "#183752";
+        draft.qrColor = "#183752";
+        editSession = new EditSession(draft);
+
+        Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        LinearLayout page = new LinearLayout(this);
+        page.setOrientation(LinearLayout.VERTICAL);
+        page.setBackground(Ui.gradient(Color.rgb(20, 25, 31), COLOR_BG, 0));
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        page.addView(content, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        renderOnboardingStep(dialog, content, 0);
+        dialog.setContentView(page);
+        dialog.setOnDismissListener(ignored -> {
+            editingProfile = null;
+            editSession = null;
+        });
+        dialog.show();
+        Window window = dialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawable(new ColorDrawable(COLOR_BG));
+            window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        }
+    }
+
+    private void renderOnboardingStep(Dialog dialog, LinearLayout content, int step) {
+        content.removeAllViews();
+        if (step == 0) {
+            renderOnboardingWelcome(dialog, content);
+            return;
+        }
+        if (step == 6) {
+            renderOnboardingComplete(dialog, content);
+            return;
+        }
+
+        LinearLayout top = new LinearLayout(this);
+        top.setOrientation(LinearLayout.VERTICAL);
+        top.setPadding(dp(24), statusTop() + dp(14), dp(24), dp(14));
+        top.setBackgroundColor(Color.argb(238, 20, 21, 24));
+        LinearLayout meta = new LinearLayout(this);
+        meta.setOrientation(LinearLayout.HORIZONTAL);
+        meta.setGravity(Gravity.CENTER_VERTICAL);
+        TextView mark = onboardingMark();
+        meta.addView(mark, new LinearLayout.LayoutParams(dp(42), dp(42)));
+        View metaSpacer = new View(this);
+        meta.addView(metaSpacer, new LinearLayout.LayoutParams(0, dp(1), 1));
+        TextView count = new TextView(this);
+        count.setText(step + " / 5");
+        count.setTextColor(COLOR_MUTED);
+        count.setTextSize(13);
+        count.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL);
+        count.setTypeface(android.graphics.Typeface.MONOSPACE, android.graphics.Typeface.BOLD);
+        count.setContentDescription(i18n.t("setupProgress"));
+        meta.addView(count, new LinearLayout.LayoutParams(dp(64), dp(42)));
+        top.addView(meta);
+        LinearLayout progress = new LinearLayout(this);
+        progress.setOrientation(LinearLayout.HORIZONTAL);
+        progress.setPadding(0, dp(8), 0, 0);
+        for (int i = 1; i <= 5; i++) {
+            View segment = new View(this);
+            segment.setBackground(rounded(i <= step ? Ui.TEAL : Color.rgb(52, 54, 59), dp(3)));
+            LinearLayout.LayoutParams segmentParams = new LinearLayout.LayoutParams(0, dp(6), i == step ? 1.55f : 1f);
+            segmentParams.setMargins(0, 0, i == 5 ? 0 : dp(7), 0);
+            progress.addView(segment, segmentParams);
+        }
+        top.addView(progress);
+        content.addView(top);
+
+        ScrollView scroll = new ScrollView(this);
+        LinearLayout body = new LinearLayout(this);
+        body.setOrientation(LinearLayout.VERTICAL);
+        body.setPadding(dp(26), dp(28), dp(26), dp(132));
+        scroll.addView(body);
+        content.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+
+        String[] titles = {"setupWelcome", "setupIdentity", "setupQr", "setupAppearance", "setupTags", "setupFinal"};
+        String[] bodies = {"setupWelcomeBody", "setupIdentityBody", "setupQrBody", "setupAppearanceBody", "setupTagsBody", "setupFinalBody"};
+        body.addView(onboardingStepTitle(String.format(Locale.US, "%02d", step), i18n.t(titles[step]), i18n.t(bodies[step])));
+
+        if (step == 1) {
+            LinearLayout identity = panel();
+            editSession.name = field(i18n.t("profileName"), editSession.profile.name, false);
+            editSession.subtitle = field(i18n.t("bio"), editSession.profile.subtitle, true);
+            identity.addView(editSession.name);
+            identity.addView(separator());
+            identity.addView(editSession.subtitle);
+            body.addView(identity);
+            Button avatar = actionButton(i18n.t("chooseImage") + " · " + i18n.t("avatar"));
+            avatar.setOnClickListener(v -> {
+                syncOnboardingFields();
+                chooseImage(PICK_AVATAR);
+            });
+            LinearLayout.LayoutParams avatarParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52));
+            avatarParams.setMargins(0, dp(10), 0, 0);
+            body.addView(avatar, avatarParams);
+        } else if (step == 2) {
+            MeQrItem item = editSession.profile.firstItem();
+            LinearLayout qrPanel = panel();
+            Button platform = rowButton(item.platformDisplayName(i18n), "⌄");
+            EditText custom = field(i18n.t("customPlatform"), item.customPlatformName, false);
+            custom.setVisibility("custom".equals(item.platform) ? View.VISIBLE : View.GONE);
+            platform.setOnClickListener(v -> showPlatformPicker(item, platform, custom));
+            EditText qr = field(i18n.t("qrContent"), item.qrContent, true);
+            qrPanel.addView(platform, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(54)));
+            qrPanel.addView(custom);
+            qrPanel.addView(separator());
+            qrPanel.addView(qr);
+            body.addView(qrPanel);
+            TextWatcher watcher = directItemWatcher(item, qr, custom);
+            qr.addTextChangedListener(watcher);
+            custom.addTextChangedListener(watcher);
+            Button importQr = actionButton(i18n.t("importQrImage"));
+            importQr.setOnClickListener(v -> {
+                pendingQrItem = item;
+                pendingQrField = qr;
+                chooseImage(PICK_QR_IMAGE);
+            });
+            LinearLayout.LayoutParams importParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52));
+            importParams.setMargins(0, dp(10), 0, 0);
+            body.addView(importQr, importParams);
+        } else if (step == 3) {
+            LinearLayout templates = panel();
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setPadding(dp(6), dp(6), dp(6), dp(6));
+            Button standard = templateButton(i18n.t("standardTemplate"), "standard".equals(editSession.profile.template));
+            Button rhodes = templateButton(i18n.t("rhodesTemplate"), "rhodes".equals(editSession.profile.template));
+            standard.setOnClickListener(v -> {
+                editSession.profile.template = "standard";
+                styleTemplateButtons(standard, rhodes);
+            });
+            rhodes.setOnClickListener(v -> {
+                editSession.profile.template = "rhodes";
+                styleTemplateButtons(rhodes, standard);
+            });
+            row.addView(standard, new LinearLayout.LayoutParams(0, dp(48), 1));
+            LinearLayout.LayoutParams rhodesParams = new LinearLayout.LayoutParams(0, dp(48), 1);
+            rhodesParams.setMargins(dp(6), 0, 0, 0);
+            row.addView(rhodes, rhodesParams);
+            templates.addView(row);
+            body.addView(templates);
+            LinearLayout colors = panel();
+            editSession.textColor = addColorRow(colors, i18n.t("textColor"), editSession.profile.textColor);
+            colors.addView(separator());
+            editSession.qrColor = addColorRow(colors, i18n.t("qrColor"), editSession.profile.qrColor);
+            colors.addView(separator());
+            editSession.backgroundColor = addColorRow(colors, i18n.t("backgroundColor"), editSession.profile.backgroundColor);
+            body.addView(colors);
+            Button background = actionButton(i18n.t("chooseImage") + " · " + i18n.t("backgroundImage"));
+            background.setOnClickListener(v -> {
+                syncOnboardingFields();
+                chooseImage(PICK_BACKGROUND);
+            });
+            LinearLayout.LayoutParams backgroundParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52));
+            backgroundParams.setMargins(0, dp(10), 0, 0);
+            body.addView(background, backgroundParams);
+        } else if (step == 4) {
+            LinearLayout tagsPanel = panel();
+            editSession.tags = field(i18n.t("tagsHint"), joinTags(editSession.profile.tags), true);
+            editSession.tags.setMinLines(5);
+            tagsPanel.addView(editSession.tags);
+            tagsPanel.addView(separator());
+            Button tagLibrary = actionButton("⌕  " + i18n.t("tagLibrary"));
+            tagLibrary.setOnClickListener(v -> showTagLibrary());
+            tagsPanel.addView(tagLibrary, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46)));
+            body.addView(tagsPanel);
+        } else {
+            editSession.preview = new ImageView(this);
+            editSession.preview.setAdjustViewBounds(true);
+            editSession.preview.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            editSession.preview.setImageBitmap(CardRenderer.render(editSession.profile, i18n, 900));
+            body.addView(editSession.preview);
+        }
+
+        LinearLayout navigation = new LinearLayout(this);
+        navigation.setOrientation(LinearLayout.HORIZONTAL);
+        navigation.setGravity(Gravity.CENTER_VERTICAL);
+        navigation.setPadding(dp(24), dp(12), dp(24), dp(14) + navigationBottom());
+        navigation.setBackgroundColor(Color.argb(244, 20, 21, 24));
+        Button back = quietButton("‹");
+        back.setTextSize(28);
+        back.setContentDescription(i18n.t("back"));
+        back.setOnClickListener(v -> {
+            syncOnboardingFields();
+            renderOnboardingStep(dialog, content, step - 1);
+        });
+        navigation.addView(back, new LinearLayout.LayoutParams(dp(54), dp(52)));
+        Button next = filledButton(step == 5 ? i18n.t("finishSetup") : i18n.t("continue"));
+        next.setOnClickListener(v -> {
+            syncOnboardingFields();
+            if (step == 1 && editSession.profile.name.trim().isEmpty()) {
+                toast(i18n.t("nameRequired"));
+                return;
+            }
+            if (step == 5) {
+                if (saveOnboardingProfile()) {
+                    renderOnboardingStep(dialog, content, 6);
+                }
+            } else {
+                renderOnboardingStep(dialog, content, step + 1);
+            }
+        });
+        LinearLayout.LayoutParams nextParams = new LinearLayout.LayoutParams(0, dp(52), 1);
+        nextParams.setMargins(dp(12), 0, 0, 0);
+        navigation.addView(next, nextParams);
+        content.addView(navigation);
+    }
+
+    private void renderOnboardingWelcome(Dialog dialog, LinearLayout content) {
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
+        LinearLayout body = new LinearLayout(this);
+        body.setOrientation(LinearLayout.VERTICAL);
+        body.setPadding(dp(28), statusTop() + dp(22), dp(28), dp(30) + navigationBottom());
+        scroll.addView(body);
+        content.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        LinearLayout header = new LinearLayout(this);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        header.addView(onboardingMark(), new LinearLayout.LayoutParams(dp(44), dp(44)));
+        View headerSpacer = new View(this);
+        header.addView(headerSpacer, new LinearLayout.LayoutParams(0, dp(1), 1));
+        TextView eyebrow = new TextView(this);
+        eyebrow.setText(i18n.t("setupEyebrow"));
+        eyebrow.setTextColor(COLOR_MUTED);
+        eyebrow.setTextSize(10);
+        eyebrow.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        eyebrow.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL);
+        header.addView(eyebrow);
+        body.addView(header);
+
+        FrameLayout cardStack = new FrameLayout(this);
+        cardStack.setPadding(dp(12), dp(24), dp(12), dp(16));
+        View tealLayer = new View(this);
+        tealLayer.setBackground(rounded(Color.argb(145, 57, 197, 187), dp(28)));
+        tealLayer.setRotation(-4f);
+        FrameLayout.LayoutParams tealParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(238), Gravity.CENTER);
+        tealParams.setMargins(dp(8), dp(18), dp(8), 0);
+        cardStack.addView(tealLayer, tealParams);
+        View pinkLayer = new View(this);
+        pinkLayer.setBackground(rounded(Color.argb(95, 255, 77, 141), dp(28)));
+        pinkLayer.setRotation(4f);
+        FrameLayout.LayoutParams pinkParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(238), Gravity.CENTER);
+        pinkParams.setMargins(dp(8), dp(18), dp(8), 0);
+        cardStack.addView(pinkLayer, pinkParams);
+        ImageView sample = new ImageView(this);
+        sample.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        sample.setImageBitmap(CardRenderer.render(editSession.profile, i18n, 720));
+        sample.setElevation(dp(12));
+        FrameLayout.LayoutParams sampleParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(260), Gravity.CENTER);
+        sampleParams.setMargins(dp(18), dp(8), dp(18), 0);
+        cardStack.addView(sample, sampleParams);
+        LinearLayout.LayoutParams stackParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(310));
+        stackParams.setMargins(0, dp(40), 0, 0);
+        body.addView(cardStack, stackParams);
+
+        TextView title = new TextView(this);
+        title.setText(i18n.t("setupWelcome"));
+        title.setTextColor(COLOR_TEXT);
+        title.setTextSize(36);
+        title.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        title.setLineSpacing(dp(3), 1f);
+        title.setPadding(0, dp(30), 0, 0);
+        body.addView(title);
+        TextView intro = new TextView(this);
+        intro.setText(i18n.t("setupWelcomeBody"));
+        intro.setTextColor(COLOR_MUTED);
+        intro.setTextSize(16);
+        intro.setLineSpacing(dp(5), 1f);
+        intro.setPadding(0, dp(14), 0, dp(26));
+        body.addView(intro);
+        Button start = filledButton(i18n.t("setupStart") + "  →");
+        start.setOnClickListener(v -> renderOnboardingStep(dialog, content, 1));
+        body.addView(start, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(56)));
+        Button later = quietButton(i18n.t("cancel"));
+        later.setOnClickListener(v -> dialog.dismiss());
+        LinearLayout.LayoutParams laterParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(50));
+        laterParams.setMargins(0, dp(8), 0, 0);
+        body.addView(later, laterParams);
+    }
+
+    private void renderOnboardingComplete(Dialog dialog, LinearLayout content) {
+        LinearLayout body = new LinearLayout(this);
+        body.setOrientation(LinearLayout.VERTICAL);
+        body.setGravity(Gravity.CENTER_HORIZONTAL);
+        body.setPadding(dp(28), statusTop() + dp(46), dp(28), dp(28) + navigationBottom());
+        content.addView(body, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        TextView mark = onboardingMark();
+        mark.setGravity(Gravity.CENTER);
+        body.addView(mark, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
+        ImageView preview = new ImageView(this);
+        preview.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        preview.setImageBitmap(CardRenderer.render(editSession.profile, i18n, 900));
+        preview.setElevation(dp(14));
+        LinearLayout.LayoutParams previewParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1);
+        previewParams.setMargins(0, dp(28), 0, dp(22));
+        body.addView(preview, previewParams);
+        TextView title = new TextView(this);
+        title.setText(i18n.t("setupComplete"));
+        title.setTextColor(COLOR_TEXT);
+        title.setTextSize(32);
+        title.setGravity(Gravity.CENTER);
+        title.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        body.addView(title);
+        TextView copy = new TextView(this);
+        copy.setText(i18n.t("setupCompleteBody"));
+        copy.setTextColor(COLOR_MUTED);
+        copy.setTextSize(16);
+        copy.setGravity(Gravity.CENTER);
+        copy.setLineSpacing(dp(4), 1f);
+        copy.setPadding(dp(10), dp(12), dp(10), dp(24));
+        body.addView(copy);
+        Button enter = filledButton(i18n.t("setupEnter") + "  →");
+        enter.setOnClickListener(v -> {
+            dialog.dismiss();
+            renderMain();
+        });
+        body.addView(enter, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(56)));
+    }
+
+    private View onboardingStepTitle(String number, String titleText, String bodyText) {
+        LinearLayout block = new LinearLayout(this);
+        block.setOrientation(LinearLayout.VERTICAL);
+        TextView numberView = new TextView(this);
+        numberView.setText(number);
+        numberView.setTextColor(Ui.TEAL);
+        numberView.setTextSize(15);
+        numberView.setTypeface(android.graphics.Typeface.MONOSPACE, android.graphics.Typeface.BOLD);
+        block.addView(numberView);
+        TextView title = new TextView(this);
+        title.setText(titleText);
+        title.setTextColor(COLOR_TEXT);
+        title.setTextSize(29);
+        title.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        title.setLineSpacing(dp(2), 1f);
+        title.setPadding(0, dp(7), 0, 0);
+        block.addView(title);
+        TextView copy = new TextView(this);
+        copy.setText(bodyText);
+        copy.setTextColor(COLOR_MUTED);
+        copy.setTextSize(15);
+        copy.setLineSpacing(dp(4), 1f);
+        copy.setPadding(0, dp(10), 0, dp(26));
+        block.addView(copy);
+        return block;
+    }
+
+    private TextView onboardingMark() {
+        TextView mark = new TextView(this);
+        mark.setText("M");
+        mark.setTextColor(Color.BLACK);
+        mark.setTextSize(20);
+        mark.setGravity(Gravity.CENTER);
+        mark.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        mark.setBackground(rounded(Ui.TEAL, dp(13)));
+        mark.setContentDescription(i18n.t("appName"));
+        return mark;
+    }
+
+    private boolean saveOnboardingProfile() {
+        editSession.profile.syncLegacyFields();
+        profiles.add(editSession.profile);
+        try {
+            store.save(profiles);
+        } catch (IOException exception) {
+            profiles.remove(editSession.profile);
+            toast(exception.getMessage());
+            return false;
+        }
+        getSharedPreferences("settings", MODE_PRIVATE).edit().putBoolean(ONBOARDING_VERSION, true).apply();
+        return true;
+    }
+
+    private TextWatcher directItemWatcher(MeQrItem item, EditText qr, EditText custom) {
+        return new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence value, int start, int count, int after) { }
+            @Override public void onTextChanged(CharSequence value, int start, int before, int count) {
+                item.qrContent = qr.getText().toString();
+                item.customPlatformName = custom.getText().toString();
+            }
+            @Override public void afterTextChanged(Editable value) { }
+        };
+    }
+
+    private void syncOnboardingFields() {
+        if (editSession == null) {
+            return;
+        }
+        if (editSession.name != null) {
+            editSession.profile.name = editSession.name.getText().toString().trim();
+        }
+        if (editSession.subtitle != null) {
+            editSession.profile.subtitle = editSession.subtitle.getText().toString().trim();
+        }
+        if (editSession.textColor != null) {
+            editSession.profile.textColor = value(editSession.textColor, editSession.profile.textColor);
+        }
+        if (editSession.qrColor != null) {
+            editSession.profile.qrColor = value(editSession.qrColor, editSession.profile.qrColor);
+        }
+        if (editSession.backgroundColor != null) {
+            editSession.profile.backgroundColor = value(editSession.backgroundColor, editSession.profile.backgroundColor);
+        }
+        if (editSession.tags != null) {
+            editSession.profile.tags.clear();
+            editSession.profile.tags.addAll(parseTags(editSession.tags.getText().toString()));
+            pruneTagOverrides(editSession.profile);
+        }
     }
 
     private void showLanguagePicker() {
@@ -953,6 +2159,573 @@ public final class MainActivity extends Activity {
         }
     }
 
+    private void showScan() {
+        if (Build.VERSION.SDK_INT >= 23 && checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA);
+            return;
+        }
+        openScanner();
+    }
+
+    private void openScanner() {
+        new MeQrScannerDialog(this, i18n, new MeQrScannerDialog.Listener() {
+            @Override
+            public void onPayload(String payload) {
+                if (payload == null || payload.isEmpty()) {
+                    toast(i18n.t("couldNotDecode"));
+                    return;
+                }
+                handleMeQrPayload(payload);
+            }
+
+            @Override
+            public void onImportRequest() {
+                scanningPhoto = true;
+                chooseImage(PICK_SCAN_QR);
+            }
+        }).show();
+    }
+
+    private void handleMeQrPayload(String payload) {
+        try {
+            MeQrExchangeProfile profile = MeQrExchangeCodec.decode(payload);
+            showEncounterPreview(profile);
+            return;
+        } catch (Exception ignored) {
+        }
+        if (MeQrExchangeCodec.isRemoteUrl(payload)) {
+            new Thread(() -> {
+                try {
+                    MeQrExchangeProfile profile = MeQrRemoteService.fetchProfile(payload);
+                    runOnUiThread(() -> showEncounterPreview(profile));
+                } catch (Exception exception) {
+                    MeQrExchangeProfile fallback = MeQrExchangeCodec.offlineFallback(payload);
+                    runOnUiThread(() -> {
+                        if (fallback != null) {
+                            showEncounterPreview(fallback);
+                        } else {
+                            toast(i18n.t("couldNotDecode"));
+                        }
+                    });
+                }
+            }).start();
+            return;
+        }
+        MeQrExchangeProfile fallback = MeQrExchangeCodec.offlineFallback(payload);
+        if (fallback != null) {
+            showEncounterPreview(fallback);
+        } else {
+            toast(i18n.t("notMeQrCode"));
+        }
+    }
+
+    private void showEncounterPreview(MeQrExchangeProfile profile) {
+        if (profile == null) {
+            toast(i18n.t("couldNotDecode"));
+            return;
+        }
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(20), dp(16), dp(20), dp(16));
+        root.setBackgroundColor(COLOR_BG);
+
+        root.addView(heading(i18n.t("meqrProfileFound")));
+
+        LinearLayout header = panel();
+        header.setOrientation(LinearLayout.HORIZONTAL);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        header.setPadding(dp(16), dp(14), dp(16), dp(14));
+        ImageView avatar = new ImageView(this);
+        Bitmap avatarBitmap = base64Bitmap(profile.avatarBase64);
+        if (avatarBitmap != null) {
+            avatar.setImageBitmap(circleBitmap(avatarBitmap, dp(64)));
+        } else {
+            avatar.setImageBitmap(initialBitmap(profile.name, dp(64), Color.rgb(57, 197, 187), Color.WHITE));
+        }
+        header.addView(avatar, new LinearLayout.LayoutParams(dp(64), dp(64)));
+
+        LinearLayout nameBlock = new LinearLayout(this);
+        nameBlock.setOrientation(LinearLayout.VERTICAL);
+        nameBlock.setPadding(dp(14), 0, 0, 0);
+        TextView name = new TextView(this);
+        name.setText(profile.name == null || profile.name.trim().isEmpty() ? i18n.t("unknownContact") : profile.name.trim());
+        name.setTextSize(20);
+        name.setTextColor(COLOR_TEXT);
+        name.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        nameBlock.addView(name);
+        if (profile.subtitle != null && !profile.subtitle.trim().isEmpty()) {
+            TextView subtitle = new TextView(this);
+            subtitle.setText(profile.subtitle.trim());
+            subtitle.setTextSize(14);
+            subtitle.setTextColor(COLOR_MUTED);
+            subtitle.setPadding(0, dp(4), 0, 0);
+            nameBlock.addView(subtitle);
+        }
+        header.addView(nameBlock, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        root.addView(header);
+
+        if (!profile.platforms.isEmpty()) {
+            root.addView(section(i18n.t("platformsFromMeQr")));
+            LinearLayout platformsPanel = panel();
+            for (int i = 0; i < profile.platforms.size(); i++) {
+                MeQrExchangeProfile.Platform platform = profile.platforms.get(i);
+                if (i > 0) {
+                    platformsPanel.addView(separator());
+                }
+                platformsPanel.addView(encounterPlatformRow(platform));
+            }
+            root.addView(platformsPanel);
+        }
+
+        MeQrEvent activeEvent = eventStore.activeEvent();
+        if (activeEvent != null) {
+            root.addView(section(i18n.t("activeEvent")));
+            LinearLayout eventPanel = panel();
+            TextView eventTitle = new TextView(this);
+            eventTitle.setText(activeEvent.title);
+            eventTitle.setTextSize(17);
+            eventTitle.setTextColor(COLOR_TEXT);
+            eventTitle.setPadding(dp(16), dp(12), dp(16), dp(4));
+            eventPanel.addView(eventTitle);
+            if (activeEvent.venue != null && !activeEvent.venue.isEmpty()) {
+                TextView eventVenue = new TextView(this);
+                eventVenue.setText(i18n.t("eventVenue") + "：" + activeEvent.venue);
+                eventVenue.setTextSize(14);
+                eventVenue.setTextColor(COLOR_MUTED);
+                eventVenue.setPadding(dp(16), 0, dp(16), dp(12));
+                eventPanel.addView(eventVenue);
+            }
+            root.addView(eventPanel);
+        }
+
+        Button save = filledButton(i18n.t("saveEncounter"));
+        save.setOnClickListener(v -> {
+            encounterStore.add(profile, eventStore.activeEvent());
+            toast(i18n.t("savedEncounter"));
+            AlertDialog dialog = (AlertDialog) root.getTag();
+            if (dialog != null) {
+                dialog.dismiss();
+            }
+        });
+        LinearLayout.LayoutParams saveParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(54));
+        saveParams.setMargins(0, dp(14), 0, 0);
+        root.addView(save, saveParams);
+
+        AlertDialog dialog = new AlertDialog.Builder(this).setView(root).setPositiveButton(i18n.t("done"), null).show();
+        root.setTag(dialog);
+        styleAlert(dialog);
+    }
+
+    private LinearLayout encounterPlatformRow(MeQrExchangeProfile.Platform platform) {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(dp(14), dp(10), dp(14), dp(10));
+        row.setOrientation(LinearLayout.HORIZONTAL);
+
+        String content = platform.qrContent == null ? "" : platform.qrContent.trim();
+        ImageView qr = new ImageView(this);
+        qr.setImageBitmap(QrCodeGenerator.generate(content.isEmpty() ? "MeQR" : content, Color.BLACK, 108));
+        qr.setBackground(Ui.rounded(Color.WHITE, dp(10)));
+        qr.setPadding(dp(5), dp(5), dp(5), dp(5));
+        row.addView(qr, new LinearLayout.LayoutParams(dp(64), dp(64)));
+
+        LinearLayout info = new LinearLayout(this);
+        info.setOrientation(LinearLayout.VERTICAL);
+        info.setPadding(dp(12), 0, 0, 0);
+        TextView name = new TextView(this);
+        name.setText(platform.name == null || platform.name.trim().isEmpty() ? i18n.t("custom") : platform.name.trim());
+        name.setTextSize(16);
+        name.setTextColor(COLOR_TEXT);
+        name.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        info.addView(name);
+        if (!content.isEmpty()) {
+            TextView qrContent = new TextView(this);
+            qrContent.setText(content);
+            qrContent.setTextSize(12);
+            qrContent.setTextColor(COLOR_MUTED);
+            qrContent.setMaxLines(2);
+            qrContent.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            qrContent.setPadding(0, dp(3), 0, 0);
+            info.addView(qrContent);
+        }
+        row.addView(info, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+
+        if (canOpenLink(content)) {
+            Button open = lightActionButton("↗");
+            open.setContentDescription(i18n.t("openLink"));
+            open.setOnClickListener(v -> {
+                try {
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(content)));
+                } catch (Exception ignored) {
+                }
+            });
+            row.addView(open, new LinearLayout.LayoutParams(dp(52), dp(48)));
+        }
+        return row;
+    }
+
+    private boolean canOpenLink(String content) {
+        if (content == null || content.isEmpty()) {
+            return false;
+        }
+        try {
+            String scheme = new java.net.URI(content).getScheme();
+            if (scheme == null) {
+                return false;
+            }
+            String lower = scheme.toLowerCase(Locale.US);
+            return lower.equals("http") || lower.equals("https") || lower.equals("qq") || lower.equals("mqq")
+                    || lower.equals("weixin") || lower.equals("wechat") || lower.equals("line")
+                    || lower.equals("discord") || lower.equals("reddit");
+        } catch (Exception exception) {
+            return false;
+        }
+    }
+
+    private void showEncounters() {
+        List<EncounterRecord> records = encounterStore.records();
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(18), dp(12), dp(18), dp(12));
+        root.setBackgroundColor(COLOR_BG);
+
+        LinearLayout header = new LinearLayout(this);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        header.setOrientation(LinearLayout.HORIZONTAL);
+        TextView title = heading(i18n.t("encounters"));
+        header.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        root.addView(header);
+
+        Button eventButton = actionButton(i18n.t("activeEvent") + "：" + (eventStore.activeEvent() == null ? i18n.t("noActiveEvent") : eventStore.activeEvent().title));
+        eventButton.setGravity(Gravity.LEFT);
+        eventButton.setPadding(dp(16), 0, dp(16), 0);
+        eventButton.setTextColor(COLOR_BLUE);
+        eventButton.setOnClickListener(v -> showEventCenter());
+        root.addView(eventButton, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(50)));
+
+        ScrollView scroll = new ScrollView(this);
+        LinearLayout listContainer = new LinearLayout(this);
+        listContainer.setOrientation(LinearLayout.VERTICAL);
+        scroll.addView(listContainer);
+        root.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(500)));
+
+        if (records.isEmpty()) {
+            LinearLayout empty = new LinearLayout(this);
+            empty.setOrientation(LinearLayout.VERTICAL);
+            empty.setGravity(Gravity.CENTER);
+            empty.setPadding(dp(22), dp(44), dp(22), dp(44));
+            empty.setBackground(rounded(COLOR_SURFACE, dp(24)));
+            TextView icon = Ui.text(this, "◉", Ui.BLUE, 40);
+            icon.setGravity(Gravity.CENTER);
+            empty.addView(icon);
+            TextView emptyTitle = Ui.boldText(this, i18n.t("noEncounters"), COLOR_TEXT, 19);
+            emptyTitle.setGravity(Gravity.CENTER);
+            emptyTitle.setPadding(0, dp(10), 0, dp(6));
+            empty.addView(emptyTitle);
+            TextView emptyBody = Ui.text(this, i18n.t("noEncountersHint"), COLOR_MUTED, 14);
+            emptyBody.setGravity(Gravity.CENTER);
+            empty.addView(emptyBody);
+            listContainer.addView(empty, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        } else {
+            for (EncounterRecord record : records) {
+                LinearLayout row = new LinearLayout(this);
+                row.setGravity(Gravity.CENTER_VERTICAL);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                row.setPadding(dp(14), dp(12), dp(8), dp(12));
+                row.setBackground(rounded(COLOR_SURFACE, dp(18)));
+                row.setClickable(true);
+                row.setOnClickListener(v -> showEncounterDetail(record));
+
+                ImageView avatar = new ImageView(this);
+                Bitmap avatarBitmap = base64Bitmap(record.avatarBase64);
+                if (avatarBitmap != null) {
+                    avatar.setImageBitmap(circleBitmap(avatarBitmap, dp(48)));
+                } else {
+                    avatar.setImageBitmap(initialBitmap(record.name, dp(48), Color.rgb(57, 197, 187), Color.WHITE));
+                }
+                row.addView(avatar, new LinearLayout.LayoutParams(dp(48), dp(48)));
+
+                LinearLayout info = new LinearLayout(this);
+                info.setOrientation(LinearLayout.VERTICAL);
+                info.setPadding(dp(12), 0, 0, 0);
+                TextView name = Ui.boldText(this, record.name == null || record.name.trim().isEmpty() ? i18n.t("unknownContact") : record.name.trim(), COLOR_TEXT, 16);
+                info.addView(name);
+                String summary = record.subtitle;
+                if ((summary == null || summary.trim().isEmpty()) && !record.profiles.isEmpty()) {
+                    StringBuilder platforms = new StringBuilder();
+                    for (int i = 0; i < Math.min(3, record.profiles.size()); i++) {
+                        if (platforms.length() > 0) {
+                            platforms.append(" / ");
+                        }
+                        String platformName = record.profiles.get(i).name;
+                        platforms.append(platformName == null || platformName.isEmpty() ? i18n.t("custom") : platformName);
+                    }
+                    summary = platforms.toString();
+                }
+                if (summary != null && !summary.trim().isEmpty()) {
+                    TextView subtitle = Ui.text(this, summary.trim(), COLOR_MUTED, 13);
+                    subtitle.setMaxLines(2);
+                    subtitle.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                    info.addView(subtitle);
+                }
+                if (record.eventTitle != null && !record.eventTitle.isEmpty()) {
+                    TextView event = Ui.text(this, "◈ " + record.eventTitle, Ui.BLUE, 12);
+                    event.setPadding(0, dp(3), 0, 0);
+                    info.addView(event);
+                }
+                row.addView(info, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+
+                Button more = iconButton("⋯");
+                more.setOnClickListener(v -> confirmDeleteEncounter(record));
+                row.addView(more, new LinearLayout.LayoutParams(dp(44), dp(44)));
+
+                LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                rowParams.setMargins(0, 0, 0, dp(10));
+                listContainer.addView(row, rowParams);
+            }
+        }
+
+        AlertDialog dialog = new AlertDialog.Builder(this).setView(root).setPositiveButton(i18n.t("done"), null).show();
+        styleAlert(dialog);
+    }
+
+    private void confirmDeleteEncounter(EncounterRecord record) {
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle(i18n.t("deleteEncounter"))
+                .setMessage(i18n.t("deleteEncounterConfirm"))
+                .setPositiveButton(i18n.t("delete"), (d, which) -> {
+                    encounterStore.delete(record);
+                    toast(i18n.t("done"));
+                })
+                .setNegativeButton(i18n.t("cancel"), null)
+                .show();
+        styleAlert(dialog);
+    }
+
+    private void showEncounterDetail(EncounterRecord record) {
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(18), dp(12), dp(18), dp(12));
+        root.setBackgroundColor(COLOR_BG);
+        root.addView(heading(record.name == null || record.name.trim().isEmpty() ? i18n.t("unknownContact") : record.name.trim()));
+
+        ScrollView scroll = new ScrollView(this);
+        LinearLayout form = new LinearLayout(this);
+        form.setOrientation(LinearLayout.VERTICAL);
+        scroll.addView(form);
+        root.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(560)));
+
+        form.addView(section(i18n.t("encounterInfo")));
+        LinearLayout infoPanel = panel();
+        EditText note = Ui.field(this, i18n.t("note"), record.note, true);
+        infoPanel.addView(note);
+        infoPanel.addView(separator());
+        EditText tags = Ui.field(this, i18n.t("tags"), String.join(" ", record.tags), false);
+        infoPanel.addView(tags);
+        infoPanel.addView(separator());
+        EditText followStatus = Ui.field(this, i18n.t("followStatus"), record.followStatus == null ? "" : record.followStatus, false);
+        infoPanel.addView(followStatus);
+        infoPanel.addView(separator());
+        infoPanel.addView(encounterToggle(i18n.t("needsPhotoReturn"), record.needsPhotoReturn, value -> record.needsPhotoReturn = value));
+        infoPanel.addView(separator());
+        infoPanel.addView(encounterToggle(i18n.t("exchangedFreebie"), record.exchangedFreebie, value -> record.exchangedFreebie = value));
+        form.addView(infoPanel);
+
+        if (!record.profiles.isEmpty()) {
+            form.addView(section(i18n.t("platformsFromMeQr")));
+            LinearLayout platformsPanel = panel();
+            for (int i = 0; i < record.profiles.size(); i++) {
+                if (i > 0) {
+                    platformsPanel.addView(separator());
+                }
+                platformsPanel.addView(encounterPlatformRow(record.profiles.get(i)));
+            }
+            form.addView(platformsPanel);
+        }
+
+        Button save = filledButton(i18n.t("save"));
+        save.setOnClickListener(v -> {
+            record.note = note.getText().toString().trim();
+            record.tags.clear();
+            for (String raw : tags.getText().toString().split("[\\n\\r,， ]+", -1)) {
+                String tag = MeQrProfile.normalizeTag(raw);
+                if (!tag.isEmpty() && !record.tags.contains(tag)) {
+                    record.tags.add(tag);
+                }
+            }
+            String follow = followStatus.getText().toString().trim();
+            record.followStatus = follow.isEmpty() ? null : follow;
+            encounterStore.update(record);
+            toast(i18n.t("done"));
+            AlertDialog dialog = (AlertDialog) root.getTag();
+            if (dialog != null) {
+                dialog.dismiss();
+            }
+        });
+        LinearLayout.LayoutParams saveParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52));
+        saveParams.setMargins(0, dp(10), 0, 0);
+        root.addView(save, saveParams);
+
+        Button delete = quietButton(i18n.t("deleteEncounter"));
+        delete.setTextColor(Color.rgb(255, 105, 122));
+        delete.setOnClickListener(v -> {
+            encounterStore.delete(record);
+            toast(i18n.t("done"));
+            AlertDialog dialog = (AlertDialog) root.getTag();
+            if (dialog != null) {
+                dialog.dismiss();
+            }
+        });
+        root.addView(delete, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(50)));
+
+        AlertDialog dialog = new AlertDialog.Builder(this).setView(root).setPositiveButton(i18n.t("done"), null).show();
+        root.setTag(dialog);
+        styleAlert(dialog);
+    }
+
+    private View encounterToggle(String label, boolean initial, java.util.function.Consumer<Boolean> onChange) {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setPadding(dp(16), dp(10), dp(16), dp(10));
+        TextView text = Ui.text(this, label, COLOR_TEXT, 16);
+        text.setPadding(dp(14), 0, 0, 0);
+        row.addView(text, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        final boolean[] state = {initial};
+        Button toggle = pillButton(state[0] ? "✓ " + i18n.t("on") : i18n.t("off"), true);
+        toggle.setTextSize(14);
+        toggle.setOnClickListener(v -> {
+            state[0] = !state[0];
+            toggle.setText(state[0] ? "✓ " + i18n.t("on") : i18n.t("off"));
+            onChange.accept(state[0]);
+        });
+        row.addView(toggle, new LinearLayout.LayoutParams(dp(84), dp(42)));
+        return row;
+    }
+
+    private void showEventCenter() {
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(18), dp(12), dp(18), dp(12));
+        root.setBackgroundColor(COLOR_BG);
+
+        LinearLayout header = new LinearLayout(this);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        header.setOrientation(LinearLayout.HORIZONTAL);
+        TextView title = heading(i18n.t("events"));
+        header.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        Button add = actionButton("＋ " + i18n.t("addEvent"));
+        add.setOnClickListener(v -> showAddEvent());
+        header.addView(add);
+        root.addView(header);
+
+        ScrollView eventScroll = new ScrollView(this);
+        LinearLayout listContainer = new LinearLayout(this);
+        listContainer.setOrientation(LinearLayout.VERTICAL);
+        eventScroll.addView(listContainer);
+        root.addView(eventScroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(420)));
+
+        listContainer.addView(eventRow(null));
+        for (MeQrEvent event : eventStore.events()) {
+            listContainer.addView(eventRow(event));
+        }
+
+        AlertDialog dialog = new AlertDialog.Builder(this).setView(root).setPositiveButton(i18n.t("done"), null).show();
+        styleAlert(dialog);
+    }
+
+    private View eventRow(MeQrEvent event) {
+        boolean selected = event != null && eventStore.activeEvent() != null && eventStore.activeEvent().id.equals(event.id);
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setPadding(dp(16), dp(12), dp(12), dp(12));
+        row.setBackground(rounded(selected ? Color.argb(38, 57, 197, 187) : COLOR_SURFACE, dp(16),
+                selected ? Ui.TEAL : Ui.BORDER, dp(1)));
+
+        TextView marker = Ui.text(this, event == null ? "○" : "◉", selected ? Ui.TEAL : Ui.DIM, 18);
+        row.addView(marker, new LinearLayout.LayoutParams(dp(34), ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        LinearLayout info = new LinearLayout(this);
+        info.setOrientation(LinearLayout.VERTICAL);
+        info.setPadding(dp(6), 0, 0, 0);
+        TextView name = Ui.boldText(this, event == null ? i18n.t("noActiveEvent") : event.title, selected ? Ui.TEAL : COLOR_TEXT, 16);
+        info.addView(name);
+        if (event != null && event.venue != null && !event.venue.isEmpty()) {
+            TextView venue = Ui.text(this, event.venue, COLOR_MUTED, 13);
+            info.addView(venue);
+        }
+        row.addView(info, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+
+        if (event != null && event.isCustom) {
+            Button remove = iconButton("×");
+            remove.setOnClickListener(v -> {
+                eventStore.deleteCustomEvent(event);
+                toast(i18n.t("done"));
+            });
+            row.addView(remove, new LinearLayout.LayoutParams(dp(44), dp(44)));
+        }
+        row.setOnClickListener(v -> {
+            eventStore.setActiveEvent(event);
+            toast(i18n.t("done"));
+        });
+        LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        rowParams.setMargins(0, 0, 0, dp(8));
+        row.setLayoutParams(rowParams);
+        return row;
+    }
+
+    private void showAddEvent() {
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(20), dp(14), dp(20), dp(14));
+        root.setBackgroundColor(COLOR_BG);
+        root.addView(heading(i18n.t("addEvent")));
+
+        LinearLayout panel = panel();
+        EditText title = Ui.field(this, i18n.t("eventTitle"), "", false);
+        panel.addView(title);
+        panel.addView(separator());
+        EditText venue = Ui.field(this, i18n.t("eventVenue"), "", false);
+        panel.addView(venue);
+        panel.addView(separator());
+        EditText details = Ui.field(this, i18n.t("eventDetails"), "", true);
+        panel.addView(details);
+        root.addView(panel);
+
+        Button save = filledButton(i18n.t("save"));
+        save.setOnClickListener(v -> {
+            if (title.getText().toString().trim().isEmpty()) {
+                toast(i18n.t("nameRequired"));
+                return;
+            }
+            MeQrEvent event = eventStore.addCustomEvent(title.getText().toString(), venue.getText().toString(), details.getText().toString());
+            eventStore.setActiveEvent(event);
+            toast(i18n.t("done"));
+            AlertDialog dialog = (AlertDialog) root.getTag();
+            if (dialog != null) {
+                dialog.dismiss();
+            }
+        });
+        root.addView(save, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52)));
+
+        AlertDialog dialog = new AlertDialog.Builder(this).setView(root).setPositiveButton(i18n.t("cancel"), null).show();
+        root.setTag(dialog);
+        styleAlert(dialog);
+    }
+
+    private Bitmap base64Bitmap(String base64) {
+        if (base64 == null || base64.isEmpty()) {
+            return null;
+        }
+        try {
+            byte[] bytes = android.util.Base64.decode(base64, android.util.Base64.DEFAULT);
+            return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+        } catch (Exception exception) {
+            return null;
+        }
+    }
+
     private Button linkButton(String text, String url) {
         Button button = actionButton(text);
         button.setOnClickListener(v -> startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))));
@@ -967,8 +2740,18 @@ public final class MainActivity extends Activity {
         copy.platform = source.platform;
         copy.customPlatformName = source.customPlatformName;
         copy.qrContent = source.qrContent;
+        copy.qrItems.clear();
+        for (MeQrItem item : source.qrItems) {
+            copy.qrItems.add(item.copy());
+        }
+        copy.tags.clear();
+        copy.tags.addAll(source.tags);
+        copy.tagColorOverrides.clear();
+        copy.tagColorOverrides.putAll(source.tagColorOverrides);
+        copy.template = source.template;
         copy.avatarPath = source.avatarPath;
         copy.backgroundPath = source.backgroundPath;
+        copy.bannerPath = source.bannerPath;
         copy.backgroundColor = source.backgroundColor;
         copy.borderColor = source.borderColor;
         copy.textColor = source.textColor;
@@ -978,6 +2761,36 @@ public final class MainActivity extends Activity {
         copy.createdAt = source.createdAt;
         copy.sortOrder = source.sortOrder;
         return copy;
+    }
+
+    private String joinTags(List<String> tags) {
+        StringBuilder builder = new StringBuilder();
+        for (String tag : tags) {
+            if (builder.length() > 0) {
+                builder.append('\n');
+            }
+            builder.append(tag);
+        }
+        return builder.toString();
+    }
+
+    private Button templateButton(String text, boolean selected) {
+        Button button = new Button(this);
+        normalizeButton(button);
+        button.setAllCaps(false);
+        button.setText(text);
+        button.setTextSize(13);
+        button.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        button.setTextColor(selected ? Color.BLACK : COLOR_MUTED);
+        button.setBackground(rounded(selected ? Color.rgb(57, 197, 187) : COLOR_PANEL_2, dp(10)));
+        return button;
+    }
+
+    private void styleTemplateButtons(Button selected, Button other) {
+        selected.setTextColor(Color.BLACK);
+        selected.setBackground(rounded(Color.rgb(57, 197, 187), dp(10)));
+        other.setTextColor(COLOR_MUTED);
+        other.setBackground(rounded(COLOR_PANEL_2, dp(10)));
     }
 
     private TextView heading(String text) {
@@ -993,10 +2806,10 @@ public final class MainActivity extends Activity {
     private TextView section(String text) {
         TextView view = new TextView(this);
         view.setText(text);
-        view.setTextSize(19);
+        view.setTextSize(16);
         view.setTextColor(COLOR_MUTED);
         view.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        view.setPadding(dp(2), dp(26), 0, dp(10));
+        view.setPadding(dp(2), dp(22), 0, dp(8));
         return view;
     }
 
@@ -1056,29 +2869,32 @@ public final class MainActivity extends Activity {
 
     private Button iconButton(String text) {
         Button button = new Button(this);
+        normalizeButton(button);
         button.setText(text);
         button.setAllCaps(false);
         button.setTextColor(COLOR_TEXT);
-        button.setTextSize(22);
+        button.setTextSize(20);
         button.setGravity(Gravity.CENTER);
-        button.setBackground(rounded(COLOR_SURFACE, dp(24), Color.rgb(64, 64, 70), dp(1)));
+        button.setBackground(rounded(COLOR_SURFACE, dp(12), Ui.BORDER, dp(1)));
         return button;
     }
 
     private Button fabButton(String text) {
         Button button = new Button(this);
+        normalizeButton(button);
         button.setText(text);
         button.setAllCaps(false);
         button.setTextColor(Color.WHITE);
         button.setTextSize(30);
         button.setGravity(Gravity.CENTER);
         button.setElevation(dp(8));
-        button.setBackground(rounded(COLOR_BLUE, dp(33)));
+        button.setBackground(Ui.tealButton(dp(33)));
         return button;
     }
 
     private Button lightFabButton(String text) {
         Button button = new Button(this);
+        normalizeButton(button);
         button.setText(text);
         button.setAllCaps(false);
         button.setTextColor(Color.BLACK);
@@ -1091,36 +2907,39 @@ public final class MainActivity extends Activity {
 
     private Button lightIconButton(String text) {
         Button button = new Button(this);
+        normalizeButton(button);
         button.setText(text);
         button.setAllCaps(false);
         button.setTextColor(Color.BLACK);
-        button.setTextSize(22);
+        button.setTextSize(19);
         button.setGravity(Gravity.CENTER);
-        button.setElevation(dp(4));
-        button.setBackground(rounded(Color.argb(220, 255, 255, 255), dp(24), Color.argb(130, 255, 255, 255), dp(1)));
+        button.setElevation(dp(2));
+        button.setBackground(rounded(Color.argb(220, 255, 255, 255), dp(12), Color.argb(130, 255, 255, 255), dp(1)));
         return button;
     }
 
     private Button lightActionButton(String text) {
         Button button = new Button(this);
+        normalizeButton(button);
         button.setText(text);
         button.setAllCaps(false);
         button.setTextColor(Color.rgb(20, 20, 20));
-        button.setTextSize(15);
+        button.setTextSize(13);
         button.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         button.setGravity(Gravity.CENTER);
-        button.setBackground(rounded(Color.argb(190, 255, 255, 255), dp(16)));
+        button.setBackground(rounded(Color.argb(204, 255, 255, 255), dp(11), Color.argb(90, 20, 20, 20), dp(1)));
         return button;
     }
 
     private Button filledButton(String text) {
         Button button = new Button(this);
+        normalizeButton(button);
         button.setText(text);
         button.setAllCaps(false);
         button.setTextColor(Color.WHITE);
-        button.setTextSize(17);
+        button.setTextSize(15);
         button.setGravity(Gravity.CENTER);
-        button.setBackground(rounded(COLOR_BLUE, dp(18)));
+        button.setBackground(Ui.tealButton(dp(12)));
         return button;
     }
 
@@ -1138,6 +2957,7 @@ public final class MainActivity extends Activity {
 
     private Button rowButton(String leading, String trailing) {
         Button button = new Button(this);
+        normalizeButton(button);
         button.setText(leading + "   " + trailing);
         button.setAllCaps(false);
         button.setTextColor(COLOR_TEXT);
@@ -1151,8 +2971,8 @@ public final class MainActivity extends Activity {
     private LinearLayout panel() {
         LinearLayout panel = new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
-        panel.setPadding(dp(14), dp(10), dp(14), dp(10));
-        panel.setBackground(rounded(COLOR_PANEL, dp(22)));
+        panel.setPadding(dp(12), dp(7), dp(12), dp(7));
+        panel.setBackground(rounded(COLOR_PANEL, dp(16), Ui.BORDER, dp(1)));
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         params.setMargins(0, 0, 0, dp(8));
         panel.setLayoutParams(params);
@@ -1226,6 +3046,7 @@ public final class MainActivity extends Activity {
 
     private Button pillButton(String text, boolean compact) {
         Button button = new Button(this);
+        normalizeButton(button);
         button.setText(text);
         button.setAllCaps(false);
         button.setTextColor(COLOR_TEXT);
@@ -1237,24 +3058,40 @@ public final class MainActivity extends Activity {
 
     private Button actionButton(String text) {
         Button button = new Button(this);
+        normalizeButton(button);
         button.setText(text);
         button.setAllCaps(false);
         button.setTextColor(COLOR_BLUE);
-        button.setTextSize(18);
-        button.setGravity(Gravity.CENTER);
+        button.setTextSize(15);
+        button.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
+        button.setPadding(dp(10), 0, dp(10), 0);
         button.setBackgroundColor(Color.TRANSPARENT);
         return button;
     }
 
     private Button quietButton(String text) {
         Button button = new Button(this);
+        normalizeButton(button);
         button.setText(text);
         button.setAllCaps(false);
         button.setTextColor(COLOR_TEXT);
-        button.setTextSize(16);
+        button.setTextSize(15);
         button.setGravity(Gravity.CENTER);
         button.setBackground(rounded(COLOR_PANEL_2, dp(12)));
         return button;
+    }
+
+    private void normalizeButton(Button button) {
+        button.setAllCaps(false);
+        button.setMinWidth(0);
+        button.setMinHeight(0);
+        button.setMinimumWidth(0);
+        button.setMinimumHeight(0);
+        button.setIncludeFontPadding(false);
+        button.setPadding(dp(10), 0, dp(10), 0);
+        if (Build.VERSION.SDK_INT >= 21) {
+            button.setStateListAnimator(null);
+        }
     }
 
     private GradientDrawable rounded(int color, int radius) {
@@ -1267,6 +3104,12 @@ public final class MainActivity extends Activity {
     private GradientDrawable rounded(int color, int radius, int strokeColor, int strokeWidth) {
         GradientDrawable drawable = rounded(color, radius);
         drawable.setStroke(strokeWidth, strokeColor);
+        return drawable;
+    }
+
+    private GradientDrawable topRounded(int color, int radius) {
+        GradientDrawable drawable = rounded(color, 0);
+        drawable.setCornerRadii(new float[]{radius, radius, radius, radius, 0, 0, 0, 0});
         return drawable;
     }
 
@@ -1392,31 +3235,61 @@ public final class MainActivity extends Activity {
         return id > 0 ? getResources().getDimensionPixelSize(id) : dp(24);
     }
 
+    private int navigationBottom() {
+        int id = getResources().getIdentifier("navigation_bar_height", "dimen", "android");
+        return id > 0 ? getResources().getDimensionPixelSize(id) : 0;
+    }
+
     private interface SeekChange {
         void onChange(int value);
+    }
+
+    private interface ColorChoice {
+        void onColor(String hex);
+    }
+
+    private static final class ActionSheetItem {
+        final String icon;
+        final String label;
+        final boolean destructive;
+        final Runnable action;
+
+        ActionSheetItem(String icon, String label, boolean destructive, Runnable action) {
+            this.icon = icon;
+            this.label = label;
+            this.destructive = destructive;
+            this.action = action;
+        }
     }
 
     private static final class EditSession {
         final MeQrProfile profile;
         EditText name;
         EditText subtitle;
-        EditText qrContent;
-        EditText customPlatformName;
+        EditText tags;
         EditText textColor;
         EditText qrColor;
         EditText backgroundColor;
         EditText borderColor;
         ImageView preview;
-        Button platformButton;
+        LinearLayout qrItemsPanel;
+        LinearLayout tagColorPanel;
+        int selectedQrIndex;
 
         EditSession(MeQrProfile profile) {
             this.profile = profile;
         }
     }
 
+    private enum CropMode {
+        AVATAR,
+        BACKGROUND,
+        BANNER
+    }
+
     private final class CropImageView extends View {
         private final Bitmap source;
-        private final boolean circle;
+        private final CropMode mode;
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private float scale = 1f;
         private float minScale = 1f;
@@ -1427,25 +3300,26 @@ public final class MainActivity extends Activity {
         private float lastDistance;
         private RectF cropRect = new RectF();
 
-        CropImageView(Activity context, Bitmap source, boolean circle) {
+        CropImageView(Activity context, Bitmap source, CropMode mode) {
             super(context);
             this.source = source;
-            this.circle = circle;
+            this.mode = mode;
             setBackgroundColor(Color.BLACK);
         }
 
         @Override
         protected void onSizeChanged(int w, int h, int oldw, int oldh) {
             float margin = dp(26);
-            if (circle) {
+            if (mode == CropMode.AVATAR) {
                 float size = Math.min(w - margin * 2f, h * 0.62f);
                 cropRect.set((w - size) / 2f, (h - size) / 2f, (w + size) / 2f, (h + size) / 2f);
             } else {
                 float width = w - margin * 2f;
-                float height = width * 16f / 9f;
+                float aspectRatio = mode == CropMode.BANNER ? 143f / 68f : 9f / 16f;
+                float height = width / aspectRatio;
                 if (height > h - margin * 2f) {
                     height = h - margin * 2f;
-                    width = height * 9f / 16f;
+                    width = height * aspectRatio;
                 }
                 cropRect.set((w - width) / 2f, (h - height) / 2f, (w + width) / 2f, (h + height) / 2f);
             }
@@ -1474,7 +3348,7 @@ public final class MainActivity extends Activity {
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(dp(2));
             paint.setColor(Color.WHITE);
-            if (circle) {
+            if (mode == CropMode.AVATAR) {
                 canvas.drawOval(cropRect, paint);
             } else {
                 canvas.drawRoundRect(cropRect, dp(18), dp(18), paint);
@@ -1514,8 +3388,8 @@ public final class MainActivity extends Activity {
         }
 
         Bitmap crop() {
-            int outWidth = circle ? 720 : 1080;
-            int outHeight = circle ? 720 : 1920;
+            int outWidth = mode == CropMode.AVATAR ? 720 : mode == CropMode.BANNER ? 1430 : 1080;
+            int outHeight = mode == CropMode.AVATAR ? 720 : mode == CropMode.BANNER ? 680 : 1920;
             Bitmap output = Bitmap.createBitmap(outWidth, outHeight, Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(output);
             canvas.drawColor(Color.TRANSPARENT);
@@ -1525,7 +3399,7 @@ public final class MainActivity extends Activity {
             canvas.translate(offsetX, offsetY);
             canvas.scale(scale, scale);
             canvas.drawBitmap(source, -source.getWidth() / 2f, -source.getHeight() / 2f, paint);
-            if (circle) {
+            if (mode == CropMode.AVATAR) {
                 Bitmap circleOutput = Bitmap.createBitmap(outWidth, outHeight, Bitmap.Config.ARGB_8888);
                 Canvas circleCanvas = new Canvas(circleOutput);
                 Paint circlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);

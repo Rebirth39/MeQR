@@ -76,7 +76,8 @@ final class PlatformNames {
     static String detect(String text) {
         String lower = text == null ? "" : text.toLowerCase();
         if (lower.contains("u.wechat.com") || lower.contains("wechat.com") || lower.contains("weixin")) return "wechat";
-        if (lower.contains("qm.qq.com") || lower.contains("qq.com")) return "qq";
+        if (lower.contains("qm.qq.com") || lower.contains("qq.com") || lower.startsWith("mqq")
+                || lower.startsWith("qq://") || lower.startsWith("tencent://")) return "qq";
         if (lower.contains("wa.me") || lower.contains("whatsapp.com")) return "whatsapp";
         if (lower.contains("instagram.com") || lower.contains("instagr.am")) return "instagram";
         if (lower.contains("twitter.com") || lower.contains("x.com")) return "twitter";

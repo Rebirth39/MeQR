@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 
 final class MeQrRemoteService {
     private static final String API_BASE_URL = "https://meqr-api-bovpnioqev.cn-shanghai.fcapp.run";
+    static final String API_HOST = "meqr-api-bovpnioqev.cn-shanghai.fcapp.run";
 
     private MeQrRemoteService() {
     }
@@ -55,5 +56,35 @@ final class MeQrRemoteService {
             throw new IllegalStateException("MeQR upload did not return a URL.");
         }
         return uploadedUrl;
+    }
+
+    static MeQrExchangeProfile fetchProfile(String url) throws Exception {
+        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+        connection.setRequestMethod("GET");
+        connection.setConnectTimeout(10000);
+        connection.setReadTimeout(15000);
+        connection.setRequestProperty("Accept", "application/json");
+
+        int status = connection.getResponseCode();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(
+            status >= 200 && status < 300 ? connection.getInputStream() : connection.getErrorStream(),
+            StandardCharsets.UTF_8
+        ));
+        StringBuilder response = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            response.append(line);
+        }
+        connection.disconnect();
+
+        JSONObject json = new JSONObject(response.toString());
+        if (status < 200 || status >= 300) {
+            throw new IllegalStateException(json.optString("error", "MeQR fetch failed."));
+        }
+        JSONObject profileJson = json.has("profile") ? json.optJSONObject("profile") : json;
+        if (profileJson == null) {
+            throw new IllegalStateException("MeQR fetch returned an empty profile.");
+        }
+        return MeQrExchangeProfile.fromJson(profileJson);
     }
 }
