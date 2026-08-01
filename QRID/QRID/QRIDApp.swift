@@ -31,7 +31,7 @@ struct QRIDApp: App {
 
     var body: some Scene {
         WindowGroup {
-            MainView()
+            AppRootView()
                 .environment(\.appSettings, AppSettings.shared)
                 .onOpenURL { url in
                     // Widget tap opens app via meqr://open
@@ -42,6 +42,30 @@ struct QRIDApp: App {
                 }
         }
         .modelContainer(sharedModelContainer)
+    }
+}
+
+struct AppRootView: View {
+    @Query(sort: \QRCluster.sortOrder, order: .forward) private var clusters: [QRCluster]
+    @AppStorage(OnboardingStorage.completionKey) private var hasCompletedOnboarding = false
+
+    var body: some View {
+        MainView()
+            .fullScreenCover(isPresented: onboardingPresentation) {
+                OnboardingView(
+                    hasExistingCards: !clusters.isEmpty,
+                    onFinish: { hasCompletedOnboarding = true },
+                    onSkip: { hasCompletedOnboarding = true }
+                )
+                .interactiveDismissDisabled()
+            }
+    }
+
+    private var onboardingPresentation: Binding<Bool> {
+        Binding(
+            get: { !hasCompletedOnboarding },
+            set: { _ in }
+        )
     }
 }
 

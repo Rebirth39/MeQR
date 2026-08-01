@@ -3,6 +3,7 @@ import SwiftUI
 struct MoreSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.appSettings) private var settings
+    @AppStorage(OnboardingStorage.completionKey) private var hasCompletedOnboarding = true
 
     var body: some View {
         NavigationStack {
@@ -24,6 +25,13 @@ struct MoreSettingsView: View {
                 }
 
                 Section {
+                    Button {
+                        hasCompletedOnboarding = false
+                        dismiss()
+                    } label: {
+                        Label(OnboardingCopy.replayGuide, systemImage: "sparkles.rectangle.stack")
+                    }
+
                     NavigationLink {
                         AboutView()
                     } label: {
