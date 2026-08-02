@@ -67,6 +67,17 @@ def extract_function_body(source: str, function_name: str) -> str:
 
 
 class ReviewRegressionTests(unittest.TestCase):
+    def test_onboarding_welcome_card_keeps_dark_text_in_dark_mode(self):
+        source = read("QRID/QRID/Views/OnboardingView.swift")
+        self.assertRegex(
+            source,
+            r"private var welcomeCard:[\s\S]*?foregroundStyle\(\.black\)[\s\S]*?foregroundStyle\(\.black\.opacity\(0\.58\)\)",
+        )
+
+    def test_onboarding_actions_do_not_cover_fields_when_keyboard_appears(self):
+        source = read("QRID/QRID/Views/OnboardingView.swift")
+        self.assertIn('.ignoresSafeArea(.keyboard, edges: .bottom)', source)
+
     def test_swiftui_onchange_does_not_observe_swiftdata_model_arrays(self):
         app = read("QRID/QRID/QRIDApp.swift")
         main = read("QRID/QRID/Views/MainView.swift")

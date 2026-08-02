@@ -322,6 +322,7 @@ struct OnboardingView: View {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             setupActions
         }
+        .ignoresSafeArea(.keyboard, edges: .bottom)
         .overlay {
             if isDecoding || isSaving {
                 ProgressView(isSaving ? L.save : L.decodingQR)
@@ -703,10 +704,11 @@ struct OnboardingView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(name.isEmpty ? "Miku39" : name)
                     .font(.title2.weight(.black))
+                    .foregroundStyle(.black)
                 Text("QR PROFILE · 2026")
                     .font(.caption2.weight(.bold))
                     .tracking(1)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.black.opacity(0.58))
                 HStack(spacing: 6) {
                     ForEach(["初音未来", "漫展", "摄影"], id: \.self) { tag in
                         let tagColor = Color(hex: CardTagColorPalette.colorHex(for: tag))
@@ -722,6 +724,7 @@ struct OnboardingView: View {
             Spacer(minLength: 0)
             Image(systemName: "qrcode")
                 .font(.system(size: 52, weight: .medium))
+                .foregroundStyle(.black)
         }
         .padding(22)
         .frame(maxWidth: .infinity, minHeight: 210)
