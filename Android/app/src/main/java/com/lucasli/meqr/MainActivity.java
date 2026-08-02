@@ -1290,7 +1290,9 @@ public final class MainActivity extends Activity {
     }
 
     private void shareProfile(MeQrProfile profile) {
-        Bitmap bitmap = CardRenderer.render(profile, i18n, 1080);
+        MeQrProfile shareProfile = copy(profile);
+        shareProfile.cardOpacity = 1f;
+        Bitmap bitmap = CardRenderer.render(shareProfile, i18n, 1080);
         if (Build.VERSION.SDK_INT <= 28 && checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             pendingShareBitmap = bitmap;
             requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_WRITE_PHOTOS);
