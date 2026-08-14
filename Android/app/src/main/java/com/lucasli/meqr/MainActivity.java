@@ -2380,7 +2380,10 @@ public final class MainActivity extends Activity {
         cardStack.addView(pinkLayer, pinkParams);
         ImageView sample = new ImageView(this);
         sample.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        sample.setImageBitmap(CardRenderer.render(editSession.profile, i18n, 720));
+        MeQrProfile sampleProfile = copy(editSession.profile);
+        sampleProfile.name = "Miku39";
+        sampleProfile.subtitle = "QR PROFILE · 2026";
+        sample.setImageBitmap(CardRenderer.render(sampleProfile, i18n, 720));
         sample.setElevation(dp(12));
         FrameLayout.LayoutParams sampleParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(260), Gravity.CENTER);
         sampleParams.setMargins(dp(18), dp(8), dp(18), 0);
