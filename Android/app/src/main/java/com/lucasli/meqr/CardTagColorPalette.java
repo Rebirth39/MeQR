@@ -13,6 +13,7 @@ import java.util.Map;
  * IP/project; unit and character aliases map to their project color.
  */
 final class CardTagColorPalette {
+    private static final String SOLID_OVERRIDE = "@solid";
     private static final Map<String, Integer> BY_KEYWORD = new HashMap<>();
     private static final Map<String, int[]> MULTI_BY_KEYWORD = new HashMap<>();
 
@@ -231,6 +232,10 @@ final class CardTagColorPalette {
         if (tag == null || tag.trim().isEmpty()) {
             return GENERIC[0];
         }
+        int[] remote = RemoteTagCatalog.colorsFor(tag);
+        if (remote.length > 0) {
+            return remote[0];
+        }
         String normalized = normalize(tag);
         Integer mapped = BY_KEYWORD.get(normalized);
         if (mapped != null) {
@@ -245,16 +250,45 @@ final class CardTagColorPalette {
     }
 
     static int[] colorsFor(String tag, String override) {
+        int[] preset = presetColorsFor(tag);
+        if (preset.length > 0) {
+            return isSolidOverride(override) ? new int[]{preset[0]} : preset;
+        }
         int[] custom = parseColors(override);
         if (custom.length > 0) {
             return custom;
         }
-        int[] preset = MULTI_BY_KEYWORD.get(normalize(tag));
-        return preset == null ? new int[]{colorFor(tag)} : preset.clone();
+        return new int[]{colorFor(tag)};
     }
 
     static boolean hasPresetMulti(String tag) {
-        return MULTI_BY_KEYWORD.containsKey(normalize(tag));
+        return presetColorsFor(tag).length > 1;
+    }
+
+    static boolean isPresetColored(String tag) {
+        return presetColorsFor(tag).length > 0;
+    }
+
+    static int[] presetColorsFor(String tag) {
+        int[] remote = RemoteTagCatalog.colorsFor(tag);
+        if (remote.length > 0) {
+            return remote;
+        }
+        String key = normalize(tag);
+        int[] multi = MULTI_BY_KEYWORD.get(key);
+        if (multi != null) {
+            return multi.clone();
+        }
+        Integer single = BY_KEYWORD.get(key);
+        return single == null ? new int[0] : new int[]{single};
+    }
+
+    static boolean isSolidOverride(String override) {
+        return SOLID_OVERRIDE.equals(override);
+    }
+
+    static String solidOverrideValue() {
+        return SOLID_OVERRIDE;
     }
 
     static String encodeColors(List<String> values) {

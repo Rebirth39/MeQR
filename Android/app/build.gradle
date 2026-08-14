@@ -2,6 +2,12 @@ plugins {
     id "com.android.application"
 }
 
+def keystoreProps = new Properties()
+def keystorePropsFile = rootProject.file("keystore.properties")
+if (keystorePropsFile.exists()) {
+    keystorePropsFile.withInputStream { keystoreProps.load(it) }
+}
+
 android {
     namespace "com.lucasli.meqr"
     compileSdk 35
@@ -10,8 +16,27 @@ android {
         applicationId "com.lucasli.meqr"
         minSdk 26
         targetSdk 35
-        versionCode 5
-        versionName "1.0.4"
+        versionCode 10
+        versionName "1.0.9"
+    }
+
+    signingConfigs {
+        release {
+            storeFile rootProject.file(keystoreProps["storeFile"] ?: "meqr-release.keystore")
+            storePassword keystoreProps["storePassword"]
+            keyAlias keystoreProps["keyAlias"] ?: "meqr"
+            keyPassword keystoreProps["keyPassword"]
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+        }
+        debug {
+            // 统一用正式签名，保证公测包升级链与备案证书一致
+            signingConfig signingConfigs.release
+        }
     }
 }
 

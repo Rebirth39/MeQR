@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.UUID;
 
 final class EventStore {
-    private static final String REMOTE_EVENTS_URL = "https://meqr-api-bovpnioqev.cn-shanghai.fcapp.run/events";
+    private static final String REMOTE_EVENTS_URL = "https://api.meqrcode.cn/events";
     private static final String ACTIVE_EVENT_KEY = "meqr_active_event_id_v1";
 
     private final Context context;

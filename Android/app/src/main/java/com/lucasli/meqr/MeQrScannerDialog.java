@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 final class MeQrScannerDialog extends android.app.Dialog {
     interface Listener {
-        void onPayload(String payload);
+        void onPayload(String payload, byte[] colorAvatarJpeg);
 
         void onImportRequest();
     }
@@ -171,7 +171,7 @@ final class MeQrScannerDialog extends android.app.Dialog {
                 }
             }
             if (cameraId == null) {
-                listener.onPayload(null);
+                listener.onPayload(null, null);
                 dismiss();
                 return;
             }
@@ -327,6 +327,7 @@ final class MeQrScannerDialog extends android.app.Dialog {
             Result result = QrImageDecoder.decode(source);
             if (result != null && result.getText() != null && !result.getText().isEmpty()) {
                 String payload = result.getText();
+                byte[] colorAvatarJpeg = MeQrColorLayer.decode(image, result);
                 long now = System.currentTimeMillis();
                 if (!payload.equals(lastPayload) || now - lastPayloadAt > 2000) {
                     lastPayload = payload;
@@ -335,7 +336,7 @@ final class MeQrScannerDialog extends android.app.Dialog {
                     vibrate();
                     new Handler(android.os.Looper.getMainLooper()).post(() -> {
                         closeCamera();
-                        listener.onPayload(payload);
+                        listener.onPayload(payload, colorAvatarJpeg);
                         dismiss();
                     });
                 }

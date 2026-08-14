@@ -14,7 +14,9 @@ import android.text.TextPaint;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 final class CardRenderer {
@@ -232,40 +234,84 @@ final class CardRenderer {
         canvas.drawBitmap(qr, left, top, paint);
     }
 
-    private static void drawPlatformChips(Canvas canvas, MeQrProfile profile, I18n i18n, int selected, float left, float top, float maxWidth, int textColor, Paint paint, float density) {
+    // Tappable hit regions (in bitmap coordinates) for the front-side platform
+    // buttons, so the home card can switch QR on tap instead of flipping.
+    static List<RectF> platformHitRects(MeQrProfile profile, I18n i18n, int width) {
+        profile.syncLegacyFields();
+        float density = width / 360f;
+        if ("rhodes".equals(profile.template)) {
+            return rhodesPlatformRects(density);
+        }
+        return standardChipRects(profile, i18n, 22f * density, 378f * density, width - 44f * density, density);
+    }
+
+    private static List<RectF> standardChipRects(MeQrProfile profile, I18n i18n, float left, float top, float maxWidth, float density) {
+        List<RectF> rects = new ArrayList<>();
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setTextSize(11f * density);
+        paint.setTypeface(Typeface.DEFAULT_BOLD);
         float x = left;
         float y = top;
         for (int i = 0; i < profile.qrItems.size(); i++) {
             String label = profile.qrItems.get(i).platformDisplayName(i18n);
-            paint.setTextSize(11f * density);
-            paint.setTypeface(Typeface.DEFAULT_BOLD);
             float width = Math.min(maxWidth, paint.measureText(label) + 22f * density);
             if (x + width > left + maxWidth) {
                 x = left;
                 y += 30f * density;
             }
+            rects.add(new RectF(x, y, x + width, y + 24f * density));
+            x += width + 7f * density;
+        }
+        return rects;
+    }
+
+    private static List<RectF> rhodesPlatformRects(float density) {
+        // Mirrors renderRhodes(): rail(50) + gap(12) + qr(164) + gap(10) = infoLeft 236,
+        // contentRight 348, list top 214 (qrTop 186 + 28), rows 27 tall capped at 5.
+        float infoLeft = 236f * density;
+        float listWidth = 348f * density - infoLeft;
+        float top = 214f * density;
+        return listRectsAt(infoLeft, top, listWidth, density);
+    }
+
+    private static List<RectF> listRectsAt(float left, float top, float width, float density) {
+        List<RectF> rects = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            float y = top + i * 27f * density;
+            rects.add(new RectF(left, y, left + width, y + 22f * density));
+        }
+        return rects;
+    }
+
+    private static void drawPlatformChips(Canvas canvas, MeQrProfile profile, I18n i18n, int selected, float left, float top, float maxWidth, int textColor, Paint paint, float density) {
+        List<RectF> rects = standardChipRects(profile, i18n, left, top, maxWidth, density);
+        paint.setTextSize(11f * density);
+        paint.setTypeface(Typeface.DEFAULT_BOLD);
+        for (int i = 0; i < profile.qrItems.size(); i++) {
+            RectF rect = rects.get(i);
+            String label = profile.qrItems.get(i).platformDisplayName(i18n);
             paint.setColor(i == selected ? parseColor(profile.qrColor, Color.BLACK) : adjustAlpha(textColor, 0.12f));
-            canvas.drawRoundRect(new RectF(x, y, x + width, y + 24f * density), 12f * density, 12f * density, paint);
+            canvas.drawRoundRect(rect, 12f * density, 12f * density, paint);
             paint.setColor(i == selected ? contrastColor(parseColor(profile.qrColor, Color.BLACK)) : textColor);
             paint.setTextAlign(Paint.Align.CENTER);
             Paint.FontMetrics metrics = paint.getFontMetrics();
-            canvas.drawText(label, x + width / 2f, y + 12f * density - (metrics.ascent + metrics.descent) / 2f, paint);
-            x += width + 7f * density;
+            canvas.drawText(label, rect.centerX(), rect.top + 12f * density - (metrics.ascent + metrics.descent) / 2f, paint);
         }
         paint.setTextAlign(Paint.Align.LEFT);
     }
 
     private static void drawPlatformList(Canvas canvas, MeQrProfile profile, I18n i18n, int selected, float left, float top, float width, int textColor, Paint paint, float density) {
+        List<RectF> rects = listRectsAt(left, top, width, density);
         for (int i = 0; i < profile.qrItems.size() && i < 5; i++) {
-            float y = top + i * 27f * density;
+            RectF rect = rects.get(i);
             paint.setColor(i == selected ? parseColor(profile.qrColor, Color.BLACK) : adjustAlpha(textColor, 0.10f));
-            canvas.drawRoundRect(new RectF(left, y, left + width, y + 22f * density), 11f * density, 11f * density, paint);
+            canvas.drawRoundRect(rect, 11f * density, 11f * density, paint);
             paint.setTextAlign(Paint.Align.CENTER);
             paint.setTypeface(Typeface.DEFAULT_BOLD);
             paint.setTextSize(9.5f * density);
             paint.setColor(i == selected ? contrastColor(parseColor(profile.qrColor, Color.BLACK)) : textColor);
             Paint.FontMetrics metrics = paint.getFontMetrics();
-            canvas.drawText(profile.qrItems.get(i).platformDisplayName(i18n), left + width / 2f, y + 11f * density - (metrics.ascent + metrics.descent) / 2f, paint);
+            canvas.drawText(profile.qrItems.get(i).platformDisplayName(i18n), rect.centerX(), rect.top + 11f * density - (metrics.ascent + metrics.descent) / 2f, paint);
         }
         paint.setTextAlign(Paint.Align.LEFT);
     }

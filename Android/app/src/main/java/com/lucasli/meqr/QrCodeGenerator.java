@@ -24,6 +24,19 @@ final class QrCodeGenerator {
         return generateInternal(content, foregroundColor, size, Color.TRANSPARENT);
     }
 
+    static Bitmap generateColorLayered(String content, byte[] avatarJpeg, int size) {
+        Bitmap enhanced = MeQrColorLayer.generate(content, avatarJpeg, size);
+        return enhanced != null ? enhanced : generate(content, Color.BLACK, size);
+    }
+
+    static int colorLayerPayloadCapacity(String content) {
+        return MeQrColorLayer.payloadCapacity(content);
+    }
+
+    static String paddedForColorLayer(String content, int minimumPayloadCapacity) {
+        return MeQrColorLayer.paddedContent(content, minimumPayloadCapacity);
+    }
+
     private static Bitmap generateInternal(String content, int foregroundColor, int size, int backgroundColor) {
         String value = content == null || content.trim().isEmpty() ? "MeQR" : content.trim();
         Map<EncodeHintType, Object> hints = new EnumMap<>(EncodeHintType.class);

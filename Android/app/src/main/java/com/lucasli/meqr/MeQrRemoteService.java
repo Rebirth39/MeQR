@@ -10,8 +10,8 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
 final class MeQrRemoteService {
-    private static final String API_BASE_URL = "https://meqr-api-bovpnioqev.cn-shanghai.fcapp.run";
-    static final String API_HOST = "meqr-api-bovpnioqev.cn-shanghai.fcapp.run";
+    private static final String API_BASE_URL = "https://api.meqrcode.cn";
+    static final String API_HOST = "api.meqrcode.cn";
 
     private MeQrRemoteService() {
     }
@@ -36,14 +36,15 @@ final class MeQrRemoteService {
         }
 
         int status = connection.getResponseCode();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(
+        StringBuilder response = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
             status >= 200 && status < 300 ? connection.getInputStream() : connection.getErrorStream(),
             StandardCharsets.UTF_8
-        ));
-        StringBuilder response = new StringBuilder();
-        String line;
-        while ((line = reader.readLine()) != null) {
-            response.append(line);
+        ))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
         }
         connection.disconnect();
 
@@ -66,14 +67,15 @@ final class MeQrRemoteService {
         connection.setRequestProperty("Accept", "application/json");
 
         int status = connection.getResponseCode();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(
+        StringBuilder response = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
             status >= 200 && status < 300 ? connection.getInputStream() : connection.getErrorStream(),
             StandardCharsets.UTF_8
-        ));
-        StringBuilder response = new StringBuilder();
-        String line;
-        while ((line = reader.readLine()) != null) {
-            response.append(line);
+        ))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
         }
         connection.disconnect();
 

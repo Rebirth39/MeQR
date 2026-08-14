@@ -12,7 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 final class MeQrExchangeCodec {
-    private static final int ONLINE_AVATAR_TARGET_BYTES = 48 * 1024;
+    private static final int ONLINE_AVATAR_TARGET_BYTES = 256 * 1024;
     private static final String OFFLINE_FRAGMENT_PREFIX = "offline=";
 
     private MeQrExchangeCodec() {
@@ -28,6 +28,13 @@ final class MeQrExchangeCodec {
 
     static JSONObject onlineProfile(MeQrProfile profile, I18n i18n) throws Exception {
         return profileJson(profile, i18n, 10, ONLINE_AVATAR_TARGET_BYTES);
+    }
+
+    static byte[] colorLayerAvatarJpeg(MeQrProfile profile, int targetBytes) {
+        if (profile == null || targetBytes <= 0) {
+            return null;
+        }
+        return tinyAvatarJpeg(profile.avatarPath, targetBytes, true);
     }
 
     static String hybridCode(String remoteUrl, String offlinePayload) {
@@ -135,14 +142,16 @@ final class MeQrExchangeCodec {
             platforms.put(platform);
         }
         root.put("p", platforms);
-        if (!profile.tags.isEmpty()) {
-            JSONArray tags = new JSONArray();
-            for (String tag : profile.tags) {
-                tags.put(tag);
+        if (maxProfiles > 1) {
+            if (!profile.tags.isEmpty()) {
+                JSONArray tags = new JSONArray();
+                for (String tag : profile.tags) {
+                    tags.put(tag);
+                }
+                root.put("g", tags);
             }
-            root.put("g", tags);
+            root.put("m", profile.template);
         }
-        root.put("m", profile.template);
         root.put("t", System.currentTimeMillis() / 1000L);
         return root;
     }
@@ -178,20 +187,27 @@ final class MeQrExchangeCodec {
     }
 
     private static String tinyAvatarBase64(String path, int targetBytes) {
+        byte[] jpeg = tinyAvatarJpeg(path, targetBytes, false);
+        return jpeg == null ? "" : Base64.encodeToString(jpeg, Base64.NO_WRAP);
+    }
+
+    private static byte[] tinyAvatarJpeg(String path, int targetBytes, boolean strict) {
         if (path == null || path.trim().isEmpty()) {
-            return "";
+            return null;
         }
         Bitmap source = BitmapFactory.decodeFile(path);
         if (source == null) {
-            return "";
+            return null;
         }
         int size = Math.min(source.getWidth(), source.getHeight());
         if (size <= 0) {
-            return "";
+            return null;
         }
         Bitmap square = Bitmap.createBitmap(source, (source.getWidth() - size) / 2, (source.getHeight() - size) / 2, size, size);
-        int[] sizes = new int[]{256, 192, 144, 96, 72, 56};
-        int[] qualities = new int[]{82, 72, 62, 52, 42, 32};
+        int[] sizes = targetBytes >= 64 * 1024
+                ? new int[]{1024, 768, 512, 384, 256, 192, 160, 144, 128, 112, 96, 80, 72, 64, 56, 48, 40, 32, 28, 24, 20, 16}
+                : new int[]{256, 192, 160, 144, 128, 112, 96, 80, 72, 64, 56, 48, 40, 32, 28, 24, 20, 16};
+        int[] qualities = new int[]{84, 74, 64, 54, 44, 34, 24, 16, 10};
         byte[] smallest = null;
         for (int avatarSize : sizes) {
             Bitmap scaled = Bitmap.createScaledBitmap(square, avatarSize, avatarSize, true);
@@ -203,11 +219,14 @@ final class MeQrExchangeCodec {
                     smallest = bytes;
                 }
                 if (bytes.length <= targetBytes) {
-                    return Base64.encodeToString(bytes, Base64.NO_WRAP);
+                    return bytes;
                 }
             }
         }
-        return smallest == null || smallest.length > targetBytes * 2 ? "" : Base64.encodeToString(smallest, Base64.NO_WRAP);
+        if (strict) {
+            return null;
+        }
+        return smallest == null || smallest.length > targetBytes * 2 ? null : smallest;
     }
 
     private static String base64Url(byte[] bytes) {

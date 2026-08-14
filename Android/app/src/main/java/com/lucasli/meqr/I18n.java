@@ -31,6 +31,9 @@ final class I18n {
         put("done", "完成", "完成", "完成", "Done", "完了");
         put("ok", "好", "好", "好", "OK", "OK");
         put("share", "分享", "分享", "分享", "Share", "共有");
+        put("shareConfirmTitle", "确认分享这张卡片？", "確認分享這張卡片？", "確認分享這張卡片？", "Share this card?", "このカードを共有しますか？");
+        put("shareConfirmBody", "继续后会先把卡片保存到相册，再打开系统分享菜单。", "繼續後會先把卡片儲存到相簿，再開啟系統分享選單。", "繼續後會先把卡片儲存到照片，再開啟系統分享選單。", "Continuing saves the card to Photos, then opens Android's share menu.", "続けるとカードを写真に保存してから、Androidの共有メニューを開きます。");
+        put("continueShare", "继续分享", "繼續分享", "繼續分享", "Continue", "共有を続ける");
         put("meqrProfileCode", "MeQR 交换码", "MeQR 交換碼", "MeQR 交換碼", "MeQR Profile Code", "MeQR 交換コード");
         put("saveMeQrCode", "保存交换码到相册", "儲存交換碼到相簿", "儲存交換碼到照片", "Save Code to Photos", "交換コードを写真に保存");
         put("meqrCodeHint", "对方用 MeQR 扫这个码，就能看到你的这张扩列卡。", "對方用 MeQR 掃這個碼，就能看到你的這張擴列卡。", "對方用 MeQR 掃描這個碼，就能看到你的這張擴列卡。", "Someone can scan this with MeQR to read your profile.", "相手がMeQRでこのコードを読み取ると、あなたのプロフィールを表示できます。");
@@ -41,8 +44,8 @@ final class I18n {
         put("meqrCodeFailed", "交换码生成失败", "交換碼產生失敗", "交換碼產生失敗", "Could not create MeQR code.", "交換コードを作成できません。");
         put("saved", "已保存到相册", "已儲存到相簿", "已儲存到照片", "Saved to Photos", "写真に保存しました");
         put("saveFailed", "无法保存，请重试。", "無法儲存，請再試一次。", "無法儲存，請再試一次。", "Please try again.", "もう一度お試しください。");
-        put("emptyTitle", "还没有二维码", "還沒有 QR Code", "還沒有 QR Code", "No QR Codes Yet", "QRコードがまだありません");
-        put("emptyBody", "添加你的第一个社交二维码开始使用", "加入你的第一個社交 QR Code 開始使用", "加入你的第一個社群 QR Code 開始使用", "Add your first social QR code to get started.", "最初のSNS用QRコードを追加して始めましょう。");
+        put("emptyTitle", "还没有卡片", "還沒有卡片", "還沒有卡片", "No Cards Yet", "カードがまだありません");
+        put("emptyBody", "创建你的第一张卡片，开始吧", "建立你的第一張卡片，開始吧", "建立你的第一張卡片，開始吧", "Create your first card to get started.", "最初のカードを作って始めましょう。");
         put("newProfile", "新建 Profile", "新增 Profile", "新增 Profile", "New Profile", "新規プロフィール");
         put("editProfile", "编辑 Profile", "編輯 Profile", "編輯 Profile", "Edit Profile", "プロフィールを編集");
         put("profileName", "Profile 名称", "Profile 名稱", "Profile 名稱", "Profile Name", "プロフィール名");
@@ -94,7 +97,7 @@ final class I18n {
         put("setupFinalBody", "确认后会保存在这台设备上，所有内容之后都能继续编辑。", "確認後會儲存在這台裝置上，所有內容之後都能繼續編輯。", "確認後會儲存在這台裝置上，所有內容之後都能繼續編輯。", "It will be saved on this device, and every detail remains editable.", "この端末に保存され、すべてあとから編集できます。");
         put("setupComplete", "你的卡片，准备好了。", "你的卡片，準備好了。", "你的卡片，準備好了。", "Your card is ready.", "カードができました。");
         put("setupCompleteBody", "下次见面时，直接把它拿出来就好。接下来还可以添加更多平台。", "下次見面時，直接把它拿出來就好。接下來還可以加入更多平台。", "下次見面時，直接把它拿出來就好。接下來還可以新增更多平台。", "Bring it up the next time you meet someone. You can add more platforms next.", "次に誰かと会うとき、そのまま見せられます。ほかのプラットフォームも追加できます。");
-        put("setupEnter", "进入喜劳转扩", "進入喜勞轉擴", "進入喜勞轉擴", "Enter MeQR", "喜劳转扩を始める");
+        put("setupEnter", "进入喜劳转扩", "進入喜勞轉擴", "進入喜勞轉擴", "Enter MeQR", "MeQRを始める");
         put("continue", "继续", "繼續", "繼續", "Continue", "続ける");
         put("back", "返回", "返回", "返回", "Back", "戻る");
         put("finishSetup", "完成建档", "完成建檔", "完成建檔", "Finish Setup", "設定を完了");
@@ -105,16 +108,28 @@ final class I18n {
         put("moveDown", "下移", "下移", "下移", "Move Down", "下へ");
         put("deleteConfirm", "确定要删除这个 Profile？", "確定要刪除這個 Profile？", "確定要刪除這個 Profile？", "Delete this profile?", "このプロフィールを削除しますか？");
         put("settings", "更多设置", "更多設定", "更多設定", "More Settings", "その他の設定");
+        put("settingsActions", "常用功能", "常用功能", "常用功能", "Quick Actions", "クイック操作");
+        put("settingsGeneral", "偏好与支持", "偏好與支援", "偏好與支援", "Preferences & Support", "設定とサポート");
+        put("settingsData", "数据", "資料", "資料", "Data", "データ");
         put("language", "语言", "語言", "語言", "Language", "言語");
         put("followSystem", "跟随系统", "跟隨系統", "跟隨系統", "Follow System", "システムに合わせる");
-        put("restartNotice", "部分新语言资源可能需要重启软件才能生效", "部分新語言資源可能需要重新啟動軟件才能生效", "部分新語言資源可能需要重新啟動軟體才能生效", "Some new language resources may require restarting the app to take effect.", "一部の新しい言語リソースは、アプリの再起動後に反映される場合があります。");
+        put("checkUpdates", "检查更新", "檢查更新", "檢查更新", "Check for Updates", "アップデートを確認");
+        put("updateAvailable", "发现新版本", "發現新版本", "發現新版本", "Update Available", "新しいバージョンがあります");
+        put("updateNow", "在 App 内更新", "在 App 內更新", "在 App 內更新", "Update in App", "アプリ内で更新");
+        put("later", "稍后", "稍後", "稍後", "Later", "あとで");
+        put("alreadyLatest", "已经是最新版本", "已經是最新版本", "已經是最新版本", "You already have the latest version", "最新バージョンです");
+        put("updateCheckFailed", "暂时无法检查更新", "暫時無法檢查更新", "暫時無法檢查更新", "Could not check for updates", "アップデートを確認できませんでした");
+        put("downloadingUpdate", "正在下载更新，完成后会打开系统安装界面", "正在下載更新，完成後會開啟系統安裝畫面", "正在下載更新，完成後會開啟系統安裝畫面", "Downloading the update. Android will ask before installing.", "更新をダウンロード中。完了後にAndroidのインストール画面を開きます");
+        put("updateDownloadFailed", "更新下载失败，请稍后重试", "更新下載失敗，請稍後再試", "更新下載失敗，請稍後再試", "Update download failed. Try again later.", "更新のダウンロードに失敗しました");
+        put("updateVerificationFailed", "更新包校验失败，已停止安装", "更新包驗證失敗，已停止安裝", "更新包驗證失敗，已停止安裝", "The update package failed verification and was not opened.", "更新パッケージの検証に失敗したため、インストールを中止しました");
+        put("allowInstallUpdates", "请允许喜劳转扩安装更新，返回后会继续", "請允許喜勞轉擴安裝更新，返回後會繼續", "請允許喜勞轉擴安裝更新，返回後會繼續", "Allow MeQR to install updates, then return to continue.", "MeQRによる更新のインストールを許可してから戻ってください");
         put("about", "关于软件", "關於軟件", "關於 App", "About", "このアプリについて");
         put("privacy", "隐私政策", "私隱政策", "隱私權政策", "Privacy Policy (English)", "プライバシーポリシー（英語）");
         put("version", "版本", "版本", "版本", "Version", "バージョン");
-        put("github", "GitHub 项目页面", "GitHub 項目頁面", "GitHub 專案頁面", "GitHub Project", "GitHubプロジェクト");
+        put("website", "跳转官网", "前往官網", "前往官網", "Open Website", "公式サイトを開く");
         put("contact", "联系开发者", "聯絡開發者", "聯絡開發者", "Contact Developer", "開発者に連絡");
         put("developerIntro", "开发者介绍", "開發者介紹", "開發者介紹", "Developer Intro", "開発者紹介");
-        put("developerStudent", "目前高中就读 初⚪︎未来重度依赖（）", "目前高中就讀 初⚪︎未來重度依賴（）", "目前高中就讀 初⚪︎未來重度依賴（）", "High school student, heavily dependent on Hat⚪︎ne Miku.", "高校生です。初⚪︎ミクにかなり依存しています。");
+        put("developerStudent", "目前高中就读 初音未来重度依赖", "目前高中就讀 初音未來重度依賴", "目前高中就讀 初音未來重度依賴", "High school student, heavily dependent on Hatsune Miku.", "高校生です。初音ミクにかなり依存しています。");
         put("developerMadeForFun", "抱着玩一下的心态开发了这款软件", "抱着玩一下的心態開發了這款軟件", "抱著玩一下的心態開發了這款 App", "I started this app just for fun", "遊び半分でこのアプリを作り始めました");
         put("developerUnexpected", "没想到后面功能越加越多", "沒想到後面功能越加越多", "沒想到後來功能越加越多", "then somehow kept adding more features", "気づいたら機能がどんどん増えていました");
         put("developerHope", "希望大家喜欢:)", "希望大家喜歡:)", "希望大家喜歡:)", "Hope you like it :)", "気に入ってもらえたらうれしいです :)");
@@ -124,11 +139,11 @@ final class I18n {
         put("couldNotDecode", "无法识别这个二维码", "無法辨識這個 QR Code", "無法辨識這個 QR Code", "Could not read this QR code", "このQRコードを読み取れません");
         put("notMeQrCode", "这不是 MeQR 交换码", "這不是 MeQR 交換碼", "這不是 MeQR 交換碼", "This is not a MeQR profile code", "これはMeQR交換コードではありません");
         put("cameraPermissionNeeded", "需要相机权限才能扫码", "需要相機權限才能掃碼", "需要相機權限才能掃碼", "Camera permission is required to scan", "スキャンにはカメラ権限が必要です");
-        put("meqrProfileFound", "发现 MeQR 名片", "發現 MeQR 名片", "發現 MeQR 名片", "MeQR Profile Found", "MeQRプロフィールを検出");
-        put("saveEncounter", "保存到认识记录", "儲存到認識記錄", "儲存到認識記錄", "Save Encounter", "認識記録に保存");
-        put("savedEncounter", "已保存到认识记录", "已儲存到認識記錄", "已儲存到認識記錄", "Saved to Encounters", "認識記録に保存しました");
-        put("encounters", "认识记录", "認識記錄", "認識記錄", "Encounters", "認識記録");
-        put("noEncounters", "还没有认识记录", "還沒有認識記錄", "還沒有認識記錄", "No Encounters Yet", "認識記録はまだありません");
+        put("meqrProfileFound", "发现 MeQR 卡片", "發現 MeQR 卡片", "發現 MeQR 卡片", "MeQR Card Found", "MeQRカードを検出");
+        put("saveEncounter", "保存到认识记录", "儲存到認識記錄", "儲存到認識記錄", "Save Encounter", "出会いの記録に保存");
+        put("savedEncounter", "已保存到认识记录", "已儲存到認識記錄", "已儲存到認識記錄", "Saved to Encounters", "出会いの記録に保存しました");
+        put("encounters", "认识记录", "認識記錄", "認識記錄", "Encounters", "出会いの記録");
+        put("noEncounters", "还没有认识记录", "還沒有認識記錄", "還沒有認識記錄", "No Encounters Yet", "出会いの記録はまだありません");
         put("noEncountersHint", "扫描交换码后，把对方保存到这里。", "掃描交換碼後，把對方儲存在這裡。", "掃描交換碼後，把對方儲存在這裡。", "Scan a MeQR code and save the person here.", "交換コードを読み取ると、ここに相手を保存できます。");
         put("unknownContact", "未命名联系人", "未命名聯絡人", "未命名聯絡人", "Unknown Contact", "名前未設定の相手");
         put("platformsFromMeQr", "来自 MeQR 的平台", "來自 MeQR 的平台", "來自 MeQR 的平台", "Platforms from MeQR", "MeQRからのプラットフォーム");
@@ -136,6 +151,8 @@ final class I18n {
         put("activeEvent", "当前活动", "目前活動", "目前活動", "Active Event", "現在のイベント");
         put("noActiveEvent", "未选择活动", "未選擇活動", "未選擇活動", "No Active Event", "イベント未選択");
         put("events", "活动", "活動", "活動", "Events", "イベント");
+        put("defaultEventTitle", "自定义线下扩列", "自訂線下擴列", "自訂線下擴列", "Custom Offline Meetup", "カスタム対面オフ会");
+        put("defaultEventVenue", "现场", "現場", "現場", "On-site", "現地");
         put("addEvent", "添加活动", "新增活動", "新增活動", "Add Event", "イベントを追加");
         put("eventTitle", "活动名称", "活動名稱", "活動名稱", "Event Title", "イベント名");
         put("eventVenue", "地点", "地點", "地點", "Venue", "会場");
@@ -148,20 +165,25 @@ final class I18n {
         put("on", "已开启", "已開啟", "已開啟", "On", "オン");
         put("off", "未开启", "未開啟", "未開啟", "Off", "オフ");
         put("deleteEncounter", "删除这条记录", "刪除這條記錄", "刪除這條記錄", "Delete Record", "この記録を削除");
-        put("deleteEncounterConfirm", "确定删除这条认识记录？删除后无法恢复。", "確定刪除這條認識記錄？刪除後無法復原。", "確定刪除這條認識記錄？刪除後無法復原。", "Delete this encounter? This cannot be undone.", "この認識記録を削除しますか？元に戻せません。");
+        put("deleteEncounterConfirm", "确定删除这条认识记录？删除后无法恢复。", "確定刪除這條認識記錄？刪除後無法復原。", "確定刪除這條認識記錄？刪除後無法復原。", "Delete this encounter? This cannot be undone.", "この出会いの記録を削除しますか？元に戻せません。");
         put("tagColors", "标签配色", "標籤配色", "標籤配色", "Tag Colors", "タグの色");
         put("tagColorsHint", "输入标签后，可在这里为每个标签单独配色", "輸入標籤後，可在這裡為每個標籤單獨配色", "輸入標籤後，可在這裡為每個標籤單獨配色", "Add tags above, then customize each tag color here", "タグを追加すると、ここで個別の色を設定できます");
         put("tagLibrary", "从 Tag 库添加", "從 Tag 庫加入", "從 Tag 庫新增", "Add from Tag Library", "Tagライブラリから追加");
         put("searchTags", "搜索作品、组合或角色", "搜尋作品、組合或角色", "搜尋作品、組合或角色", "Search series, groups, or characters", "作品・ユニット・キャラクターを検索");
         put("tagLibraryHint", "点按即可添加，支持中英日名称与常用简称", "點按即可加入，支援中英日名稱與常用簡稱", "點按即可新增，支援中英日名稱與常用簡稱", "Tap to add. Names and common aliases are searchable.", "タップで追加。名前と略称で検索できます。");
+        put("tagCatalogLoading", "正在载入在线 Tag 库", "正在載入線上 Tag 庫", "正在載入線上 Tag 庫", "Loading the online Tag library", "オンラインTagライブラリを読み込み中");
+        put("tagCatalogRetry", "Tag 库载入失败，点按重试", "Tag 庫載入失敗，點按重試", "Tag 庫載入失敗，點按重試", "Tag library unavailable. Tap to retry.", "Tagライブラリを読み込めません。タップして再試行");
         put("tagLimitReached", "最多添加 10 个 Tag", "最多加入 10 個 Tag", "最多新增 10 個 Tag", "Up to 10 tags", "Tagは最大10個です");
         put("editTagColors", "编辑拼色", "編輯拼色", "編輯拼色", "Edit Colors", "配色を編集");
         put("solidColor", "纯色", "純色", "純色", "Solid", "単色");
         put("mixedColor", "拼色", "拼色", "拼色", "Mixed", "多色");
+        put("presetColor", "预设", "預設", "預設", "Preset", "プリセット");
         put("builtInMix", "恢复内置拼色", "恢復內建拼色", "恢復內建拼色", "Restore Built-in Mix", "プリセット配色に戻す");
         put("addColor", "增加颜色", "增加顏色", "增加顏色", "Add Color", "色を追加");
         put("color", "颜色", "顏色", "顏色", "Color", "色");
         put("choosePresetColor", "选择预设颜色", "選擇預設顏色", "選擇預設顏色", "Choose Preset Color", "プリセット色を選択");
+        put("pickColor", "选择颜色", "選擇顏色", "選擇顏色", "Choose Color", "色を選択");
+        put("presets", "预设", "預設", "預設", "Presets", "プリセット");
         put("bannerImage", "横版头图", "橫版頭圖", "橫版頭圖", "Banner Image", "横長ヘッダー画像");
         put("backupData", "备份全部数据", "備份全部資料", "備份全部資料", "Backup All Data", "全データをバックアップ");
         put("restoreData", "恢复数据", "還原資料", "還原資料", "Restore Data", "データを復元");
@@ -203,7 +225,7 @@ final class I18n {
     }
 
     String languageMode() {
-        return preferences.getString("language", ZH_HANS);
+        return preferences.getString("language", SYSTEM);
     }
 
     void setLanguageMode(String mode) {
