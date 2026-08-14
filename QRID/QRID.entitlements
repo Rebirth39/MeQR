@@ -4,15 +4,7 @@
 <dict>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.com.lucasli.qrid</string>
-	</array>
-	<key>com.apple.developer.icloud-container-identifiers</key>
-	<array>
-		<string>iCloud.com.lucasli.QRID</string>
-	</array>
-	<key>com.apple.developer.icloud-services</key>
-	<array>
-		<string>CloudKit</string>
+		<string>group.com.lucasli.meqr</string>
 	</array>
 </dict>
 </plist>

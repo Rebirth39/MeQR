@@ -493,12 +493,12 @@ struct AddProfileView: View {
         let trimmedQR = qrContent.trimmingCharacters(in: .whitespaces)
 
         if !isAddingToExisting && trimmedName.isEmpty {
-            saveError = "请输入卡片名称。"
+            saveError = L.enterCardName
             showSaveError = true
             return
         }
         if trimmedQR.isEmpty {
-            saveError = "请输入二维码内容。"
+            saveError = L.enterQRContent
             showSaveError = true
             return
         }
@@ -560,7 +560,7 @@ struct AddProfileView: View {
             dismiss()
         } catch {
             modelContext.rollback()
-            saveError = "保存失败：\(error.localizedDescription)"
+            saveError = L.saveFailedWithReason(error.localizedDescription)
             showSaveError = true
         }
     }

@@ -6,6 +6,7 @@ struct MeQRProfileCodeView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var codeString = ""
+    @State private var colorAvatarJPEG: Data?
     @State private var showSavedAlert = false
     @State private var saveError: String?
     @State private var showSaveError = false
@@ -88,6 +89,7 @@ struct MeQRProfileCodeView: View {
 
                         MeQRExchangeCard(
                             codeString: codeString,
+                            colorAvatarJPEG: colorAvatarJPEG,
                             codeModeText: codeModeText,
                             includedProfiles: includedProfiles,
                             includedPlatformSummary: includedPlatformSummary,
@@ -251,18 +253,23 @@ struct MeQRProfileCodeView: View {
             localProfile.subtitle = exchangeSubtitle
             var offlineFallback = MeQRExchangeProfile(offlineCluster: cluster, profile: offlineProfile)
             offlineFallback.subtitle = exchangeSubtitle
-            codeString = try MeQRExchangeCodec.encode(localProfile)
+            let localCode = colorEnhancedCode(for: try MeQRExchangeCodec.encode(localProfile))
+            codeString = localCode.payload
+            colorAvatarJPEG = localCode.avatarJPEG
             codeModeText = L.meqrCodeUploading
 
             uploadTask = Task {
                 do {
-                    var onlineProfile = MeQRExchangeProfile(cluster: cluster, profiles: selectedProfiles, avatarMaxBytes: 640)
+                    var onlineProfile = MeQRExchangeProfile(cluster: cluster, profiles: selectedProfiles, avatarMaxBytes: 256 * 1024)
                     onlineProfile.subtitle = exchangeSubtitle
                     let remoteURL = try await MeQRRemoteService.uploadProfile(onlineProfile)
-                    let hybridCode = try MeQRExchangeCodec.encodeHybrid(remoteURL: remoteURL, offlineProfile: offlineFallback)
+                    let hybridCode = colorEnhancedCode(
+                        for: try MeQRExchangeCodec.encodeHybrid(remoteURL: remoteURL, offlineProfile: offlineFallback)
+                    )
                     await MainActor.run {
                         guard !Task.isCancelled else { return }
-                        codeString = hybridCode
+                        codeString = hybridCode.payload
+                        colorAvatarJPEG = hybridCode.avatarJPEG
                         codeModeText = L.meqrCodeOnlineReady
                     }
                 } catch {
@@ -349,6 +356,21 @@ struct MeQRProfileCodeView: View {
         ExchangeSubtitleLimiter.limited(value)
     }
 
+    private func colorLayerAvatar(for payload: String) -> Data? {
+        let capacity = QRCodeGenerator.colorLayerPayloadCapacity(from: payload, correctionLevel: "M")
+        return MeQRExchangeProfile.colorLayerAvatarJPEG(from: cluster.avatarImageData, maxBytes: capacity)
+    }
+
+    private func colorEnhancedCode(for payload: String) -> (payload: String, avatarJPEG: Data?) {
+        guard cluster.avatarImageData != nil else { return (payload, nil) }
+        let enhancedPayload = QRCodeGenerator.paddedForColorLayer(
+            payload,
+            minimumPayloadCapacity: 800,
+            correctionLevel: "M"
+        )
+        return (enhancedPayload, colorLayerAvatar(for: enhancedPayload))
+    }
+
     private func saveCodeToPhotos() {
         guard !codeString.isEmpty else {
             saveError = L.meqrCodeStillPreparing
@@ -356,7 +378,11 @@ struct MeQRProfileCodeView: View {
             return
         }
 
-        let renderer = ImageRenderer(content: MeQRProfileCodeShareImage(cluster: cluster, codeString: codeString))
+        let renderer = ImageRenderer(content: MeQRProfileCodeShareImage(
+            cluster: cluster,
+            codeString: codeString,
+            colorAvatarJPEG: colorAvatarJPEG
+        ))
         renderer.scale = 3
         guard let image = renderer.uiImage else {
             saveError = L.tryAgain
@@ -403,6 +429,7 @@ struct MeQRProfileCodeView: View {
 
 private struct MeQRExchangeCard: View {
     let codeString: String
+    let colorAvatarJPEG: Data?
     let codeModeText: String
     let includedProfiles: [QRProfile]
     let includedPlatformSummary: String
@@ -625,10 +652,9 @@ private struct MeQRExchangeCard: View {
         if codeString.isEmpty {
             ProgressView()
                 .scaleEffect(1.3)
-        } else if let image = QRCodeGenerator.generate(
+        } else if let image = QRCodeGenerator.generateColorLayered(
             from: codeString,
-            foreground: .black,
-            background: .white,
+            avatarJPEG: colorAvatarJPEG,
             correctionLevel: "M"
         ) {
             Image(uiImage: image)
@@ -831,6 +857,7 @@ private struct MeQRCodeSettingsView: View {
 private struct MeQRProfileCodeShareImage: View {
     let cluster: QRCluster
     let codeString: String
+    let colorAvatarJPEG: Data?
 
     var body: some View {
         ZStack {
@@ -865,7 +892,7 @@ private struct MeQRProfileCodeShareImage: View {
                         .lineLimit(3)
                 }
 
-                if let image = QRCodeGenerator.generate(from: codeString, foreground: .black, background: .white, correctionLevel: "L") {
+                if let image = QRCodeGenerator.generateColorLayered(from: codeString, avatarJPEG: colorAvatarJPEG, correctionLevel: "M") {
                     Image(uiImage: image)
                         .resizable()
                         .interpolation(.none)
@@ -924,7 +951,7 @@ private enum ExchangeSubtitleLimiter {
         let halfUnits = halfWidthUnitCount(value)
         let whole = halfUnits / 2
         let suffix = halfUnits % 2 == 0 ? "" : ".5"
-        return "\(whole)\(suffix) / 25 汉字"
+        return L.exchangeIntroUsage("\(whole)\(suffix)")
     }
 
     private static func halfWidthUnitCount(_ value: String) -> Int {

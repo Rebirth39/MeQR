@@ -7,7 +7,7 @@ enum OnboardingStorage {
 }
 
 enum OnboardingCopy {
-    static var welcomeTitle: String { L.tr("先做一张，真正属于你的二维码卡片。", "先做一張，真正屬於你的 QR Code 卡片。", "先做一張，真正屬於你的 QR Code 卡片。", "Let's make a QR card that feels like you.", "あなたらしいQRカードを作りましょう。") }
+    static var welcomeTitle: String { L.tr("先做一张属于你自己的二维码卡片。", "先做一張屬於你自己的 QR Code 卡片。", "先做一張屬於你自己的 QR Code 卡片。", "Let's make a QR card that feels like you.", "あなたらしいQRカードを作りましょう。") }
     static var welcomeBody: String { L.tr("头像、昵称、二维码和喜欢的颜色，我们一步一步来。大约两分钟，之后随时都能修改。", "頭像、暱稱、QR Code 和喜歡的顏色，我們一步一步來。大約兩分鐘，之後隨時都能修改。", "頭像、暱稱、QR Code 和喜歡的顏色，我們一步一步來。大約兩分鐘，之後隨時都能修改。", "Avatar, name, QR code, and your colors. We'll do it one step at a time, and you can edit everything later.", "アイコン、名前、QRコード、好きな色を順番に設定します。あとからいつでも変更できます。") }
     static var existingBody: String { L.tr("新的建档引导已经准备好了。你可以体验一次，也可以直接回到现有卡片。", "新的建檔引導已經準備好了。你可以體驗一次，也可以直接回到現有卡片。", "新的建檔引導已經準備好了。你可以體驗一次，也可以直接回到現有卡片。", "The new setup guide is ready. Try it once or return to your existing cards.", "新しい作成ガイドを用意しました。試すことも、既存のカードへ戻ることもできます。") }
     static var start: String { L.tr("开始建档", "開始建檔", "開始建立", "Start My Card", "カードを作る") }
@@ -36,7 +36,7 @@ enum OnboardingCopy {
     static var previewTitle: String { L.tr("确认一下，你的第一张卡片。", "確認一下，你的第一張卡片。", "確認一下，你的第一張卡片。", "Meet your first card.", "最初のカードを確認しましょう。") }
     static var previewBody: String { L.tr("创建后会保存在这台设备上。所有内容都可以继续编辑。", "建立後會儲存在這台裝置上。所有內容都可以繼續編輯。", "建立後會儲存在這台裝置上。所有內容都可以繼續編輯。", "It will be stored on this device, and every detail remains editable.", "この端末に保存され、すべてあとから編集できます。") }
     static var completeTitle: String { L.tr("你的卡片，准备好了。", "你的卡片，準備好了。", "你的卡片，準備好了。", "Your card is ready.", "カードができました。") }
-    static var completeBody: String { L.tr("下次见面时，直接把它拿出来就好。接下来还可以添加更多平台和小组件。", "下次見面時，直接把它拿出來就好。接下來還可以加入更多平台和小工具。", "下次見面時，直接把它拿出來就好。接下來還可以新增更多平台和小工具。", "Bring it up the next time you meet someone. You can add more platforms and widgets next.", "次に誰かと会うとき、そのまま見せられます。ほかの平台やウィジェットも追加できます。") }
+    static var completeBody: String { L.tr("下次见面时，直接把它拿出来就好。接下来还可以添加更多平台和小组件。", "下次見面時，直接把它拿出來就好。接下來還可以加入更多平台和小工具。", "下次見面時，直接把它拿出來就好。接下來還可以新增更多平台和小工具。", "Bring it up the next time you meet someone. You can add more platforms and widgets next.", "次に誰かと会うとき、そのまま見せられます。ほかのプラットフォームやウィジェットも追加できます。") }
     static var replayGuide: String { L.tr("重新体验建档引导", "重新體驗建檔引導", "重新體驗建立引導", "Replay Setup Guide", "作成ガイドをもう一度見る") }
     static var nameRequired: String { L.tr("先写一个昵称，再继续。", "先寫一個暱稱，再繼續。", "先寫一個暱稱，再繼續。", "Add a display name to continue.", "続けるには表示名を入力してください。") }
     static var qrRequired: String { L.tr("先添加一个可以使用的二维码。", "先加入一個可以使用的 QR Code。", "先新增一個可以使用的 QR Code。", "Add a working QR code to continue.", "続けるにはQRコードを追加してください。") }
@@ -60,6 +60,7 @@ private enum OnboardingStep: Int, CaseIterable {
 struct OnboardingView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.appSettings) private var settings
     @Query(sort: \QRCluster.sortOrder, order: .forward) private var clusters: [QRCluster]
 
     let hasExistingCards: Bool
@@ -88,7 +89,12 @@ struct OnboardingView: View {
     @State private var backgroundImage: UIImage?
     @State private var rawBackgroundImage: CroppableImage?
     @State private var backgroundPhotosItem: PhotosPickerItem?
+    @State private var rhodesBannerImage: UIImage?
+    @State private var rawRhodesBannerImage: CroppableImage?
+    @State private var rhodesBannerPhotosItem: PhotosPickerItem?
     @State private var tagInput = ""
+
+    @FocusState private var isSubtitleFocused: Bool
 
     @State private var validationMessage: String?
     @State private var errorMessage: String?
@@ -137,6 +143,15 @@ struct OnboardingView: View {
                 }
             }
         }
+        .onChange(of: rhodesBannerPhotosItem) { _, item in
+            guard let item else { return }
+            Task {
+                if let data = try? await item.loadTransferable(type: Data.self),
+                   let image = UIImage(data: data) {
+                    rawRhodesBannerImage = CroppableImage(image: image)
+                }
+            }
+        }
         .fullScreenCover(item: $rawAvatarImage) { item in
             AvatarCropView(
                 sourceImage: item.image,
@@ -155,6 +170,17 @@ struct OnboardingView: View {
                     rawBackgroundImage = nil
                 },
                 onCancel: { rawBackgroundImage = nil }
+            )
+        }
+        .fullScreenCover(item: $rawRhodesBannerImage) { item in
+            BackgroundCropView(
+                sourceImage: item.image,
+                cropAspectRatio: 16.0 / 9.0,
+                onDone: { image in
+                    rhodesBannerImage = image
+                    rawRhodesBannerImage = nil
+                },
+                onCancel: { rawRhodesBannerImage = nil }
             )
         }
         .alert(L.couldNotSave, isPresented: $showError) {
@@ -201,13 +227,14 @@ struct OnboardingView: View {
     private var welcomeView: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                HStack {
+                HStack(spacing: 10) {
                     onboardingMark
                     Spacer()
                     Text("MEQR · FIRST CARD")
                         .font(.caption2.weight(.black))
                         .tracking(1.2)
                         .foregroundStyle(.secondary)
+                    onboardingLanguageMenu
                 }
 
                 Spacer(minLength: 64)
@@ -317,12 +344,23 @@ struct OnboardingView: View {
                 .onChange(of: step) { _, newStep in
                     proxy.scrollTo(newStep, anchor: .top)
                 }
+                .onChange(of: isSubtitleFocused) { _, isFocused in
+                    guard isFocused else { return }
+                    withAnimation(.easeOut(duration: 0.25)) {
+                        proxy.scrollTo("onboarding-intro-field", anchor: .center)
+                    }
+                }
+                .onChange(of: subtitle) { _, _ in
+                    guard isSubtitleFocused else { return }
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        proxy.scrollTo("onboarding-intro-field", anchor: .center)
+                    }
+                }
             }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             setupActions
         }
-        .ignoresSafeArea(.keyboard, edges: .bottom)
         .overlay {
             if isDecoding || isSaving {
                 ProgressView(isSaving ? L.save : L.decodingQR)
@@ -434,6 +472,8 @@ struct OnboardingView: View {
                     .font(.subheadline.weight(.bold))
                 TextField(L.subtitleInfo, text: $subtitle, axis: .vertical)
                     .lineLimit(3...5)
+                    .focused($isSubtitleFocused)
+                    .id("onboarding-intro-field")
                     .onboardingField()
             }
         }
@@ -562,6 +602,65 @@ struct OnboardingView: View {
                     backgroundPhotosItem = nil
                 }
                 .font(.subheadline.weight(.semibold))
+            }
+
+            if templateStyle == .rhodesPass {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(spacing: 12) {
+                        Image(systemName: "rectangle.landscape")
+                            .font(.title2.weight(.semibold))
+                            .foregroundStyle(accent)
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(rhodesBannerImage == nil ? L.passBannerImage : L.changePassBannerImage)
+                                .font(.headline)
+                            Text(L.passBannerHint)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+
+                        Spacer(minLength: 0)
+                    }
+
+                    PhotosPicker(selection: $rhodesBannerPhotosItem, matching: .images) {
+                        HStack {
+                            Label(
+                                rhodesBannerImage == nil ? L.passBannerImage : L.changePassBannerImage,
+                                systemImage: "photo.badge.plus"
+                            )
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.bold))
+                        }
+                        .font(.subheadline.weight(.semibold))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                        .foregroundStyle(accent)
+                        .background(accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 12))
+                    }
+
+                    if let rhodesBannerImage {
+                        Image(uiImage: rhodesBannerImage)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(maxWidth: .infinity)
+                            .aspectRatio(16.0 / 9.0, contentMode: .fit)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+                        Button(L.removePassBanner, role: .destructive) {
+                            self.rhodesBannerImage = nil
+                            rhodesBannerPhotosItem = nil
+                        }
+                        .font(.subheadline.weight(.semibold))
+                    }
+                }
+                .padding(16)
+                .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(accent.opacity(rhodesBannerImage == nil ? 0.48 : 0.18), lineWidth: 1)
+                )
             }
         }
     }
@@ -697,23 +796,57 @@ struct OnboardingView: View {
         }
     }
 
+    private var onboardingLanguageMenu: some View {
+        Menu {
+            ForEach(AppLanguage.allCases) { language in
+                Button {
+                    settings.selectedLanguage = language
+                } label: {
+                    if settings.selectedLanguage == language {
+                        Label(language.displayName, systemImage: "checkmark")
+                    } else {
+                        Text(language.displayName)
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: "globe")
+                .font(.system(size: 16, weight: .semibold))
+                .frame(width: 36, height: 36)
+                .background(.thinMaterial, in: Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(L.languageSelection)
+    }
+
     private var welcomeCard: some View {
-        HStack(spacing: 18) {
-            avatarPreview
-                .frame(width: 74, height: 74)
-            VStack(alignment: .leading, spacing: 8) {
-                Text(name.isEmpty ? "Miku39" : name)
-                    .font(.title2.weight(.black))
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 18) {
+                avatarPreview
+                    .frame(width: 74, height: 74)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(name.isEmpty ? "Miku39" : name)
+                        .font(.title2.weight(.black))
+                        .foregroundStyle(.black)
+                    Text("QR PROFILE · 2026")
+                        .font(.caption2.weight(.bold))
+                        .tracking(1)
+                        .foregroundStyle(.black.opacity(0.58))
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "qrcode")
+                    .font(.system(size: 52, weight: .medium))
                     .foregroundStyle(.black)
-                Text("QR PROFILE · 2026")
-                    .font(.caption2.weight(.bold))
-                    .tracking(1)
-                    .foregroundStyle(.black.opacity(0.58))
+            }
+
+            ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
-                    ForEach(["初音未来", "漫展", "摄影"], id: \.self) { tag in
+                    ForEach(L.previewSampleTags, id: \.self) { tag in
                         let tagColor = Color(hex: CardTagColorPalette.colorHex(for: tag))
                         Text(tag)
                             .font(.caption2.weight(.bold))
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
                             .padding(.horizontal, 7)
                             .padding(.vertical, 5)
                             .foregroundStyle(tagColor.uiContrastColor)
@@ -721,10 +854,6 @@ struct OnboardingView: View {
                     }
                 }
             }
-            Spacer(minLength: 0)
-            Image(systemName: "qrcode")
-                .font(.system(size: 52, weight: .medium))
-                .foregroundStyle(.black)
         }
         .padding(22)
         .frame(maxWidth: .infinity, minHeight: 210)
@@ -822,6 +951,9 @@ struct OnboardingView: View {
             textColorHex: textColor.toHex() ?? "#000000",
             qrColorHex: qrColorHex,
             templateStyleRawValue: templateStyle.rawValue,
+            rhodesBannerImageData: templateStyle == .rhodesPass
+                ? rhodesBannerImage?.jpegData(compressionQuality: 0.9)
+                : nil,
             tagListRawValue: CardTagLimiter.normalizedRawValue(tagInput),
             tagColorOverridesRawValue: CardTagColorPalette.rawValue(from: [:], tags: tags),
             cornerRadius: templateStyle == .rhodesPass ? 12 : 16,
@@ -1118,7 +1250,7 @@ struct OnboardingView: View {
     }
 
     private var suggestedTags: [String] {
-        ["初音未来", "VOCALOID", "PJSK", "MyGO!!!!!", "漫展", "摄影"]
+        CardTagIndex.featuredSuggestions()
     }
 
     private var currentSetupIndex: Int {
@@ -1221,6 +1353,9 @@ struct OnboardingView: View {
             textColorHex: textColor.toHex() ?? "#000000",
             qrColorHex: qrColorHex,
             templateStyleRawValue: templateStyle.rawValue,
+            rhodesBannerImageData: templateStyle == .rhodesPass
+                ? rhodesBannerImage?.jpegData(compressionQuality: 0.9)
+                : nil,
             tagListRawValue: CardTagLimiter.normalizedRawValue(tagInput),
             tagColorOverridesRawValue: CardTagColorPalette.rawValue(from: [:], tags: tags),
             cornerRadius: templateStyle == .rhodesPass ? 12 : 16,

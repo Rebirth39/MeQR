@@ -210,6 +210,9 @@ enum CardTagLimiter {
         if let indexedTag = CardTagIndex.canonicalTag(for: trimmed) {
             return indexedTag
         }
+        if CardTagColorPalette.isPresetColored(trimmed) {
+            return trimmed
+        }
         return limited(trimmed)
     }
 
@@ -236,284 +239,70 @@ enum CardTagLimiter {
 }
 
 enum CardTagIndex {
-    private struct LocalizedTagName {
-        let zhHans: String
-        let zhHantHK: String
-        let zhHantTW: String
-        let en: String
-        let ja: String
-
-        var allValues: [String] {
-            [zhHans, zhHantHK, zhHantTW, en, ja]
-        }
-
-        func value(for language: AppLanguage) -> String {
-            switch language {
-            case .system:
-                return value(for: AppLanguage.preferredSystemLanguage())
-            case .zhHans:
-                return zhHans
-            case .zhHantHK:
-                return zhHantHK
-            case .zhHantTW:
-                return zhHantTW
-            case .en:
-                return en
-            case .ja:
-                return ja
-            }
-        }
-    }
-
-    private struct Entry {
-        let name: LocalizedTagName
-        let aliases: [String]
-
-        var searchableValues: [String] { name.allValues + aliases }
-
-        func display(for language: AppLanguage) -> String {
-            name.value(for: language)
-        }
-    }
-
-    private nonisolated static let entries: [Entry] = [
-        Entry(name: .init(zhHans: "世界计划", zhHantHK: "世界計畫", zhHantTW: "世界計畫", en: "Project Sekai", ja: "プロセカ"), aliases: ["pjsk", "projectsekai", "project sekai", "啤酒烧烤", "啤酒燒烤", "世嘉彩舞", "彩舞"]),
-        Entry(name: .init(zhHans: "Leo/need", zhHantHK: "Leo/need", zhHantTW: "Leo/need", en: "Leo/need", ja: "Leo/need"), aliases: ["ln", "l/n", "leoneed", "レオニ"]),
-        Entry(name: .init(zhHans: "MORE MORE JUMP!", zhHantHK: "MORE MORE JUMP!", zhHantTW: "MORE MORE JUMP!", en: "MORE MORE JUMP!", ja: "MORE MORE JUMP!"), aliases: ["mmj", "more more jump", "moremorejump", "モモジャン", "桃跳"]),
-        Entry(name: .init(zhHans: "Vivid BAD SQUAD", zhHantHK: "Vivid BAD SQUAD", zhHantTW: "Vivid BAD SQUAD", en: "Vivid BAD SQUAD", ja: "Vivid BAD SQUAD"), aliases: ["vbs", "vivid bad squad", "vividbadsquad", "ビビバス"]),
-        Entry(name: .init(zhHans: "Wonderlands x Showtime", zhHantHK: "Wonderlands x Showtime", zhHantTW: "Wonderlands x Showtime", en: "Wonderlands x Showtime", ja: "ワンダーランズ x ショウタイム"), aliases: ["ws", "wxs", "wxS", "wonderlands x showtime", "wonderlandsxshowtime", "ワンダショ", "ワショ"]),
-        Entry(name: .init(zhHans: "Wonderlands x Showtime 拼色", zhHantHK: "Wonderlands x Showtime 拼色", zhHantTW: "Wonderlands x Showtime 拼色", en: "Wonderlands x Showtime Mix", ja: "ワンダショMIX"), aliases: ["wsmix", "ws mix", "ws多色", "ws拼色", "wxsmix", "wxs mix", "wxs多色", "wxs拼色", "ワンダショmix", "ワンダショ多色", "ワンダショ拼色"]),
-        Entry(name: .init(zhHans: "25点，Nightcord见。", zhHantHK: "25點，Nightcord見。", zhHantTW: "25點，Nightcord見。", en: "Nightcord at 25:00", ja: "25時、ナイトコードで。"), aliases: ["25ji", "n25", "nightcord", "25時、ナイトコードで。", "25時", "25时", "25點", "25点", "ニーゴ"]),
-        Entry(name: .init(zhHans: "星乃一歌", zhHantHK: "星乃一歌", zhHantTW: "星乃一歌", en: "Ichika Hoshino", ja: "星乃一歌"), aliases: ["一歌", "ichika", "hoshinoichika"]),
-        Entry(name: .init(zhHans: "天马咲希", zhHantHK: "天馬咲希", zhHantTW: "天馬咲希", en: "Saki Tenma", ja: "天馬咲希"), aliases: ["咲希", "saki", "tenmasaki"]),
-        Entry(name: .init(zhHans: "望月穗波", zhHantHK: "望月穂波", zhHantTW: "望月穂波", en: "Honami Mochizuki", ja: "望月穂波"), aliases: ["穗波", "穂波", "honami", "mochizukihonami"]),
-        Entry(name: .init(zhHans: "日野森志步", zhHantHK: "日野森志歩", zhHantTW: "日野森志歩", en: "Shiho Hinomori", ja: "日野森志歩"), aliases: ["志步", "志歩", "shiho", "hinomorishiho"]),
-        Entry(name: .init(zhHans: "花里实乃理", zhHantHK: "花里實乃理", zhHantTW: "花里實乃理", en: "Minori Hanasato", ja: "花里みのり"), aliases: ["实乃理", "実乃理", "みのり", "minori", "hanasatominori"]),
-        Entry(name: .init(zhHans: "桐谷遥", zhHantHK: "桐谷遙", zhHantTW: "桐谷遙", en: "Haruka Kiritani", ja: "桐谷遥"), aliases: ["遥", "遙", "haruka", "kiritaniharuka"]),
-        Entry(name: .init(zhHans: "桃井爱莉", zhHantHK: "桃井愛莉", zhHantTW: "桃井愛莉", en: "Airi Momoi", ja: "桃井愛莉"), aliases: ["爱莉", "愛莉", "airi", "momoiairi"]),
-        Entry(name: .init(zhHans: "日野森雫", zhHantHK: "日野森雫", zhHantTW: "日野森雫", en: "Shizuku Hinomori", ja: "日野森雫"), aliases: ["雫", "shizuku", "hinomorishizuku"]),
-        Entry(name: .init(zhHans: "小豆泽心羽", zhHantHK: "小豆澤心羽", zhHantTW: "小豆澤心羽", en: "Kohane Azusawa", ja: "小豆沢こはね"), aliases: ["心羽", "こはね", "kohane", "azusawakohane"]),
-        Entry(name: .init(zhHans: "白石杏", zhHantHK: "白石杏", zhHantTW: "白石杏", en: "An Shiraishi", ja: "白石杏"), aliases: ["杏", "an", "shiraishian"]),
-        Entry(name: .init(zhHans: "东云彰人", zhHantHK: "東雲彰人", zhHantTW: "東雲彰人", en: "Akito Shinonome", ja: "東雲彰人"), aliases: ["彰人", "akito", "shinonomeakito"]),
-        Entry(name: .init(zhHans: "青柳冬弥", zhHantHK: "青柳冬彌", zhHantTW: "青柳冬彌", en: "Toya Aoyagi", ja: "青柳冬弥"), aliases: ["冬弥", "冬彌", "toya", "touya", "aoyagitoya"]),
-        Entry(name: .init(zhHans: "天马司", zhHantHK: "天馬司", zhHantTW: "天馬司", en: "Tsukasa Tenma", ja: "天馬司"), aliases: ["司", "tsukasa", "tenmatsukasa"]),
-        Entry(name: .init(zhHans: "凤笑梦", zhHantHK: "鳳笑夢", zhHantTW: "鳳笑夢", en: "Emu Otori", ja: "鳳えむ"), aliases: ["笑梦", "笑夢", "emu", "otoriemu"]),
-        Entry(name: .init(zhHans: "草薙宁宁", zhHantHK: "草薙寧寧", zhHantTW: "草薙寧寧", en: "Nene Kusanagi", ja: "草薙寧々"), aliases: ["宁宁", "寧寧", "寧々", "nene", "kusanaginene"]),
-        Entry(name: .init(zhHans: "神代类", zhHantHK: "神代類", zhHantTW: "神代類", en: "Rui Kamishiro", ja: "神代類"), aliases: ["类", "類", "rui", "kamishirorui"]),
-        Entry(name: .init(zhHans: "宵崎奏", zhHantHK: "宵崎奏", zhHantTW: "宵崎奏", en: "Kanade Yoisaki", ja: "宵崎奏"), aliases: ["奏", "kanade", "yoisakikanade"]),
-        Entry(name: .init(zhHans: "朝比奈真冬", zhHantHK: "朝比奈真冬", zhHantTW: "朝比奈真冬", en: "Mafuyu Asahina", ja: "朝比奈まふゆ"), aliases: ["真冬", "mafuyu", "asahinamafuyu"]),
-        Entry(name: .init(zhHans: "东云绘名", zhHantHK: "東雲繪名", zhHantTW: "東雲繪名", en: "Ena Shinonome", ja: "東雲絵名"), aliases: ["绘名", "繪名", "絵名", "ena", "shinonomeena"]),
-        Entry(name: .init(zhHans: "晓山瑞希", zhHantHK: "曉山瑞希", zhHantTW: "曉山瑞希", en: "Mizuki Akiyama", ja: "暁山瑞希"), aliases: ["瑞希", "mizuki", "akiyamamizuki"]),
-        Entry(name: .init(zhHans: "VOCALOID", zhHantHK: "VOCALOID", zhHantTW: "VOCALOID", en: "VOCALOID", ja: "ボカロ"), aliases: ["术力口", "ボカロ", "vocalo", "vocaloid"]),
-        Entry(name: .init(zhHans: "初音未来", zhHantHK: "初音未來", zhHantTW: "初音未來", en: "Hatsune Miku", ja: "初音ミク"), aliases: ["初音", "miku", "hatsunemiku"]),
-        Entry(name: .init(zhHans: "BanG Dream!", zhHantHK: "BanG Dream!", zhHantTW: "BanG Dream!", en: "BanG Dream!", ja: "バンドリ"), aliases: ["bangdream", "bandori", "邦邦", "バンドリ"]),
-        Entry(name: .init(zhHans: "Poppin'Party", zhHantHK: "Poppin'Party", zhHantTW: "Poppin'Party", en: "Poppin'Party", ja: "Poppin'Party"), aliases: ["popipa", "poppinparty", "ポピパ"]),
-        Entry(name: .init(zhHans: "Afterglow", zhHantHK: "Afterglow", zhHantTW: "Afterglow", en: "Afterglow", ja: "Afterglow"), aliases: ["aglow", "美竹兰组", "美竹蘭組"]),
-        Entry(name: .init(zhHans: "Pastel*Palettes", zhHantHK: "Pastel*Palettes", zhHantTW: "Pastel*Palettes", en: "Pastel*Palettes", ja: "Pastel*Palettes"), aliases: ["pp", "pasupare", "パスパレ", "彩组", "彩組"]),
-        Entry(name: .init(zhHans: "Roselia", zhHantHK: "Roselia", zhHantTW: "Roselia", en: "Roselia", ja: "Roselia"), aliases: ["roselia组"]),
-        Entry(name: .init(zhHans: "Hello Happy World!", zhHantHK: "Hello Happy World!", zhHantTW: "Hello Happy World!", en: "Hello Happy World!", ja: "ハロー、ハッピーワールド！"), aliases: ["hhw", "hellohappyworld", "hello happy world", "ハロハピ"]),
-        Entry(name: .init(zhHans: "Morfonica", zhHantHK: "Morfonica", zhHantTW: "Morfonica", en: "Morfonica", ja: "Morfonica"), aliases: ["monica", "モニカ"]),
-        Entry(name: .init(zhHans: "RAISE A SUILEN", zhHantHK: "RAISE A SUILEN", zhHantTW: "RAISE A SUILEN", en: "RAISE A SUILEN", ja: "RAISE A SUILEN"), aliases: ["ras", "raiseasuilen"]),
-        Entry(name: .init(zhHans: "MyGO!!!!!", zhHantHK: "MyGO!!!!!", zhHantTW: "MyGO!!!!!", en: "MyGO!!!!!", ja: "MyGO!!!!!"), aliases: ["mygo", "迷子"]),
-        Entry(name: .init(zhHans: "Ave Mujica", zhHantHK: "Ave Mujica", zhHantTW: "Ave Mujica", en: "Ave Mujica", ja: "Ave Mujica"), aliases: ["avemujica", "母鸡卡"]),
-        Entry(name: .init(zhHans: "梦限大 Mewtype", zhHantHK: "夢限大 Mewtype", zhHantTW: "夢限大 Mewtype", en: "Mugendai Mewtype", ja: "夢限大みゅーたいぷ"), aliases: ["mugendai", "mugendaimewtype", "mugendai mewtype", "梦限大", "夢限大", "夢限大みゅーたいぷ"]),
-        Entry(name: .init(zhHans: "户山香澄", zhHantHK: "戶山香澄", zhHantTW: "戶山香澄", en: "Kasumi Toyama", ja: "戸山香澄"), aliases: ["香澄", "kasumi", "toyamakasumi"]),
-        Entry(name: .init(zhHans: "花园多惠", zhHantHK: "花園多惠", zhHantTW: "花園多惠", en: "Tae Hanazono", ja: "花園たえ"), aliases: ["多惠", "たえ", "tae", "hanazonotae"]),
-        Entry(name: .init(zhHans: "牛込里美", zhHantHK: "牛込里美", zhHantTW: "牛込里美", en: "Rimi Ushigome", ja: "牛込りみ"), aliases: ["里美", "りみ", "rimi", "ushigomerimi"]),
-        Entry(name: .init(zhHans: "山吹沙绫", zhHantHK: "山吹沙綾", zhHantTW: "山吹沙綾", en: "Saaya Yamabuki", ja: "山吹沙綾"), aliases: ["沙绫", "沙綾", "saaya", "yamabukisaaya"]),
-        Entry(name: .init(zhHans: "市谷有咲", zhHantHK: "市谷有咲", zhHantTW: "市谷有咲", en: "Arisa Ichigaya", ja: "市ヶ谷有咲"), aliases: ["有咲", "arisa", "ichigayaarisa"]),
-        Entry(name: .init(zhHans: "美竹兰", zhHantHK: "美竹蘭", zhHantTW: "美竹蘭", en: "Ran Mitake", ja: "美竹蘭"), aliases: ["蘭", "ran", "mitakeran"]),
-        Entry(name: .init(zhHans: "青叶摩卡", zhHantHK: "青葉摩卡", zhHantTW: "青葉摩卡", en: "Moca Aoba", ja: "青葉モカ"), aliases: ["摩卡", "モカ", "moca", "aobamoca"]),
-        Entry(name: .init(zhHans: "上原绯玛丽", zhHantHK: "上原緋瑪麗", zhHantTW: "上原緋瑪麗", en: "Himari Uehara", ja: "上原ひまり"), aliases: ["绯玛丽", "緋瑪麗", "ひまり", "himari", "ueharahimari"]),
-        Entry(name: .init(zhHans: "宇田川巴", zhHantHK: "宇田川巴", zhHantTW: "宇田川巴", en: "Tomoe Udagawa", ja: "宇田川巴"), aliases: ["tomoe", "udagawatomoe"]),
-        Entry(name: .init(zhHans: "羽泽鸫", zhHantHK: "羽澤鶇", zhHantTW: "羽澤鶇", en: "Tsugumi Hazawa", ja: "羽沢つぐみ"), aliases: ["鸫", "鶇", "つぐみ", "tsugumi", "hazawatsugumi"]),
-        Entry(name: .init(zhHans: "丸山彩", zhHantHK: "丸山彩", zhHantTW: "丸山彩", en: "Aya Maruyama", ja: "丸山彩"), aliases: ["aya", "maruyamaaya"]),
-        Entry(name: .init(zhHans: "冰川日菜", zhHantHK: "冰川日菜", zhHantTW: "冰川日菜", en: "Hina Hikawa", ja: "氷川日菜"), aliases: ["日菜", "hina", "hikawahina"]),
-        Entry(name: .init(zhHans: "白鹭千圣", zhHantHK: "白鷺千聖", zhHantTW: "白鷺千聖", en: "Chisato Shirasagi", ja: "白鷺千聖"), aliases: ["千圣", "千聖", "chisato", "shirasagichisato"]),
-        Entry(name: .init(zhHans: "大和麻弥", zhHantHK: "大和麻彌", zhHantTW: "大和麻彌", en: "Maya Yamato", ja: "大和麻弥"), aliases: ["麻弥", "麻彌", "maya", "yamatomaya"]),
-        Entry(name: .init(zhHans: "若宫伊芙", zhHantHK: "若宮伊芙", zhHantTW: "若宮伊芙", en: "Eve Wakamiya", ja: "若宮イヴ"), aliases: ["伊芙", "イヴ", "eve", "wakamiyaeve"]),
-        Entry(name: .init(zhHans: "凑友希那", zhHantHK: "湊友希那", zhHantTW: "湊友希那", en: "Yukina Minato", ja: "湊友希那"), aliases: ["友希那", "yukina", "minatoyukina"]),
-        Entry(name: .init(zhHans: "冰川纱夜", zhHantHK: "冰川紗夜", zhHantTW: "冰川紗夜", en: "Sayo Hikawa", ja: "氷川紗夜"), aliases: ["纱夜", "紗夜", "sayo", "hikawasayo"]),
-        Entry(name: .init(zhHans: "今井莉莎", zhHantHK: "今井莉莎", zhHantTW: "今井莉莎", en: "Lisa Imai", ja: "今井リサ"), aliases: ["莉莎", "リサ", "lisa", "imailisa"]),
-        Entry(name: .init(zhHans: "宇田川亚子", zhHantHK: "宇田川亞子", zhHantTW: "宇田川亞子", en: "Ako Udagawa", ja: "宇田川あこ"), aliases: ["亚子", "亞子", "あこ", "ako", "udagawaako"]),
-        Entry(name: .init(zhHans: "白金燐子", zhHantHK: "白金燐子", zhHantTW: "白金燐子", en: "Rinko Shirokane", ja: "白金燐子"), aliases: ["燐子", "rinko", "shirokanerinko"]),
-        Entry(name: .init(zhHans: "弦卷心", zhHantHK: "弦卷心", zhHantTW: "弦卷心", en: "Kokoro Tsurumaki", ja: "弦巻こころ"), aliases: ["こころ", "kokoro", "tsurumakikokoro"]),
-        Entry(name: .init(zhHans: "濑田薰", zhHantHK: "瀨田薰", zhHantTW: "瀨田薰", en: "Kaoru Seta", ja: "瀬田薫"), aliases: ["薰", "薫", "kaoru", "setakaoru"]),
-        Entry(name: .init(zhHans: "北泽育美", zhHantHK: "北澤育美", zhHantTW: "北澤育美", en: "Hagumi Kitazawa", ja: "北沢はぐみ"), aliases: ["育美", "はぐみ", "hagumi", "kitazawahagumi"]),
-        Entry(name: .init(zhHans: "松原花音", zhHantHK: "松原花音", zhHantTW: "松原花音", en: "Kanon Matsubara", ja: "松原花音"), aliases: ["花音", "kanon", "matsubarakanon"]),
-        Entry(name: .init(zhHans: "奥泽美咲", zhHantHK: "奧澤美咲", zhHantTW: "奧澤美咲", en: "Misaki Okusawa", ja: "奥沢美咲"), aliases: ["美咲", "米歇尔", "ミッシェル", "Michelle", "misaki", "okusawamisaki"]),
-        Entry(name: .init(zhHans: "仓田真白", zhHantHK: "倉田真白", zhHantTW: "倉田真白", en: "Mashiro Kurata", ja: "倉田ましろ"), aliases: ["真白", "ましろ", "mashiro", "kuratamashiro"]),
-        Entry(name: .init(zhHans: "桐谷透子", zhHantHK: "桐谷透子", zhHantTW: "桐谷透子", en: "Toko Kirigaya", ja: "桐ヶ谷透子"), aliases: ["透子", "toko", "kirigayatoko"]),
-        Entry(name: .init(zhHans: "广町七深", zhHantHK: "廣町七深", zhHantTW: "廣町七深", en: "Nanami Hiromachi", ja: "広町七深"), aliases: ["七深", "nanami", "hiromachinanami"]),
-        Entry(name: .init(zhHans: "二叶筑紫", zhHantHK: "二葉筑紫", zhHantTW: "二葉筑紫", en: "Tsukushi Futaba", ja: "二葉つくし"), aliases: ["筑紫", "つくし", "tsukushi", "futabatsukushi"]),
-        Entry(name: .init(zhHans: "八潮瑠唯", zhHantHK: "八潮瑠唯", zhHantTW: "八潮瑠唯", en: "Rui Yashio", ja: "八潮瑠唯"), aliases: ["瑠唯", "yashiorui"]),
-        Entry(name: .init(zhHans: "和奏蕾依", zhHantHK: "和奏蕾依", zhHantTW: "和奏蕾依", en: "Rei Wakana", ja: "和奏レイ"), aliases: ["蕾依", "レイヤ", "layer", "reiwakana"]),
-        Entry(name: .init(zhHans: "朝日六花", zhHantHK: "朝日六花", zhHantTW: "朝日六花", en: "Rokka Asahi", ja: "朝日六花"), aliases: ["六花", "ロック", "lock", "rokka", "asahirokka"]),
-        Entry(name: .init(zhHans: "佐藤益木", zhHantHK: "佐藤益木", zhHantTW: "佐藤益木", en: "Masuki Sato", ja: "マスキング"), aliases: ["益木", "masking", "masuki", "satomasuki"]),
-        Entry(name: .init(zhHans: "鳰原令王那", zhHantHK: "鳰原令王那", zhHantTW: "鳰原令王那", en: "Reona Nyubara", ja: "パレオ"), aliases: ["令王那", "pareo", "reona", "nyubarareona"]),
-        Entry(name: .init(zhHans: "珠手知由", zhHantHK: "珠手知由", zhHantTW: "珠手知由", en: "Chiyu Tamade", ja: "チュチュ"), aliases: ["知由", "chu2", "chiyu", "tamadechiyu"]),
-        Entry(name: .init(zhHans: "高松灯", zhHantHK: "高松燈", zhHantTW: "高松燈", en: "Tomori Takamatsu", ja: "高松燈"), aliases: ["灯", "燈", "tmr", "tomori", "takamatsutomori"]),
-        Entry(name: .init(zhHans: "千早爱音", zhHantHK: "千早愛音", zhHantTW: "千早愛音", en: "Anon Chihaya", ja: "千早愛音"), aliases: ["爱音", "愛音", "anon", "chihayaanon"]),
-        Entry(name: .init(zhHans: "要乐奈", zhHantHK: "要樂奈", zhHantTW: "要樂奈", en: "Raana Kaname", ja: "要楽奈"), aliases: ["乐奈", "樂奈", "楽奈", "raana", "kanameraana"]),
-        Entry(name: .init(zhHans: "长崎素世", zhHantHK: "長崎素世", zhHantTW: "長崎素世", en: "Soyo Nagasaki", ja: "長崎そよ"), aliases: ["素世", "そよ", "soyo", "nagasakisoyo"]),
-        Entry(name: .init(zhHans: "椎名立希", zhHantHK: "椎名立希", zhHantTW: "椎名立希", en: "Taki Shiina", ja: "椎名立希"), aliases: ["立希", "taki", "shiinataki"]),
-        Entry(name: .init(zhHans: "三角初华", zhHantHK: "三角初華", zhHantTW: "三角初華", en: "Uika Misumi", ja: "三角初華"), aliases: ["初华", "初華", "doloris", "uika", "misumiuika"]),
-        Entry(name: .init(zhHans: "丰川祥子", zhHantHK: "豐川祥子", zhHantTW: "豐川祥子", en: "Sakiko Togawa", ja: "豊川祥子"), aliases: ["祥子", "oblivionis", "sakiko", "togawasakiko"]),
-        Entry(name: .init(zhHans: "若叶睦", zhHantHK: "若葉睦", zhHantTW: "若葉睦", en: "Mutsumi Wakaba", ja: "若葉睦"), aliases: ["mortis", "mutsumi", "wakabamutsumi"]),
-        Entry(name: .init(zhHans: "八幡海铃", zhHantHK: "八幡海鈴", zhHantTW: "八幡海鈴", en: "Umiri Yahata", ja: "八幡海鈴"), aliases: ["海铃", "海鈴", "timoris", "umiri", "yahataumiri"]),
-        Entry(name: .init(zhHans: "祐天寺若麦", zhHantHK: "祐天寺若麥", zhHantTW: "祐天寺若麥", en: "Nyamu Yutenji", ja: "祐天寺若麦"), aliases: ["若麦", "若麥", "amoris", "nyamu", "yutenjinyamu"]),
-        Entry(name: .init(zhHans: "仲町阿拉蕾", zhHantHK: "仲町阿拉蕾", zhHantTW: "仲町阿拉蕾", en: "Arale Nakamachi", ja: "仲町あられ"), aliases: ["阿拉蕾", "あられ", "arale", "nakamachiarale"]),
-        Entry(name: .init(zhHans: "宫永野乃花", zhHantHK: "宮永野乃花", zhHantTW: "宮永野乃花", en: "Nonoka Miyanaga", ja: "宮永ののか"), aliases: ["野乃花", "ののか", "nonoka", "miyanaganonoka"]),
-        Entry(name: .init(zhHans: "峰月律", zhHantHK: "峰月律", zhHantTW: "峰月律", en: "Ritsu Minetsuki", ja: "峰月律"), aliases: ["ritsu", "minetsukiritsu"]),
-        Entry(name: .init(zhHans: "藤都子", zhHantHK: "藤都子", zhHantTW: "藤都子", en: "Miyako Fuji", ja: "藤都子"), aliases: ["都子", "miyako", "fujimiyako"]),
-        Entry(name: .init(zhHans: "千石由乃", zhHantHK: "千石由乃", zhHantTW: "千石由乃", en: "Yuno Sengoku", ja: "千石ユノ"), aliases: ["由乃", "ユノ", "yuno", "sengokuyuno"]),
-        Entry(name: .init(zhHans: "明日方舟", zhHantHK: "明日方舟", zhHantTW: "明日方舟", en: "Arknights", ja: "アークナイツ"), aliases: ["arknights", "方舟", "罗德岛", "羅德島", "rhodesisland"]),
-        Entry(name: .init(zhHans: "阿米娅", zhHantHK: "阿米婭", zhHantTW: "阿米婭", en: "Amiya", ja: "アーミヤ"), aliases: ["amiya"]),
-        Entry(name: .init(zhHans: "凯尔希", zhHantHK: "凱爾希", zhHantTW: "凱爾希", en: "Kal'tsit", ja: "ケルシー"), aliases: ["kaltsit", "kelsey"]),
-        Entry(name: .init(zhHans: "陈", zhHantHK: "陳", zhHantTW: "陳", en: "Ch'en", ja: "チェン"), aliases: ["chen"]),
-        Entry(name: .init(zhHans: "德克萨斯", zhHantHK: "德克薩斯", zhHantTW: "德克薩斯", en: "Texas", ja: "テキサス"), aliases: ["texas"]),
-        Entry(name: .init(zhHans: "拉普兰德", zhHantHK: "拉普蘭德", zhHantTW: "拉普蘭德", en: "Lappland", ja: "ラップランド"), aliases: ["lappland"]),
-        Entry(name: .init(zhHans: "能天使", zhHantHK: "能天使", zhHantTW: "能天使", en: "Exusiai", ja: "エクシア"), aliases: ["exusiai"]),
-        Entry(name: .init(zhHans: "蔚蓝档案", zhHantHK: "蔚藍檔案", zhHantTW: "蔚藍檔案", en: "Blue Archive", ja: "ブルアカ"), aliases: ["bluearchive", "ba", "碧蓝档案", "碧藍檔案"]),
-        Entry(name: .init(zhHans: "砂狼白子", zhHantHK: "砂狼白子", zhHantTW: "砂狼白子", en: "Shiroko Sunaookami", ja: "砂狼シロコ"), aliases: ["白子", "シロコ", "shiroko"]),
-        Entry(name: .init(zhHans: "小鸟游星野", zhHantHK: "小鳥遊星野", zhHantTW: "小鳥遊星野", en: "Hoshino Takanashi", ja: "小鳥遊ホシノ"), aliases: ["星野", "ホシノ", "hoshino"]),
-        Entry(name: .init(zhHans: "空崎日奈", zhHantHK: "空崎日奈", zhHantTW: "空崎日奈", en: "Hina Sorasaki", ja: "空崎ヒナ"), aliases: ["日奈", "ヒナ", "hina"]),
-        Entry(name: .init(zhHans: "早濑优香", zhHantHK: "早瀨優香", zhHantTW: "早瀨優香", en: "Yuuka Hayase", ja: "早瀬ユウカ"), aliases: ["优香", "優香", "ユウカ", "yuuka"]),
-        Entry(name: .init(zhHans: "崩坏星穹铁道", zhHantHK: "崩壞星穹鐵道", zhHantTW: "崩壞星穹鐵道", en: "Honkai: Star Rail", ja: "崩壊スターレイル"), aliases: ["hsr", "honkaistarrail", "星铁", "星鐵"]),
-        Entry(name: .init(zhHans: "卡芙卡", zhHantHK: "卡芙卡", zhHantTW: "卡芙卡", en: "Kafka", ja: "カフカ"), aliases: ["kafka"]),
-        Entry(name: .init(zhHans: "流萤", zhHantHK: "流螢", zhHantTW: "流螢", en: "Firefly", ja: "ホタル"), aliases: ["firefly"]),
-        Entry(name: .init(zhHans: "知更鸟", zhHantHK: "知更鳥", zhHantTW: "知更鳥", en: "Robin", ja: "ロビン"), aliases: ["robin"]),
-        Entry(name: .init(zhHans: "原神", zhHantHK: "原神", zhHantTW: "原神", en: "Genshin Impact", ja: "原神"), aliases: ["genshin", "genshinimpact"]),
-        Entry(name: .init(zhHans: "纳西妲", zhHantHK: "納西妲", zhHantTW: "納西妲", en: "Nahida", ja: "ナヒーダ"), aliases: ["nahida"]),
-        Entry(name: .init(zhHans: "芙宁娜", zhHantHK: "芙寧娜", zhHantTW: "芙寧娜", en: "Furina", ja: "フリーナ"), aliases: ["furina"]),
-        Entry(name: .init(zhHans: "LoveLive!", zhHantHK: "LoveLive!", zhHantTW: "LoveLive!", en: "LoveLive!", ja: "ラブライブ"), aliases: ["lovelive", "ll", "ラブライブ"]),
-        Entry(name: .init(zhHans: "偶像梦幻祭", zhHantHK: "偶像夢幻祭", zhHantTW: "偶像夢幻祭", en: "Ensemble Stars", ja: "あんスタ"), aliases: ["ensemblestars", "enstars", "es", "あんスタ"]),
-        Entry(name: .init(zhHans: "偶像大师", zhHantHK: "偶像大師", zhHantTW: "偶像大師", en: "The Idolmaster", ja: "アイマス"), aliases: ["idolmaster", "theidolmaster", "imas", "アイマス"]),
-        Entry(name: .init(zhHans: "赛马娘", zhHantHK: "賽馬娘", zhHantTW: "賽馬娘", en: "Uma Musume", ja: "ウマ娘"), aliases: ["umamusume", "马娘", "馬娘", "ウマ娘"]),
-        Entry(name: .init(zhHans: "孤独摇滚", zhHantHK: "孤獨搖滾", zhHantTW: "孤獨搖滾", en: "Bocchi the Rock!", ja: "ぼっち・ざ・ろっく！"), aliases: ["bocchitherock", "孤摇", "孤搖", "ぼっちざろっく"]),
-        Entry(name: .init(zhHans: "结束乐队", zhHantHK: "結束樂隊", zhHantTW: "結束樂隊", en: "Kessoku Band", ja: "結束バンド"), aliases: ["kessokuband", "結束バンド", "结束band", "結束band"]),
-        Entry(name: .init(zhHans: "后藤一里", zhHantHK: "後藤一里", zhHantTW: "後藤一里", en: "Hitori Gotoh", ja: "後藤ひとり"), aliases: ["波奇", "ぼっち", "hitorigotoh"]),
-        Entry(name: .init(zhHans: "伊地知虹夏", zhHantHK: "伊地知虹夏", zhHantTW: "伊地知虹夏", en: "Nijika Ijichi", ja: "伊地知虹夏"), aliases: ["虹夏", "nijika", "ijichinijika"]),
-        Entry(name: .init(zhHans: "山田凉", zhHantHK: "山田涼", zhHantTW: "山田涼", en: "Ryo Yamada", ja: "山田リョウ"), aliases: ["凉", "涼", "リョウ", "ryo", "yamadaryo"]),
-        Entry(name: .init(zhHans: "喜多郁代", zhHantHK: "喜多郁代", zhHantTW: "喜多郁代", en: "Ikuyo Kita", ja: "喜多郁代"), aliases: ["喜多", "喜多ちゃん", "kita", "ikuyokita"]),
-        Entry(name: .init(zhHans: "放学后茶会", zhHantHK: "放學後茶會", zhHantTW: "放學後茶會", en: "Ho-kago Tea Time", ja: "放課後ティータイム"), aliases: ["k-on", "kon", "けいおん", "轻音", "輕音", "轻音少女", "輕音少女", "轻音部", "輕音部", "htt", "hokagoteatime", "ho-kago tea time", "放学后tea time", "放學後tea time", "放課後tea time"]),
-        Entry(name: .init(zhHans: "平泽唯", zhHantHK: "平澤唯", zhHantTW: "平澤唯", en: "Yui Hirasawa", ja: "平沢唯"), aliases: ["唯", "yui", "hirasawayui"]),
-        Entry(name: .init(zhHans: "秋山澪", zhHantHK: "秋山澪", zhHantTW: "秋山澪", en: "Mio Akiyama", ja: "秋山澪"), aliases: ["澪", "mio", "akiyamamio"]),
-        Entry(name: .init(zhHans: "田井中律", zhHantHK: "田井中律", zhHantTW: "田井中律", en: "Ritsu Tainaka", ja: "田井中律"), aliases: ["tainakaritsu"]),
-        Entry(name: .init(zhHans: "琴吹紬", zhHantHK: "琴吹紬", zhHantTW: "琴吹紬", en: "Tsumugi Kotobuki", ja: "琴吹紬"), aliases: ["紬", "mugi", "tsumugi", "kotobukitsumugi"]),
-        Entry(name: .init(zhHans: "中野梓", zhHantHK: "中野梓", zhHantTW: "中野梓", en: "Azusa Nakano", ja: "中野梓"), aliases: ["梓", "azusa", "azunyan", "あずにゃん", "nakanoazusa"]),
-        Entry(name: .init(zhHans: "平泽忧", zhHantHK: "平澤憂", zhHantTW: "平澤憂", en: "Ui Hirasawa", ja: "平沢憂"), aliases: ["忧", "憂", "ui", "hirasawaui"]),
-        Entry(name: .init(zhHans: "真锅和", zhHantHK: "真鍋和", zhHantTW: "真鍋和", en: "Nodoka Manabe", ja: "真鍋和"), aliases: ["和", "nodoka", "manabenodoka"]),
-        Entry(name: .init(zhHans: "山中佐和子", zhHantHK: "山中佐和子", zhHantTW: "山中佐和子", en: "Sawako Yamanaka", ja: "山中さわ子"), aliases: ["佐和子", "さわ子", "sawako", "yamanakasawako"]),
-        Entry(name: .init(zhHans: "铃木纯", zhHantHK: "鈴木純", zhHantTW: "鈴木純", en: "Jun Suzuki", ja: "鈴木純"), aliases: ["纯", "純", "jun", "suzukijun"]),
-        Entry(name: .init(zhHans: "有刺无刺", zhHantHK: "有刺無刺", zhHantTW: "有刺無刺", en: "TOGENASHI TOGEARI", ja: "トゲナシトゲアリ"), aliases: ["gbc", "girlsbandcry", "ガルクラ", "ガールズバンドクライ", "ガールズバンドくらい", "togenashitogeari", "トゲトゲ", "tgtg", "刺"]),
-        Entry(name: .init(zhHans: "井芹仁菜", zhHantHK: "井芹仁菜", zhHantTW: "井芹仁菜", en: "Nina Iseri", ja: "井芹仁菜"), aliases: ["仁菜", "nina", "iserinina"]),
-        Entry(name: .init(zhHans: "河原木桃香", zhHantHK: "河原木桃香", zhHantTW: "河原木桃香", en: "Momoka Kawaragi", ja: "河原木桃香"), aliases: ["桃香", "momoka", "kawaragimomoka"]),
-        Entry(name: .init(zhHans: "安和昴", zhHantHK: "安和昴", zhHantTW: "安和昴", en: "Subaru Awa", ja: "安和すばる"), aliases: ["昴", "すばる", "subaru", "awasubaru"]),
-        Entry(name: .init(zhHans: "海老塚智", zhHantHK: "海老塚智", zhHantTW: "海老塚智", en: "Tomo Ebizuka", ja: "海老塚智"), aliases: ["智", "tomo", "ebizukatomo"]),
-        Entry(name: .init(zhHans: "卢帕", zhHantHK: "盧帕", zhHantTW: "盧帕", en: "Rupa", ja: "ルパ"), aliases: ["rupa", "ルパ"]),
-        Entry(name: .init(zhHans: "东方Project", zhHantHK: "東方Project", zhHantTW: "東方Project", en: "Touhou Project", ja: "東方Project"), aliases: ["touhou", "touhouproject", "东方", "東方"]),
-        Entry(name: .init(zhHans: "博丽灵梦", zhHantHK: "博麗靈夢", zhHantTW: "博麗靈夢", en: "Reimu Hakurei", ja: "博麗霊夢"), aliases: ["灵梦", "靈夢", "霊夢", "reimu"]),
-        Entry(name: .init(zhHans: "雾雨魔理沙", zhHantHK: "霧雨魔理沙", zhHantTW: "霧雨魔理沙", en: "Marisa Kirisame", ja: "霧雨魔理沙"), aliases: ["魔理沙", "marisa"]),
-        Entry(name: .init(zhHans: "新世纪福音战士", zhHantHK: "新世紀福音戰士", zhHantTW: "新世紀福音戰士", en: "Evangelion", ja: "エヴァンゲリオン"), aliases: ["eva", "nge", "新世纪福音战士", "新世紀エヴァンゲリオン", "エヴァ"]),
-        Entry(name: .init(zhHans: "碇真嗣", zhHantHK: "碇真嗣", zhHantTW: "碇真嗣", en: "Shinji Ikari", ja: "碇シンジ"), aliases: ["真嗣", "シンジ", "shinji", "ikari"]),
-        Entry(name: .init(zhHans: "绫波丽", zhHantHK: "綾波麗", zhHantTW: "綾波麗", en: "Rei Ayanami", ja: "綾波レイ"), aliases: ["绫波", "綾波", "丽", "麗", "rei", "ayanami"]),
-        Entry(name: .init(zhHans: "明日香", zhHantHK: "明日香", zhHantTW: "明日香", en: "Asuka Langley", ja: "アスカ"), aliases: ["惣流明日香", "式波明日香", "アスカ", "asuka"]),
-        Entry(name: .init(zhHans: "渚薰", zhHantHK: "渚薰", zhHantTW: "渚薰", en: "Kaworu Nagisa", ja: "渚カヲル"), aliases: ["薰", "カヲル", "kaworu", "nagisa"]),
-        Entry(name: .init(zhHans: "葛城美里", zhHantHK: "葛城美里", zhHantTW: "葛城美里", en: "Misato Katsuragi", ja: "葛城ミサト"), aliases: ["美里", "ミサト", "misato"]),
-        Entry(name: .init(zhHans: "葬送的芙莉莲", zhHantHK: "葬送的芙莉蓮", zhHantTW: "葬送的芙莉蓮", en: "Frieren", ja: "葬送のフリーレン"), aliases: ["frieren", "芙莉莲", "芙莉蓮", "フリーレン"]),
-        Entry(name: .init(zhHans: "芙莉莲", zhHantHK: "芙莉蓮", zhHantTW: "芙莉蓮", en: "Frieren", ja: "フリーレン"), aliases: ["frieren", "フリーレン"]),
-        Entry(name: .init(zhHans: "菲伦", zhHantHK: "菲倫", zhHantTW: "菲倫", en: "Fern", ja: "フェルン"), aliases: ["fern", "フェルン"]),
-        Entry(name: .init(zhHans: "修塔尔克", zhHantHK: "修塔爾克", zhHantTW: "修塔爾克", en: "Stark", ja: "シュタルク"), aliases: ["stark", "シュタルク"]),
-        Entry(name: .init(zhHans: "辛美尔", zhHantHK: "辛美爾", zhHantTW: "辛美爾", en: "Himmel", ja: "ヒンメル"), aliases: ["欣梅尔", "欣梅爾", "himmel", "ヒンメル"]),
-        Entry(name: .init(zhHans: "阿乌拉", zhHantHK: "阿烏拉", zhHantTW: "阿烏拉", en: "Aura", ja: "アウラ"), aliases: ["aura", "アウラ"]),
-        Entry(name: .init(zhHans: "咒术回战", zhHantHK: "咒術迴戰", zhHantTW: "咒術迴戰", en: "Jujutsu Kaisen", ja: "呪術廻戦"), aliases: ["jjk", "jujutsukaisen", "咒回", "呪術"]),
-        Entry(name: .init(zhHans: "虎杖悠仁", zhHantHK: "虎杖悠仁", zhHantTW: "虎杖悠仁", en: "Yuji Itadori", ja: "虎杖悠仁"), aliases: ["虎杖", "itadori", "yuji"]),
-        Entry(name: .init(zhHans: "伏黑惠", zhHantHK: "伏黑惠", zhHantTW: "伏黑惠", en: "Megumi Fushiguro", ja: "伏黒恵"), aliases: ["伏黑", "伏黒", "megumi", "fushiguro"]),
-        Entry(name: .init(zhHans: "钉崎野蔷薇", zhHantHK: "釘崎野薔薇", zhHantTW: "釘崎野薔薇", en: "Nobara Kugisaki", ja: "釘崎野薔薇"), aliases: ["野蔷薇", "野薔薇", "nobara", "kugisaki"]),
-        Entry(name: .init(zhHans: "五条悟", zhHantHK: "五條悟", zhHantTW: "五條悟", en: "Satoru Gojo", ja: "五条悟"), aliases: ["五条", "五條", "gojo", "satoru"]),
-        Entry(name: .init(zhHans: "夏油杰", zhHantHK: "夏油傑", zhHantTW: "夏油傑", en: "Suguru Geto", ja: "夏油傑"), aliases: ["夏油", "geto", "suguru"]),
-        Entry(name: .init(zhHans: "鬼灭之刃", zhHantHK: "鬼滅之刃", zhHantTW: "鬼滅之刃", en: "Demon Slayer", ja: "鬼滅の刃"), aliases: ["kimetsu", "demonslayer", "鬼灭", "鬼滅"]),
-        Entry(name: .init(zhHans: "灶门炭治郎", zhHantHK: "竈門炭治郎", zhHantTW: "竈門炭治郎", en: "Tanjiro Kamado", ja: "竈門炭治郎"), aliases: ["炭治郎", "tanjiro", "kamado"]),
-        Entry(name: .init(zhHans: "灶门祢豆子", zhHantHK: "竈門禰豆子", zhHantTW: "竈門禰豆子", en: "Nezuko Kamado", ja: "竈門禰豆子"), aliases: ["祢豆子", "禰豆子", "nezuko"]),
-        Entry(name: .init(zhHans: "我妻善逸", zhHantHK: "我妻善逸", zhHantTW: "我妻善逸", en: "Zenitsu Agatsuma", ja: "我妻善逸"), aliases: ["善逸", "zenitsu"]),
-        Entry(name: .init(zhHans: "嘴平伊之助", zhHantHK: "嘴平伊之助", zhHantTW: "嘴平伊之助", en: "Inosuke Hashibira", ja: "嘴平伊之助"), aliases: ["伊之助", "inosuke"]),
-        Entry(name: .init(zhHans: "富冈义勇", zhHantHK: "富岡義勇", zhHantTW: "富岡義勇", en: "Giyu Tomioka", ja: "冨岡義勇"), aliases: ["义勇", "義勇", "giyu", "tomioka"]),
-        Entry(name: .init(zhHans: "排球少年", zhHantHK: "排球少年", zhHantTW: "排球少年", en: "Haikyu!!", ja: "ハイキュー!!"), aliases: ["haikyuu", "haikyu", "ハイキュー"]),
-        Entry(name: .init(zhHans: "日向翔阳", zhHantHK: "日向翔陽", zhHantTW: "日向翔陽", en: "Shoyo Hinata", ja: "日向翔陽"), aliases: ["翔阳", "翔陽", "hinata", "shoyo"]),
-        Entry(name: .init(zhHans: "影山飞雄", zhHantHK: "影山飛雄", zhHantTW: "影山飛雄", en: "Tobio Kageyama", ja: "影山飛雄"), aliases: ["影山", "kageyama", "tobio"]),
-        Entry(name: .init(zhHans: "月岛萤", zhHantHK: "月島螢", zhHantTW: "月島螢", en: "Kei Tsukishima", ja: "月島蛍"), aliases: ["月岛", "月島", "tsukishima", "kei"]),
-        Entry(name: .init(zhHans: "孤爪研磨", zhHantHK: "孤爪研磨", zhHantTW: "孤爪研磨", en: "Kenma Kozume", ja: "孤爪研磨"), aliases: ["研磨", "kenma", "kozume"]),
-        Entry(name: .init(zhHans: "黑尾铁朗", zhHantHK: "黒尾鐵朗", zhHantTW: "黒尾鐵朗", en: "Tetsuro Kuroo", ja: "黒尾鉄朗"), aliases: ["黑尾", "黒尾", "kuroo"]),
-        Entry(name: .init(zhHans: "名侦探柯南", zhHantHK: "名偵探柯南", zhHantTW: "名偵探柯南", en: "Detective Conan", ja: "名探偵コナン"), aliases: ["conan", "detectiveconan", "柯南", "コナン"]),
-        Entry(name: .init(zhHans: "江户川柯南", zhHantHK: "江戶川柯南", zhHantTW: "江戶川柯南", en: "Conan Edogawa", ja: "江戸川コナン"), aliases: ["柯南", "conan", "edogawa"]),
-        Entry(name: .init(zhHans: "工藤新一", zhHantHK: "工藤新一", zhHantTW: "工藤新一", en: "Shinichi Kudo", ja: "工藤新一"), aliases: ["新一", "shinichi", "kudo"]),
-        Entry(name: .init(zhHans: "毛利兰", zhHantHK: "毛利蘭", zhHantTW: "毛利蘭", en: "Ran Mouri", ja: "毛利蘭"), aliases: ["小兰", "小蘭", "ranmouri"]),
-        Entry(name: .init(zhHans: "灰原哀", zhHantHK: "灰原哀", zhHantTW: "灰原哀", en: "Ai Haibara", ja: "灰原哀"), aliases: ["小哀", "haibara", "aihaibara"]),
-        Entry(name: .init(zhHans: "安室透", zhHantHK: "安室透", zhHantTW: "安室透", en: "Rei Furuya", ja: "安室透"), aliases: ["降谷零", "安室", "amuro", "furuya"]),
-        Entry(name: .init(zhHans: "进击的巨人", zhHantHK: "進擊的巨人", zhHantTW: "進擊的巨人", en: "Attack on Titan", ja: "進撃の巨人"), aliases: ["aot", "snk", "attackontitan", "进巨", "進巨"]),
-        Entry(name: .init(zhHans: "艾伦耶格尔", zhHantHK: "艾連葉卡", zhHantTW: "艾連葉卡", en: "Eren Yeager", ja: "エレン・イェーガー"), aliases: ["艾伦", "艾連", "eren", "yeager"]),
-        Entry(name: .init(zhHans: "三笠阿克曼", zhHantHK: "米卡莎阿卡曼", zhHantTW: "米卡莎阿卡曼", en: "Mikasa Ackerman", ja: "ミカサ・アッカーマン"), aliases: ["三笠", "米卡莎", "mikasa"]),
-        Entry(name: .init(zhHans: "阿尔敏阿诺德", zhHantHK: "阿爾敏亞魯雷特", zhHantTW: "阿爾敏亞魯雷特", en: "Armin Arlert", ja: "アルミン・アルレルト"), aliases: ["阿尔敏", "阿爾敏", "armin"]),
-        Entry(name: .init(zhHans: "利威尔", zhHantHK: "里維", zhHantTW: "里維", en: "Levi Ackerman", ja: "リヴァイ"), aliases: ["兵长", "兵長", "levi", "リヴァイ"]),
-        Entry(name: .init(zhHans: "电锯人", zhHantHK: "鏈鋸人", zhHantTW: "鏈鋸人", en: "Chainsaw Man", ja: "チェンソーマン"), aliases: ["chainsawman", "csm", "链锯人", "鏈鋸人"]),
-        Entry(name: .init(zhHans: "电次", zhHantHK: "淀治", zhHantTW: "淀治", en: "Denji", ja: "デンジ"), aliases: ["denji"]),
-        Entry(name: .init(zhHans: "玛奇玛", zhHantHK: "瑪奇瑪", zhHantTW: "瑪奇瑪", en: "Makima", ja: "マキマ"), aliases: ["makima"]),
-        Entry(name: .init(zhHans: "早川秋", zhHantHK: "早川秋", zhHantTW: "早川秋", en: "Aki Hayakawa", ja: "早川アキ"), aliases: ["aki", "hayakawaaki"]),
-        Entry(name: .init(zhHans: "帕瓦", zhHantHK: "帕瓦", zhHantTW: "帕瓦", en: "Power", ja: "パワー"), aliases: ["power", "パワー"]),
-        Entry(name: .init(zhHans: "蕾塞", zhHantHK: "蕾塞", zhHantTW: "蕾塞", en: "Reze", ja: "レゼ"), aliases: ["reze", "レゼ"]),
-        Entry(name: .init(zhHans: "我推的孩子", zhHantHK: "【我推的孩子】", zhHantTW: "【我推的孩子】", en: "Oshi no Ko", ja: "【推しの子】"), aliases: ["oshinoko", "推しの子", "我推"]),
-        Entry(name: .init(zhHans: "星野爱", zhHantHK: "星野愛", zhHantTW: "星野愛", en: "Ai Hoshino", ja: "星野アイ"), aliases: ["星野愛", "aihoshino"]),
-        Entry(name: .init(zhHans: "星野爱久爱海", zhHantHK: "星野愛久愛海", zhHantTW: "星野愛久愛海", en: "Aqua Hoshino", ja: "星野愛久愛海"), aliases: ["阿库亚", "阿庫亞", "aqua", "hoshinoaqua"]),
-        Entry(name: .init(zhHans: "星野瑠美衣", zhHantHK: "星野瑠美衣", zhHantTW: "星野瑠美衣", en: "Ruby Hoshino", ja: "星野瑠美衣"), aliases: ["露比", "ruby", "hoshinoruby"]),
-        Entry(name: .init(zhHans: "有马加奈", zhHantHK: "有馬加奈", zhHantTW: "有馬加奈", en: "Kana Arima", ja: "有馬かな"), aliases: ["加奈", "kana", "arimakana"]),
-        Entry(name: .init(zhHans: "黑川茜", zhHantHK: "黑川茜", zhHantTW: "黑川茜", en: "Akane Kurokawa", ja: "黒川あかね"), aliases: ["茜", "akane", "kurokawaakane"]),
-        Entry(name: .init(zhHans: "间谍过家家", zhHantHK: "SPY x FAMILY 間諜家家酒", zhHantTW: "SPY x FAMILY 間諜家家酒", en: "SPY x FAMILY", ja: "SPY×FAMILY"), aliases: ["spyxfamily", "spy family", "间谍家家酒", "間諜家家酒"]),
-        Entry(name: .init(zhHans: "阿尼亚福杰", zhHantHK: "安妮亞佛傑", zhHantTW: "安妮亞佛傑", en: "Anya Forger", ja: "アーニャ・フォージャー"), aliases: ["阿尼亚", "安妮亞", "anya"]),
-        Entry(name: .init(zhHans: "劳埃德福杰", zhHantHK: "洛伊德佛傑", zhHantTW: "洛伊德佛傑", en: "Loid Forger", ja: "ロイド・フォージャー"), aliases: ["劳埃德", "洛伊德", "loid", "twilight"]),
-        Entry(name: .init(zhHans: "约尔福杰", zhHantHK: "約兒佛傑", zhHantTW: "約兒佛傑", en: "Yor Forger", ja: "ヨル・フォージャー"), aliases: ["约尔", "約兒", "yor"]),
-        Entry(name: .init(zhHans: "宝可梦", zhHantHK: "寶可夢", zhHantTW: "寶可夢", en: "Pokemon", ja: "ポケモン"), aliases: ["pokemon", "pokémon", "ポケモン", "精灵宝可梦", "神奇寶貝"]),
-        Entry(name: .init(zhHans: "皮卡丘", zhHantHK: "皮卡丘", zhHantTW: "皮卡丘", en: "Pikachu", ja: "ピカチュウ"), aliases: ["pikachu", "ピカチュウ"]),
-        Entry(name: .init(zhHans: "小智", zhHantHK: "小智", zhHantTW: "小智", en: "Ash Ketchum", ja: "サトシ"), aliases: ["ash", "satoshi", "サトシ"]),
-        Entry(name: .init(zhHans: "喷火龙", zhHantHK: "噴火龍", zhHantTW: "噴火龍", en: "Charizard", ja: "リザードン"), aliases: ["charizard", "リザードン"]),
-        Entry(name: .init(zhHans: "伊布", zhHantHK: "伊布", zhHantTW: "伊布", en: "Eevee", ja: "イーブイ"), aliases: ["eevee", "イーブイ"]),
-        Entry(name: .init(zhHans: "梦幻", zhHantHK: "夢幻", zhHantTW: "夢幻", en: "Mew", ja: "ミュウ"), aliases: ["mew", "ミュウ"]),
-   ]
-
     static func canonicalTag(for tag: String) -> String? {
         let key = normalizedKey(tag)
         guard !key.isEmpty else { return nil }
         let language = AppSettings.shared.resolvedLanguage
-        return entries.first { entry in
-            entry.searchableValues.contains(where: { key == normalizedKey($0) })
-        }?.display(for: language)
+        return RemoteTagCatalogSnapshot.entry(matchingNormalizedKey: key)?.names.value(for: language)
     }
 
     static func suggestions(for query: String, excluding existingTags: [String] = []) -> [String] {
+        let language = AppSettings.shared.resolvedLanguage
+        return searchEntries(for: query, excluding: existingTags, limit: 8).map {
+            $0.names.value(for: language)
+        }
+    }
+
+    static func searchEntries(
+        for query: String,
+        excluding existingTags: [String] = [],
+        limit: Int? = nil
+    ) -> [RemoteTagEntry] {
         let key = normalizedKey(query)
         guard !key.isEmpty else { return [] }
 
-        let language = AppSettings.shared.resolvedLanguage
         let existingKeys = Set(existingTags.map(normalizedKey))
-        var result: [String] = []
-        var seen: Set<String> = []
+        let ranked = RemoteTagCatalogSnapshot.searchRecordValue().compactMap { record -> (Int, RemoteTagEntry)? in
+            guard !record.searchableKeys.contains(where: existingKeys.contains) else { return nil }
 
-        for entry in entries {
-            let display = entry.display(for: language)
-            let displayKey = normalizedKey(display)
-            guard !existingKeys.contains(displayKey), !seen.contains(displayKey) else { continue }
-
-            if entry.searchableValues.contains(where: { normalizedKey($0).hasPrefix(key) || normalizedKey($0).contains(key) }) {
-                result.append(display)
-                seen.insert(displayKey)
+            let score: Int
+            if record.displayKeys.contains(key) {
+                score = 0
+            } else if record.aliasKeys.contains(key) {
+                score = 1
+            } else if record.displayKeys.contains(where: { $0.hasPrefix(key) }) {
+                score = 2
+            } else if record.aliasKeys.contains(where: { $0.hasPrefix(key) }) {
+                score = 3
+            } else if record.searchableKeys.contains(where: { $0.contains(key) }) {
+                score = 4
+            } else {
+                return nil
             }
-
-            if result.count >= 8 {
-                break
-            }
+            return (score, record.entry)
         }
+        .sorted { lhs, rhs in
+            lhs.0 == rhs.0 ? lhs.1.id < rhs.1.id : lhs.0 < rhs.0
+        }
+        .map(\.1)
 
-        return result
+        guard let limit else { return ranked }
+        return Array(ranked.prefix(max(0, limit)))
+    }
+
+    static func featuredSuggestions(limit: Int = 6) -> [String] {
+        let language = AppSettings.shared.resolvedLanguage
+        return RemoteTagCatalogSnapshot.value().prefix(max(0, limit)).map {
+            $0.names.value(for: language)
+        }
+    }
+
+    static var categories: [RemoteTagCategory] {
+        RemoteTagCatalogSnapshot.categoryValue()
+    }
+
+    static func entries(in category: RemoteTagCategory) -> [RemoteTagEntry] {
+        RemoteTagCatalogSnapshot.entries(in: category)
     }
 
     nonisolated static func normalizedKey(_ tag: String) -> String {
@@ -545,7 +334,7 @@ enum CardTagColorPalette {
         (["#00A0E9", "#33AAEE", "#FFDD45", "#EE6666", "#BBDD22"], ["leoneed", "leo/need", "l/n", "ln", "レオニ", "Leo/need"]),
         (["#88DD44", "#FFCCAA", "#99CCFF", "#FFAACC", "#99EEDD"], ["moremorejump", "MORE MORE JUMP!", "mmj", "モモジャン", "桃跳"]),
         (["#EE1166", "#FF6699", "#00BBDD", "#FF7722", "#0077DD"], ["vividbadsquad", "vbs", "ビビバス", "Vivid BAD SQUAD"]),
-        (["#FF9900", "#FFBB00", "#FF66BB", "#33DD99", "#BB88EE"], ["wonderlandsxshowtime", "Wonderlands x Showtime", "ワンダーランズ x ショウタイム", "ワンダーランズ×ショウタイム", "ws", "wxs", "wxS", "ワンダショ", "ワショ"]),
+        (["#FF9900", "#FFBB00", "#FF66BB", "#33DD99", "#BB88EE"], ["wonderlandsxshowtime", "Wonderlands x Showtime", "wonderlandsxshowti", "Wonderlands x Showti", "ワンダーランズ x ショウタイム", "ワンダーランズ×ショウタイム", "ws", "wxs", "wxS", "ワンダショ", "ワショ"]),
         (["#884499", "#BB6688", "#8889CC", "#CCAA88", "#DDAACC"], ["nightcord", "Nightcord at 25:00", "25点，Nightcord见。", "25點，Nightcord見。", "25時、ナイトコードで。", "n25", "25ji", "25時", "25时", "25點", "25点", "ニーゴ"]),
         (["#FF3377", "#FF5522", "#3366CC", "#FF99CC", "#FFCC33", "#AA66CC"], ["poppinparty", "poppin'party", "ポピパ", "Poppin'Party"]),
         (["#E53344", "#E5004F", "#55BB77", "#FF77AA", "#CC3333", "#FFCC66"], ["afterglow", "aglow", "美竹兰组", "美竹蘭組"]),
@@ -560,6 +349,8 @@ enum CardTagColorPalette {
         (["#F4B6C2", "#FF99CC", "#FFD34E", "#5B8FE8", "#E94B4B"], ["kessokuband", "結束バンド", "结束乐队", "結束樂隊", "Kessoku Band"]),
         (["#F2C94C", "#FF8FB3", "#5AA0E6", "#FFD23F", "#CFA7FF", "#61C28B"], ["htt", "hokagoteatime", "ho-kago tea time", "放学后茶会", "放學後茶會", "放課後ティータイム", "Ho-kago Tea Time"]),
         (["#E60033", "#F05A8A", "#9B6DFF", "#FFD447", "#58A6FF", "#5EC26A"], ["togenashitogeari", "トゲナシトゲアリ", "有刺无刺", "有刺無刺", "TOGENASHI TOGEARI", "トゲトゲ", "刺"]),
+        (["#FFFFFF", "#32C5FF", "#FFFFFF"], ["maimai", "舞萌", "舞萌DX", "maimai dx", "maimaidx"]),
+        (["#FF4D6D", "#FFD447", "#62DC70", "#43C7FF", "#9B6DFF"], ["maimai 15000+", "maimai15000+", "15000+"]),
     ]
 
     private nonisolated static let splitDefaults: [(leadingHex: String, trailingHex: String, keywords: [String])] = [
@@ -651,6 +442,11 @@ enum CardTagColorPalette {
         ("#E60033", "#FFD447", ["安和昴", "安和すばる", "昴", "すばる", "Subaru Awa", "subaru", "awasubaru"]),
         ("#E60033", "#58A6FF", ["海老塚智", "智", "Tomo Ebizuka", "tomo", "ebizukatomo"]),
         ("#E60033", "#5EC26A", ["卢帕", "盧帕", "ルパ", "Rupa", "rupa"]),
+        ("#8A3FB5", "#D68AF2", ["maimai 10000+", "maimai10000+", "10000+"]),
+        ("#9D3F28", "#F08A4B", ["maimai 12000+", "maimai12000+", "12000+"]),
+        ("#72BDE8", "#C4EDFF", ["maimai 13000+", "maimai13000+", "13000+"]),
+        ("#F2B705", "#FFE77A", ["maimai 14000+", "maimai14000+", "14000+"]),
+        ("#E8CF63", "#FFF8C4", ["maimai 14500+", "maimai14500+", "14500+"]),
     ]
 
     private nonisolated static let defaults: [(hex: String, keywords: [String])] = [
@@ -695,6 +491,13 @@ enum CardTagColorPalette {
         ("#E85AA8", ["oshinoko", "我推的孩子", "推しの子", "星野爱", "星野愛", "星野アイ", "星野爱久爱海", "星野愛久愛海", "阿库亚", "阿庫亞", "露比", "有马加奈", "有馬かな", "黑川茜", "黒川あかね"]),
         ("#7BA05B", ["spyxfamily", "SPY x FAMILY", "SPY×FAMILY", "间谍过家家", "間諜家家酒", "阿尼亚福杰", "安妮亞佛傑", "アーニャ", "劳埃德福杰", "洛伊德佛傑", "ロイド", "约尔福杰", "約兒佛傑", "ヨル"]),
         ("#FFCB05", ["pokemon", "pokémon", "宝可梦", "寶可夢", "ポケモン", "精灵宝可梦", "神奇寶貝", "皮卡丘", "ピカチュウ", "小智", "サトシ", "喷火龙", "噴火龍", "リザードン", "伊布", "イーブイ", "梦幻", "夢幻", "ミュウ"]),
+        ("#32C5FF", ["maimai", "舞萌", "舞萌DX", "maimai dx", "maimaidx"]),
+        ("#D68AF2", ["maimai 10000+", "maimai10000+"]),
+        ("#F08A4B", ["maimai 12000+", "maimai12000+"]),
+        ("#C4EDFF", ["maimai 13000+", "maimai13000+"]),
+        ("#FFE77A", ["maimai 14000+", "maimai14000+"]),
+        ("#FFF8C4", ["maimai 14500+", "maimai14500+"]),
+        ("#9B6DFF", ["maimai 15000+", "maimai15000+"]),
     ]
 
     nonisolated static func colorHex(for tag: String, overrides: [String: CardTagColorOverride] = [:]) -> String {
@@ -808,6 +611,12 @@ enum CardTagColorPalette {
     }
 
     private nonisolated static func presetStyle(for tag: String) -> (style: CardTagColorStyle, solidHex: String)? {
+        if let remotePreset = RemoteTagCatalogSnapshot.colorPreset(for: tag) {
+            let hexes = normalizedPresetHexes(remotePreset.colors)
+            let solidHex = remotePreset.solidColor ?? hexes.first ?? fallbackHex
+            return (CardTagColorStyle(segmentHexes: hexes), solidHex)
+        }
+
         let key = normalized(tag)
 
         for entry in multiDefaults {
@@ -833,6 +642,10 @@ enum CardTagColorPalette {
     }
 
     private nonisolated static func defaultHexMatch(for tag: String) -> String? {
+        if let remoteHex = RemoteTagCatalogSnapshot.colors(for: tag)?.first {
+            return normalizedHex(remoteHex)
+        }
+
         let key = normalized(tag)
         for entry in defaults {
             if entry.keywords.contains(where: { key == normalized($0) }) {
@@ -859,7 +672,7 @@ enum CardTagColorPalette {
         values.compactMap(normalizedHex)
     }
 
-    private nonisolated static func normalizedHex(_ value: String) -> String? {
+    nonisolated static func normalizedHex(_ value: String) -> String? {
         var hex = value.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
         if !hex.hasPrefix("#") {
             hex = "#" + hex

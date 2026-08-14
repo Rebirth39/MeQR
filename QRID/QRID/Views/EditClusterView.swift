@@ -310,7 +310,7 @@ struct EditClusterView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     avatarPreview
                         .frame(width: 24, height: 24)
-                    Text(name.isEmpty ? "预览" : name)
+                    Text(name.isEmpty ? L.preview : name)
                         .font(.system(size: 10, weight: .semibold))
                         .foregroundStyle(textColor)
                         .lineLimit(1)
@@ -322,7 +322,7 @@ struct EditClusterView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         avatarPreview
                             .frame(width: 28, height: 28)
-                        Text(name.isEmpty ? "预览" : name)
+                        Text(name.isEmpty ? L.preview : name)
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(textColor)
                             .lineLimit(1)
@@ -339,7 +339,7 @@ struct EditClusterView: View {
                     HStack(spacing: 6) {
                         avatarPreview
                             .frame(width: 32, height: 32)
-                        Text(name.isEmpty ? "预览" : name)
+                        Text(name.isEmpty ? L.preview : name)
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundStyle(textColor)
                     }

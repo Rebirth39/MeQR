@@ -2,7 +2,6 @@ import SwiftUI
 
 struct AboutView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.appSettings) private var appSettings
 
     private var appName: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
@@ -18,14 +17,10 @@ struct AboutView: View {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"
     }
 
-    private let githubURL = URL(string: "https://github.com/Rebirth39/MeQR")!
+    private let websiteURL = URL(string: "https://meqrcode.cn/")!
+    private let privacyPolicyURL = URL(string: "https://meqrcode.cn/privacy.html")!
     private let mailURL = URL(string: "mailto:lucas_and_miku@icloud.com")!
     private let qqURL = URL(string: "https://qm.qq.com/q/ErpPGQuaAi")!
-
-    private var privacyPolicyURL: URL {
-        let path = appSettings.isChinese ? "privacy.html" : "privacy-en.html"
-        return URL(string: "https://rebirth39.github.io/MeQR/\(path)")!
-    }
 
 
     var body: some View {
@@ -34,9 +29,11 @@ struct AboutView: View {
          
                 Section {
                     VStack(spacing: 12) {
-                        Image(systemName: "qrcode")
-                            .font(.system(size: 64))
-                            .foregroundStyle(.primary)
+                        Image("AboutAppIcon")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 88, height: 88)
+                            .clipShape(RoundedRectangle(cornerRadius: 19, style: .continuous))
 
                         Text(appName)
                             .font(.title2.bold())
@@ -52,12 +49,12 @@ struct AboutView: View {
 
                 Section {
                     Button {
-                        openGitHub()
+                        openWebsite()
                     } label: {
                         HStack {
                             Image(systemName: "link")
                                 .foregroundStyle(.primary)
-                            Text(L.githubProjectPage)
+                            Text(L.website)
                             Spacer()
                             Image(systemName: "arrow.up.right.square")
                                 .font(.caption)
@@ -65,7 +62,7 @@ struct AboutView: View {
                         }
                     }
                 } footer: {
-                    Text(L.githubFooter)
+                    Text(L.websiteFooter)
                 }
 
                 Section {
@@ -132,7 +129,7 @@ struct AboutView: View {
         }
     }
 
-    private func openGitHub() {
-        UIApplication.shared.open(githubURL)
+    private func openWebsite() {
+        UIApplication.shared.open(websiteURL)
     }
 }

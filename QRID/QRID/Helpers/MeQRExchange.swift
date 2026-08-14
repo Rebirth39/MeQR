@@ -82,6 +82,15 @@ struct MeQRExchangeProfile: Codable, Identifiable, Hashable {
         return jpeg.base64EncodedString()
     }
 
+    static func colorLayerAvatarJPEG(from data: Data?, maxBytes: Int) -> Data? {
+        guard maxBytes > 0,
+              let data,
+              let image = UIImage(data: data),
+              let jpeg = image.jpegDataForMeQRAvatar(targetMaxBytes: maxBytes),
+              jpeg.count <= maxBytes else { return nil }
+        return jpeg
+    }
+
     enum CodingKeys: String, CodingKey {
         case id = "i"
         case version = "v"
@@ -308,8 +317,13 @@ private extension Data {
 
 private extension UIImage {
     func jpegDataForMeQRAvatar(targetMaxBytes: Int) -> Data? {
-        let sideCandidates: [CGFloat] = [56, 48, 40, 32, 28, 24]
-        let qualityCandidates: [CGFloat] = [0.5, 0.38, 0.28, 0.2, 0.14, 0.1]
+        let sideCandidates: [CGFloat]
+        if targetMaxBytes >= 64 * 1024 {
+            sideCandidates = [1024, 768, 512, 384, 256, 192, 160, 128, 112, 96, 80, 64, 56, 48, 40, 32, 28, 24, 20, 16]
+        } else {
+            sideCandidates = [256, 192, 160, 128, 112, 96, 80, 64, 56, 48, 40, 32, 28, 24, 20, 16]
+        }
+        let qualityCandidates: [CGFloat] = [0.84, 0.74, 0.64, 0.54, 0.44, 0.34, 0.24, 0.16, 0.1]
         var smallestJPEG: Data?
 
         for maxSide in sideCandidates {

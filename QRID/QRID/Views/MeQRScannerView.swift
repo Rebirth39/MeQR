@@ -1,6 +1,7 @@
 import SwiftUI
 import PhotosUI
 import AVFoundation
+import CoreImage
 
 struct MeQRScannerView: View {
     @Environment(\.dismiss) private var dismiss
@@ -15,8 +16,8 @@ struct MeQRScannerView: View {
         NavigationStack {
             ZStack(alignment: .bottom) {
                 if cameraAuthorized {
-                    QRScannerRepresentable { payload in
-                        handlePayload(payload)
+                    QRScannerRepresentable { payload, frame in
+                        handlePayload(payload, frame: frame)
                     }
                     .ignoresSafeArea()
                 } else {
@@ -90,24 +91,32 @@ struct MeQRScannerView: View {
         }
     }
 
-    private func handlePayload(_ payload: String) {
-        Task { await decodePayload(payload) }
+    private func handlePayload(_ payload: String, frame: UIImage?) {
+        Task {
+            var colorAvatarJPEG: Data?
+            if let frame,
+               let decoded = try? await QRCodeGenerator.decodeEnhanced(from: frame) {
+                colorAvatarJPEG = decoded.colorAvatarJPEG
+            }
+            await decodePayload(payload, colorAvatarJPEG: colorAvatarJPEG)
+        }
     }
 
     @MainActor
-    private func decodePayload(_ payload: String) async {
+    private func decodePayload(_ payload: String, colorAvatarJPEG: Data? = nil) async {
         if let localProfile = try? MeQRExchangeCodec.decode(payload) {
-            decodedProfile = localProfile
+            decodedProfile = applyingColorAvatar(colorAvatarJPEG, to: localProfile)
             return
         }
 
         if MeQRRemoteService.canFetchProfile(from: payload) {
             do {
-                decodedProfile = try await MeQRRemoteService.fetchProfile(from: payload)
+                let profile = try await MeQRRemoteService.fetchProfile(from: payload)
+                decodedProfile = applyingColorAvatar(colorAvatarJPEG, to: profile)
                 return
             } catch {
                 if let fallbackProfile = MeQRExchangeCodec.offlineFallback(from: payload) {
-                    decodedProfile = fallbackProfile
+                    decodedProfile = applyingColorAvatar(colorAvatarJPEG, to: fallbackProfile)
                     return
                 }
                 errorMessage = error.localizedDescription
@@ -117,7 +126,7 @@ struct MeQRScannerView: View {
         }
 
         if let fallbackProfile = MeQRExchangeCodec.offlineFallback(from: payload) {
-            decodedProfile = fallbackProfile
+            decodedProfile = applyingColorAvatar(colorAvatarJPEG, to: fallbackProfile)
             return
         }
 
@@ -133,17 +142,26 @@ struct MeQRScannerView: View {
                   let image = UIImage(data: data) else {
                 throw QRCodeGenerator.QRDecodeError.invalidImage
             }
-            let payload = try await QRCodeGenerator.decode(from: image)
-            await decodePayload(payload)
+            let decoded = try await QRCodeGenerator.decodeEnhanced(from: image)
+            await decodePayload(decoded.payload, colorAvatarJPEG: decoded.colorAvatarJPEG)
         } catch {
             errorMessage = error.localizedDescription
             showError = true
         }
     }
+
+    private func applyingColorAvatar(_ jpeg: Data?, to profile: MeQRExchangeProfile) -> MeQRExchangeProfile {
+        guard let jpeg else { return profile }
+        let currentBytes = profile.avatarJPEGBase64.flatMap { Data(base64Encoded: $0) }?.count ?? 0
+        guard jpeg.count > currentBytes else { return profile }
+        var enhanced = profile
+        enhanced.avatarJPEGBase64 = jpeg.base64EncodedString()
+        return enhanced
+    }
 }
 
 private struct QRScannerRepresentable: UIViewControllerRepresentable {
-    let onPayload: (String) -> Void
+    let onPayload: (String, UIImage?) -> Void
 
     func makeUIViewController(context: Context) -> QRScannerViewController {
         let controller = QRScannerViewController()
@@ -154,13 +172,17 @@ private struct QRScannerRepresentable: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: QRScannerViewController, context: Context) {}
 }
 
-private final class QRScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDelegate {
-    var onPayload: ((String) -> Void)?
+private final class QRScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDelegate, AVCaptureVideoDataOutputSampleBufferDelegate {
+    var onPayload: ((String, UIImage?) -> Void)?
 
     private let session = AVCaptureSession()
     private var previewLayer: AVCaptureVideoPreviewLayer?
     private var lastPayload = ""
     private var lastPayloadDate = Date.distantPast
+    private let frameQueue = DispatchQueue(label: "meqr.color-layer.frames", qos: .userInitiated)
+    private let frameLock = NSLock()
+    private let imageContext = CIContext()
+    private var latestPixelBuffer: CVPixelBuffer?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -203,6 +225,17 @@ private final class QRScannerViewController: UIViewController, AVCaptureMetadata
         output.setMetadataObjectsDelegate(self, queue: .main)
         output.metadataObjectTypes = [.qr]
 
+        let videoOutput = AVCaptureVideoDataOutput()
+        videoOutput.alwaysDiscardsLateVideoFrames = true
+        videoOutput.videoSettings = [
+            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
+        ]
+        if session.canAddOutput(videoOutput) {
+            session.addOutput(videoOutput)
+            videoOutput.setSampleBufferDelegate(self, queue: frameQueue)
+            videoOutput.connection(with: .video)?.videoRotationAngle = 90
+        }
+
         let layer = AVCaptureVideoPreviewLayer(session: session)
         layer.videoGravity = .resizeAspectFill
         layer.frame = view.bounds
@@ -226,6 +259,27 @@ private final class QRScannerViewController: UIViewController, AVCaptureMetadata
         lastPayloadDate = now
 
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        onPayload?(payload)
+        onPayload?(payload, latestFrameImage())
+    }
+
+    func captureOutput(
+        _ output: AVCaptureOutput,
+        didOutput sampleBuffer: CMSampleBuffer,
+        from connection: AVCaptureConnection
+    ) {
+        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        frameLock.lock()
+        latestPixelBuffer = pixelBuffer
+        frameLock.unlock()
+    }
+
+    private func latestFrameImage() -> UIImage? {
+        frameLock.lock()
+        let pixelBuffer = latestPixelBuffer
+        frameLock.unlock()
+        guard let pixelBuffer else { return nil }
+        let image = CIImage(cvPixelBuffer: pixelBuffer)
+        guard let cgImage = imageContext.createCGImage(image, from: image.extent) else { return nil }
+        return UIImage(cgImage: cgImage)
     }
 }

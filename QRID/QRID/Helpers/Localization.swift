@@ -23,10 +23,11 @@ struct L {
     // MainView
     static var qrID: String { "喜劳转扩" }
     static var noQRCodesYet: String { tr("还没有二维码", "還沒有 QR Code", "還沒有 QR Code", "No QR Codes Yet", "QRコードがまだありません") }
-    static var addFirstQR: String { tr("添加你的第一个社交二维码开始使用", "加入你的第一個社交 QR Code 開始使用", "加入你的第一個社群 QR Code 開始使用", "Add your first social QR code to get started.", "最初のSNS用QRコードを追加して始めましょう。") }
+    static var addFirstQR: String { tr("添加你的第一个社交二维码，开始使用", "加入你的第一個社交 QR Code，開始使用", "加入你的第一個社群 QR Code，開始使用", "Add your first social QR code to get started.", "最初のSNS用QRコードを追加して始めましょう。") }
     static var addQRCode: String { tr("添加二维码", "加入 QR Code", "新增 QR Code", "Add QR Code", "QRコードを追加") }
     static var deleteProfile: String { tr("删除名片", "刪除名片", "刪除名片", "Delete Profile", "プロフィールを削除") }
     static var deleteConfirm: String { tr("确定要删除", "確定要刪除", "確定要刪除", "Are you sure you want to delete", "削除しますか") }
+    static func deleteConfirm(_ name: String) -> String { tr("确定要删除 \"\(name)\" 吗？", "確定要刪除 \"\(name)\" 嗎？", "確定要刪除 \"\(name)\" 嗎？", "Are you sure you want to delete \"\(name)\"?", "\"\(name)\"を削除しますか？") }
     static var cancel: String { tr("取消", "取消", "取消", "Cancel", "キャンセル") }
     static var delete: String { tr("删除", "刪除", "刪除", "Delete", "削除") }
     static var done: String { tr("完成", "完成", "完成", "Done", "完了") }
@@ -91,7 +92,7 @@ struct L {
     static var language: String { tr("语言", "語言", "語言", "Language", "言語") }
     static var languageSelection: String { tr("语言选择", "語言選擇", "語言選擇", "Language", "言語選択") }
     static var followSystem: String { tr("跟随系统", "跟隨系統", "跟隨系統", "Follow System", "システムに合わせる") }
-    static var languageRestartNotice: String { tr("部分新语言资源可能需要重启软件才能生效", "部分新語言資源可能需要重新啟動軟件才能生效", "部分新語言資源可能需要重新啟動軟體才能生效", "Some new language resources may require restarting the app to take effect.", "一部の新しい言語リソースは、アプリの再起動後に反映される場合があります。") }
+    static var languageRestartNotice: String { tr("部分新语言内容可能需要重启软件才能生效", "部分新語言內容可能需要重新啟動軟件才能生效", "部分新語言內容可能需要重新啟動軟體才能生效", "Some new language resources may require restarting the app to take effect.", "一部の新しい言語リソースは、アプリの再起動後に反映される場合があります。") }
     static var chinese: String { tr("中文", "中文", "中文", "Chinese", "中国語") }
     static var english: String { tr("English", "English", "English", "English", "英語") }
 
@@ -105,7 +106,7 @@ struct L {
     static var addQRToCluster: String { tr("添加二维码", "加入 QR Code", "新增 QR Code", "Add QR Code", "QRコードを追加") }
     static var clusterInfo: String { tr("卡片信息", "卡片資料", "卡片資訊", "Card Info", "カード情報") }
     static var clusterName: String { tr("卡片名称", "卡片名稱", "卡片名稱", "Card Name", "カード名") }
-    static var sharedFieldsNote: String { tr("以下信息由卡片共享，编辑请前往卡片设置", "以下資料由卡片共用，請到卡片設定編輯", "以下資訊由卡片共用，請到卡片設定編輯", "Shared by card. Edit in card settings.", "以下はカードで共有されます。編集はカード設定から行ってください。") }
+    static var sharedFieldsNote: String { tr("这些信息由卡片共享，想改的话去卡片设置", "這些資料由卡片共用，想改的話去卡片設定", "這些資訊由卡片共用，想改的話去卡片設定", "Shared by card. Edit in card settings.", "以下はカードで共有されます。編集はカード設定から行ってください。") }
     static var chooseAction: String { tr("选择操作", "選擇操作", "選擇操作", "Choose Action", "操作を選択") }
     static var qrCodesInCluster: String { tr("卡片中的二维码", "卡片中的 QR Code", "卡片中的 QR Code", "QR Codes", "QRコード") }
     static var noClustersYet: String { tr("还没有卡片", "還沒有卡片", "還沒有卡片", "No Cards Yet", "カードがまだありません") }
@@ -137,14 +138,14 @@ struct L {
     static var meqrCodeStillPreparing: String { tr("交换码还在生成，等它一下。", "交換碼還在產生，等它一下。", "交換碼還在產生，等它一下。", "The code is still being prepared.", "交換コードを準備中です。") }
     static var exchangeCardIntro: String { tr("展示文案", "展示文案", "展示文案", "Display Intro", "表示テキスト") }
     static var exchangeCardIntroHint: String { tr("显示在交换码页面和名片里，最多 25 个汉字；英文数字按半个汉字算。", "顯示在交換碼頁面和名片裡，最多 25 個漢字；英文數字按半個漢字算。", "顯示在交換碼頁面和名片裡，最多 25 個漢字；英文數字按半個漢字算。", "Shown on the exchange page and profile card. Up to 25 CJK characters; Latin letters count as half.", "交換コード画面とプロフィールに表示します。漢字25文字まで、英数字は半分換算。") }
-    static var includedPlatforms: String { tr("塞进交换码的平台", "放入交換碼的平台", "放進交換碼的平台", "Included Platforms", "交換コードに入れる平台") }
-    static var offlineFallbackPlatform: String { tr("离线备用平台", "離線備用平台", "離線備用平台", "Offline Backup Platform", "オフライン予備平台") }
-    static var offlineFallbackPlatformHint: String { tr("没网的时候只保这个平台，加上昵称和 25 个字以内的介绍。", "無網時只保留這個平台，加上暱稱和 25 字以內的介紹。", "沒網時只保留這個平台，加上暱稱和 25 字以內的介紹。", "When offline, MeQR keeps only this platform plus your name and a short intro.", "オフライン時は、この平台と名前、短い紹介だけを残します。") }
+    static var includedPlatforms: String { tr("塞进交换码的平台", "放入交換碼的平台", "放進交換碼的平台", "Included Platforms", "交換コードに入れるプラットフォーム") }
+    static var offlineFallbackPlatform: String { tr("离线备用平台", "離線備用平台", "離線備用平台", "Offline Backup Platform", "オフライン予備プラットフォーム") }
+    static var offlineFallbackPlatformHint: String { tr("没网的时候只保留这个平台，加上昵称和 25 个字以内的介绍。", "無網時只保留這個平台，加上暱稱和 25 字以內的介紹。", "沒網時只保留這個平台，加上暱稱和 25 字以內的介紹。", "When offline, MeQR keeps only this platform plus your name and a short intro.", "オフライン時は、このプラットフォームと名前、短い紹介だけを残します。") }
     static var chooseAtLeastThreePlatforms: String { tr("至少保留 3 个平台，这样扫出来不会太空。", "至少保留 3 個平台，掃出來才不會太空。", "至少保留 3 個平台，掃出來才不會太空。", "Keep at least 3 platforms so the card does not look empty.", "最低3個は入れておくと、カードが空っぽに見えません。") }
     static var chooseUpToThreePlatforms: String { tr("最多塞 3 个平台，不然这个码会胖到扫不动。", "最多放 3 個平台，不然這個碼會太胖不好掃。", "最多放 3 個平台，不然這個碼會太胖不好掃。", "Pick up to 3 platforms so the code stays scannable.", "読み取りやすくするため、最大3個まで選べます。") }
     static func meqrIncludedPlatforms(_ count: Int, _ names: String) -> String {
         if names.isEmpty {
-            return tr("当前没有可交换的平台", "目前沒有可交換的平台", "目前沒有可交換的平台", "No platforms are included yet.", "共有できる平台がまだありません。")
+            return tr("当前没有可交换的平台", "目前沒有可交換的平台", "目前沒有可交換的平台", "No platforms are included yet.", "共有できるプラットフォームがまだありません。")
         }
         return tr(
             "当前交换 \(count) 个：\(names)",
@@ -159,7 +160,7 @@ struct L {
     static var meqrProfileFound: String { tr("发现 MeQR 名片", "發現 MeQR 名片", "發現 MeQR 名片", "MeQR Profile Found", "MeQRプロフィールを検出") }
     static var saveEncounter: String { tr("保存记录", "儲存記錄", "儲存紀錄", "Save Encounter", "記録を保存") }
     static var saved: String { tr("已保存", "已儲存", "已儲存", "Saved", "保存済み") }
-    static var platformsFromMeQR: String { tr("交换的平台", "交換的平台", "交換的平台", "Shared Platforms", "共有された平台") }
+    static var platformsFromMeQR: String { tr("交换的平台", "交換的平台", "交換的平台", "Shared Platforms", "共有されたプラットフォーム") }
     static var activeEvent: String { tr("当前活动", "目前活動", "目前活動", "Active Event", "現在のイベント") }
     static var noActiveEvent: String { tr("不绑定活动", "不綁定活動", "不綁定活動", "No Active Event", "イベントなし") }
     static var noActiveEventHint: String { tr("扫码保存时只记录时间，不归到具体展子。", "掃碼儲存時只記錄時間，不歸到具體展子。", "掃描儲存時只記錄時間，不歸到具體活動。", "New scans will not be attached to an event.", "新しい記録をイベントに紐づけません。") }
@@ -192,6 +193,15 @@ struct L {
     static var addColor: String { tr("增加颜色", "增加顏色", "新增顏色", "Add Color", "色を追加") }
     static var removeColor: String { tr("移除颜色", "移除顏色", "移除顏色", "Remove Color", "色を削除") }
     static var cardTagsHint: String { tr("输入后按回车添加，最多 10 个；会显示在通行证背面。", "輸入後按 Return 加入，最多 10 個；會顯示在通行證背面。", "輸入後按 Return 新增，最多 10 個；會顯示在通行證背面。", "Press Return to add. Up to 10 tags, shown on the pass back.", "入力後Returnで追加。最大10個、パス裏面に表示します。") }
+    static var tagCatalogLoading: String { tr("正在载入在线 Tag 库", "正在載入線上 Tag 庫", "正在載入線上 Tag 庫", "Loading the online Tag library", "オンラインTagライブラリを読み込み中") }
+    static var tagCatalogRetry: String { tr("Tag 库载入失败，点按重试", "Tag 庫載入失敗，點按重試", "Tag 庫載入失敗，點按重試", "Tag library unavailable. Tap to retry.", "Tagライブラリを読み込めません。タップして再試行") }
+    static var tagCatalogOnline: String { tr("Tag 库由服务器实时更新", "Tag 庫由伺服器即時更新", "Tag 庫由伺服器即時更新", "Tag library updates from the server", "Tagライブラリはサーバーから更新されます") }
+    static var tagLibrary: String { tr("Tag 库", "Tag 庫", "Tag 庫", "Tag Library", "Tagライブラリ") }
+    static var browseTagLibrary: String { tr("浏览 Tag 库", "瀏覽 Tag 庫", "瀏覽 Tag 庫", "Browse Tag Library", "Tagライブラリを見る") }
+    static var searchTags: String { tr("搜索所有 IP 和 Tag", "搜尋所有 IP 和 Tag", "搜尋所有 IP 和 Tag", "Search all IPs and tags", "作品・Tagを検索") }
+    static var browseByIP: String { tr("按 IP 浏览", "按 IP 瀏覽", "依 IP 瀏覽", "Browse by IP", "作品別に見る") }
+    static func tagsAvailable(_ count: Int) -> String { tr("\(count) 个 Tag", "\(count) 個 Tag", "\(count) 個 Tag", "\(count) tags", "\(count)件のTag") }
+    static var noTagResults: String { tr("没有找到 Tag", "找不到 Tag", "找不到 Tag", "No Tags Found", "Tagが見つかりません") }
     static var followStatus: String { tr("互关状态 / 返图进度", "互關狀態 / 返圖進度", "互關狀態 / 返圖進度", "Follow / photo status", "フォロー・返礼状況") }
     static var needsPhotoReturn: String { tr("需要返图", "需要返圖", "需要返圖", "Needs photo return", "写真返却が必要") }
     static var exchangedFreebie: String { tr("交换过无料", "交換過無料", "交換過無料配布", "Freebie exchanged", "無配交換済み") }
@@ -200,6 +210,24 @@ struct L {
     static var cameraPermissionNeeded: String { tr("需要相机权限才能扫描 MeQR 交换码。", "需要相機權限才能掃描 MeQR 交換碼。", "需要相機權限才能掃描 MeQR 交換碼。", "Camera permission is needed to scan MeQR codes.", "MeQRコードをスキャンするにはカメラへのアクセスが必要です。") }
     static var couldNotSave: String { tr("无法保存", "無法儲存", "無法儲存", "Could Not Save", "保存できません") }
     static var tryAgain: String { tr("无法保存，请重试。", "無法儲存，請再試一次。", "無法儲存，請再試一次。", "Please try again.", "もう一度お試しください。") }
+    static var enterCardName: String { tr("请输入卡片名称。", "請輸入卡片名稱。", "請輸入卡片名稱。", "Please enter a card name.", "カード名を入力してください。") }
+    static var enterQRContent: String { tr("请输入二维码内容。", "請輸入 QR Code 內容。", "請輸入 QR Code 內容。", "Please enter the QR code content.", "QRコードの内容を入力してください。") }
+    static func saveFailedWithReason(_ reason: String) -> String { tr("保存失败：\(reason)", "儲存失敗：\(reason)", "儲存失敗：\(reason)", "Save failed: \(reason)", "保存に失敗しました：\(reason)") }
+    static func exchangeIntroUsage(_ count: String) -> String { tr("\(count) / 25 汉字", "\(count) / 25 漢字", "\(count) / 25 漢字", "\(count) / 25 CJK characters", "\(count) / 25 文字") }
+    static var previewSampleTags: [String] {
+        switch AppSettings.shared.resolvedLanguage {
+        case .system, .en:
+            return ["Hatsune Miku", "Convention", "Photography"]
+        case .zhHans:
+            return ["初音未来", "漫展", "摄影"]
+        case .zhHantHK:
+            return ["初音未來", "漫展", "攝影"]
+        case .zhHantTW:
+            return ["初音未來", "漫展", "攝影"]
+        case .ja:
+            return ["初音ミク", "即売会", "写真"]
+        }
+    }
     static var longPressToReorder: String { tr("长按卡片排序", "長按卡片排序", "長按卡片排序", "Long press to reorder", "長押しして並べ替え") }
 
     // Widget
@@ -225,9 +253,9 @@ struct L {
     // About
     static var versionBuild: String { tr("版本", "版本", "版本", "Version", "バージョン") }
     static var build: String { tr("构建", "構建", "建置", "Build", "ビルド") }
-    static var githubProjectPage: String { tr("GitHub 项目页面", "GitHub 項目頁面", "GitHub 專案頁面", "GitHub Project", "GitHubプロジェクト") }
-    static var githubFooter: String { tr("如果想看更多的软件介绍的话点一下上面的按钮可以跳到GitHub页面w", "如果想看更多軟件介紹，可以點上面的按鈕跳到 GitHub 頁面w", "如果想看更多 App 介紹，可以點上面的按鈕跳到 GitHub 頁面w", "Tap the button above to open the GitHub page for more app info.", "上のボタンからGitHubページを開けます。") }
-    static var privacyFooter: String { tr("这个链接会跳到 GitHub 上公开放着的隐私政策页面。", "這個連結會跳到 GitHub 上公開放着的私隱政策頁面。", "這個連結會開啟 GitHub 上公開放置的隱私權政策頁面。", "This link opens the public privacy policy page on GitHub.", "このリンクはGitHub上の公開プライバシーポリシーを開きます。") }
+    static var website: String { tr("跳转官网", "前往官網", "前往官網", "Open Website", "公式サイトを開く") }
+    static var websiteFooter: String { tr("点击上面的按钮可以前往 MeQR 官网。", "點擊上面的按鈕可以前往 MeQR 官網。", "點擊上面的按鈕可以前往 MeQR 官網。", "Tap the button above to open the MeQR website.", "上のボタンからMeQR公式サイトを開けます。") }
+    static var privacyFooter: String { tr("这个链接会跳到官网的隐私政策页面。", "這個連結會跳到官網的私隱政策頁面。", "這個連結會開啟官網的隱私權政策頁面。", "This link opens the privacy policy on the MeQR website.", "このリンクはMeQR公式サイトのプライバシーポリシーを開きます。") }
     static var email: String { tr("邮箱", "電郵", "電子郵件", "Email", "メール") }
     static var developerIntro: String { tr("开发者介绍", "開發者介紹", "開發者介紹", "Developer Intro", "開発者紹介") }
     static var developerStudent: String { tr("目前高中就读 初⚪︎未来重度依赖（）", "目前高中就讀 初⚪︎未來重度依賴（）", "目前高中就讀 初⚪︎未來重度依賴（）", "High school student, heavily dependent on Hat⚪︎ne Miku.", "高校生です。初⚪︎ミクにかなり依存しています。") }

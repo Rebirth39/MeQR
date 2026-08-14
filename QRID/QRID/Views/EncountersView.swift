@@ -379,12 +379,14 @@ struct EventCenterView: View {
                     }
                     .buttonStyle(.bordered)
 
-                    Button {
-                        openURL(amapURL(for: event))
-                    } label: {
-                        Label(L.amap, systemImage: "location")
+                    if canOpenAmap {
+                        Button {
+                            openURL(amapURL(for: event))
+                        } label: {
+                            Label(L.amap, systemImage: "location")
+                        }
+                        .buttonStyle(.bordered)
                     }
-                    .buttonStyle(.bordered)
                 }
                 .controlSize(.small)
             }
@@ -405,6 +407,11 @@ struct EventCenterView: View {
         }
         let query = event.navigationQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? event.navigationQuery
         return URL(string: "http://maps.apple.com/?q=\(query)")!
+    }
+
+    private var canOpenAmap: Bool {
+        guard let url = URL(string: "iosamap://") else { return false }
+        return UIApplication.shared.canOpenURL(url)
     }
 
     private func amapURL(for event: MeQREvent) -> URL {

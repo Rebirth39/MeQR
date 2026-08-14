@@ -207,7 +207,7 @@ struct MainView: View {
                     clusterIdBeforeReorder = nil
                 }
             }
-            .confirmationDialog(L.deleteProfile, isPresented: $showingDeleteOptions) {
+            .confirmationDialog(L.deleteCluster, isPresented: $showingDeleteOptions) {
                 if let cluster = currentCluster, cluster.profiles.count > 1 {
                     Button(L.deleteQRFromCluster, role: .destructive) {
                         deleteCurrentQR()
@@ -226,7 +226,7 @@ struct MainView: View {
                 if let cluster = currentCluster, cluster.profiles.count > 1 {
                     Text("\(L.deleteClusterConfirm)")
                 } else {
-                    Text("\(L.deleteConfirm) \"\(currentCluster?.name ?? "")\"?")
+                    Text(L.deleteConfirm(currentCluster?.name ?? ""))
                 }
             }
             .onAppear {
@@ -445,8 +445,6 @@ struct MainView: View {
                 DispatchQueue.main.async {
                     if success {
                         showSavedAlert = true
-                    } else {
-                        print("Failed to save card: \(error?.localizedDescription ?? "unknown error")")
                     }
                 }
             }

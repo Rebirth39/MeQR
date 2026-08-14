@@ -33,9 +33,8 @@ struct QRIDApp: App {
         WindowGroup {
             AppRootView()
                 .environment(\.appSettings, AppSettings.shared)
-                .onOpenURL { url in
+                .onOpenURL { _ in
                     // Widget tap opens app via meqr://open
-                    print("Opened from URL: \(url)")
                 }
                 .background {
                     WidgetSyncView()

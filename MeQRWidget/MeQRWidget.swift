@@ -43,7 +43,7 @@ struct Provider: TimelineProvider {
     }
 
     private func loadClusters() -> [WidgetCluster] {
-        let appGroupID = "group.com.lucasli.qrid"
+        let appGroupID = "group.com.lucasli.meqr"
         guard let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupID) else {
             return []
         }

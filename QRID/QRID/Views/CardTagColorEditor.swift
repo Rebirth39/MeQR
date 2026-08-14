@@ -157,17 +157,13 @@ struct CardTagColorEditor: View {
 struct CardTagInputView: View {
     @Binding var text: String
     var colorOverrides: [String: CardTagColorOverride] = [:]
+    @StateObject private var remoteCatalog = RemoteTagCatalog.shared
     @State private var draft = ""
+    @State private var suggestions: [String] = []
+    @State private var showingCatalog = false
 
     private var tags: [String] {
         CardTagLimiter.tags(from: text)
-    }
-
-    private var suggestions: [String] {
-        CardTagIndex.suggestions(
-            for: draft,
-            excluding: tags
-        )
     }
 
     var body: some View {
@@ -187,6 +183,7 @@ struct CardTagInputView: View {
                 TextField(L.tags, text: $draft)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
+                    .disabled(tags.count >= CardTagLimiter.maxTags)
                     .onSubmit {
                         commitDraft()
                     }
@@ -197,11 +194,19 @@ struct CardTagInputView: View {
                 Text("\(tags.count)/\(CardTagLimiter.maxTags)")
                     .font(.caption2.monospacedDigit())
                     .foregroundStyle(.secondary)
+
+                Button {
+                    showingCatalog = true
+                } label: {
+                    Image(systemName: "magnifyingglass")
+                        .frame(width: 28, height: 28)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(L.browseTagLibrary)
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 8)
             .background(.quaternary.opacity(0.55), in: RoundedRectangle(cornerRadius: 8))
-            .disabled(tags.count >= CardTagLimiter.maxTags)
 
             if tags.count >= CardTagLimiter.maxTags {
                 Text(L.cardTagsHint)
@@ -228,22 +233,62 @@ struct CardTagInputView: View {
                 }
             }
 
+            if remoteCatalog.isLoading && suggestions.isEmpty {
+                HStack(spacing: 7) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text(L.tagCatalogLoading)
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            } else if remoteCatalog.errorMessage != nil && suggestions.isEmpty {
+                Button {
+                    Task { await remoteCatalog.refresh() }
+                } label: {
+                    Label(L.tagCatalogRetry, systemImage: "arrow.clockwise")
+                        .font(.caption.weight(.semibold))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+            } else if !remoteCatalog.revision.isEmpty {
+                Text(L.tagCatalogOnline)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+
             if tags.count < CardTagLimiter.maxTags {
                 Text(L.cardTagsHint)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
         }
+        .task {
+            await remoteCatalog.refreshIfNeeded()
+        }
+        .task(id: draft) {
+            guard !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                suggestions = []
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(120))
+            guard !Task.isCancelled else { return }
+            suggestions = CardTagIndex.suggestions(for: draft, excluding: tags)
+        }
+        .sheet(isPresented: $showingCatalog) {
+            CardTagCatalogBrowser(text: $text, colorOverrides: colorOverrides)
+        }
     }
 
     private func commitDraft() {
         appendTags([draft])
         draft = ""
+        suggestions = []
     }
 
     private func applySuggestion(_ suggestion: String) {
         appendTags([suggestion])
         draft = ""
+        suggestions = []
     }
 
     private func commitPastedLinesIfNeeded(_ value: String) {

@@ -103,7 +103,6 @@ enum BackupManager {
             try data.write(to: url)
             return url
         } catch {
-            print("Failed to export backup: \(error)")
             return nil
         }
     }
@@ -115,7 +114,9 @@ enum BackupManager {
             clusters: clusters.map(makeClusterBackup)
         )
         let data = try JSONEncoder().encode(backup)
-        let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        guard let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            throw CocoaError(.fileNoSuchFile)
+        }
         let formatter = ISO8601DateFormatter()
         let safeDate = formatter.string(from: Date()).replacingOccurrences(of: ":", with: "-")
         let destination = documents.appendingPathComponent("MeQR-PreRestore-\(safeDate).json")
@@ -192,23 +193,20 @@ enum BackupManager {
             return true
         } catch {
             modelContext.rollback()
-            print("Failed to import backup: \(error)")
             return false
         }
     }
 
     static func writeAutoBackup(clusters: [QRCluster]) {
-        guard let backup = exportBackup(clusters: clusters) else { return }
+        guard let backup = exportBackup(clusters: clusters),
+              let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
         do {
-            let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
             let destination = documents.appendingPathComponent(backupFileName)
             if FileManager.default.fileExists(atPath: destination.path) {
                 try FileManager.default.removeItem(at: destination)
             }
             try FileManager.default.copyItem(at: backup, to: destination)
-        } catch {
-            print("Failed to write auto backup: \(error)")
-        }
+        } catch { }
     }
 
     static func autoBackupURL() -> URL? {

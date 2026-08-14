@@ -127,7 +127,7 @@ final class EventStore: ObservableObject {
 
     private let storageKey = "meqr_events_v1"
     private let activeEventStorageKey = "meqr_active_event_id_v1"
-    private let remoteEventsURL = URL(string: "https://meqr-api-bovpnioqev.cn-shanghai.fcapp.run/events")
+    private let remoteEventsURL = URL(string: "https://api.meqrcode.cn/events")
 
     var activeEvent: MeQREvent? {
         guard let activeEventID else { return nil }
@@ -146,7 +146,9 @@ final class EventStore: ObservableObject {
         defer { isRefreshing = false }
 
         do {
-            let (data, response) = try await URLSession.shared.data(from: remoteEventsURL)
+            var request = URLRequest(url: remoteEventsURL, timeoutInterval: 15)
+            request.httpMethod = "GET"
+            let (data, response) = try await URLSession.shared.data(for: request)
             if let httpResponse = response as? HTTPURLResponse,
                !(200..<300).contains(httpResponse.statusCode) {
                 throw URLError(.badServerResponse)

@@ -1,7 +1,7 @@
 import Foundation
 
 enum MeQRRemoteService {
-    private static let apiBaseURL = URL(string: "https://meqr-api-bovpnioqev.cn-shanghai.fcapp.run")!
+    private static let apiBaseURL = URL(string: "https://api.meqrcode.cn")!
 
     static func uploadProfile(_ profile: MeQRExchangeProfile) async throws -> String {
         var request = URLRequest(url: apiBaseURL.appendingPathComponent("profiles"))

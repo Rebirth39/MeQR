@@ -28,7 +28,7 @@ struct WidgetClusterData: Codable {
 }
 
 enum WidgetDataHelper {
-    static let appGroupID = "group.com.lucasli.qrid"
+    static let appGroupID = "group.com.lucasli.meqr"
 
     static var sharedFileURL: URL? {
         FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupID)?.appendingPathComponent("clusters.json")
@@ -68,36 +68,6 @@ enum WidgetDataHelper {
             try? data.write(to: url)
         }
 
-        WidgetCenter.shared.reloadAllTimelines()
-    }
-
-    static func writeTestData() {
-        let test = WidgetClusterData(
-            id: "test",
-            name: "测试",
-            subtitle: "",
-            backgroundColorHex: "#FFFFFF",
-            borderColorHex: "#000000",
-            textColorHex: "#000000",
-            avatarBase64: nil,
-            profileCount: 1,
-            qrContent: "https://example.com",
-            qrColorHex: "#000000",
-            useClusterBackground: true,
-            widgetOpacity: 0.8,
-            widgetBackgroundImageBase64: nil,
-            widgetTextColorHex: "#000000",
-            widgetSmallOffsetX: 0,
-            widgetSmallOffsetY: 0,
-            widgetMediumOffsetX: 0,
-            widgetMediumOffsetY: 0,
-            widgetLargeOffsetX: 0,
-            widgetLargeOffsetY: 0
-        )
-        guard let url = sharedFileURL else { return }
-        if let data = try? JSONEncoder().encode([test]) {
-            try? data.write(to: url)
-        }
         WidgetCenter.shared.reloadAllTimelines()
     }
 }

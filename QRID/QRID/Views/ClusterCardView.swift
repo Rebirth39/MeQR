@@ -421,12 +421,8 @@ struct ClusterCardView: View {
                 cardTagChips
             }
 
-            VStack(alignment: .leading, spacing: 8) {
-                if cluster.subtitle.isEmpty {
-                    Text(L.subtitleInfo)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(cluster.textColor.opacity(0.38))
-                } else {
+            if !cluster.subtitle.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
                     ScrollView(.vertical, showsIndicators: false) {
                         Text(cluster.subtitle)
                             .font(.subheadline.weight(.medium))
@@ -436,14 +432,14 @@ struct ClusterCardView: View {
                     }
                     .frame(maxHeight: 190)
                 }
+                .padding(14)
+                .frame(maxWidth: .infinity, minHeight: 150, alignment: .topLeading)
+                .background(.white.opacity(0.38), in: RoundedRectangle(cornerRadius: 14))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(cluster.textColor.opacity(0.12), lineWidth: 1)
+                )
             }
-            .padding(14)
-            .frame(maxWidth: .infinity, minHeight: 150, alignment: .topLeading)
-            .background(.white.opacity(0.38), in: RoundedRectangle(cornerRadius: 14))
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(cluster.textColor.opacity(0.12), lineWidth: 1)
-            )
         }
     }
 
@@ -455,6 +451,7 @@ struct ClusterCardView: View {
                 Text(tag)
                     .font(.caption2.weight(.black))
                     .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
                     .padding(.horizontal, 9)
                     .padding(.vertical, 5)
                     .foregroundStyle(tagColor.uiContrastColor.opacity(0.92))

@@ -24,7 +24,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
         }
     }
 
-    static func preferredSystemLanguage() -> AppLanguage {
+    nonisolated static func preferredSystemLanguage() -> AppLanguage {
         for identifier in Locale.preferredLanguages {
             if let language = language(matching: identifier) {
                 return language
@@ -33,7 +33,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
         return .en
     }
 
-    private static func language(matching identifier: String) -> AppLanguage? {
+    nonisolated private static func language(matching identifier: String) -> AppLanguage? {
         let normalized = identifier.replacingOccurrences(of: "_", with: "-").lowercased()
         if normalized.hasPrefix("en") {
             return .en
