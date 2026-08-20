@@ -2,8 +2,10 @@ import SwiftUI
 import PhotosUI
 import AVFoundation
 import CoreImage
+import SwiftData
 
 struct MeQRScannerView: View {
+    let localCluster: QRCluster?
     @Environment(\.dismiss) private var dismiss
 
     @State private var pickedItem: PhotosPickerItem?
@@ -11,6 +13,11 @@ struct MeQRScannerView: View {
     @State private var errorMessage: String?
     @State private var showError = false
     @State private var cameraAuthorized = AVCaptureDevice.authorizationStatus(for: .video) == .authorized
+    @State private var pendingSessionID: String?
+
+    init(localCluster: QRCluster? = nil) {
+        self.localCluster = localCluster
+    }
 
     var body: some View {
         NavigationStack {
@@ -58,7 +65,11 @@ struct MeQRScannerView: View {
                 Task { await decodePhoto(item) }
             }
             .sheet(item: $decodedProfile) { profile in
-                EncounterPreviewView(profile: profile)
+                EncounterPreviewView(
+                    profile: profile,
+                    sessionID: pendingSessionID,
+                    localProfile: localProfile
+                )
             }
             .alert(L.couldNotDecodeQR, isPresented: $showError) {
                 Button(L.ok, role: .cancel) {}
@@ -104,9 +115,25 @@ struct MeQRScannerView: View {
 
     @MainActor
     private func decodePayload(_ payload: String, colorAvatarJPEG: Data? = nil) async {
+        pendingSessionID = nil
+
         if let localProfile = try? MeQRExchangeCodec.decode(payload) {
             decodedProfile = applyingColorAvatar(colorAvatarJPEG, to: localProfile)
             return
+        }
+
+        if MeQRRemoteService.canFetchEncounterSession(from: payload) {
+            do {
+                let session = try await MeQRRemoteService.fetchEncounterSession(from: payload)
+                guard let creatorProfile = session.creatorProfile else {
+                    throw MeQRRemoteServiceError.server(L.notMeQRProfileCode)
+                }
+                pendingSessionID = session.sessionID
+                decodedProfile = applyingColorAvatar(colorAvatarJPEG, to: creatorProfile)
+                return
+            } catch {
+                // Continue to the offline fragment below when the session is unavailable.
+            }
         }
 
         if MeQRRemoteService.canFetchProfile(from: payload) {
@@ -132,6 +159,11 @@ struct MeQRScannerView: View {
 
         errorMessage = L.notMeQRProfileCode
         showError = true
+    }
+
+    private var localProfile: MeQRExchangeProfile? {
+        guard let localCluster else { return nil }
+        return MeQRExchangeProfile(cluster: localCluster, avatarMaxBytes: 256 * 1024)
     }
 
     @MainActor

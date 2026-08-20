@@ -191,7 +191,7 @@ struct MainView: View {
                 }
             }
             .sheet(isPresented: $showingMeQRScanner) {
-                MeQRScannerView()
+                MeQRScannerView(localCluster: currentCluster)
             }
             .sheet(isPresented: $showingEncounters) {
                 EncountersView()

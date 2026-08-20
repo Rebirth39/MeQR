@@ -18,7 +18,9 @@ struct AboutView: View {
     }
 
     private let websiteURL = URL(string: "https://meqrcode.cn/")!
+    private let supportURL = URL(string: "https://support.meqrcode.cn/")!
     private let privacyPolicyURL = URL(string: "https://meqrcode.cn/privacy.html")!
+    private let icpFilingURL = URL(string: "https://beian.miit.gov.cn/")!
     private let mailURL = URL(string: "mailto:lucas_and_miku@icloud.com")!
     private let qqURL = URL(string: "https://qm.qq.com/q/ErpPGQuaAi")!
 
@@ -48,6 +50,18 @@ struct AboutView: View {
                 .listRowBackground(Color.clear)
 
                 Section {
+                    Link(destination: supportURL) {
+                        HStack {
+                            Image(systemName: "questionmark.bubble")
+                                .foregroundStyle(.primary)
+                            Text(OnboardingCopy.openSupport)
+                            Spacer()
+                            Image(systemName: "arrow.up.right.square")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
                     Button {
                         openWebsite()
                     } label: {
@@ -72,6 +86,21 @@ struct AboutView: View {
                                 .foregroundStyle(.primary)
                             Text(L.privacyPolicy)
                             Spacer()
+                            Image(systemName: "arrow.up.right.square")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    Link(destination: icpFilingURL) {
+                        HStack {
+                            Image(systemName: "checkmark.shield")
+                                .foregroundStyle(.primary)
+                            Text(L.icpFiling)
+                            Spacer()
+                            Text("粤ICP备2026097629号-2A")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                             Image(systemName: "arrow.up.right.square")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)

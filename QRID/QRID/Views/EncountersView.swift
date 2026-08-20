@@ -2,6 +2,8 @@ import SwiftUI
 
 struct EncounterPreviewView: View {
     let profile: MeQRExchangeProfile
+    var sessionID: String? = nil
+    var localProfile: MeQRExchangeProfile? = nil
 
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var store = EncounterStore.shared
@@ -43,7 +45,15 @@ struct EncounterPreviewView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(saved ? L.saved : L.saveEncounter) {
-                        store.add(profile, event: eventStore.activeEvent)
+                        store.add(profile, event: eventStore.activeEvent, sessionID: sessionID)
+                        if let sessionID, let localProfile {
+                            Task {
+                                try? await MeQRRemoteService.confirmEncounterSession(
+                                    sessionID: sessionID,
+                                    peerProfile: localProfile
+                                )
+                            }
+                        }
                         saved = true
                         dismiss()
                     }
@@ -78,6 +88,15 @@ struct EncountersView: View {
     var body: some View {
         NavigationStack {
             List {
+                if store.pendingSessionCount > 0 {
+                    Section {
+                        Label(
+                            L.encounterWaitingForPeer(store.pendingSessionCount),
+                            systemImage: "clock.arrow.circlepath"
+                        )
+                        .foregroundStyle(.secondary)
+                    }
+                }
                 Section {
                     Button {
                         showingEvents = true
@@ -121,6 +140,12 @@ struct EncountersView: View {
                     }
                     .onDelete(perform: delete)
                 }
+            }
+            .refreshable {
+                await store.syncPendingSessions()
+            }
+            .task {
+                await store.syncPendingSessions()
             }
             .searchable(text: $searchText, prompt: L.searchEncounters)
             .navigationTitle(L.encounters)

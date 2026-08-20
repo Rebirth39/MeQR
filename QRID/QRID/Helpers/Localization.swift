@@ -125,6 +125,7 @@ struct L {
     static var settings: String { tr("设置", "設定", "設定", "Settings", "設定") }
     static var aboutSoftware: String { tr("关于软件", "關於軟件", "關於 App", "About", "このアプリについて") }
     static var privacyPolicy: String { tr("隐私政策", "私隱政策", "隱私權政策", "Privacy Policy (English)", "プライバシーポリシー（英語）") }
+    static var icpFiling: String { tr("备案信息", "備案資訊", "備案資訊", "ICP Filing", "ICP备案") }
     static var contactDeveloper: String { tr("联系开发者", "聯絡開發者", "聯絡開發者", "Contact Developer", "開発者に連絡") }
     static var developerInfo: String { tr("开发者信息", "開發者資料", "開發者資訊", "Developer Info", "開発者情報") }
     static var savedToPhotos: String { tr("已保存到相册", "已儲存到相簿", "已儲存到照片", "Saved to Photos", "写真に保存しました") }
@@ -181,6 +182,7 @@ struct L {
     static var searchEncounters: String { tr("搜索昵称、备注、标签", "搜尋暱稱、備註、標籤", "搜尋暱稱、備註、標籤", "Search names, notes, tags", "名前、メモ、タグを検索") }
     static var noSearchResults: String { tr("没有搜索结果", "沒有搜尋結果", "沒有搜尋結果", "No Results", "結果がありません") }
     static var tryAnotherSearch: String { tr("换个关键词试试。", "換個關鍵字試試。", "換個關鍵字試試。", "Try another search.", "別のキーワードを試してください。") }
+    static func encounterWaitingForPeer(_ count: Int) -> String { tr("等待对方确认的认识记录：(count)", "等待對方確認的認識記錄：(count)", "等待對方確認的認識紀錄：(count)", "Waiting for peer confirmation: (count)", "相手の確認待ち：(count)") }
     static var encounterInfo: String { tr("记录信息", "記錄資料", "紀錄資訊", "Encounter Info", "記録情報") }
     static var metAt: String { tr("认识时间", "認識時間", "認識時間", "Met At", "会った日時") }
     static var note: String { tr("备注", "備註", "備註", "Note", "メモ") }

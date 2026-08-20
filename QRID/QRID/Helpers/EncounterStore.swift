@@ -3,6 +3,7 @@ import Combine
 
 struct EncounterRecord: Codable, Identifiable, Hashable {
     var id: UUID
+    var sessionID: String?
     var name: String
     var subtitle: String
     var avatarJPEGBase64: String?
@@ -19,8 +20,9 @@ struct EncounterRecord: Codable, Identifiable, Hashable {
     var exchangedFreebie: Bool?
     var followStatus: String?
 
-    init(exchangeProfile: MeQRExchangeProfile, event: MeQREvent? = nil) {
+    init(exchangeProfile: MeQRExchangeProfile, event: MeQREvent? = nil, sessionID: String? = nil) {
         id = UUID()
+        self.sessionID = sessionID
         name = exchangeProfile.name
         subtitle = exchangeProfile.subtitle
         avatarJPEGBase64 = exchangeProfile.avatarJPEGBase64
@@ -37,6 +39,11 @@ struct EncounterRecord: Codable, Identifiable, Hashable {
         exchangedFreebie = false
         followStatus = nil
     }
+}
+
+private struct PendingEncounterSession: Codable, Identifiable {
+    let id: String
+    let createdAt: Date
 }
 
 struct MeQREvent: Codable, Identifiable, Hashable {
@@ -69,16 +76,51 @@ final class EncounterStore: ObservableObject {
     static let shared = EncounterStore()
 
     @Published private(set) var records: [EncounterRecord] = []
+    @Published private(set) var pendingSessionCount = 0
 
     private let storageKey = "meqr_encounter_records_v1"
+    private let pendingStorageKey = "meqr_encounter_pending_sessions_v1"
+    private var pendingSessions: [PendingEncounterSession] = []
 
     private init() {
         load()
     }
 
-    func add(_ exchangeProfile: MeQRExchangeProfile, event: MeQREvent? = nil) {
-        records.insert(EncounterRecord(exchangeProfile: exchangeProfile, event: event ?? EventStore.shared.activeEvent), at: 0)
+    func add(_ exchangeProfile: MeQRExchangeProfile, event: MeQREvent? = nil, sessionID: String? = nil) {
+        if let sessionID, records.contains(where: { $0.sessionID == sessionID }) {
+            return
+        }
+        records.insert(EncounterRecord(exchangeProfile: exchangeProfile, event: event ?? EventStore.shared.activeEvent, sessionID: sessionID), at: 0)
         save()
+    }
+
+    func registerOutgoingSession(_ sessionID: String) {
+        guard !sessionID.isEmpty, !pendingSessions.contains(where: { $0.id == sessionID }) else { return }
+        pendingSessions.insert(PendingEncounterSession(id: sessionID, createdAt: Date()), at: 0)
+        pendingSessionCount = pendingSessions.count
+        savePendingSessions()
+    }
+
+    func syncPendingSessions() async {
+        guard !pendingSessions.isEmpty else { return }
+        var remaining: [PendingEncounterSession] = []
+        for pending in pendingSessions {
+            do {
+                let session = try await MeQRRemoteService.fetchEncounterSession(
+                    from: "https://api.meqrcode.cn/encounter-sessions/\(pending.id)"
+                )
+                if session.status == "confirmed", let peerProfile = session.peerProfile {
+                    add(peerProfile, event: EventStore.shared.activeEvent, sessionID: pending.id)
+                } else {
+                    remaining.append(pending)
+                }
+            } catch {
+                remaining.append(pending)
+            }
+        }
+        pendingSessions = remaining
+        pendingSessionCount = remaining.count
+        savePendingSessions()
     }
 
     func update(_ record: EncounterRecord) {
@@ -94,17 +136,27 @@ final class EncounterStore: ObservableObject {
     }
 
     private func load() {
-        guard let data = UserDefaults.standard.data(forKey: storageKey),
-              let decoded = try? JSONDecoder.meqrEncounter.decode([EncounterRecord].self, from: data) else {
+        if let data = UserDefaults.standard.data(forKey: storageKey),
+           let decoded = try? JSONDecoder.meqrEncounter.decode([EncounterRecord].self, from: data) {
+            records = decoded.sorted { $0.metAt > $1.metAt }
+        } else {
             records = []
-            return
         }
-        records = decoded.sorted { $0.metAt > $1.metAt }
+        if let data = UserDefaults.standard.data(forKey: pendingStorageKey),
+           let decodedPending = try? JSONDecoder.meqrEncounter.decode([PendingEncounterSession].self, from: data) {
+            pendingSessions = decodedPending
+            pendingSessionCount = decodedPending.count
+        }
     }
 
     private func save() {
         guard let data = try? JSONEncoder.meqrEncounter.encode(records) else { return }
         UserDefaults.standard.set(data, forKey: storageKey)
+    }
+
+    private func savePendingSessions() {
+        guard let data = try? JSONEncoder.meqrEncounter.encode(pendingSessions) else { return }
+        UserDefaults.standard.set(data, forKey: pendingStorageKey)
     }
 
     private func sortRecords() {

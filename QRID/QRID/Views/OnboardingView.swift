@@ -37,6 +37,9 @@ enum OnboardingCopy {
     static var previewBody: String { L.tr("创建后会保存在这台设备上。所有内容都可以继续编辑。", "建立後會儲存在這台裝置上。所有內容都可以繼續編輯。", "建立後會儲存在這台裝置上。所有內容都可以繼續編輯。", "It will be stored on this device, and every detail remains editable.", "この端末に保存され、すべてあとから編集できます。") }
     static var completeTitle: String { L.tr("你的卡片，准备好了。", "你的卡片，準備好了。", "你的卡片，準備好了。", "Your card is ready.", "カードができました。") }
     static var completeBody: String { L.tr("下次见面时，直接把它拿出来就好。接下来还可以添加更多平台和小组件。", "下次見面時，直接把它拿出來就好。接下來還可以加入更多平台和小工具。", "下次見面時，直接把它拿出來就好。接下來還可以新增更多平台和小工具。", "Bring it up the next time you meet someone. You can add more platforms and widgets next.", "次に誰かと会うとき、そのまま見せられます。ほかのプラットフォームやウィジェットも追加できます。") }
+    static var supportTitle: String { L.tr("需要帮忙？", "需要幫忙？", "需要協助？", "Need help?", "お困りですか？") }
+    static var supportBody: String { L.tr("支持中心有常见问题和使用说明。之后也可以从“关于软件”打开。", "支援中心有常見問題和使用說明。之後也可以從「關於軟件」開啟。", "支援中心有常見問題和使用說明。之後也可以從「關於 App」開啟。", "The support center has answers to common questions and guides. You can also open it later from About.", "サポートセンターで、よくある質問と使い方を確認できます。あとから「このアプリについて」でも開けます。") }
+    static var openSupport: String { L.tr("打开支持中心", "開啟支援中心", "開啟支援中心", "Open Support Center", "サポートセンターを開く") }
     static var replayGuide: String { L.tr("重新体验建档引导", "重新體驗建檔引導", "重新體驗建立引導", "Replay Setup Guide", "作成ガイドをもう一度見る") }
     static var nameRequired: String { L.tr("先写一个昵称，再继续。", "先寫一個暱稱，再繼續。", "先寫一個暱稱，再繼續。", "Add a display name to continue.", "続けるには表示名を入力してください。") }
     static var qrRequired: String { L.tr("先添加一个可以使用的二维码。", "先加入一個可以使用的 QR Code。", "先新增一個可以使用的 QR Code。", "Add a working QR code to continue.", "続けるにはQRコードを追加してください。") }
@@ -51,6 +54,7 @@ private enum OnboardingStep: Int, CaseIterable {
     case tags
     case preview
     case complete
+    case support
 
     static var setupSteps: [OnboardingStep] {
         [.identity, .qr, .appearance, .tags, .preview]
@@ -113,6 +117,9 @@ struct OnboardingView: View {
                     .transition(stepTransition)
             } else if step == .complete {
                 completeView
+                    .transition(stepTransition)
+            } else if step == .support {
+                supportView
                     .transition(stepTransition)
             } else {
                 setupView
@@ -328,7 +335,7 @@ struct OnboardingView: View {
                             tagsStep
                         case .preview:
                             previewStep
-                        case .welcome, .complete:
+                        case .welcome, .complete, .support:
                             EmptyView()
                         }
                     }
@@ -755,7 +762,7 @@ struct OnboardingView: View {
                     .padding(.top, 38)
 
                 Button {
-                    onFinish()
+                    move(to: .support)
                 } label: {
                     HStack {
                         Text(OnboardingCopy.enterApp)
@@ -772,6 +779,34 @@ struct OnboardingView: View {
             .frame(maxWidth: .infinity)
         }
         .scrollIndicators(.hidden)
+    }
+
+    private var supportView: some View {
+        VStack(spacing: 24) {
+            Spacer()
+            Image(systemName: "questionmark.bubble.fill")
+                .font(.system(size: 64))
+                .foregroundStyle(accent)
+            Text(OnboardingCopy.supportTitle)
+                .font(.system(size: 38, weight: .black, design: .rounded))
+            Text(OnboardingCopy.supportBody)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .lineSpacing(5)
+            Link(destination: URL(string: "https://support.meqrcode.cn/")!) {
+                Label(OnboardingCopy.openSupport, systemImage: "arrow.up.right.square")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(OnboardingPrimaryButtonStyle(color: accent))
+            Button(OnboardingCopy.enterApp) { onFinish() }
+                .buttonStyle(.plain)
+                .fontWeight(.semibold)
+                .padding(.top, 4)
+            Spacer()
+        }
+        .padding(.horizontal, 28)
+        .frame(maxWidth: 620)
+        .frame(maxWidth: .infinity)
     }
 
     private var onboardingMark: some View {
@@ -1302,7 +1337,7 @@ struct OnboardingView: View {
             move(to: .preview)
         case .preview:
             saveCard()
-        case .welcome, .complete:
+        case .welcome, .complete, .support:
             break
         }
     }

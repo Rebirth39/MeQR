@@ -263,8 +263,22 @@ struct MeQRProfileCodeView: View {
                     var onlineProfile = MeQRExchangeProfile(cluster: cluster, profiles: selectedProfiles, avatarMaxBytes: 256 * 1024)
                     onlineProfile.subtitle = exchangeSubtitle
                     let remoteURL = try await MeQRRemoteService.uploadProfile(onlineProfile)
+                    let sessionURL: String
+                    do {
+                        let session = try await MeQRRemoteService.createEncounterSession(
+                            creatorProfile: onlineProfile,
+                            eventID: EventStore.shared.activeEvent?.id
+                        )
+                        sessionURL = session.url
+                        await MainActor.run {
+                            EncounterStore.shared.registerOutgoingSession(session.sessionID)
+                        }
+                    } catch {
+                        // A profile URL still provides one-way exchange if session creation is unavailable.
+                        sessionURL = remoteURL
+                    }
                     let hybridCode = colorEnhancedCode(
-                        for: try MeQRExchangeCodec.encodeHybrid(remoteURL: remoteURL, offlineProfile: offlineFallback)
+                        for: try MeQRExchangeCodec.encodeHybrid(remoteURL: sessionURL, offlineProfile: offlineFallback)
                     )
                     await MainActor.run {
                         guard !Task.isCancelled else { return }
