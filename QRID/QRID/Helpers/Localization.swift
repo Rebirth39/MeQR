@@ -158,6 +158,8 @@ struct L {
     }
     static var scanMeQRHint: String { tr("扫描对方的 MeQR 交换码", "掃描對方的 MeQR 交換碼", "掃描對方的 MeQR 交換碼", "Scan someone's MeQR profile code.", "相手のMeQR交換コードをスキャン") }
     static var importMeQRFromPhoto: String { tr("从相册导入", "從相簿匯入", "從照片匯入", "Import from Photos", "写真から読み込む") }
+    static var myExchangeCode: String { tr("我的交换码", "我的交換碼", "我的交換碼", "My Exchange Code", "交換コード") }
+    static var wechatNotInstalled: String { tr("未安装微信，无法打开扫一扫", "未安裝微信，無法打開掃一掃", "未安裝微信，無法開啟掃一掃", "WeChat is not installed.", "WeChatがインストールされていません。") }
     static var meqrProfileFound: String { tr("发现 MeQR 名片", "發現 MeQR 名片", "發現 MeQR 名片", "MeQR Profile Found", "MeQRプロフィールを検出") }
     static var saveEncounter: String { tr("保存记录", "儲存記錄", "儲存紀錄", "Save Encounter", "記録を保存") }
     static var saved: String { tr("已保存", "已儲存", "已儲存", "Saved", "保存済み") }

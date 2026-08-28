@@ -2,6 +2,7 @@ import Foundation
 
 enum MeQRRemoteService {
     private static let apiBaseURL = URL(string: "https://api.meqrcode.cn")!
+    private static let meqrHosts: Set<String> = ["api.meqrcode.cn", "profile.meqrcode.cn"]
 
     static func uploadProfile(_ profile: MeQRExchangeProfile) async throws -> String {
         var request = URLRequest(url: apiBaseURL.appendingPathComponent("profiles"))
@@ -23,9 +24,8 @@ enum MeQRRemoteService {
 
     static func canFetchProfile(from string: String) -> Bool {
         guard let url = URL(string: string),
-              let baseHost = apiBaseURL.host(),
               url.scheme?.hasPrefix("http") == true,
-              url.host() == baseHost else {
+              meqrHosts.contains(url.host() ?? "") else {
             return false
         }
         return url.path().hasPrefix("/profiles/")
@@ -47,9 +47,8 @@ enum MeQRRemoteService {
 
     static func canFetchEncounterSession(from string: String) -> Bool {
         guard let url = URL(string: string),
-              let baseHost = apiBaseURL.host(),
               url.scheme?.hasPrefix("http") == true,
-              url.host() == baseHost else {
+              meqrHosts.contains(url.host() ?? "") else {
             return false
         }
         return url.path().hasPrefix("/encounter-sessions/")

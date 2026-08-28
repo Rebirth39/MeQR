@@ -21,10 +21,10 @@ struct QRCodeGenerator {
         UIColor(red: 0.29, green: 0.12, blue: 0.50, alpha: 1)
     ]
     private static let lightPalette: [UIColor] = [
-        UIColor(red: 0.75, green: 0.85, blue: 1.00, alpha: 1),
-        UIColor(red: 0.72, green: 0.95, blue: 0.91, alpha: 1),
-        UIColor(red: 1.00, green: 0.80, blue: 0.87, alpha: 1),
-        UIColor(red: 0.89, green: 0.80, blue: 1.00, alpha: 1)
+        UIColor(red: 0.66, green: 0.81, blue: 1.00, alpha: 1),
+        UIColor(red: 0.62, green: 0.90, blue: 0.84, alpha: 1),
+        UIColor(red: 1.00, green: 0.76, blue: 0.83, alpha: 1),
+        UIColor(red: 0.84, green: 0.72, blue: 1.00, alpha: 1)
     ]
 
     static func trimQuietZoneForDisplay(_ image: UIImage) -> UIImage? {
@@ -159,13 +159,6 @@ struct QRCodeGenerator {
         correctionLevel: String = "M"
     ) -> UIImage? {
         guard let matrix = qrMatrix(from: string, correctionLevel: correctionLevel) else { return nil }
-        guard let avatarJPEG,
-              !avatarJPEG.isEmpty,
-              avatarJPEG.count <= colorLayerPayloadCapacity(from: string, correctionLevel: correctionLevel),
-              let packet = colorLayerPacket(payload: avatarJPEG, type: colorLayerAvatarType) else {
-            return generate(from: string, foreground: .black, background: .white, correctionLevel: correctionLevel)
-        }
-
         let moduleCount = matrix.count
         let finalModuleCount = moduleCount + colorLayerQuietZone * 2
         let pixelSide = finalModuleCount * colorLayerScale
@@ -181,11 +174,24 @@ struct QRCodeGenerator {
 
         context.setFillColor(UIColor.white.cgColor)
         context.fill(CGRect(x: 0, y: 0, width: pixelSide, height: pixelSide))
-        let symbols = colorLayerSymbols(packet: packet, count: moduleCount * moduleCount)
+        let packet: Data?
+        if let avatarJPEG,
+           !avatarJPEG.isEmpty,
+           avatarJPEG.count <= colorLayerPayloadCapacity(from: string, correctionLevel: correctionLevel) {
+            packet = colorLayerPacket(payload: avatarJPEG, type: colorLayerAvatarType)
+        } else {
+            packet = nil
+        }
+        let symbols: [UInt8]? = packet.map {
+            colorLayerSymbols(packet: $0, count: moduleCount * moduleCount)
+        }
 
         for row in 0..<moduleCount {
             for column in 0..<moduleCount {
-                let symbol = Int(symbols[row * moduleCount + column])
+                let symbolIndex = row * moduleCount + column
+                let symbol = symbols == nil
+                    ? ((row * 3 + column * 5) & 3)
+                    : Int(symbols![symbolIndex])
                 let color = matrix[row][column] ? darkPalette[symbol] : lightPalette[symbol]
                 context.setFillColor(color.cgColor)
                 context.fill(CGRect(

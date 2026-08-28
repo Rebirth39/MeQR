@@ -14,6 +14,11 @@ struct MeQRScannerView: View {
     @State private var showError = false
     @State private var cameraAuthorized = AVCaptureDevice.authorizationStatus(for: .video) == .authorized
     @State private var pendingSessionID: String?
+    @State private var showingMyCode = false
+    @State private var lastRoutedPayload: String?
+    @State private var lastRoutedDate = Date.distantPast
+    @State private var pendingExternalURL: URL?
+    @AppStorage("meqr.allowExternalLinks") private var allowExternalAlways = false
 
     init(localCluster: QRCluster? = nil) {
         self.localCluster = localCluster
@@ -32,18 +37,25 @@ struct MeQRScannerView: View {
                 }
 
                 VStack(spacing: 14) {
-                    Image(systemName: "qrcode.viewfinder")
-                        .font(.system(size: 44, weight: .medium))
-                    Text(L.scanMeQRHint)
-                        .font(.headline)
-                        .multilineTextAlignment(.center)
+                    VStack(spacing: 12) {
+                        if localCluster != nil {
+                            Button {
+                                showingMyCode = true
+                            } label: {
+                                Label(L.myExchangeCode, systemImage: "qrcode")
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 48)
+                            }
+                            .buttonStyle(ScannerGlassButtonStyle())
+                        }
 
-                    PhotosPicker(selection: $pickedItem, matching: .images) {
-                        Label(L.importMeQRFromPhoto, systemImage: "photo.on.rectangle")
-                            .frame(maxWidth: .infinity)
+                        PhotosPicker(selection: $pickedItem, matching: .images) {
+                            Label(L.importMeQRFromPhoto, systemImage: "photo.on.rectangle")
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 48)
+                        }
+                        .buttonStyle(ScannerGlassButtonStyle())
                     }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
                 }
                 .foregroundStyle(.white)
                 .padding(20)
@@ -71,13 +83,43 @@ struct MeQRScannerView: View {
                     localProfile: localProfile
                 )
             }
+            .sheet(isPresented: $showingMyCode) {
+                if let localCluster {
+                    MeQRProfileCodeView(cluster: localCluster)
+                }
+            }
             .alert(L.couldNotDecodeQR, isPresented: $showError) {
                 Button(L.ok, role: .cancel) {}
             } message: {
                 Text(errorMessage ?? L.notMeQRProfileCode)
             }
+            .confirmationDialog("打开外部链接？", isPresented: Binding(
+                get: { pendingExternalURL != nil },
+                set: { if !$0 { pendingExternalURL = nil } }
+            ), titleVisibility: .visible) {
+                Button("本次允许") { openPendingExternalURL() }
+                Button("之后都允许") { allowExternalAlways = true; openPendingExternalURL() }
+                Button("不允许", role: .cancel) { pendingExternalURL = nil }
+            } message: {
+                Text("将离开喜劳转扩并打开其他 App 或网页。")
+            }
         }
     }
+
+private struct ScannerGlassButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.headline.weight(.semibold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 18)
+            .background(.ultraThinMaterial, in: Capsule())
+            .overlay(Capsule().stroke(.white.opacity(configuration.isPressed ? 0.62 : 0.3), lineWidth: 1))
+            .shadow(color: .black.opacity(configuration.isPressed ? 0.08 : 0.2), radius: 12, y: 5)
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .opacity(configuration.isPressed ? 0.82 : 1)
+            .animation(.easeOut(duration: 0.16), value: configuration.isPressed)
+    }
+}
 
     private func requestCameraAccessIfNeeded() {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
@@ -103,7 +145,22 @@ struct MeQRScannerView: View {
     }
 
     private func handlePayload(_ payload: String, frame: UIImage?) {
-        Task {
+        Task { @MainActor in
+            // Fast path: only MeQR codes carry a color layer worth the expensive
+            // decodeEnhanced pass. Social-platform and plain-URL codes route at once.
+            let isMeQRPayload = (try? MeQRExchangeCodec.decode(payload)) != nil
+                || MeQRRemoteService.canFetchEncounterSession(from: payload)
+                || MeQRRemoteService.canFetchProfile(from: payload)
+                || MeQRExchangeCodec.offlineFallback(from: payload) != nil
+
+            if !isMeQRPayload {
+                if !routeGenericQR(payload) {
+                    errorMessage = L.notMeQRProfileCode
+                    showError = true
+                }
+                return
+            }
+
             var colorAvatarJPEG: Data?
             if let frame,
                let decoded = try? await QRCodeGenerator.decodeEnhanced(from: frame) {
@@ -157,8 +214,155 @@ struct MeQRScannerView: View {
             return
         }
 
+        if routeGenericQR(payload) {
+            return
+        }
+
         errorMessage = L.notMeQRProfileCode
         showError = true
+    }
+
+    @MainActor
+    @discardableResult
+    private func routeGenericQR(_ payload: String) -> Bool {
+        // Cooldown: avoid re-routing the same non-MeQR payload repeatedly as the
+        // camera keeps firing the metadata callback on the same code.
+        let now = Date()
+        if payload == lastRoutedPayload, now.timeIntervalSince(lastRoutedDate) < 3 {
+            return true
+        }
+
+        guard let platform = Platform.detect(from: payload) else {
+            // Not a known social platform: open http(s) URLs in the browser.
+            if let url = URL(string: payload), url.scheme?.hasPrefix("http") == true {
+                lastRoutedPayload = payload
+                lastRoutedDate = now
+                requestExternalOpen(url)
+                return true
+            }
+            return false
+        }
+
+        lastRoutedPayload = payload
+        lastRoutedDate = now
+
+        if platform == .wechat {
+            openWeChatScan()
+            return true
+        }
+
+        guard let url = URL(string: payload), url.scheme != nil else { return true }
+
+        if platform == .xiaohongshu {
+            openXiaohongshu(url)
+            return true
+        }
+
+        // Universal Link: opens the matching app if installed, falls back to Safari.
+        requestExternalOpen(url)
+        return true
+    }
+
+    @MainActor
+    private func openXiaohongshu(_ url: URL) {
+        // Xiaohongshu doesn't route xiaohongshu.com via Universal Link; opening
+        // the web URL (or the xhslink short link) lands in Safari. The app opens
+        // a user profile through xhsdiscover://user/<user_id>, so extract the
+        // 24-hex user ID and deep-link instead.
+        if let userID = Self.xiaohongshuUserID(from: url) {
+            openXiaohongshuApp(userID: userID, fallback: url)
+            return
+        }
+
+        // xhslink.com short links need one redirect hop to reveal the profile URL.
+        Task { @MainActor in
+            let key = url.absoluteString.lowercased()
+            if let cached = Self.xiaohongshuUserIDCache.object(forKey: key as NSString) {
+                openXiaohongshuApp(userID: cached as String, fallback: url)
+                return
+            }
+            if let resolved = await Self.resolveXiaohongshuRedirect(url),
+               let userID = Self.xiaohongshuUserID(from: resolved) {
+                Self.xiaohongshuUserIDCache.setObject(userID as NSString, forKey: key as NSString)
+                openXiaohongshuApp(userID: userID, fallback: resolved)
+            } else {
+                requestExternalOpen(url)
+            }
+        }
+    }
+
+    @MainActor
+    private func openXiaohongshuApp(userID: String, fallback: URL) {
+        guard let schemeURL = URL(string: "xhsdiscover://user/\(userID)") else {
+            requestExternalOpen(fallback)
+            return
+        }
+        if UIApplication.shared.canOpenURL(schemeURL) {
+            requestExternalOpen(schemeURL)
+        } else {
+            requestExternalOpen(fallback)
+        }
+    }
+
+    private static let xiaohongshuUserIDCache = NSCache<NSString, NSString>()
+
+    private static func xiaohongshuUserID(from url: URL) -> String? {
+        let s = url.absoluteString.lowercased()
+        guard let range = s.range(of: #"[0-9a-f]{24}"#, options: .regularExpression) else {
+            return nil
+        }
+        return String(s[range])
+    }
+
+    private static func resolveXiaohongshuRedirect(_ url: URL) async -> URL? {
+        var url = url
+        if url.scheme == "http", var comps = URLComponents(url: url, resolvingAgainstBaseURL: false) {
+            comps.scheme = "https"
+            url = comps.url ?? url
+        }
+
+        // xhslink returns 302 only to GET (HEAD gives 404). We only need the
+        // Location header, not the body, so stop following redirects and read it
+        // from the response directly.
+        let delegate = RedirectStopDelegate()
+        let config = URLSessionConfiguration.ephemeral
+        config.timeoutIntervalForRequest = 5
+        config.timeoutIntervalForResource = 8
+        let session = URLSession(configuration: config, delegate: delegate, delegateQueue: nil)
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15", forHTTPHeaderField: "User-Agent")
+
+        _ = try? await session.data(for: request)
+        return delegate.redirectURL
+    }
+
+    @MainActor
+    private func openWeChatScan() {
+        guard let scanURL = URL(string: "weixin://scanqrcode") else { return }
+        if UIApplication.shared.canOpenURL(scanURL) {
+            UIApplication.shared.open(scanURL)
+        } else {
+            errorMessage = L.wechatNotInstalled
+            showError = true
+        }
+    }
+
+    @MainActor
+    private func requestExternalOpen(_ url: URL) {
+        if allowExternalAlways {
+            UIApplication.shared.open(url)
+        } else {
+            pendingExternalURL = url
+        }
+    }
+
+    @MainActor
+    private func openPendingExternalURL() {
+        guard let url = pendingExternalURL else { return }
+        pendingExternalURL = nil
+        UIApplication.shared.open(url)
     }
 
     private var localProfile: MeQRExchangeProfile? {
@@ -189,6 +393,23 @@ struct MeQRScannerView: View {
         var enhanced = profile
         enhanced.avatarJPEGBase64 = jpeg.base64EncodedString()
         return enhanced
+    }
+}
+
+/// Captures the first redirect's Location header and cancels the rest of the
+/// request, so we never download the redirect target's (potentially large) body.
+private final class RedirectStopDelegate: NSObject, URLSessionTaskDelegate {
+    private(set) var redirectURL: URL?
+
+    func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        willPerformHTTPRedirection response: HTTPURLResponse,
+        newRequest request: URLRequest,
+        completionHandler: @escaping (URLRequest?) -> Void
+    ) {
+        redirectURL = request.url
+        completionHandler(nil)
     }
 }
 

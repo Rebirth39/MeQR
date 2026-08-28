@@ -69,17 +69,21 @@ struct MainView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 12) {
+                        Button {
+                            showingMeQRScanner = true
+                        } label: {
+                            Image(systemName: "qrcode.viewfinder")
+                                .font(.system(size: 18, weight: .medium))
+                                .frame(width: 44, height: 44)
+                                .contentShape(Rectangle())
+                        }
+                        .accessibilityLabel(L.scanMeQRCode)
                         if !clusters.isEmpty {
                             Menu {
                                 Button {
                                     showingMeQRProfileCode = true
                                 } label: {
                                     Label(L.meqrProfileCode, systemImage: "qrcode")
-                                }
-                                Button {
-                                    showingMeQRScanner = true
-                                } label: {
-                                    Label(L.scanMeQRCode, systemImage: "qrcode.viewfinder")
                                 }
                                 Button {
                                     showingEncounters = true

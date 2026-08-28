@@ -261,7 +261,8 @@ struct MeQRProfileCodeView: View {
             uploadTask = Task {
                 do {
                     var onlineProfile = MeQRExchangeProfile(cluster: cluster, profiles: selectedProfiles, avatarMaxBytes: 256 * 1024)
-                    onlineProfile.subtitle = exchangeSubtitle
+                    onlineProfile.subtitle = cluster.subtitle
+                    onlineProfile.intro = ""
                     let remoteURL = try await MeQRRemoteService.uploadProfile(onlineProfile)
                     let sessionURL: String
                     do {

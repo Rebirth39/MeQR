@@ -6,61 +6,285 @@ struct EncounterPreviewView: View {
     var localProfile: MeQRExchangeProfile? = nil
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     @ObservedObject private var store = EncounterStore.shared
     @ObservedObject private var eventStore = EventStore.shared
     @State private var saved = false
+    @State private var selectedPlatformIndex = 0
+    @State private var pendingExternalURL: URL?
+    @AppStorage("meqr.allowExternalLinks") private var allowExternalAlways = false
+
+    private var textColor: Color { Color(hex: profile.textColorHex ?? "#000000") }
+    private var backgroundColor: Color { Color(hex: profile.backgroundColorHex ?? "#FFFFFF") }
+    private var qrColor: Color { Color(hex: profile.qrColorHex ?? "#000000") }
+
+    private var currentPlatform: MeQRExchangePlatform? {
+        profile.profiles[safe: selectedPlatformIndex]
+    }
+
+    private var hasCustomBackground: Bool {
+        profile.backgroundJPEGBase64 != nil
+    }
 
     var body: some View {
         NavigationStack {
-            List {
-                Section {
-                    encounterHeader(
-                        name: profile.name,
-                        subtitle: profile.subtitle,
-                        avatarBase64: profile.avatarJPEGBase64,
-                        backgroundBase64: profile.backgroundJPEGBase64
-                    )
-                }
+            ZStack {
+                background
+                    .ignoresSafeArea()
 
-                Section(L.platformsFromMeQR) {
-                    ForEach(profile.profiles) { platform in
-                        platformRow(platform)
+                ScrollView {
+                    VStack(spacing: 16) {
+                        card
+                        saveButton
                     }
-                }
-
-                if let activeEvent = eventStore.activeEvent {
-                    Section(L.activeEvent) {
-                        LabeledContent(L.eventName, value: activeEvent.title)
-                        if !activeEvent.venue.isEmpty {
-                            LabeledContent(L.eventVenue, value: activeEvent.venue)
-                        }
-                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
+                    .padding(.bottom, 24)
                 }
             }
             .navigationTitle(L.meqrProfileFound)
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(textColor.isDarkForUI ? .dark : .light, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(L.cancel) { dismiss() }
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(saved ? L.saved : L.saveEncounter) {
-                        store.add(profile, event: eventStore.activeEvent, sessionID: sessionID)
-                        if let sessionID, let localProfile {
-                            Task {
-                                try? await MeQRRemoteService.confirmEncounterSession(
-                                    sessionID: sessionID,
-                                    peerProfile: localProfile
-                                )
-                            }
+            }
+            .confirmationDialog("打开外部链接？", isPresented: Binding(
+                get: { pendingExternalURL != nil },
+                set: { if !$0 { pendingExternalURL = nil } }
+            ), titleVisibility: .visible) {
+                Button("本次允许") { openPendingURL(); }
+                Button("之后都允许") { allowExternalAlways = true; openPendingURL() }
+                Button("不允许", role: .cancel) { pendingExternalURL = nil }
+            } message: {
+                Text("将打开" + (currentPlatform?.platformName ?? "外部应用") + "。")
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var background: some View {
+        if let data = profile.backgroundJPEGBase64.flatMap({ Data(base64Encoded: $0) }),
+           let image = UIImage(data: data) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+        } else {
+            backgroundColor
+        }
+    }
+
+    private var card: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 6) {
+                    avatar
+                        .frame(width: 56, height: 56)
+
+                    Text(profile.name)
+                        .font(.headline.bold())
+                        .foregroundStyle(textColor)
+                        .lineLimit(1)
+                }
+
+                if !profile.subtitle.isEmpty {
+                    Rectangle()
+                        .fill(textColor.opacity(0.3))
+                        .frame(width: 1)
+                        .padding(.vertical, 4)
+                }
+
+                if !profile.subtitle.isEmpty {
+                    Text(profile.subtitle)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(textColor.opacity(0.8))
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(9)
+                        .frame(maxWidth: .infinity, alignment: .topLeading)
+                }
+            }
+
+            if let data = profile.bannerJPEGBase64.flatMap({ Data(base64Encoded: $0) }),
+               let image = UIImage(data: data) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 110)
+                    .clipped()
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+            }
+
+            if let currentPlatform {
+                platformQRCode(for: currentPlatform)
+                    .frame(width: min(260, UIScreen.main.bounds.width * 0.58), height: min(260, UIScreen.main.bounds.width * 0.58))
+                    .padding(12)
+                    .background(.white, in: RoundedRectangle(cornerRadius: 18))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18)
+                            .stroke(textColor.opacity(0.08), lineWidth: 1)
+                    )
+                    .shadow(color: .black.opacity(0.08), radius: 8, y: 4)
+                    .frame(maxWidth: .infinity, alignment: .center)
+            }
+
+            if profile.profiles.count > 1 {
+                platformPicker
+            }
+
+            if let currentPlatform, currentPlatform.openURL != nil {
+                openPlatformButton(currentPlatform)
+            }
+
+            if let activeEvent = eventStore.activeEvent {
+                HStack(spacing: 6) {
+                    Image(systemName: "calendar")
+                        .font(.caption)
+                    Text(activeEvent.title)
+                        .font(.caption)
+                        .lineLimit(1)
+                }
+                .foregroundStyle(textColor.opacity(0.72))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(.white.opacity(0.5), in: Capsule())
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 22)
+                .fill(backgroundColor.opacity(0.72))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 22)
+                .stroke(.white.opacity(0.5), lineWidth: 1)
+        )
+    }
+
+    @ViewBuilder
+    private var avatar: some View {
+        if let data = profile.avatarJPEGBase64.flatMap({ Data(base64Encoded: $0) }),
+           let image = UIImage(data: data) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .clipShape(Circle())
+        } else {
+            ZStack {
+                Circle().fill(textColor.opacity(0.15))
+                Image(systemName: "person.fill")
+                    .font(.system(size: 24))
+                    .foregroundStyle(textColor.opacity(0.6))
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func platformQRCode(for platform: MeQRExchangePlatform) -> some View {
+        let baseImage = hasCustomBackground
+            ? QRCodeGenerator.generateTransparent(from: platform.qrContent, foreground: qrColor)
+            : QRCodeGenerator.generate(from: platform.qrContent, foreground: qrColor, background: .white)
+        let uiImage = hasCustomBackground
+            ? baseImage.flatMap(QRCodeGenerator.trimQuietZoneForDisplay)
+            : baseImage
+        if let uiImage {
+            Image(uiImage: uiImage)
+                .resizable()
+                .interpolation(.none)
+                .scaledToFit()
+        } else {
+            Image(systemName: "qrcode")
+                .resizable()
+                .scaledToFit()
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var platformPicker: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(Array(profile.profiles.enumerated()), id: \.element.id) { index, platform in
+                    Button {
+                        let impact = UIImpactFeedbackGenerator(style: .light)
+                        impact.impactOccurred()
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            selectedPlatformIndex = index
                         }
-                        saved = true
-                        dismiss()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: (Platform(rawValue: platform.platformType) ?? .custom).iconName)
+                                .font(.caption)
+                            Text(platform.platformName)
+                                .font(.caption)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 5)
+                        .background(
+                            Capsule()
+                                .fill(index == selectedPlatformIndex
+                                    ? qrColor
+                                    : Color.white.opacity(0.55))
+                        )
+                        .foregroundStyle(index == selectedPlatformIndex
+                            ? qrColor.uiContrastColor
+                            : textColor)
                     }
-                    .disabled(saved)
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private func openPlatformButton(_ platform: MeQRExchangePlatform) -> some View {
+        if let url = platform.openURL {
+            Button {
+                if allowExternalAlways {
+                    openURL(url)
+                } else {
+                    pendingExternalURL = url
+                }
+            } label: {
+                Label(L.platformsFromMeQR + " · " + platform.platformName, systemImage: "arrow.up.forward.app")
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 46)
+            }
+            .buttonStyle(.bordered)
+            .tint(textColor)
+        }
+    }
+
+    private func openPendingURL() {
+        guard let url = pendingExternalURL else { return }
+        pendingExternalURL = nil
+        openURL(url)
+    }
+
+    private var saveButton: some View {
+        Button {
+            store.add(profile, event: eventStore.activeEvent, sessionID: sessionID)
+            if let sessionID, let localProfile {
+                Task {
+                    try? await MeQRRemoteService.confirmEncounterSession(
+                        sessionID: sessionID,
+                        peerProfile: localProfile
+                    )
+                }
+            }
+            saved = true
+            dismiss()
+        } label: {
+            Label(saved ? L.saved : L.saveEncounter, systemImage: saved ? "checkmark" : "person.badge.plus")
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .frame(height: 50)
+        }
+        .buttonStyle(.borderedProminent)
+        .clipShape(Capsule())
+        .disabled(saved)
     }
 }
 

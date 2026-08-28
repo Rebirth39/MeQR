@@ -24,6 +24,9 @@
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>iosamap</string>
+		<string>weixin</string>
+		<string>wechat</string>
+		<string>xhsdiscover</string>
 	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>用于扫描 MeQR 交换码，保存线下认识的人。</string>

@@ -782,26 +782,34 @@ struct OnboardingView: View {
     }
 
     private var supportView: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 22) {
             Spacer()
             Image(systemName: "questionmark.bubble.fill")
-                .font(.system(size: 64))
+                .font(.system(size: 56))
                 .foregroundStyle(accent)
             Text(OnboardingCopy.supportTitle)
-                .font(.system(size: 38, weight: .black, design: .rounded))
+                .font(.system(size: 30, weight: .black, design: .rounded))
             Text(OnboardingCopy.supportBody)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .lineSpacing(5)
+            Button {
+                onFinish()
+            } label: {
+                HStack {
+                    Text(OnboardingCopy.enterApp)
+                    Image(systemName: "arrow.right")
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(OnboardingPrimaryButtonStyle(color: .black))
             Link(destination: URL(string: "https://support.meqrcode.cn/")!) {
                 Label(OnboardingCopy.openSupport, systemImage: "arrow.up.right.square")
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(OnboardingPrimaryButtonStyle(color: accent))
-            Button(OnboardingCopy.enterApp) { onFinish() }
-                .buttonStyle(.plain)
-                .fontWeight(.semibold)
-                .padding(.top, 4)
+            .buttonStyle(.plain)
+            .fontWeight(.semibold)
+            .padding(.top, 4)
             Spacer()
         }
         .padding(.horizontal, 28)
