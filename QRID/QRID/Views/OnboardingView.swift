@@ -1357,7 +1357,7 @@ struct OnboardingView: View {
 
         do {
             guard let data = try await item.loadTransferable(type: Data.self),
-                  let image = UIImage(data: data) else {
+                  let image = QRCodeGenerator.imageForDecoding(from: data) else {
                 throw QRCodeGenerator.QRDecodeError.invalidImage
             }
             let decoded = try await QRCodeGenerator.decode(from: image)

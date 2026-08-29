@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreImage.CIFilterBuiltins
+import ImageIO
 import Vision
 
 struct QRCodeGenerator {
@@ -26,6 +27,19 @@ struct QRCodeGenerator {
         UIColor(red: 1.00, green: 0.76, blue: 0.83, alpha: 1),
         UIColor(red: 0.84, green: 0.72, blue: 1.00, alpha: 1)
     ]
+
+    static func imageForDecoding(from data: Data, maxPixelSize: Int = 4096) -> UIImage? {
+        let options = [kCGImageSourceShouldCache: false] as CFDictionary
+        guard let source = CGImageSourceCreateWithData(data as CFData, options) else { return nil }
+        let thumbnailOptions = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxPixelSize
+        ] as CFDictionary
+        guard let image = CGImageSourceCreateThumbnailAtIndex(source, 0, thumbnailOptions) else { return nil }
+        return UIImage(cgImage: image)
+    }
 
     static func trimQuietZoneForDisplay(_ image: UIImage) -> UIImage? {
         guard let cgImage = image.cgImage else { return nil }

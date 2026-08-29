@@ -67,6 +67,20 @@ def extract_function_body(source: str, function_name: str) -> str:
 
 
 class ReviewRegressionTests(unittest.TestCase):
+    def test_photo_qr_imports_downsample_before_decoding(self):
+        generator = read("QRID/QRID/Helpers/QRCodeGenerator.swift")
+        self.assertIn("CGImageSourceCreateThumbnailAtIndex", generator)
+        self.assertIn("kCGImageSourceThumbnailMaxPixelSize: maxPixelSize", generator)
+
+        for path in (
+            "QRID/QRID/Views/AddProfileView.swift",
+            "QRID/QRID/Views/EditProfileView.swift",
+            "QRID/QRID/Views/OnboardingView.swift",
+            "QRID/QRID/Views/MeQRScannerView.swift",
+        ):
+            source = read(path)
+            self.assertIn("QRCodeGenerator.imageForDecoding(from: data)", source)
+
     def test_onboarding_welcome_card_keeps_dark_text_in_dark_mode(self):
         source = read("QRID/QRID/Views/OnboardingView.swift")
         self.assertRegex(
