@@ -71,6 +71,7 @@ class ReviewRegressionTests(unittest.TestCase):
         generator = read("QRID/QRID/Helpers/QRCodeGenerator.swift")
         self.assertIn("CGImageSourceCreateThumbnailAtIndex", generator)
         self.assertIn("kCGImageSourceThumbnailMaxPixelSize: maxPixelSize", generator)
+        self.assertIn("maxPixelSize: Int = 2048", generator)
 
         for path in (
             "QRID/QRID/Views/AddProfileView.swift",
@@ -80,6 +81,14 @@ class ReviewRegressionTests(unittest.TestCase):
         ):
             source = read(path)
             self.assertIn("QRCodeGenerator.imageForDecoding(from: data)", source)
+
+        for path in (
+            "QRID/QRID/Views/AddProfileView.swift",
+            "QRID/QRID/Views/OnboardingView.swift",
+        ):
+            source = read(path)
+            self.assertNotIn("importedQRImage = image", source)
+            self.assertIn("imageForDecoding(from: data, maxPixelSize: 768)", source)
 
     def test_onboarding_welcome_card_keeps_dark_text_in_dark_mode(self):
         source = read("QRID/QRID/Views/OnboardingView.swift")

@@ -1361,7 +1361,7 @@ struct OnboardingView: View {
                 throw QRCodeGenerator.QRDecodeError.invalidImage
             }
             let decoded = try await QRCodeGenerator.decode(from: image)
-            importedQRImage = image
+            importedQRImage = QRCodeGenerator.imageForDecoding(from: data, maxPixelSize: 768)
             qrContent = decoded
             validationMessage = nil
             if let detected = Platform.detect(from: decoded) {

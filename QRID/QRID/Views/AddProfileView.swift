@@ -473,8 +473,8 @@ struct AddProfileView: View {
                   let image = QRCodeGenerator.imageForDecoding(from: data) else {
                 throw QRCodeGenerator.QRDecodeError.invalidImage
             }
-            importedQRImage = image
             let decoded = try await QRCodeGenerator.decode(from: image)
+            importedQRImage = QRCodeGenerator.imageForDecoding(from: data, maxPixelSize: 768)
             qrContent = decoded
             isGenerated = true
             if let detected = Platform.detect(from: decoded) {

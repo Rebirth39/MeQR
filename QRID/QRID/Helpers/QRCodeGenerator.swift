@@ -28,7 +28,7 @@ struct QRCodeGenerator {
         UIColor(red: 0.84, green: 0.72, blue: 1.00, alpha: 1)
     ]
 
-    static func imageForDecoding(from data: Data, maxPixelSize: Int = 4096) -> UIImage? {
+    static func imageForDecoding(from data: Data, maxPixelSize: Int = 2048) -> UIImage? {
         let options = [kCGImageSourceShouldCache: false] as CFDictionary
         guard let source = CGImageSourceCreateWithData(data as CFData, options) else { return nil }
         let thumbnailOptions = [
