@@ -136,7 +136,7 @@ struct OnboardingView: View {
             guard let item else { return }
             Task {
                 if let data = try? await item.loadTransferable(type: Data.self),
-                   let image = UIImage(data: data) {
+                   let image = QRCodeGenerator.imageForEditing(from: data) {
                     rawAvatarImage = CroppableImage(image: image)
                 }
             }
@@ -145,7 +145,7 @@ struct OnboardingView: View {
             guard let item else { return }
             Task {
                 if let data = try? await item.loadTransferable(type: Data.self),
-                   let image = UIImage(data: data) {
+                   let image = QRCodeGenerator.imageForEditing(from: data) {
                     rawBackgroundImage = CroppableImage(image: image)
                 }
             }
@@ -154,7 +154,7 @@ struct OnboardingView: View {
             guard let item else { return }
             Task {
                 if let data = try? await item.loadTransferable(type: Data.self),
-                   let image = UIImage(data: data) {
+                   let image = QRCodeGenerator.imageForEditing(from: data) {
                     rawRhodesBannerImage = CroppableImage(image: image)
                 }
             }

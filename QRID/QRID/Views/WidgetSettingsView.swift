@@ -56,7 +56,7 @@ struct WidgetSettingsView: View {
                 Task {
                     guard let newItem else { return }
                     if let data = try? await newItem.loadTransferable(type: Data.self),
-                       let image = UIImage(data: data) {
+                       let image = QRCodeGenerator.imageForEditing(from: data) {
                         rawBackgroundImage = CroppableImage(image: image)
                     }
                 }

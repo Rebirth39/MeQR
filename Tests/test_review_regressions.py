@@ -296,8 +296,26 @@ class ReviewRegressionTests(unittest.TestCase):
         self.assertIn("ModelConfiguration(", app)
         self.assertIn("url: storeDirectoryURL.appendingPathComponent(\"QRID.store\")", app)
         self.assertIn("cloudKitDatabase: .none", app)
-        self.assertIn(".modelContainer(sharedModelContainer)", app)
+        self.assertIn(".modelContainer(container)", app)
+        self.assertIn("isStoredInMemoryOnly: true", app)
+        self.assertIn("container: nil", app)
+        self.assertNotIn("fatalError(", app)
         self.assertNotIn(".modelContainer(for: [QRCluster.self, QRProfile.self])", app)
+
+    def test_photo_editing_imports_are_downsampled(self):
+        generator = read("QRID/QRID/Helpers/QRCodeGenerator.swift")
+        self.assertIn("static func imageForEditing(from data: Data, maxPixelSize: Int = 2560)", generator)
+
+        paths = [
+            "QRID/QRID/Views/AddProfileView.swift",
+            "QRID/QRID/Views/EditClusterView.swift",
+            "QRID/QRID/Views/OnboardingView.swift",
+            "QRID/QRID/Views/WidgetSettingsView.swift",
+        ]
+        for path in paths:
+            with self.subTest(path=path):
+                source = read(path)
+                self.assertIn("QRCodeGenerator.imageForEditing(from: data)", source)
 
     def test_persistence_saves_are_not_silently_discarded(self):
         files = [

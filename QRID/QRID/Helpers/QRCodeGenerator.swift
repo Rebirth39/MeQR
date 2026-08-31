@@ -29,6 +29,14 @@ struct QRCodeGenerator {
     ]
 
     static func imageForDecoding(from data: Data, maxPixelSize: Int = 2048) -> UIImage? {
+        downsampledImage(from: data, maxPixelSize: maxPixelSize)
+    }
+
+    static func imageForEditing(from data: Data, maxPixelSize: Int = 2560) -> UIImage? {
+        downsampledImage(from: data, maxPixelSize: maxPixelSize)
+    }
+
+    private static func downsampledImage(from data: Data, maxPixelSize: Int) -> UIImage? {
         let options = [kCGImageSourceShouldCache: false] as CFDictionary
         guard let source = CGImageSourceCreateWithData(data as CFData, options) else { return nil }
         let thumbnailOptions = [

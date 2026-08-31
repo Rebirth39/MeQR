@@ -621,16 +621,18 @@ struct EventCenterView: View {
 
             if !event.navigationQuery.isEmpty {
                 HStack(spacing: 10) {
-                    Button {
-                        openURL(appleMapsURL(for: event))
-                    } label: {
-                        Label(L.appleMaps, systemImage: "map")
-                    }
-                    .buttonStyle(.bordered)
-
-                    if canOpenAmap {
+                    if let appleMapsURL = appleMapsURL(for: event) {
                         Button {
-                            openURL(amapURL(for: event))
+                            openURL(appleMapsURL)
+                        } label: {
+                            Label(L.appleMaps, systemImage: "map")
+                        }
+                        .buttonStyle(.bordered)
+                    }
+
+                    if canOpenAmap, let amapURL = amapURL(for: event) {
+                        Button {
+                            openURL(amapURL)
                         } label: {
                             Label(L.amap, systemImage: "location")
                         }
@@ -644,18 +646,23 @@ struct EventCenterView: View {
     }
 
     private func deleteEvents(_ offsets: IndexSet) {
-        for offset in offsets {
+        for offset in offsets where eventStore.events.indices.contains(offset) {
             let event = eventStore.events[offset]
             eventStore.deleteCustomEvent(event)
         }
     }
 
-    private func appleMapsURL(for event: MeQREvent) -> URL {
+    private func appleMapsURL(for event: MeQREvent) -> URL? {
+        var components = URLComponents(string: "https://maps.apple.com/")
         if let latitude = event.latitude, let longitude = event.longitude {
-            return URL(string: "http://maps.apple.com/?ll=\(latitude),\(longitude)&q=\(event.title.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? event.title)")!
+            components?.queryItems = [
+                URLQueryItem(name: "ll", value: "\(latitude),\(longitude)"),
+                URLQueryItem(name: "q", value: event.title)
+            ]
+        } else {
+            components?.queryItems = [URLQueryItem(name: "q", value: event.navigationQuery)]
         }
-        let query = event.navigationQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? event.navigationQuery
-        return URL(string: "http://maps.apple.com/?q=\(query)")!
+        return components?.url
     }
 
     private var canOpenAmap: Bool {
@@ -663,13 +670,27 @@ struct EventCenterView: View {
         return UIApplication.shared.canOpenURL(url)
     }
 
-    private func amapURL(for event: MeQREvent) -> URL {
-        let name = event.title.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? event.title
+    private func amapURL(for event: MeQREvent) -> URL? {
+        var components = URLComponents()
+        components.scheme = "iosamap"
         if let latitude = event.latitude, let longitude = event.longitude {
-            return URL(string: "iosamap://path?sourceApplication=MeQR&dlat=\(latitude)&dlon=\(longitude)&dname=\(name)&dev=0&t=0")!
+            components.host = "path"
+            components.queryItems = [
+                URLQueryItem(name: "sourceApplication", value: "MeQR"),
+                URLQueryItem(name: "dlat", value: String(latitude)),
+                URLQueryItem(name: "dlon", value: String(longitude)),
+                URLQueryItem(name: "dname", value: event.title),
+                URLQueryItem(name: "dev", value: "0"),
+                URLQueryItem(name: "t", value: "0")
+            ]
+        } else {
+            components.host = "poi"
+            components.queryItems = [
+                URLQueryItem(name: "sourceApplication", value: "MeQR"),
+                URLQueryItem(name: "keywords", value: event.navigationQuery)
+            ]
         }
-        let query = event.navigationQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? event.navigationQuery
-        return URL(string: "iosamap://poi?sourceApplication=MeQR&keywords=\(query)")!
+        return components.url
     }
 }
 
