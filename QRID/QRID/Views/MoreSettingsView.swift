@@ -25,6 +25,9 @@ struct MoreSettingsView: View {
                 }
 
                 Section {
+                    NavigationLink { AnnouncementHistoryView() } label: {
+                        Label("历史通知", systemImage: "bell.and.waves.left.and.right")
+                    }
                     Button {
                         hasCompletedOnboarding = false
                         dismiss()
@@ -47,6 +50,17 @@ struct MoreSettingsView: View {
                 }
             }
         }
+    }
+}
+
+struct AnnouncementHistoryView: View {
+    @EnvironmentObject private var manager: AnnouncementManager
+    var body: some View {
+        List(manager.history) { item in
+            Link(destination: item.url) {
+                VStack(alignment: .leading, spacing: 5) { Text(item.title).font(.headline); Text(item.summary).font(.subheadline).foregroundStyle(.secondary) }
+            }
+        }.navigationTitle("历史通知").navigationBarTitleDisplayMode(.inline)
     }
 }
 

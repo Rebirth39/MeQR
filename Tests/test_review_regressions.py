@@ -1,3 +1,4 @@
+import json
 import re
 import unittest
 from pathlib import Path
@@ -510,9 +511,12 @@ class ReviewRegressionTests(unittest.TestCase):
         self.assertNotIn('CharacterSet(charactersIn: ",，、;；\\n\\r\\t ")', cluster)
         self.assertIn('enum CardTagIndex', cluster)
         self.assertIn('RemoteTagCatalogSnapshot.value()', cluster)
-        self.assertIn('https://meqrcode.cn/config/tags-v1.json', remote_catalog)
-        self.assertIn('cachePolicy = .reloadRevalidatingCacheData', remote_catalog)
-        self.assertIn('appendingPathComponent("meqr-tags-v1.json")', remote_catalog)
+        self.assertIn('Bundle.main.url(forResource: "tags-v1", withExtension: "json")', remote_catalog)
+        self.assertNotIn('https://meqrcode.cn/config/tags-v1.json', remote_catalog)
+        self.assertNotIn('URLSession.shared.data', remote_catalog)
+        tag_catalog = json.loads(read("QRID/QRID/tags-v1.json"))
+        self.assertEqual(tag_catalog["revision"], "2026.08.27.2")
+        self.assertEqual(len(tag_catalog["entries"]), 362)
         self.assertIn('let categories: [RemoteTagCategory]?', remote_catalog)
         self.assertIn('let solidColor: String?', remote_catalog)
         self.assertIn('searchRecords = records', remote_catalog)

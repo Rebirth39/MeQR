@@ -242,14 +242,9 @@ struct CardTagInputView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             } else if remoteCatalog.errorMessage != nil && suggestions.isEmpty {
-                Button {
-                    Task { await remoteCatalog.refresh() }
-                } label: {
-                    Label(L.tagCatalogRetry, systemImage: "arrow.clockwise")
-                        .font(.caption.weight(.semibold))
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(.secondary)
+                Text(L.tagCatalogRetry)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             } else if !remoteCatalog.revision.isEmpty {
                 Text(L.tagCatalogOnline)
                     .font(.caption2)

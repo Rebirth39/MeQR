@@ -3,6 +3,7 @@ import SwiftData
 
 @main
 struct QRIDApp: App {
+    @StateObject private var announcementManager = AnnouncementManager()
     private let modelBootstrap: ModelContainerBootstrap = {
         let schema = Schema([QRCluster.self, QRProfile.self])
         let fileManager = FileManager.default
@@ -61,6 +62,8 @@ struct QRIDApp: App {
                         WidgetSyncView()
                     }
                     .modelContainer(container)
+                    .environmentObject(announcementManager)
+                    .onAppear { announcementManager.refresh() }
             } else {
                 ContentUnavailableView(
                     "无法载入本地数据",
@@ -81,6 +84,7 @@ struct AppRootView: View {
     @Query(sort: \QRCluster.sortOrder, order: .forward) private var clusters: [QRCluster]
     @AppStorage(OnboardingStorage.completionKey) private var hasCompletedOnboarding = false
     @State private var startupError: String?
+    @EnvironmentObject private var announcementManager: AnnouncementManager
 
     init(startupError: String? = nil) {
         _startupError = State(initialValue: startupError)

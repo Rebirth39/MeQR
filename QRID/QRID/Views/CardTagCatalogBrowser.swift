@@ -52,10 +52,6 @@ struct CardTagCatalogBrowser: View {
                         Label(L.tagLibrary, systemImage: "tag")
                     } description: {
                         Text(L.tagCatalogRetry)
-                    } actions: {
-                        Button(L.tagCatalogRetry) {
-                            Task { await remoteCatalog.refresh() }
-                        }
                     }
                 }
             }

@@ -159,11 +159,6 @@ nonisolated enum RemoteTagCatalogSnapshot {
 @MainActor
 final class RemoteTagCatalog: ObservableObject {
     static let shared = RemoteTagCatalog()
-    private static let catalogURL = URL(string: "https://meqrcode.cn/config/tags-v1.json")!
-    private static let cacheURL = FileManager.default.urls(
-        for: .cachesDirectory,
-        in: .userDomainMask
-    )[0].appendingPathComponent("meqr-tags-v1.json")
 
     @Published private(set) var revision = ""
     @Published private(set) var isLoading = false
@@ -183,29 +178,13 @@ final class RemoteTagCatalog: ObservableObject {
         defer { isLoading = false }
 
         do {
-            if !hasLoaded,
-               let cachedDocument = try? await Self.loadDocument(from: Self.cacheURL) {
-                install(cachedDocument)
+            guard let url = Bundle.main.url(forResource: "tags-v1", withExtension: "json") else {
+                throw URLError(.fileDoesNotExist)
             }
-
-            var request = URLRequest(url: Self.catalogURL)
-            request.cachePolicy = .reloadRevalidatingCacheData
-            request.timeoutInterval = 12
-            request.setValue("application/json", forHTTPHeaderField: "Accept")
-
-            let (data, response) = try await URLSession.shared.data(for: request)
-            guard let httpResponse = response as? HTTPURLResponse,
-                  (200..<300).contains(httpResponse.statusCode) else {
-                throw URLError(.badServerResponse)
-            }
-
-            let document = try await Self.decode(data)
+            let document = try await Self.loadDocument(from: url)
             install(document)
-            try? data.write(to: Self.cacheURL, options: .atomic)
         } catch {
-            if !hasLoaded {
-                errorMessage = error.localizedDescription
-            }
+            errorMessage = error.localizedDescription
         }
     }
 

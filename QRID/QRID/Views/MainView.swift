@@ -3,6 +3,7 @@ import SwiftData
 import Photos
 
 struct MainView: View {
+    @EnvironmentObject private var announcementManager: AnnouncementManager
     @Environment(\.modelContext) private var modelContext
     @Environment(\.appSettings) private var settings
     @Query(sort: \QRCluster.sortOrder, order: .forward) private var clusters: [QRCluster]
@@ -65,6 +66,7 @@ struct MainView: View {
                     contentView
                 }
             }
+            .safeAreaInset(edge: .bottom) { AnnouncementBanner(manager: announcementManager) }
             .navigationTitle(L.qrID)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

@@ -40,7 +40,7 @@
 		B47513132FD52F8300DC3FE9 /* MeQRWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MeQRWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		B47513152FD52F8300DC3FE9 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		B47513172FD52F8300DC3FE9 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
-		B4BE7E452FC08BCF00F23520 /* QRID.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QRID.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B4BE7E452FC08BCF00F23520 /* 喜劳转扩.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "喜劳转扩.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B4C0189E2FCF1AF200C395AD /* MeQRWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MeQRWidgetExtension.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -129,7 +129,7 @@
 		B4BE7E462FC08BCF00F23520 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				B4BE7E452FC08BCF00F23520 /* QRID.app */,
+				B4BE7E452FC08BCF00F23520 /* 喜劳转扩.app */,
 				B47513132FD52F8300DC3FE9 /* MeQRWidgetExtension.appex */,
 			);
 			name = Products;
@@ -189,7 +189,7 @@
 			packageProductDependencies = (
 			);
 			productName = QRID;
-			productReference = B4BE7E452FC08BCF00F23520 /* QRID.app */;
+			productReference = B4BE7E452FC08BCF00F23520 /* 喜劳转扩.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
