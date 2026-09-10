@@ -18,7 +18,6 @@ struct MainView: View {
     @State private var showingMeQRScanner = false
     @State private var showingEncounters = false
     @State private var showingEvents = false
-    @State private var cardHeight: CGFloat = 520
     @State private var currentSelectedProfileIndex: Int = 0
     @State private var clusterIdBeforeReorder: PersistentIdentifier?
     @State private var showSavedAlert = false
@@ -272,54 +271,14 @@ struct MainView: View {
             }
             .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                Spacer()
-
-                TabView(selection: $currentPage) {
-                    ForEach(Array(clusters.enumerated()), id: \.element.id) { index, cluster in
-                        ClusterCardView(cluster: cluster, size: 180) { profileIndex in
-                            if index == currentPage {
-                                currentSelectedProfileIndex = profileIndex
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                        .tag(index)
-                    }
-                }
-                .tabViewStyle(.page(indexDisplayMode: .never))
-                .animation(.easeInOut(duration: 0.3), value: currentPage)
-                .frame(height: cardHeight)
-                .onChange(of: currentPage) { _, _ in
-                    currentSelectedProfileIndex = 0
-                }
-
-                if clusters.count > 1 {
-                    HStack(spacing: 8) {
-                        ForEach(0..<clusters.count, id: \.self) { index in
-                            Circle()
-                                .fill(index == currentPage ? Color.white : Color.white.opacity(0.5))
-                                .frame(width: index == currentPage ? 10 : 8,
-                                       height: index == currentPage ? 10 : 8)
-                                .scaleEffect(index == currentPage ? 1.2 : 1.0)
-                                .animation(.easeInOut(duration: 0.2), value: currentPage)
-                        }
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(
-                        Capsule()
-                            .fill(Color.black.opacity(0.35))
-                    )
-                    .padding(.top, 16)
-                    .padding(.bottom, 32)
-                } else {
-                    Spacer(minLength: 32)
-                }
+            ClusterCardPager(clusters: clusters, currentPage: $currentPage) { profileIndex in
+                currentSelectedProfileIndex = profileIndex
             }
-            .frame(maxWidth: .infinity)
+            .onChange(of: currentPage) { _, _ in
+                currentSelectedProfileIndex = 0
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .ignoresSafeArea()
     }
 
     // MARK: - Empty State

@@ -1,0 +1,40 @@
+// !$*UTF8*$!
+{
+ archiveVersion = 1;
+ classes = {};
+ objectVersion = 56;
+ objects = {
+  A001 = {isa = PBXProject; buildConfigurationList = C001; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; knownRegions = (en, Base); mainGroup = G001; productRefGroup = G002; projectDirPath = ""; targets = (T001, T002); };
+  G001 = {isa = PBXGroup; children = (F001, F002, F003, F004, F005, F006, F007, G002); sourceTree = "<group>"; };
+  G002 = {isa = PBXGroup; children = (P001, P002); name = Products; sourceTree = "<group>"; };
+  F001 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Host.swift; sourceTree = "<group>"; };
+  F002 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutTests.swift; sourceTree = "<group>"; };
+  F003 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ../../QRID/QRID/Views/CardTagReorderView.swift; sourceTree = "<group>"; };
+  F004 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ../../QRID/QRID/Helpers/ColorExtensions.swift; sourceTree = "<group>"; };
+  F005 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ../../QRID/QRID/Views/CardTagReportView.swift; sourceTree = "<group>"; };
+  F006 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ../../QRID/QRID/Views/QRLinkReviewView.swift; sourceTree = "<group>"; };
+  F007 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ../../QRID/QRID/Helpers/QRLinkPolicy.swift; sourceTree = "<group>"; };
+  P001 = {isa = PBXFileReference; explicitFileType = wrapper.application; path = TagLayoutHost.app; sourceTree = BUILT_PRODUCTS_DIR; };
+  P002 = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = LayoutTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+  B001 = {isa = PBXBuildFile; fileRef = F001; };
+  B002 = {isa = PBXBuildFile; fileRef = F002; };
+  B003 = {isa = PBXBuildFile; fileRef = F003; };
+  B004 = {isa = PBXBuildFile; fileRef = F004; };
+  B005 = {isa = PBXBuildFile; fileRef = F005; };
+  B006 = {isa = PBXBuildFile; fileRef = F006; };
+  B007 = {isa = PBXBuildFile; fileRef = F007; };
+  S001 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (B001, B003, B004, B005, B006, B007); runOnlyForDeploymentPostprocessing = 0; };
+  S002 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (B002); runOnlyForDeploymentPostprocessing = 0; };
+  T001 = {isa = PBXNativeTarget; buildConfigurationList = C002; buildPhases = (S001); buildRules = (); dependencies = (); name = TagLayoutHost; productName = TagLayoutHost; productReference = P001; productType = "com.apple.product-type.application"; };
+  T002 = {isa = PBXNativeTarget; buildConfigurationList = C003; buildPhases = (S002); buildRules = (); dependencies = (D001); name = LayoutTests; productName = LayoutTests; productReference = P002; productType = "com.apple.product-type.bundle.ui-testing"; };
+  D001 = {isa = PBXTargetDependency; target = T001; targetProxy = D002; };
+  D002 = {isa = PBXContainerItemProxy; containerPortal = A001; proxyType = 1; remoteGlobalIDString = T001; remoteInfo = TagLayoutHost; };
+  C001 = {isa = XCConfigurationList; buildConfigurations = (X001); defaultConfigurationIsVisible = 0; defaultConfigurationName = Debug; };
+  C002 = {isa = XCConfigurationList; buildConfigurations = (X002); defaultConfigurationIsVisible = 0; defaultConfigurationName = Debug; };
+  C003 = {isa = XCConfigurationList; buildConfigurations = (X003); defaultConfigurationIsVisible = 0; defaultConfigurationName = Debug; };
+  X001 = {isa = XCBuildConfiguration; name = Debug; buildSettings = {SDKROOT = iphoneos; IPHONEOS_DEPLOYMENT_TARGET = 18.0; SWIFT_VERSION = 5.0; CLANG_ENABLE_MODULES = YES; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; DEBUG_INFORMATION_FORMAT = dwarf; }; };
+  X002 = {isa = XCBuildConfiguration; name = Debug; buildSettings = {PRODUCT_NAME = "$(TARGET_NAME)"; PRODUCT_BUNDLE_IDENTIFIER = com.lucasli.meqr.taglayouthost; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_UILaunchScreen_Generation = YES; INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES; TARGETED_DEVICE_FAMILY = 1; CODE_SIGNING_ALLOWED = NO; }; };
+  X003 = {isa = XCBuildConfiguration; name = Debug; buildSettings = {PRODUCT_NAME = "$(TARGET_NAME)"; PRODUCT_BUNDLE_IDENTIFIER = com.lucasli.meqr.taglayouttests; GENERATE_INFOPLIST_FILE = YES; TARGETED_DEVICE_FAMILY = 1; CODE_SIGNING_ALLOWED = NO; TEST_TARGET_NAME = TagLayoutHost; }; };
+ };
+ rootObject = A001;
+}

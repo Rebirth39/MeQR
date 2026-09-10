@@ -277,43 +277,6 @@ enum Platform: String, CaseIterable, Identifiable {
 
     /// Detects the platform from a QR code URL/content string.
     static func detect(from url: String) -> Platform? {
-        let lower = url.lowercased()
-        if lower.contains("u.wechat.com") || lower.contains("wechat.com") || lower.contains("weixin") { return .wechat }
-        if lower.contains("qm.qq.com") || lower.contains("qq.com") { return .qq }
-        if lower.contains("wa.me") || lower.contains("whatsapp.com") { return .whatsapp }
-        if lower.contains("instagram.com") || lower.contains("instagr.am") { return .instagram }
-        if lower.contains("twitter.com") || isDomain(lower, "x.com") { return .twitter }
-        if lower.contains("tiktok.com") || lower.contains("vm.tiktok.com") { return .tiktok }
-        if lower.contains("snapchat.com") { return .snapchat }
-        if lower.contains("reddit.com") || lower.contains("redd.it") { return .reddit }
-        if lower.contains("threads.net") { return .threads }
-        if lower.contains("linkedin.com") { return .linkedin }
-        if lower.contains("github.com") { return .github }
-        if lower.contains("facebook.com") || lower.contains("fb.com") || lower.contains("fb.me") { return .facebook }
-        if lower.contains("twitch.tv") { return .twitch }
-        if lower.contains("line.me") || lower.contains("lin.ee") { return .line }
-        if lower.contains("testflight.apple.com") { return .testflight }
-        if lower.contains("xiaohongshu.com") || lower.contains("xhslink.com") { return .xiaohongshu }
-        if lower.contains("bilibili.com") || lower.contains("b23.tv") { return .bilibili }
-        if lower.contains("douyin.com") || lower.contains("iesdouyin.com") { return .douyin }
-        if lower.contains("weibo.com") || lower.contains("weibo.cn") { return .weibo }
-        if lower.contains("wechat") || lower.contains("weixin") { return .wechat }
-        if lower.contains("instagram") { return .instagram }
-        if lower.contains("twitter") { return .twitter }
-        if lower.contains("tiktok") { return .tiktok }
-        if lower.contains("snapchat") { return .snapchat }
-        if lower.contains("reddit") { return .reddit }
-        if lower.contains("threads") { return .threads }
-        if lower.contains("linkedin") { return .linkedin }
-        if lower.contains("github") { return .github }
-        if lower.contains("facebook") { return .facebook }
-        if lower.contains("whatsapp") { return .whatsapp }
-        if lower.contains("twitch") { return .twitch }
-        if lower.contains("testflight") { return .testflight }
-        if lower.contains("xiaohongshu") || lower.contains("xhs") { return .xiaohongshu }
-        if lower.contains("bilibili") { return .bilibili }
-        if lower.contains("douyin") { return .douyin }
-        if lower.contains("weibo") { return .weibo }
-        return nil
+        QRLinkPolicy.platformID(url).flatMap(Platform.init(rawValue:))
     }
 }

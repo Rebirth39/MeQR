@@ -328,6 +328,8 @@ struct AddProfileView: View {
 
     private var qrDetailsSection: some View {
         Section(L.details) {
+            QRContentWarning(content: qrContent, platform: platformType)
+            if !isGenerated && !qrContent.isEmpty { Text(qrContent).textSelection(.enabled) }
             Picker(L.platform, selection: $platformType) {
                 Section(L.commonPlatforms) {
                     platformOptions(Platform.commonPlatforms)

@@ -1,7 +1,53 @@
 {
   "schemaVersion": 1,
-  "revision": "2026.08.27.2",
-  "updatedAt": "2026-08-06T23:38:30+08:00",
+  "revision": "2026.09.08.2",
+  "updatedAt": "2026-09-08",
+  "changelog": [
+    {
+      "revision": "2026.09.08.2",
+      "date": "2026-09-08",
+      "summary": {
+        "zhHans": "补充 88 个角色、组合和作品条目；核对邦邦成员色，修正 Leo/need、咲希及真冬配色。",
+        "zhHantHK": "補充 88 個角色、組合和作品條目；核對邦邦成員色，修正 Leo/need、咲希及真冬配色。",
+        "zhHantTW": "補充 88 個角色、組合和作品條目；核對邦邦成員色，修正 Leo/need、咲希及真冬配色。",
+        "en": "Added 88 character, group and work entries; verified Bandori member colors and corrected Leo/need, Saki and Mafuyu palettes.",
+        "ja": "キャラクター・グループ・作品を88件追加。バンドリのメンバーカラーを照合し、Leo/need・咲希・まふゆの配色を修正。"
+      }
+    },
+    {
+      "revision": "2026.09.08.1",
+      "date": "2026-09-08",
+      "summary": {
+        "zhHans": "新增作品、角色和组合归属，支持按作品与角色联合搜索。",
+        "zhHantHK": "新增作品、角色和組合歸屬，支援按作品與角色聯合搜尋。",
+        "zhHantTW": "新增作品、角色和組合歸屬，支援依作品與角色聯合搜尋。",
+        "en": "Added work, character and group metadata for contextual Tag search.",
+        "ja": "作品・キャラクター・グループの情報を追加し、作品名とキャラクター名を組み合わせた検索に対応しました。"
+      }
+    },
+    {
+      "revision": "2026.09.07.2",
+      "date": "2026-09-07",
+      "summary": {
+        "zhHans": "修复 LoveLive! 灰色、MEIKO 与镜音铃/连配色；统一各语言和双端的完整预设拼色，修复名称匹配冲突。世界计划保留六色。",
+        "zhHantHK": "修復 LoveLive! 灰色、MEIKO 與鏡音鈴/連配色；統一各語言和雙端的完整預設拼色，修復名稱配對衝突。世界計畫保留六色。",
+        "zhHantTW": "修正 LoveLive! 灰色、MEIKO 與鏡音鈴/連配色；統一各語言和雙端的完整預設拼色，修正名稱比對衝突。世界計畫保留六色。",
+        "en": "Fixed gray LoveLive! tags and MEIKO/Rin/Len colors. Aligned full preset palettes across languages and platforms and corrected name matching. Project Sekai retains six colors.",
+        "ja": "LoveLive! の灰色表示と MEIKO・鏡音リン/レンの配色を修正。言語・OS 間でプリセットの全配色を統一し、名前の照合を修正しました。プロジェクトセカイの6色は維持しています。"
+      }
+    },
+    {
+      "revision": "2026.09.06.1",
+      "date": "2026-09-06",
+      "summary": {
+        "zhHans": "世界计划默认色更正为 #00A0E9。从此版本起，内置 Tag 库附带变更记录。",
+        "zhHantHK": "世界計劃預設色更正為 #00A0E9。從此版本起，內建 Tag 庫附帶變更記錄。",
+        "zhHantTW": "世界計畫預設色更正為 #00A0E9。從此版本起，內建 Tag 庫附帶更新記錄。",
+        "en": "Corrected the Project Sekai default color to #00A0E9. The bundled Tag library now includes a changelog.",
+        "ja": "プロジェクトセカイの標準色を #00A0E9 に修正しました。このバージョンから内蔵Tagライブラリに更新履歴を含めています。"
+      }
+    }
+  ],
   "categories": [
     {
       "id": "ip-project-sekai",
@@ -52,6 +98,10 @@
         {
           "start": "tag-0030",
           "end": "tag-0090"
+        },
+        {
+          "start": "tag-0451",
+          "end": "tag-0451"
         }
       ]
     },
@@ -68,6 +118,10 @@
         {
           "start": "tag-0091",
           "end": "tag-0097"
+        },
+        {
+          "start": "tag-0364",
+          "end": "tag-0367"
         }
       ]
     },
@@ -104,6 +158,10 @@
         {
           "start": "tag-0103",
           "end": "tag-0106"
+        },
+        {
+          "start": "tag-0368",
+          "end": "tag-0378"
         }
       ]
     },
@@ -120,6 +178,10 @@
         {
           "start": "tag-0107",
           "end": "tag-0109"
+        },
+        {
+          "start": "tag-0379",
+          "end": "tag-0390"
         }
       ]
     },
@@ -136,6 +198,10 @@
         {
           "start": "tag-0110",
           "end": "tag-0110"
+        },
+        {
+          "start": "tag-0391",
+          "end": "tag-0405"
         }
       ]
     },
@@ -152,6 +218,10 @@
         {
           "start": "tag-0111",
           "end": "tag-0111"
+        },
+        {
+          "start": "tag-0406",
+          "end": "tag-0417"
         }
       ]
     },
@@ -168,6 +238,10 @@
         {
           "start": "tag-0112",
           "end": "tag-0112"
+        },
+        {
+          "start": "tag-0418",
+          "end": "tag-0433"
         }
       ]
     },
@@ -184,6 +258,10 @@
         {
           "start": "tag-0113",
           "end": "tag-0113"
+        },
+        {
+          "start": "tag-0434",
+          "end": "tag-0442"
         }
       ]
     },
@@ -216,6 +294,10 @@
         {
           "start": "tag-0120",
           "end": "tag-0129"
+        },
+        {
+          "start": "tag-0449",
+          "end": "tag-0449"
         }
       ]
     },
@@ -232,6 +314,10 @@
         {
           "start": "tag-0130",
           "end": "tag-0135"
+        },
+        {
+          "start": "tag-0450",
+          "end": "tag-0450"
         }
       ]
     },
@@ -248,6 +334,10 @@
         {
           "start": "tag-0136",
           "end": "tag-0138"
+        },
+        {
+          "start": "tag-0443",
+          "end": "tag-0448"
         }
       ]
     },
@@ -463,8 +553,16 @@
         "世嘉彩舞",
         "彩舞"
       ],
-      "colors": ["#E4007F"],
-      "solidColor": "#E4007F"
+      "colors": [
+        "#39C5BB",
+        "#00A0E9",
+        "#88DD44",
+        "#FF9900",
+        "#EE1166",
+        "#884499"
+      ],
+      "solidColor": "#00A0E9",
+      "kind": "work"
     },
     {
       "id": "tag-0002",
@@ -481,7 +579,15 @@
         "leoneed",
         "レオニ"
       ],
-      "colors": []
+      "colors": [
+        "#4455DD",
+        "#33AAEE",
+        "#FFDD44",
+        "#EE6666",
+        "#BBDD22"
+      ],
+      "solidColor": "#4455DD",
+      "kind": "group"
     },
     {
       "id": "tag-0003",
@@ -499,7 +605,15 @@
         "モモジャン",
         "桃跳"
       ],
-      "colors": []
+      "colors": [
+        "#88DD44",
+        "#FFCCAA",
+        "#99CCFF",
+        "#FFAACC",
+        "#99EEDD"
+      ],
+      "solidColor": "#88DD44",
+      "kind": "group"
     },
     {
       "id": "tag-0004",
@@ -516,7 +630,15 @@
         "vividbadsquad",
         "ビビバス"
       ],
-      "colors": []
+      "colors": [
+        "#EE1166",
+        "#FF6699",
+        "#00BBDD",
+        "#FF7722",
+        "#0077DD"
+      ],
+      "solidColor": "#EE1166",
+      "kind": "group"
     },
     {
       "id": "tag-0005",
@@ -534,9 +656,31 @@
         "wonderlands x showtime",
         "wonderlandsxshowtime",
         "ワンダショ",
-        "ワショ"
+        "ワショ",
+        "Wonderlands x Showtime 拼色",
+        "Wonderlands x Showtime Mix",
+        "ワンダショMIX",
+        "wsmix",
+        "ws mix",
+        "ws多色",
+        "ws拼色",
+        "wxsmix",
+        "wxs mix",
+        "wxs多色",
+        "wxs拼色",
+        "ワンダショmix",
+        "ワンダショ多色",
+        "ワンダショ拼色"
       ],
-      "colors": []
+      "colors": [
+        "#FF9900",
+        "#FFBB00",
+        "#FF66BB",
+        "#33DD99",
+        "#BB88EE"
+      ],
+      "solidColor": "#FF9900",
+      "kind": "group"
     },
     {
       "id": "tag-0007",
@@ -558,7 +702,15 @@
         "25点",
         "ニーゴ"
       ],
-      "colors": []
+      "colors": [
+        "#884499",
+        "#BB6688",
+        "#8888CC",
+        "#CCAA88",
+        "#DDAACC"
+      ],
+      "solidColor": "#884499",
+      "kind": "group"
     },
     {
       "id": "tag-0008",
@@ -575,10 +727,12 @@
         "hoshinoichika"
       ],
       "colors": [
-        "#00A0E9",
+        "#4455DD",
         "#33AAEE"
       ],
-      "solidColor": "#33AAEE"
+      "solidColor": "#33AAEE",
+      "kind": "character",
+      "parentID": "tag-0002"
     },
     {
       "id": "tag-0009",
@@ -595,10 +749,12 @@
         "tenmasaki"
       ],
       "colors": [
-        "#00A0E9",
-        "#FFDD45"
+        "#4455DD",
+        "#FFDD44"
       ],
-      "solidColor": "#FFDD45"
+      "solidColor": "#FFDD44",
+      "kind": "character",
+      "parentID": "tag-0002"
     },
     {
       "id": "tag-0010",
@@ -616,10 +772,12 @@
         "mochizukihonami"
       ],
       "colors": [
-        "#00A0E9",
+        "#4455DD",
         "#EE6666"
       ],
-      "solidColor": "#EE6666"
+      "solidColor": "#EE6666",
+      "kind": "character",
+      "parentID": "tag-0002"
     },
     {
       "id": "tag-0011",
@@ -637,10 +795,12 @@
         "hinomorishiho"
       ],
       "colors": [
-        "#00A0E9",
+        "#4455DD",
         "#BBDD22"
       ],
-      "solidColor": "#BBDD22"
+      "solidColor": "#BBDD22",
+      "kind": "character",
+      "parentID": "tag-0002"
     },
     {
       "id": "tag-0012",
@@ -662,7 +822,9 @@
         "#88DD44",
         "#FFCCAA"
       ],
-      "solidColor": "#FFCCAA"
+      "solidColor": "#FFCCAA",
+      "kind": "character",
+      "parentID": "tag-0003"
     },
     {
       "id": "tag-0013",
@@ -683,7 +845,9 @@
         "#88DD44",
         "#99CCFF"
       ],
-      "solidColor": "#99CCFF"
+      "solidColor": "#99CCFF",
+      "kind": "character",
+      "parentID": "tag-0003"
     },
     {
       "id": "tag-0014",
@@ -704,7 +868,9 @@
         "#88DD44",
         "#FFAACC"
       ],
-      "solidColor": "#FFAACC"
+      "solidColor": "#FFAACC",
+      "kind": "character",
+      "parentID": "tag-0003"
     },
     {
       "id": "tag-0015",
@@ -724,7 +890,9 @@
         "#88DD44",
         "#99EEDD"
       ],
-      "solidColor": "#99EEDD"
+      "solidColor": "#99EEDD",
+      "kind": "character",
+      "parentID": "tag-0003"
     },
     {
       "id": "tag-0016",
@@ -745,7 +913,9 @@
         "#EE1166",
         "#FF6699"
       ],
-      "solidColor": "#FF6699"
+      "solidColor": "#FF6699",
+      "kind": "character",
+      "parentID": "tag-0004"
     },
     {
       "id": "tag-0017",
@@ -765,7 +935,9 @@
         "#EE1166",
         "#00BBDD"
       ],
-      "solidColor": "#00BBDD"
+      "solidColor": "#00BBDD",
+      "kind": "character",
+      "parentID": "tag-0004"
     },
     {
       "id": "tag-0018",
@@ -785,7 +957,9 @@
         "#EE1166",
         "#FF7722"
       ],
-      "solidColor": "#FF7722"
+      "solidColor": "#FF7722",
+      "kind": "character",
+      "parentID": "tag-0004"
     },
     {
       "id": "tag-0019",
@@ -807,7 +981,9 @@
         "#EE1166",
         "#0077DD"
       ],
-      "solidColor": "#0077DD"
+      "solidColor": "#0077DD",
+      "kind": "character",
+      "parentID": "tag-0004"
     },
     {
       "id": "tag-0020",
@@ -827,7 +1003,9 @@
         "#FF9900",
         "#FFBB00"
       ],
-      "solidColor": "#FFBB00"
+      "solidColor": "#FFBB00",
+      "kind": "character",
+      "parentID": "tag-0005"
     },
     {
       "id": "tag-0021",
@@ -848,7 +1026,9 @@
         "#FF9900",
         "#FF66BB"
       ],
-      "solidColor": "#FF66BB"
+      "solidColor": "#FF66BB",
+      "kind": "character",
+      "parentID": "tag-0005"
     },
     {
       "id": "tag-0022",
@@ -870,7 +1050,9 @@
         "#FF9900",
         "#33DD99"
       ],
-      "solidColor": "#33DD99"
+      "solidColor": "#33DD99",
+      "kind": "character",
+      "parentID": "tag-0005"
     },
     {
       "id": "tag-0023",
@@ -891,7 +1073,9 @@
         "#FF9900",
         "#BB88EE"
       ],
-      "solidColor": "#BB88EE"
+      "solidColor": "#BB88EE",
+      "kind": "character",
+      "parentID": "tag-0005"
     },
     {
       "id": "tag-0024",
@@ -911,7 +1095,9 @@
         "#884499",
         "#BB6688"
       ],
-      "solidColor": "#BB6688"
+      "solidColor": "#BB6688",
+      "kind": "character",
+      "parentID": "tag-0007"
     },
     {
       "id": "tag-0025",
@@ -929,9 +1115,11 @@
       ],
       "colors": [
         "#884499",
-        "#8889CC"
+        "#8888CC"
       ],
-      "solidColor": "#8889CC"
+      "solidColor": "#8888CC",
+      "kind": "character",
+      "parentID": "tag-0007"
     },
     {
       "id": "tag-0026",
@@ -953,7 +1141,9 @@
         "#884499",
         "#CCAA88"
       ],
-      "solidColor": "#CCAA88"
+      "solidColor": "#CCAA88",
+      "kind": "character",
+      "parentID": "tag-0007"
     },
     {
       "id": "tag-0027",
@@ -973,7 +1163,9 @@
         "#884499",
         "#DDAACC"
       ],
-      "solidColor": "#DDAACC"
+      "solidColor": "#DDAACC",
+      "kind": "character",
+      "parentID": "tag-0007"
     },
     {
       "id": "tag-0028",
@@ -990,7 +1182,16 @@
         "vocalo",
         "vocaloid"
       ],
-      "colors": []
+      "colors": [
+        "#39C5BB",
+        "#FFB000",
+        "#FFE211",
+        "#FF69B4",
+        "#D80000",
+        "#0068B7"
+      ],
+      "solidColor": "#39C5BB",
+      "kind": "work"
     },
     {
       "id": "tag-0029",
@@ -1009,7 +1210,8 @@
       "colors": [
         "#39C5BB"
       ],
-      "solidColor": "#39C5BB"
+      "solidColor": "#39C5BB",
+      "kind": "character"
     },
     {
       "id": "tag-0030",
@@ -1030,7 +1232,9 @@
         "#FF3377",
         "#33DDAA",
         "#3344AA"
-      ]
+      ],
+      "solidColor": "#FF3377",
+      "kind": "work"
     },
     {
       "id": "tag-0031",
@@ -1046,7 +1250,16 @@
         "poppinparty",
         "ポピパ"
       ],
-      "colors": []
+      "colors": [
+        "#FF3377",
+        "#FF5522",
+        "#0077DD",
+        "#FF55BB",
+        "#FFCC11",
+        "#AA66DD"
+      ],
+      "solidColor": "#FF3377",
+      "kind": "group"
     },
     {
       "id": "tag-0032",
@@ -1062,7 +1275,16 @@
         "美竹兰组",
         "美竹蘭組"
       ],
-      "colors": []
+      "colors": [
+        "#E53344",
+        "#EE0022",
+        "#00CCAA",
+        "#FF9999",
+        "#BB0033",
+        "#FFEE88"
+      ],
+      "solidColor": "#E53344",
+      "kind": "group"
     },
     {
       "id": "tag-0033",
@@ -1080,7 +1302,16 @@
         "彩组",
         "彩組"
       ],
-      "colors": []
+      "colors": [
+        "#33DDAA",
+        "#FF88BB",
+        "#55DDEE",
+        "#FFEEAA",
+        "#99DD88",
+        "#DDBBFF"
+      ],
+      "solidColor": "#33DDAA",
+      "kind": "group"
     },
     {
       "id": "tag-0034",
@@ -1094,7 +1325,16 @@
       "aliases": [
         "roselia组"
       ],
-      "colors": []
+      "colors": [
+        "#3344AA",
+        "#881188",
+        "#00AABB",
+        "#DD2200",
+        "#DD0088",
+        "#BBBBBB"
+      ],
+      "solidColor": "#3344AA",
+      "kind": "group"
     },
     {
       "id": "tag-0035",
@@ -1111,7 +1351,16 @@
         "hello happy world",
         "ハロハピ"
       ],
-      "colors": []
+      "colors": [
+        "#FFC02A",
+        "#FFEE22",
+        "#AA33CC",
+        "#FF9922",
+        "#44DDFF",
+        "#006699"
+      ],
+      "solidColor": "#FFC02A",
+      "kind": "group"
     },
     {
       "id": "tag-0036",
@@ -1126,7 +1375,16 @@
         "monica",
         "モニカ"
       ],
-      "colors": []
+      "colors": [
+        "#33AADD",
+        "#6677CC",
+        "#EE6666",
+        "#EE7744",
+        "#EE7788",
+        "#669988"
+      ],
+      "solidColor": "#33AADD",
+      "kind": "group"
     },
     {
       "id": "tag-0037",
@@ -1141,7 +1399,16 @@
         "ras",
         "raiseasuilen"
       ],
-      "colors": []
+      "colors": [
+        "#66CC33",
+        "#CC0000",
+        "#AAEE22",
+        "#EEBB44",
+        "#FF99BB",
+        "#00BBFF"
+      ],
+      "solidColor": "#66CC33",
+      "kind": "group"
     },
     {
       "id": "tag-0038",
@@ -1156,7 +1423,16 @@
         "mygo",
         "迷子"
       ],
-      "colors": []
+      "colors": [
+        "#3381B0",
+        "#77BBDD",
+        "#FF8899",
+        "#77DD77",
+        "#FFDD88",
+        "#7777AA"
+      ],
+      "solidColor": "#3381B0",
+      "kind": "group"
     },
     {
       "id": "tag-0039",
@@ -1171,7 +1447,16 @@
         "avemujica",
         "母鸡卡"
       ],
-      "colors": []
+      "colors": [
+        "#881144",
+        "#CC4466",
+        "#884499",
+        "#66AA66",
+        "#336699",
+        "#DDBB66"
+      ],
+      "solidColor": "#881144",
+      "kind": "group"
     },
     {
       "id": "tag-0040",
@@ -1194,7 +1479,9 @@
         "#7D4CFF",
         "#FF66AA",
         "#66CCFF"
-      ]
+      ],
+      "solidColor": "#7D4CFF",
+      "kind": "group"
     },
     {
       "id": "tag-0041",
@@ -1214,7 +1501,9 @@
         "#FF3377",
         "#FF5522"
       ],
-      "solidColor": "#FF5522"
+      "solidColor": "#FF5522",
+      "kind": "character",
+      "parentID": "tag-0031"
     },
     {
       "id": "tag-0042",
@@ -1233,9 +1522,11 @@
       ],
       "colors": [
         "#FF3377",
-        "#3366CC"
+        "#0077DD"
       ],
-      "solidColor": "#3366CC"
+      "solidColor": "#0077DD",
+      "kind": "character",
+      "parentID": "tag-0031"
     },
     {
       "id": "tag-0043",
@@ -1254,9 +1545,11 @@
       ],
       "colors": [
         "#FF3377",
-        "#FF99CC"
+        "#FF55BB"
       ],
-      "solidColor": "#FF99CC"
+      "solidColor": "#FF55BB",
+      "kind": "character",
+      "parentID": "tag-0031"
     },
     {
       "id": "tag-0044",
@@ -1275,9 +1568,11 @@
       ],
       "colors": [
         "#FF3377",
-        "#FFCC33"
+        "#FFCC11"
       ],
-      "solidColor": "#FFCC33"
+      "solidColor": "#FFCC11",
+      "kind": "character",
+      "parentID": "tag-0031"
     },
     {
       "id": "tag-0045",
@@ -1295,9 +1590,11 @@
       ],
       "colors": [
         "#FF3377",
-        "#AA66CC"
+        "#AA66DD"
       ],
-      "solidColor": "#AA66CC"
+      "solidColor": "#AA66DD",
+      "kind": "character",
+      "parentID": "tag-0031"
     },
     {
       "id": "tag-0046",
@@ -1315,9 +1612,11 @@
       ],
       "colors": [
         "#E53344",
-        "#E5004F"
+        "#EE0022"
       ],
-      "solidColor": "#E5004F"
+      "solidColor": "#EE0022",
+      "kind": "character",
+      "parentID": "tag-0032"
     },
     {
       "id": "tag-0047",
@@ -1336,9 +1635,11 @@
       ],
       "colors": [
         "#E53344",
-        "#55BB77"
+        "#00CCAA"
       ],
-      "solidColor": "#55BB77"
+      "solidColor": "#00CCAA",
+      "kind": "character",
+      "parentID": "tag-0032"
     },
     {
       "id": "tag-0048",
@@ -1358,9 +1659,11 @@
       ],
       "colors": [
         "#E53344",
-        "#FF77AA"
+        "#FF9999"
       ],
-      "solidColor": "#FF77AA"
+      "solidColor": "#FF9999",
+      "kind": "character",
+      "parentID": "tag-0032"
     },
     {
       "id": "tag-0049",
@@ -1377,9 +1680,11 @@
       ],
       "colors": [
         "#E53344",
-        "#CC3333"
+        "#BB0033"
       ],
-      "solidColor": "#CC3333"
+      "solidColor": "#BB0033",
+      "kind": "character",
+      "parentID": "tag-0032"
     },
     {
       "id": "tag-0050",
@@ -1399,9 +1704,11 @@
       ],
       "colors": [
         "#E53344",
-        "#FFCC66"
+        "#FFEE88"
       ],
-      "solidColor": "#FFCC66"
+      "solidColor": "#FFEE88",
+      "kind": "character",
+      "parentID": "tag-0032"
     },
     {
       "id": "tag-0051",
@@ -1418,9 +1725,11 @@
       ],
       "colors": [
         "#33DDAA",
-        "#FF66AA"
+        "#FF88BB"
       ],
-      "solidColor": "#FF66AA"
+      "solidColor": "#FF88BB",
+      "kind": "character",
+      "parentID": "tag-0033"
     },
     {
       "id": "tag-0052",
@@ -1438,9 +1747,11 @@
       ],
       "colors": [
         "#33DDAA",
-        "#66CCFF"
+        "#55DDEE"
       ],
-      "solidColor": "#66CCFF"
+      "solidColor": "#55DDEE",
+      "kind": "character",
+      "parentID": "tag-0033"
     },
     {
       "id": "tag-0053",
@@ -1459,9 +1770,11 @@
       ],
       "colors": [
         "#33DDAA",
-        "#FFEE99"
+        "#FFEEAA"
       ],
-      "solidColor": "#FFEE99"
+      "solidColor": "#FFEEAA",
+      "kind": "character",
+      "parentID": "tag-0033"
     },
     {
       "id": "tag-0054",
@@ -1480,9 +1793,11 @@
       ],
       "colors": [
         "#33DDAA",
-        "#88DD44"
+        "#99DD88"
       ],
-      "solidColor": "#88DD44"
+      "solidColor": "#99DD88",
+      "kind": "character",
+      "parentID": "tag-0033"
     },
     {
       "id": "tag-0055",
@@ -1501,9 +1816,11 @@
       ],
       "colors": [
         "#33DDAA",
-        "#CC99FF"
+        "#DDBBFF"
       ],
-      "solidColor": "#CC99FF"
+      "solidColor": "#DDBBFF",
+      "kind": "character",
+      "parentID": "tag-0033"
     },
     {
       "id": "tag-0056",
@@ -1521,9 +1838,11 @@
       ],
       "colors": [
         "#3344AA",
-        "#6676D8"
+        "#881188"
       ],
-      "solidColor": "#6676D8"
+      "solidColor": "#881188",
+      "kind": "character",
+      "parentID": "tag-0034"
     },
     {
       "id": "tag-0057",
@@ -1542,9 +1861,11 @@
       ],
       "colors": [
         "#3344AA",
-        "#66CCFF"
+        "#00AABB"
       ],
-      "solidColor": "#66CCFF"
+      "solidColor": "#00AABB",
+      "kind": "character",
+      "parentID": "tag-0034"
     },
     {
       "id": "tag-0058",
@@ -1563,9 +1884,11 @@
       ],
       "colors": [
         "#3344AA",
-        "#DD2244"
+        "#DD2200"
       ],
-      "solidColor": "#DD2244"
+      "solidColor": "#DD2200",
+      "kind": "character",
+      "parentID": "tag-0034"
     },
     {
       "id": "tag-0059",
@@ -1585,9 +1908,11 @@
       ],
       "colors": [
         "#3344AA",
-        "#AA44DD"
+        "#DD0088"
       ],
-      "solidColor": "#AA44DD"
+      "solidColor": "#DD0088",
+      "kind": "character",
+      "parentID": "tag-0034"
     },
     {
       "id": "tag-0060",
@@ -1605,9 +1930,11 @@
       ],
       "colors": [
         "#3344AA",
-        "#9999CC"
+        "#BBBBBB"
       ],
-      "solidColor": "#9999CC"
+      "solidColor": "#BBBBBB",
+      "kind": "character",
+      "parentID": "tag-0034"
     },
     {
       "id": "tag-0061",
@@ -1625,9 +1952,11 @@
       ],
       "colors": [
         "#FFC02A",
-        "#FFCC33"
+        "#FFEE22"
       ],
-      "solidColor": "#FFCC33"
+      "solidColor": "#FFEE22",
+      "kind": "character",
+      "parentID": "tag-0035"
     },
     {
       "id": "tag-0062",
@@ -1646,9 +1975,11 @@
       ],
       "colors": [
         "#FFC02A",
-        "#AA66CC"
+        "#AA33CC"
       ],
-      "solidColor": "#AA66CC"
+      "solidColor": "#AA33CC",
+      "kind": "character",
+      "parentID": "tag-0035"
     },
     {
       "id": "tag-0063",
@@ -1667,9 +1998,11 @@
       ],
       "colors": [
         "#FFC02A",
-        "#FF9933"
+        "#FF9922"
       ],
-      "solidColor": "#FF9933"
+      "solidColor": "#FF9922",
+      "kind": "character",
+      "parentID": "tag-0035"
     },
     {
       "id": "tag-0064",
@@ -1687,9 +2020,11 @@
       ],
       "colors": [
         "#FFC02A",
-        "#66CCFF"
+        "#44DDFF"
       ],
-      "solidColor": "#66CCFF"
+      "solidColor": "#44DDFF",
+      "kind": "character",
+      "parentID": "tag-0035"
     },
     {
       "id": "tag-0065",
@@ -1702,17 +2037,16 @@
       },
       "aliases": [
         "美咲",
-        "米歇尔",
-        "ミッシェル",
-        "Michelle",
         "misaki",
         "okusawamisaki"
       ],
       "colors": [
         "#FFC02A",
-        "#996633"
+        "#006699"
       ],
-      "solidColor": "#996633"
+      "solidColor": "#006699",
+      "kind": "character",
+      "parentID": "tag-0035"
     },
     {
       "id": "tag-0066",
@@ -1731,9 +2065,11 @@
       ],
       "colors": [
         "#33AADD",
-        "#AABBFF"
+        "#6677CC"
       ],
-      "solidColor": "#AABBFF"
+      "solidColor": "#6677CC",
+      "kind": "character",
+      "parentID": "tag-0036"
     },
     {
       "id": "tag-0067",
@@ -1751,9 +2087,11 @@
       ],
       "colors": [
         "#33AADD",
-        "#FF99CC"
+        "#EE6666"
       ],
-      "solidColor": "#FF99CC"
+      "solidColor": "#EE6666",
+      "kind": "character",
+      "parentID": "tag-0036"
     },
     {
       "id": "tag-0068",
@@ -1771,9 +2109,11 @@
       ],
       "colors": [
         "#33AADD",
-        "#99DD66"
+        "#EE7744"
       ],
-      "solidColor": "#99DD66"
+      "solidColor": "#EE7744",
+      "kind": "character",
+      "parentID": "tag-0036"
     },
     {
       "id": "tag-0069",
@@ -1792,9 +2132,11 @@
       ],
       "colors": [
         "#33AADD",
-        "#FFCC66"
+        "#EE7788"
       ],
-      "solidColor": "#FFCC66"
+      "solidColor": "#EE7788",
+      "kind": "character",
+      "parentID": "tag-0036"
     },
     {
       "id": "tag-0070",
@@ -1811,9 +2153,11 @@
       ],
       "colors": [
         "#33AADD",
-        "#6699CC"
+        "#669988"
       ],
-      "solidColor": "#6699CC"
+      "solidColor": "#669988",
+      "kind": "character",
+      "parentID": "tag-0036"
     },
     {
       "id": "tag-0071",
@@ -1832,9 +2176,11 @@
       ],
       "colors": [
         "#66CC33",
-        "#AA3333"
+        "#CC0000"
       ],
-      "solidColor": "#AA3333"
+      "solidColor": "#CC0000",
+      "kind": "character",
+      "parentID": "tag-0037"
     },
     {
       "id": "tag-0072",
@@ -1854,9 +2200,11 @@
       ],
       "colors": [
         "#66CC33",
-        "#77CC44"
+        "#AAEE22"
       ],
-      "solidColor": "#77CC44"
+      "solidColor": "#AAEE22",
+      "kind": "character",
+      "parentID": "tag-0037"
     },
     {
       "id": "tag-0073",
@@ -1875,9 +2223,11 @@
       ],
       "colors": [
         "#66CC33",
-        "#FF9933"
+        "#EEBB44"
       ],
-      "solidColor": "#FF9933"
+      "solidColor": "#EEBB44",
+      "kind": "character",
+      "parentID": "tag-0037"
     },
     {
       "id": "tag-0074",
@@ -1896,9 +2246,11 @@
       ],
       "colors": [
         "#66CC33",
-        "#FF77BB"
+        "#FF99BB"
       ],
-      "solidColor": "#FF77BB"
+      "solidColor": "#FF99BB",
+      "kind": "character",
+      "parentID": "tag-0037"
     },
     {
       "id": "tag-0075",
@@ -1917,9 +2269,11 @@
       ],
       "colors": [
         "#66CC33",
-        "#66CCFF"
+        "#00BBFF"
       ],
-      "solidColor": "#66CCFF"
+      "solidColor": "#00BBFF",
+      "kind": "character",
+      "parentID": "tag-0037"
     },
     {
       "id": "tag-0076",
@@ -1941,7 +2295,9 @@
         "#3381B0",
         "#77BBDD"
       ],
-      "solidColor": "#77BBDD"
+      "solidColor": "#77BBDD",
+      "kind": "character",
+      "parentID": "tag-0038"
     },
     {
       "id": "tag-0077",
@@ -1962,7 +2318,9 @@
         "#3381B0",
         "#FF8899"
       ],
-      "solidColor": "#FF8899"
+      "solidColor": "#FF8899",
+      "kind": "character",
+      "parentID": "tag-0038"
     },
     {
       "id": "tag-0078",
@@ -1982,9 +2340,11 @@
       ],
       "colors": [
         "#3381B0",
-        "#66CC99"
+        "#77DD77"
       ],
-      "solidColor": "#66CC99"
+      "solidColor": "#77DD77",
+      "kind": "character",
+      "parentID": "tag-0038"
     },
     {
       "id": "tag-0079",
@@ -2003,9 +2363,11 @@
       ],
       "colors": [
         "#3381B0",
-        "#DDBB66"
+        "#FFDD88"
       ],
-      "solidColor": "#DDBB66"
+      "solidColor": "#FFDD88",
+      "kind": "character",
+      "parentID": "tag-0038"
     },
     {
       "id": "tag-0080",
@@ -2023,9 +2385,11 @@
       ],
       "colors": [
         "#3381B0",
-        "#4455AA"
+        "#7777AA"
       ],
-      "solidColor": "#4455AA"
+      "solidColor": "#7777AA",
+      "kind": "character",
+      "parentID": "tag-0038"
     },
     {
       "id": "tag-0081",
@@ -2047,7 +2411,9 @@
         "#881144",
         "#CC4466"
       ],
-      "solidColor": "#CC4466"
+      "solidColor": "#CC4466",
+      "kind": "character",
+      "parentID": "tag-0039"
     },
     {
       "id": "tag-0082",
@@ -2068,7 +2434,9 @@
         "#881144",
         "#884499"
       ],
-      "solidColor": "#884499"
+      "solidColor": "#884499",
+      "kind": "character",
+      "parentID": "tag-0039"
     },
     {
       "id": "tag-0083",
@@ -2088,7 +2456,9 @@
         "#881144",
         "#66AA66"
       ],
-      "solidColor": "#66AA66"
+      "solidColor": "#66AA66",
+      "kind": "character",
+      "parentID": "tag-0039"
     },
     {
       "id": "tag-0084",
@@ -2110,7 +2480,9 @@
         "#881144",
         "#336699"
       ],
-      "solidColor": "#336699"
+      "solidColor": "#336699",
+      "kind": "character",
+      "parentID": "tag-0039"
     },
     {
       "id": "tag-0085",
@@ -2132,7 +2504,9 @@
         "#881144",
         "#DDBB66"
       ],
-      "solidColor": "#DDBB66"
+      "solidColor": "#DDBB66",
+      "kind": "character",
+      "parentID": "tag-0039"
     },
     {
       "id": "tag-0086",
@@ -2153,7 +2527,9 @@
         "#7D4CFF",
         "#FF66AA"
       ],
-      "solidColor": "#FF66AA"
+      "solidColor": "#FF66AA",
+      "kind": "character",
+      "parentID": "tag-0040"
     },
     {
       "id": "tag-0087",
@@ -2174,7 +2550,9 @@
         "#7D4CFF",
         "#66CCFF"
       ],
-      "solidColor": "#66CCFF"
+      "solidColor": "#66CCFF",
+      "kind": "character",
+      "parentID": "tag-0040"
     },
     {
       "id": "tag-0088",
@@ -2193,7 +2571,9 @@
         "#7D4CFF",
         "#FFCC66"
       ],
-      "solidColor": "#FFCC66"
+      "solidColor": "#FFCC66",
+      "kind": "character",
+      "parentID": "tag-0040"
     },
     {
       "id": "tag-0089",
@@ -2213,7 +2593,9 @@
         "#7D4CFF",
         "#99DD66"
       ],
-      "solidColor": "#99DD66"
+      "solidColor": "#99DD66",
+      "kind": "character",
+      "parentID": "tag-0040"
     },
     {
       "id": "tag-0090",
@@ -2234,7 +2616,9 @@
         "#7D4CFF",
         "#CC99FF"
       ],
-      "solidColor": "#CC99FF"
+      "solidColor": "#CC99FF",
+      "kind": "character",
+      "parentID": "tag-0040"
     },
     {
       "id": "tag-0091",
@@ -2252,7 +2636,11 @@
         "羅德島",
         "rhodesisland"
       ],
-      "colors": []
+      "colors": [
+        "#F2A900"
+      ],
+      "solidColor": "#F2A900",
+      "kind": "work"
     },
     {
       "id": "tag-0092",
@@ -2270,7 +2658,8 @@
         "#F2A900",
         "#2E6F9E"
       ],
-      "solidColor": "#2E6F9E"
+      "solidColor": "#2E6F9E",
+      "kind": "character"
     },
     {
       "id": "tag-0093",
@@ -2289,7 +2678,8 @@
         "#F2A900",
         "#4E6B54"
       ],
-      "solidColor": "#4E6B54"
+      "solidColor": "#4E6B54",
+      "kind": "character"
     },
     {
       "id": "tag-0094",
@@ -2307,7 +2697,8 @@
         "#F2A900",
         "#D94A4A"
       ],
-      "solidColor": "#D94A4A"
+      "solidColor": "#D94A4A",
+      "kind": "character"
     },
     {
       "id": "tag-0095",
@@ -2325,7 +2716,8 @@
         "#F2A900",
         "#2F6BA8"
       ],
-      "solidColor": "#2F6BA8"
+      "solidColor": "#2F6BA8",
+      "kind": "character"
     },
     {
       "id": "tag-0096",
@@ -2343,7 +2735,8 @@
         "#F2A900",
         "#D8D8E8"
       ],
-      "solidColor": "#D8D8E8"
+      "solidColor": "#D8D8E8",
+      "kind": "character"
     },
     {
       "id": "tag-0097",
@@ -2361,7 +2754,8 @@
         "#F2A900",
         "#E84D78"
       ],
-      "solidColor": "#E84D78"
+      "solidColor": "#E84D78",
+      "kind": "character"
     },
     {
       "id": "tag-0098",
@@ -2383,7 +2777,9 @@
       "colors": [
         "#00AEEF",
         "#FFFFFF"
-      ]
+      ],
+      "solidColor": "#00AEEF",
+      "kind": "work"
     },
     {
       "id": "tag-0099",
@@ -2406,7 +2802,8 @@
         "#324B62",
         "#81AEB8"
       ],
-      "solidColor": "#81AEB8"
+      "solidColor": "#81AEB8",
+      "kind": "character"
     },
     {
       "id": "tag-0100",
@@ -2430,7 +2827,8 @@
         "#8EBFD3",
         "#C68A99"
       ],
-      "solidColor": "#C68A99"
+      "solidColor": "#C68A99",
+      "kind": "character"
     },
     {
       "id": "tag-0101",
@@ -2455,7 +2853,8 @@
         "#1C305B",
         "#695574"
       ],
-      "solidColor": "#695574"
+      "solidColor": "#695574",
+      "kind": "character"
     },
     {
       "id": "tag-0102",
@@ -2480,7 +2879,8 @@
         "#93BEE8",
         "#423C70"
       ],
-      "solidColor": "#423C70"
+      "solidColor": "#423C70",
+      "kind": "character"
     },
     {
       "id": "tag-0103",
@@ -2497,7 +2897,11 @@
         "星铁",
         "星鐵"
       ],
-      "colors": []
+      "colors": [
+        "#5D7EDB"
+      ],
+      "solidColor": "#5D7EDB",
+      "kind": "work"
     },
     {
       "id": "tag-0104",
@@ -2515,7 +2919,8 @@
         "#5D7EDB",
         "#8C3B64"
       ],
-      "solidColor": "#8C3B64"
+      "solidColor": "#8C3B64",
+      "kind": "character"
     },
     {
       "id": "tag-0105",
@@ -2533,7 +2938,8 @@
         "#5D7EDB",
         "#AEE7E8"
       ],
-      "solidColor": "#AEE7E8"
+      "solidColor": "#AEE7E8",
+      "kind": "character"
     },
     {
       "id": "tag-0106",
@@ -2551,7 +2957,8 @@
         "#5D7EDB",
         "#78C4D4"
       ],
-      "solidColor": "#78C4D4"
+      "solidColor": "#78C4D4",
+      "kind": "character"
     },
     {
       "id": "tag-0107",
@@ -2566,7 +2973,11 @@
         "genshin",
         "genshinimpact"
       ],
-      "colors": []
+      "colors": [
+        "#C9A063"
+      ],
+      "solidColor": "#C9A063",
+      "kind": "work"
     },
     {
       "id": "tag-0108",
@@ -2584,7 +2995,8 @@
         "#C9A063",
         "#79B85A"
       ],
-      "solidColor": "#79B85A"
+      "solidColor": "#79B85A",
+      "kind": "character"
     },
     {
       "id": "tag-0109",
@@ -2602,7 +3014,8 @@
         "#C9A063",
         "#5BA7C9"
       ],
-      "solidColor": "#5BA7C9"
+      "solidColor": "#5BA7C9",
+      "kind": "character"
     },
     {
       "id": "tag-0110",
@@ -2618,7 +3031,11 @@
         "ll",
         "ラブライブ"
       ],
-      "colors": []
+      "colors": [
+        "#E4007F"
+      ],
+      "solidColor": "#E4007F",
+      "kind": "work"
     },
     {
       "id": "tag-0111",
@@ -2635,7 +3052,11 @@
         "es",
         "あんスタ"
       ],
-      "colors": []
+      "colors": [
+        "#F6B51D"
+      ],
+      "solidColor": "#F6B51D",
+      "kind": "work"
     },
     {
       "id": "tag-0112",
@@ -2652,7 +3073,11 @@
         "imas",
         "アイマス"
       ],
-      "colors": []
+      "colors": [
+        "#F34E7B"
+      ],
+      "solidColor": "#F34E7B",
+      "kind": "work"
     },
     {
       "id": "tag-0113",
@@ -2669,7 +3094,11 @@
         "馬娘",
         "ウマ娘"
       ],
-      "colors": []
+      "colors": [
+        "#8D5AC2"
+      ],
+      "solidColor": "#8D5AC2",
+      "kind": "work"
     },
     {
       "id": "tag-0114",
@@ -2686,7 +3115,15 @@
         "孤搖",
         "ぼっちざろっく"
       ],
-      "colors": []
+      "colors": [
+        "#F4B6C2",
+        "#FF99CC",
+        "#FFD34E",
+        "#5B8FE8",
+        "#E94B4B"
+      ],
+      "solidColor": "#F4B6C2",
+      "kind": "work"
     },
     {
       "id": "tag-0115",
@@ -2703,7 +3140,15 @@
         "结束band",
         "結束band"
       ],
-      "colors": []
+      "colors": [
+        "#F4B6C2",
+        "#FF99CC",
+        "#FFD34E",
+        "#5B8FE8",
+        "#E94B4B"
+      ],
+      "solidColor": "#F4B6C2",
+      "kind": "group"
     },
     {
       "id": "tag-0116",
@@ -2723,7 +3168,9 @@
         "#F4B6C2",
         "#FF99CC"
       ],
-      "solidColor": "#FF99CC"
+      "solidColor": "#FF99CC",
+      "kind": "character",
+      "parentID": "tag-0115"
     },
     {
       "id": "tag-0117",
@@ -2743,7 +3190,9 @@
         "#F4B6C2",
         "#FFD34E"
       ],
-      "solidColor": "#FFD34E"
+      "solidColor": "#FFD34E",
+      "kind": "character",
+      "parentID": "tag-0115"
     },
     {
       "id": "tag-0118",
@@ -2765,7 +3214,9 @@
         "#F4B6C2",
         "#5B8FE8"
       ],
-      "solidColor": "#5B8FE8"
+      "solidColor": "#5B8FE8",
+      "kind": "character",
+      "parentID": "tag-0115"
     },
     {
       "id": "tag-0119",
@@ -2786,7 +3237,9 @@
         "#F4B6C2",
         "#E94B4B"
       ],
-      "solidColor": "#E94B4B"
+      "solidColor": "#E94B4B",
+      "kind": "character",
+      "parentID": "tag-0115"
     },
     {
       "id": "tag-0120",
@@ -2798,15 +3251,6 @@
         "ja": "放課後ティータイム"
       },
       "aliases": [
-        "k-on",
-        "kon",
-        "けいおん",
-        "轻音",
-        "輕音",
-        "轻音少女",
-        "輕音少女",
-        "轻音部",
-        "輕音部",
         "htt",
         "hokagoteatime",
         "ho-kago tea time",
@@ -2814,7 +3258,17 @@
         "放學後tea time",
         "放課後tea time"
       ],
-      "colors": []
+      "colors": [
+        "#F2C94C",
+        "#FF8FB3",
+        "#5AA0E6",
+        "#FFD23F",
+        "#CFA7FF",
+        "#61C28B"
+      ],
+      "solidColor": "#F2C94C",
+      "kind": "group",
+      "parentID": "tag-0449"
     },
     {
       "id": "tag-0121",
@@ -2834,7 +3288,9 @@
         "#F2C94C",
         "#FF8FB3"
       ],
-      "solidColor": "#FF8FB3"
+      "solidColor": "#FF8FB3",
+      "kind": "character",
+      "parentID": "tag-0120"
     },
     {
       "id": "tag-0122",
@@ -2854,7 +3310,9 @@
         "#F2C94C",
         "#5AA0E6"
       ],
-      "solidColor": "#5AA0E6"
+      "solidColor": "#5AA0E6",
+      "kind": "character",
+      "parentID": "tag-0120"
     },
     {
       "id": "tag-0123",
@@ -2872,7 +3330,9 @@
         "#F2C94C",
         "#FFD23F"
       ],
-      "solidColor": "#FFD23F"
+      "solidColor": "#FFD23F",
+      "kind": "character",
+      "parentID": "tag-0120"
     },
     {
       "id": "tag-0124",
@@ -2893,7 +3353,9 @@
         "#F2C94C",
         "#CFA7FF"
       ],
-      "solidColor": "#CFA7FF"
+      "solidColor": "#CFA7FF",
+      "kind": "character",
+      "parentID": "tag-0120"
     },
     {
       "id": "tag-0125",
@@ -2915,7 +3377,9 @@
         "#F2C94C",
         "#61C28B"
       ],
-      "solidColor": "#61C28B"
+      "solidColor": "#61C28B",
+      "kind": "character",
+      "parentID": "tag-0120"
     },
     {
       "id": "tag-0126",
@@ -2936,7 +3400,8 @@
         "#F2C94C",
         "#F5A6B8"
       ],
-      "solidColor": "#F5A6B8"
+      "solidColor": "#F5A6B8",
+      "kind": "character"
     },
     {
       "id": "tag-0127",
@@ -2956,7 +3421,8 @@
         "#F2C94C",
         "#72BFA3"
       ],
-      "solidColor": "#72BFA3"
+      "solidColor": "#72BFA3",
+      "kind": "character"
     },
     {
       "id": "tag-0128",
@@ -2977,7 +3443,8 @@
         "#F2C94C",
         "#B990D8"
       ],
-      "solidColor": "#B990D8"
+      "solidColor": "#B990D8",
+      "kind": "character"
     },
     {
       "id": "tag-0129",
@@ -2998,7 +3465,8 @@
         "#F2C94C",
         "#D59A5B"
       ],
-      "solidColor": "#D59A5B"
+      "solidColor": "#D59A5B",
+      "kind": "character"
     },
     {
       "id": "tag-0130",
@@ -3010,17 +3478,22 @@
         "ja": "トゲナシトゲアリ"
       },
       "aliases": [
-        "gbc",
-        "girlsbandcry",
-        "ガルクラ",
-        "ガールズバンドクライ",
-        "ガールズバンドくらい",
         "togenashitogeari",
         "トゲトゲ",
         "tgtg",
         "刺"
       ],
-      "colors": []
+      "colors": [
+        "#E60033",
+        "#F05A8A",
+        "#9B6DFF",
+        "#FFD447",
+        "#58A6FF",
+        "#5EC26A"
+      ],
+      "solidColor": "#E60033",
+      "kind": "group",
+      "parentID": "tag-0450"
     },
     {
       "id": "tag-0131",
@@ -3040,7 +3513,9 @@
         "#E60033",
         "#F05A8A"
       ],
-      "solidColor": "#F05A8A"
+      "solidColor": "#F05A8A",
+      "kind": "character",
+      "parentID": "tag-0130"
     },
     {
       "id": "tag-0132",
@@ -3060,7 +3535,9 @@
         "#E60033",
         "#9B6DFF"
       ],
-      "solidColor": "#9B6DFF"
+      "solidColor": "#9B6DFF",
+      "kind": "character",
+      "parentID": "tag-0130"
     },
     {
       "id": "tag-0133",
@@ -3081,7 +3558,9 @@
         "#E60033",
         "#FFD447"
       ],
-      "solidColor": "#FFD447"
+      "solidColor": "#FFD447",
+      "kind": "character",
+      "parentID": "tag-0130"
     },
     {
       "id": "tag-0134",
@@ -3101,7 +3580,9 @@
         "#E60033",
         "#58A6FF"
       ],
-      "solidColor": "#58A6FF"
+      "solidColor": "#58A6FF",
+      "kind": "character",
+      "parentID": "tag-0130"
     },
     {
       "id": "tag-0135",
@@ -3120,7 +3601,9 @@
         "#E60033",
         "#5EC26A"
       ],
-      "solidColor": "#5EC26A"
+      "solidColor": "#5EC26A",
+      "kind": "character",
+      "parentID": "tag-0130"
     },
     {
       "id": "tag-0136",
@@ -3137,7 +3620,11 @@
         "东方",
         "東方"
       ],
-      "colors": []
+      "colors": [
+        "#E60012"
+      ],
+      "solidColor": "#E60012",
+      "kind": "work"
     },
     {
       "id": "tag-0137",
@@ -3158,7 +3645,8 @@
         "#E60012",
         "#E53935"
       ],
-      "solidColor": "#E53935"
+      "solidColor": "#E53935",
+      "kind": "character"
     },
     {
       "id": "tag-0138",
@@ -3177,7 +3665,8 @@
         "#E60012",
         "#F2C94C"
       ],
-      "solidColor": "#F2C94C"
+      "solidColor": "#F2C94C",
+      "kind": "character"
     },
     {
       "id": "tag-0139",
@@ -3195,7 +3684,11 @@
         "新世紀エヴァンゲリオン",
         "エヴァ"
       ],
-      "colors": []
+      "colors": [
+        "#7B4BC9"
+      ],
+      "solidColor": "#7B4BC9",
+      "kind": "work"
     },
     {
       "id": "tag-0140",
@@ -3216,7 +3709,8 @@
         "#7B4BC9",
         "#5D6D8A"
       ],
-      "solidColor": "#5D6D8A"
+      "solidColor": "#5D6D8A",
+      "kind": "character"
     },
     {
       "id": "tag-0141",
@@ -3239,7 +3733,8 @@
         "#7B4BC9",
         "#8FC7E8"
       ],
-      "solidColor": "#8FC7E8"
+      "solidColor": "#8FC7E8",
+      "kind": "character"
     },
     {
       "id": "tag-0142",
@@ -3260,7 +3755,8 @@
         "#7B4BC9",
         "#E85B45"
       ],
-      "solidColor": "#E85B45"
+      "solidColor": "#E85B45",
+      "kind": "character"
     },
     {
       "id": "tag-0143",
@@ -3281,7 +3777,8 @@
         "#7B4BC9",
         "#C9D0E8"
       ],
-      "solidColor": "#C9D0E8"
+      "solidColor": "#C9D0E8",
+      "kind": "character"
     },
     {
       "id": "tag-0144",
@@ -3301,7 +3798,8 @@
         "#7B4BC9",
         "#9A4D72"
       ],
-      "solidColor": "#9A4D72"
+      "solidColor": "#9A4D72",
+      "kind": "character"
     },
     {
       "id": "tag-0145",
@@ -3309,7 +3807,7 @@
         "zhHans": "葬送的芙莉莲",
         "zhHantHK": "葬送的芙莉蓮",
         "zhHantTW": "葬送的芙莉蓮",
-        "en": "Frieren",
+        "en": "Frieren: Beyond Journey's End",
         "ja": "葬送のフリーレン"
       },
       "aliases": [
@@ -3318,7 +3816,11 @@
         "芙莉蓮",
         "フリーレン"
       ],
-      "colors": []
+      "colors": [
+        "#8CC7A1"
+      ],
+      "solidColor": "#8CC7A1",
+      "kind": "work"
     },
     {
       "id": "tag-0146",
@@ -3337,7 +3839,8 @@
         "#8CC7A1",
         "#D9D3B8"
       ],
-      "solidColor": "#D9D3B8"
+      "solidColor": "#D9D3B8",
+      "kind": "character"
     },
     {
       "id": "tag-0147",
@@ -3356,7 +3859,8 @@
         "#8CC7A1",
         "#6F4A7E"
       ],
-      "solidColor": "#6F4A7E"
+      "solidColor": "#6F4A7E",
+      "kind": "character"
     },
     {
       "id": "tag-0148",
@@ -3375,7 +3879,8 @@
         "#8CC7A1",
         "#D65B45"
       ],
-      "solidColor": "#D65B45"
+      "solidColor": "#D65B45",
+      "kind": "character"
     },
     {
       "id": "tag-0149",
@@ -3396,7 +3901,8 @@
         "#8CC7A1",
         "#4A77B5"
       ],
-      "solidColor": "#4A77B5"
+      "solidColor": "#4A77B5",
+      "kind": "character"
     },
     {
       "id": "tag-0150",
@@ -3415,7 +3921,8 @@
         "#8CC7A1",
         "#A86BC1"
       ],
-      "solidColor": "#A86BC1"
+      "solidColor": "#A86BC1",
+      "kind": "character"
     },
     {
       "id": "tag-0151",
@@ -3432,7 +3939,11 @@
         "咒回",
         "呪術"
       ],
-      "colors": []
+      "colors": [
+        "#4B3F72"
+      ],
+      "solidColor": "#4B3F72",
+      "kind": "work"
     },
     {
       "id": "tag-0152",
@@ -3452,7 +3963,8 @@
         "#4B3F72",
         "#D95757"
       ],
-      "solidColor": "#D95757"
+      "solidColor": "#D95757",
+      "kind": "character"
     },
     {
       "id": "tag-0153",
@@ -3473,7 +3985,8 @@
         "#4B3F72",
         "#273D63"
       ],
-      "solidColor": "#273D63"
+      "solidColor": "#273D63",
+      "kind": "character"
     },
     {
       "id": "tag-0154",
@@ -3494,7 +4007,8 @@
         "#4B3F72",
         "#D98D45"
       ],
-      "solidColor": "#D98D45"
+      "solidColor": "#D98D45",
+      "kind": "character"
     },
     {
       "id": "tag-0155",
@@ -3515,7 +4029,8 @@
         "#4B3F72",
         "#77B9E8"
       ],
-      "solidColor": "#77B9E8"
+      "solidColor": "#77B9E8",
+      "kind": "character"
     },
     {
       "id": "tag-0156",
@@ -3535,7 +4050,8 @@
         "#4B3F72",
         "#2E4057"
       ],
-      "solidColor": "#2E4057"
+      "solidColor": "#2E4057",
+      "kind": "character"
     },
     {
       "id": "tag-0157",
@@ -3552,7 +4068,11 @@
         "鬼灭",
         "鬼滅"
       ],
-      "colors": []
+      "colors": [
+        "#2E8B57"
+      ],
+      "solidColor": "#2E8B57",
+      "kind": "work"
     },
     {
       "id": "tag-0158",
@@ -3572,7 +4092,8 @@
         "#2E8B57",
         "#3B6E55"
       ],
-      "solidColor": "#3B6E55"
+      "solidColor": "#3B6E55",
+      "kind": "character"
     },
     {
       "id": "tag-0159",
@@ -3592,7 +4113,8 @@
         "#2E8B57",
         "#E78AA8"
       ],
-      "solidColor": "#E78AA8"
+      "solidColor": "#E78AA8",
+      "kind": "character"
     },
     {
       "id": "tag-0160",
@@ -3611,7 +4133,8 @@
         "#2E8B57",
         "#F0C84B"
       ],
-      "solidColor": "#F0C84B"
+      "solidColor": "#F0C84B",
+      "kind": "character"
     },
     {
       "id": "tag-0161",
@@ -3630,7 +4153,8 @@
         "#2E8B57",
         "#59789E"
       ],
-      "solidColor": "#59789E"
+      "solidColor": "#59789E",
+      "kind": "character"
     },
     {
       "id": "tag-0162",
@@ -3651,7 +4175,8 @@
         "#2E8B57",
         "#4D79B8"
       ],
-      "solidColor": "#4D79B8"
+      "solidColor": "#4D79B8",
+      "kind": "character"
     },
     {
       "id": "tag-0163",
@@ -3667,7 +4192,11 @@
         "haikyu",
         "ハイキュー"
       ],
-      "colors": []
+      "colors": [
+        "#F58220"
+      ],
+      "solidColor": "#F58220",
+      "kind": "work"
     },
     {
       "id": "tag-0164",
@@ -3688,7 +4217,8 @@
         "#F58220",
         "#FFB14A"
       ],
-      "solidColor": "#FFB14A"
+      "solidColor": "#FFB14A",
+      "kind": "character"
     },
     {
       "id": "tag-0165",
@@ -3708,7 +4238,8 @@
         "#F58220",
         "#263A64"
       ],
-      "solidColor": "#263A64"
+      "solidColor": "#263A64",
+      "kind": "character"
     },
     {
       "id": "tag-0166",
@@ -3729,7 +4260,8 @@
         "#F58220",
         "#D8B84B"
       ],
-      "solidColor": "#D8B84B"
+      "solidColor": "#D8B84B",
+      "kind": "character"
     },
     {
       "id": "tag-0167",
@@ -3749,7 +4281,8 @@
         "#F58220",
         "#C8A06A"
       ],
-      "solidColor": "#C8A06A"
+      "solidColor": "#C8A06A",
+      "kind": "character"
     },
     {
       "id": "tag-0168",
@@ -3769,7 +4302,8 @@
         "#F58220",
         "#A83232"
       ],
-      "solidColor": "#A83232"
+      "solidColor": "#A83232",
+      "kind": "character"
     },
     {
       "id": "tag-0169",
@@ -3786,7 +4320,11 @@
         "柯南",
         "コナン"
       ],
-      "colors": []
+      "colors": [
+        "#1E73BE"
+      ],
+      "solidColor": "#1E73BE",
+      "kind": "work"
     },
     {
       "id": "tag-0170",
@@ -3806,7 +4344,8 @@
         "#1E73BE",
         "#3B83C5"
       ],
-      "solidColor": "#3B83C5"
+      "solidColor": "#3B83C5",
+      "kind": "character"
     },
     {
       "id": "tag-0171",
@@ -3826,7 +4365,8 @@
         "#1E73BE",
         "#426C9E"
       ],
-      "solidColor": "#426C9E"
+      "solidColor": "#426C9E",
+      "kind": "character"
     },
     {
       "id": "tag-0172",
@@ -3846,7 +4386,8 @@
         "#1E73BE",
         "#D97B8D"
       ],
-      "solidColor": "#D97B8D"
+      "solidColor": "#D97B8D",
+      "kind": "character"
     },
     {
       "id": "tag-0173",
@@ -3866,7 +4407,8 @@
         "#1E73BE",
         "#9B3A4A"
       ],
-      "solidColor": "#9B3A4A"
+      "solidColor": "#9B3A4A",
+      "kind": "character"
     },
     {
       "id": "tag-0174",
@@ -3887,7 +4429,8 @@
         "#1E73BE",
         "#D1A25B"
       ],
-      "solidColor": "#D1A25B"
+      "solidColor": "#D1A25B",
+      "kind": "character"
     },
     {
       "id": "tag-0175",
@@ -3905,7 +4448,11 @@
         "进巨",
         "進巨"
       ],
-      "colors": []
+      "colors": [
+        "#8A6A4F"
+      ],
+      "solidColor": "#8A6A4F",
+      "kind": "work"
     },
     {
       "id": "tag-0176",
@@ -3926,7 +4473,8 @@
         "#8A6A4F",
         "#556B4E"
       ],
-      "solidColor": "#556B4E"
+      "solidColor": "#556B4E",
+      "kind": "character"
     },
     {
       "id": "tag-0177",
@@ -3946,7 +4494,8 @@
         "#8A6A4F",
         "#822F3A"
       ],
-      "solidColor": "#822F3A"
+      "solidColor": "#822F3A",
+      "kind": "character"
     },
     {
       "id": "tag-0178",
@@ -3966,7 +4515,8 @@
         "#8A6A4F",
         "#C8B38B"
       ],
-      "solidColor": "#C8B38B"
+      "solidColor": "#C8B38B",
+      "kind": "character"
     },
     {
       "id": "tag-0179",
@@ -3987,7 +4537,8 @@
         "#8A6A4F",
         "#4C566A"
       ],
-      "solidColor": "#4C566A"
+      "solidColor": "#4C566A",
+      "kind": "character"
     },
     {
       "id": "tag-0180",
@@ -4004,7 +4555,11 @@
         "链锯人",
         "鏈鋸人"
       ],
-      "colors": []
+      "colors": [
+        "#E84A27"
+      ],
+      "solidColor": "#E84A27",
+      "kind": "work"
     },
     {
       "id": "tag-0181",
@@ -4022,7 +4577,8 @@
         "#E84A27",
         "#D94832"
       ],
-      "solidColor": "#D94832"
+      "solidColor": "#D94832",
+      "kind": "character"
     },
     {
       "id": "tag-0182",
@@ -4040,7 +4596,8 @@
         "#E84A27",
         "#C83A50"
       ],
-      "solidColor": "#C83A50"
+      "solidColor": "#C83A50",
+      "kind": "character"
     },
     {
       "id": "tag-0183",
@@ -4059,7 +4616,8 @@
         "#E84A27",
         "#394F6B"
       ],
-      "solidColor": "#394F6B"
+      "solidColor": "#394F6B",
+      "kind": "character"
     },
     {
       "id": "tag-0184",
@@ -4078,7 +4636,8 @@
         "#E84A27",
         "#E5C04B"
       ],
-      "solidColor": "#E5C04B"
+      "solidColor": "#E5C04B",
+      "kind": "character"
     },
     {
       "id": "tag-0185",
@@ -4097,7 +4656,8 @@
         "#E84A27",
         "#8B4A69"
       ],
-      "solidColor": "#8B4A69"
+      "solidColor": "#8B4A69",
+      "kind": "character"
     },
     {
       "id": "tag-0186",
@@ -4113,7 +4673,11 @@
         "推しの子",
         "我推"
       ],
-      "colors": []
+      "colors": [
+        "#E85AA8"
+      ],
+      "solidColor": "#E85AA8",
+      "kind": "work"
     },
     {
       "id": "tag-0187",
@@ -4132,7 +4696,8 @@
         "#E85AA8",
         "#9B4FC8"
       ],
-      "solidColor": "#9B4FC8"
+      "solidColor": "#9B4FC8",
+      "kind": "character"
     },
     {
       "id": "tag-0188",
@@ -4153,7 +4718,8 @@
         "#E85AA8",
         "#4F86C8"
       ],
-      "solidColor": "#4F86C8"
+      "solidColor": "#4F86C8",
+      "kind": "character"
     },
     {
       "id": "tag-0189",
@@ -4173,7 +4739,8 @@
         "#E85AA8",
         "#E84A5F"
       ],
-      "solidColor": "#E84A5F"
+      "solidColor": "#E84A5F",
+      "kind": "character"
     },
     {
       "id": "tag-0190",
@@ -4193,7 +4760,8 @@
         "#E85AA8",
         "#E9A340"
       ],
-      "solidColor": "#E9A340"
+      "solidColor": "#E9A340",
+      "kind": "character"
     },
     {
       "id": "tag-0191",
@@ -4213,7 +4781,8 @@
         "#E85AA8",
         "#4D6A88"
       ],
-      "solidColor": "#4D6A88"
+      "solidColor": "#4D6A88",
+      "kind": "character"
     },
     {
       "id": "tag-0192",
@@ -4230,7 +4799,11 @@
         "间谍家家酒",
         "間諜家家酒"
       ],
-      "colors": []
+      "colors": [
+        "#7BA05B"
+      ],
+      "solidColor": "#7BA05B",
+      "kind": "work"
     },
     {
       "id": "tag-0193",
@@ -4250,7 +4823,8 @@
         "#7BA05B",
         "#E36A8D"
       ],
-      "solidColor": "#E36A8D"
+      "solidColor": "#E36A8D",
+      "kind": "character"
     },
     {
       "id": "tag-0194",
@@ -4271,7 +4845,8 @@
         "#7BA05B",
         "#54789A"
       ],
-      "solidColor": "#54789A"
+      "solidColor": "#54789A",
+      "kind": "character"
     },
     {
       "id": "tag-0195",
@@ -4291,7 +4866,8 @@
         "#7BA05B",
         "#9A3C52"
       ],
-      "solidColor": "#9A3C52"
+      "solidColor": "#9A3C52",
+      "kind": "character"
     },
     {
       "id": "tag-0196",
@@ -4309,7 +4885,11 @@
         "精灵宝可梦",
         "神奇寶貝"
       ],
-      "colors": []
+      "colors": [
+        "#FFCB05"
+      ],
+      "solidColor": "#FFCB05",
+      "kind": "work"
     },
     {
       "id": "tag-0197",
@@ -4328,7 +4908,8 @@
         "#FFCB05",
         "#F4D03F"
       ],
-      "solidColor": "#F4D03F"
+      "solidColor": "#F4D03F",
+      "kind": "character"
     },
     {
       "id": "tag-0198",
@@ -4348,7 +4929,8 @@
         "#FFCB05",
         "#3D74B9"
       ],
-      "solidColor": "#3D74B9"
+      "solidColor": "#3D74B9",
+      "kind": "character"
     },
     {
       "id": "tag-0199",
@@ -4367,7 +4949,8 @@
         "#FFCB05",
         "#E0643A"
       ],
-      "solidColor": "#E0643A"
+      "solidColor": "#E0643A",
+      "kind": "character"
     },
     {
       "id": "tag-0200",
@@ -4386,7 +4969,8 @@
         "#FFCB05",
         "#B98655"
       ],
-      "solidColor": "#B98655"
+      "solidColor": "#B98655",
+      "kind": "character"
     },
     {
       "id": "tag-0201",
@@ -4405,7 +4989,8 @@
         "#FFCB05",
         "#E58AA4"
       ],
-      "solidColor": "#E58AA4"
+      "solidColor": "#E58AA4",
+      "kind": "character"
     },
     {
       "id": "tag-0202",
@@ -4425,7 +5010,9 @@
       "colors": [
         "#4CB8E8",
         "#F2C84B"
-      ]
+      ],
+      "solidColor": "#4CB8E8",
+      "kind": "group"
     },
     {
       "id": "tag-0203",
@@ -4446,7 +5033,9 @@
       "colors": [
         "#74475E",
         "#C65C73"
-      ]
+      ],
+      "solidColor": "#74475E",
+      "kind": "group"
     },
     {
       "id": "tag-0204",
@@ -4467,7 +5056,9 @@
       "colors": [
         "#D34A4A",
         "#642E5B"
-      ]
+      ],
+      "solidColor": "#D34A4A",
+      "kind": "group"
     },
     {
       "id": "tag-0205",
@@ -4486,7 +5077,9 @@
       "colors": [
         "#E66E91",
         "#6C4E9B"
-      ]
+      ],
+      "solidColor": "#E66E91",
+      "kind": "group"
     },
     {
       "id": "tag-0206",
@@ -4507,7 +5100,9 @@
       "colors": [
         "#3BA7D8",
         "#8158B6"
-      ]
+      ],
+      "solidColor": "#3BA7D8",
+      "kind": "group"
     },
     {
       "id": "tag-0207",
@@ -4529,7 +5124,9 @@
       "colors": [
         "#C83C46",
         "#F0B54A"
-      ]
+      ],
+      "solidColor": "#C83C46",
+      "kind": "group"
     },
     {
       "id": "tag-0208",
@@ -4547,7 +5144,9 @@
       "colors": [
         "#56748F",
         "#87A8B9"
-      ]
+      ],
+      "solidColor": "#56748F",
+      "kind": "group"
     },
     {
       "id": "tag-0209",
@@ -4568,7 +5167,9 @@
       "colors": [
         "#C94B4B",
         "#E0A444"
-      ]
+      ],
+      "solidColor": "#C94B4B",
+      "kind": "group"
     },
     {
       "id": "tag-0210",
@@ -4589,7 +5190,9 @@
       "colors": [
         "#D9A84E",
         "#7CB7D8"
-      ]
+      ],
+      "solidColor": "#D9A84E",
+      "kind": "group"
     },
     {
       "id": "tag-0211",
@@ -4610,7 +5213,9 @@
       "colors": [
         "#356A91",
         "#6EA8C6"
-      ]
+      ],
+      "solidColor": "#356A91",
+      "kind": "group"
     },
     {
       "id": "tag-0212",
@@ -4631,7 +5236,9 @@
       "colors": [
         "#9A7A42",
         "#42566F"
-      ]
+      ],
+      "solidColor": "#9A7A42",
+      "kind": "group"
     },
     {
       "id": "tag-0213",
@@ -4652,7 +5259,9 @@
       "colors": [
         "#6C496F",
         "#3E7B68"
-      ]
+      ],
+      "solidColor": "#6C496F",
+      "kind": "group"
     },
     {
       "id": "tag-0214",
@@ -4677,7 +5286,8 @@
         "#5DBBE0",
         "#A5E3B2"
       ],
-      "solidColor": "#A5E3B2"
+      "solidColor": "#A5E3B2",
+      "kind": "character"
     },
     {
       "id": "tag-0215",
@@ -4702,7 +5312,8 @@
         "#292E4C",
         "#5793AC"
       ],
-      "solidColor": "#5793AC"
+      "solidColor": "#5793AC",
+      "kind": "character"
     },
     {
       "id": "tag-0216",
@@ -4727,7 +5338,8 @@
         "#76A4BF",
         "#2D324C"
       ],
-      "solidColor": "#2D324C"
+      "solidColor": "#2D324C",
+      "kind": "character"
     },
     {
       "id": "tag-0217",
@@ -4750,7 +5362,8 @@
         "#334052",
         "#586782"
       ],
-      "solidColor": "#586782"
+      "solidColor": "#586782",
+      "kind": "character"
     },
     {
       "id": "tag-0218",
@@ -4773,7 +5386,8 @@
         "#192641",
         "#42506B"
       ],
-      "solidColor": "#42506B"
+      "solidColor": "#42506B",
+      "kind": "character"
     },
     {
       "id": "tag-0219",
@@ -4798,7 +5412,8 @@
         "#6C7A92",
         "#262C3E"
       ],
-      "solidColor": "#262C3E"
+      "solidColor": "#262C3E",
+      "kind": "character"
     },
     {
       "id": "tag-0220",
@@ -4823,7 +5438,8 @@
         "#566075",
         "#21273A"
       ],
-      "solidColor": "#21273A"
+      "solidColor": "#21273A",
+      "kind": "character"
     },
     {
       "id": "tag-0221",
@@ -4846,7 +5462,8 @@
         "#59667E",
         "#423147"
       ],
-      "solidColor": "#423147"
+      "solidColor": "#423147",
+      "kind": "character"
     },
     {
       "id": "tag-0222",
@@ -4871,7 +5488,8 @@
         "#1F335F",
         "#E3969C"
       ],
-      "solidColor": "#E3969C"
+      "solidColor": "#E3969C",
+      "kind": "character"
     },
     {
       "id": "tag-0223",
@@ -4896,7 +5514,8 @@
         "#243865",
         "#755758"
       ],
-      "solidColor": "#755758"
+      "solidColor": "#755758",
+      "kind": "character"
     },
     {
       "id": "tag-0224",
@@ -4921,7 +5540,8 @@
         "#1E305A",
         "#9F3238"
       ],
-      "solidColor": "#9F3238"
+      "solidColor": "#9F3238",
+      "kind": "character"
     },
     {
       "id": "tag-0225",
@@ -4945,7 +5565,8 @@
         "#7F1921",
         "#1F315D"
       ],
-      "solidColor": "#1F315D"
+      "solidColor": "#1F315D",
+      "kind": "character"
     },
     {
       "id": "tag-0226",
@@ -4970,7 +5591,8 @@
         "#29406E",
         "#7B3449"
       ],
-      "solidColor": "#7B3449"
+      "solidColor": "#7B3449",
+      "kind": "character"
     },
     {
       "id": "tag-0227",
@@ -4995,7 +5617,8 @@
         "#1E315C",
         "#642E5B"
       ],
-      "solidColor": "#642E5B"
+      "solidColor": "#642E5B",
+      "kind": "character"
     },
     {
       "id": "tag-0228",
@@ -5020,7 +5643,8 @@
         "#273A67",
         "#55272C"
       ],
-      "solidColor": "#55272C"
+      "solidColor": "#55272C",
+      "kind": "character"
     },
     {
       "id": "tag-0229",
@@ -5045,7 +5669,8 @@
         "#283C6B",
         "#E15071"
       ],
-      "solidColor": "#E15071"
+      "solidColor": "#E15071",
+      "kind": "character"
     },
     {
       "id": "tag-0230",
@@ -5070,7 +5695,8 @@
         "#1E325E",
         "#7D5681"
       ],
-      "solidColor": "#7D5681"
+      "solidColor": "#7D5681",
+      "kind": "character"
     },
     {
       "id": "tag-0231",
@@ -5095,7 +5721,8 @@
         "#1E315C",
         "#C67274"
       ],
-      "solidColor": "#C67274"
+      "solidColor": "#C67274",
+      "kind": "character"
     },
     {
       "id": "tag-0232",
@@ -5119,7 +5746,8 @@
         "#1D2F5A",
         "#B12F37"
       ],
-      "solidColor": "#B12F37"
+      "solidColor": "#B12F37",
+      "kind": "character"
     },
     {
       "id": "tag-0233",
@@ -5144,7 +5772,8 @@
         "#243765",
         "#AF516A"
       ],
-      "solidColor": "#AF516A"
+      "solidColor": "#AF516A",
+      "kind": "character"
     },
     {
       "id": "tag-0234",
@@ -5169,7 +5798,8 @@
         "#243965",
         "#9FB7D9"
       ],
-      "solidColor": "#9FB7D9"
+      "solidColor": "#9FB7D9",
+      "kind": "character"
     },
     {
       "id": "tag-0235",
@@ -5194,7 +5824,8 @@
         "#3E4978",
         "#7182A8"
       ],
-      "solidColor": "#7182A8"
+      "solidColor": "#7182A8",
+      "kind": "character"
     },
     {
       "id": "tag-0236",
@@ -5219,7 +5850,8 @@
         "#1D315D",
         "#6C364E"
       ],
-      "solidColor": "#6C364E"
+      "solidColor": "#6C364E",
+      "kind": "character"
     },
     {
       "id": "tag-0237",
@@ -5243,7 +5875,8 @@
         "#213461",
         "#A22B36"
       ],
-      "solidColor": "#A22B36"
+      "solidColor": "#A22B36",
+      "kind": "character"
     },
     {
       "id": "tag-0238",
@@ -5268,7 +5901,8 @@
         "#3A2C2B",
         "#C4645F"
       ],
-      "solidColor": "#C4645F"
+      "solidColor": "#C4645F",
+      "kind": "character"
     },
     {
       "id": "tag-0239",
@@ -5291,7 +5925,8 @@
         "#1D305A",
         "#881E2A"
       ],
-      "solidColor": "#881E2A"
+      "solidColor": "#881E2A",
+      "kind": "character"
     },
     {
       "id": "tag-0240",
@@ -5314,7 +5949,8 @@
         "#21335E",
         "#AA4A56"
       ],
-      "solidColor": "#AA4A56"
+      "solidColor": "#AA4A56",
+      "kind": "character"
     },
     {
       "id": "tag-0241",
@@ -5339,7 +5975,8 @@
         "#1E315C",
         "#A15B5F"
       ],
-      "solidColor": "#A15B5F"
+      "solidColor": "#A15B5F",
+      "kind": "character"
     },
     {
       "id": "tag-0242",
@@ -5364,7 +6001,8 @@
         "#23345E",
         "#CA8891"
       ],
-      "solidColor": "#CA8891"
+      "solidColor": "#CA8891",
+      "kind": "character"
     },
     {
       "id": "tag-0243",
@@ -5389,7 +6027,8 @@
         "#1E325D",
         "#BF7A91"
       ],
-      "solidColor": "#BF7A91"
+      "solidColor": "#BF7A91",
+      "kind": "character"
     },
     {
       "id": "tag-0244",
@@ -5414,7 +6053,8 @@
         "#1E325D",
         "#642E5B"
       ],
-      "solidColor": "#642E5B"
+      "solidColor": "#642E5B",
+      "kind": "character"
     },
     {
       "id": "tag-0245",
@@ -5439,7 +6079,8 @@
         "#7E95CE",
         "#4D4E70"
       ],
-      "solidColor": "#4D4E70"
+      "solidColor": "#4D4E70",
+      "kind": "character"
     },
     {
       "id": "tag-0246",
@@ -5462,7 +6103,8 @@
         "#861927",
         "#D52E3B"
       ],
-      "solidColor": "#D52E3B"
+      "solidColor": "#D52E3B",
+      "kind": "character"
     },
     {
       "id": "tag-0247",
@@ -5485,7 +6127,8 @@
         "#7D5D64",
         "#8099D5"
       ],
-      "solidColor": "#8099D5"
+      "solidColor": "#8099D5",
+      "kind": "character"
     },
     {
       "id": "tag-0248",
@@ -5510,7 +6153,8 @@
         "#4C538A",
         "#CD3679"
       ],
-      "solidColor": "#CD3679"
+      "solidColor": "#CD3679",
+      "kind": "character"
     },
     {
       "id": "tag-0249",
@@ -5535,7 +6179,8 @@
         "#94A7D4",
         "#E38E98"
       ],
-      "solidColor": "#E38E98"
+      "solidColor": "#E38E98",
+      "kind": "character"
     },
     {
       "id": "tag-0250",
@@ -5558,7 +6203,8 @@
         "#632024",
         "#8699CD"
       ],
-      "solidColor": "#8699CD"
+      "solidColor": "#8699CD",
+      "kind": "character"
     },
     {
       "id": "tag-0251",
@@ -5581,7 +6227,8 @@
         "#CD3447",
         "#4C5489"
       ],
-      "solidColor": "#4C5489"
+      "solidColor": "#4C5489",
+      "kind": "character"
     },
     {
       "id": "tag-0252",
@@ -5606,7 +6253,8 @@
         "#A0ADD5",
         "#4A304A"
       ],
-      "solidColor": "#4A304A"
+      "solidColor": "#4A304A",
+      "kind": "character"
     },
     {
       "id": "tag-0253",
@@ -5631,7 +6279,8 @@
         "#CB1B67",
         "#4E5586"
       ],
-      "solidColor": "#4E5586"
+      "solidColor": "#4E5586",
+      "kind": "character"
     },
     {
       "id": "tag-0254",
@@ -5656,7 +6305,8 @@
         "#4F4E68",
         "#8FA1D6"
       ],
-      "solidColor": "#8FA1D6"
+      "solidColor": "#8FA1D6",
+      "kind": "character"
     },
     {
       "id": "tag-0255",
@@ -5681,7 +6331,8 @@
         "#859BD1",
         "#515275"
       ],
-      "solidColor": "#515275"
+      "solidColor": "#515275",
+      "kind": "character"
     },
     {
       "id": "tag-0256",
@@ -5704,7 +6355,8 @@
         "#7D6485",
         "#513E57"
       ],
-      "solidColor": "#513E57"
+      "solidColor": "#513E57",
+      "kind": "character"
     },
     {
       "id": "tag-0257",
@@ -5729,7 +6381,8 @@
         "#9E1A28",
         "#545271"
       ],
-      "solidColor": "#545271"
+      "solidColor": "#545271",
+      "kind": "character"
     },
     {
       "id": "tag-0258",
@@ -5752,7 +6405,8 @@
         "#8DB3E5",
         "#47507B"
       ],
-      "solidColor": "#47507B"
+      "solidColor": "#47507B",
+      "kind": "character"
     },
     {
       "id": "tag-0259",
@@ -5777,7 +6431,8 @@
         "#505A91",
         "#98B2E0"
       ],
-      "solidColor": "#98B2E0"
+      "solidColor": "#98B2E0",
+      "kind": "character"
     },
     {
       "id": "tag-0260",
@@ -5800,7 +6455,8 @@
         "#4D578C",
         "#7E98D3"
       ],
-      "solidColor": "#7E98D3"
+      "solidColor": "#7E98D3",
+      "kind": "character"
     },
     {
       "id": "tag-0261",
@@ -5825,7 +6481,8 @@
         "#4D5077",
         "#8297CB"
       ],
-      "solidColor": "#8297CB"
+      "solidColor": "#8297CB",
+      "kind": "character"
     },
     {
       "id": "tag-0262",
@@ -5850,7 +6507,8 @@
         "#851B32",
         "#3D5A83"
       ],
-      "solidColor": "#3D5A83"
+      "solidColor": "#3D5A83",
+      "kind": "character"
     },
     {
       "id": "tag-0263",
@@ -5875,7 +6533,8 @@
         "#D1595C",
         "#454460"
       ],
-      "solidColor": "#454460"
+      "solidColor": "#454460",
+      "kind": "character"
     },
     {
       "id": "tag-0264",
@@ -5900,7 +6559,8 @@
         "#3B5882",
         "#BB5959"
       ],
-      "solidColor": "#BB5959"
+      "solidColor": "#BB5959",
+      "kind": "character"
     },
     {
       "id": "tag-0265",
@@ -5923,7 +6583,8 @@
         "#465F8C",
         "#81A1CD"
       ],
-      "solidColor": "#81A1CD"
+      "solidColor": "#81A1CD",
+      "kind": "character"
     },
     {
       "id": "tag-0266",
@@ -5948,7 +6609,8 @@
         "#7D9CC3",
         "#436086"
       ],
-      "solidColor": "#436086"
+      "solidColor": "#436086",
+      "kind": "character"
     },
     {
       "id": "tag-0267",
@@ -5972,7 +6634,8 @@
         "#7798C5",
         "#315E85"
       ],
-      "solidColor": "#315E85"
+      "solidColor": "#315E85",
+      "kind": "character"
     },
     {
       "id": "tag-0268",
@@ -5997,7 +6660,8 @@
         "#365179",
         "#80A1CB"
       ],
-      "solidColor": "#80A1CB"
+      "solidColor": "#80A1CB",
+      "kind": "character"
     },
     {
       "id": "tag-0269",
@@ -6022,7 +6686,8 @@
         "#718FB8",
         "#4A5975"
       ],
-      "solidColor": "#4A5975"
+      "solidColor": "#4A5975",
+      "kind": "character"
     },
     {
       "id": "tag-0270",
@@ -6045,7 +6710,8 @@
         "#3D5E87",
         "#9BB8DC"
       ],
-      "solidColor": "#9BB8DC"
+      "solidColor": "#9BB8DC",
+      "kind": "character"
     },
     {
       "id": "tag-0271",
@@ -6069,7 +6735,8 @@
         "#9AB7DE",
         "#3E485D"
       ],
-      "solidColor": "#3E485D"
+      "solidColor": "#3E485D",
+      "kind": "character"
     },
     {
       "id": "tag-0272",
@@ -6094,7 +6761,8 @@
         "#5A639F",
         "#7697C2"
       ],
-      "solidColor": "#7697C2"
+      "solidColor": "#7697C2",
+      "kind": "character"
     },
     {
       "id": "tag-0273",
@@ -6118,7 +6786,8 @@
         "#84A5CF",
         "#40618B"
       ],
-      "solidColor": "#40618B"
+      "solidColor": "#40618B",
+      "kind": "character"
     },
     {
       "id": "tag-0274",
@@ -6143,7 +6812,8 @@
         "#93B7DC",
         "#415C83"
       ],
-      "solidColor": "#415C83"
+      "solidColor": "#415C83",
+      "kind": "character"
     },
     {
       "id": "tag-0275",
@@ -6168,7 +6838,8 @@
         "#64B370",
         "#9DB8DE"
       ],
-      "solidColor": "#9DB8DE"
+      "solidColor": "#9DB8DE",
+      "kind": "character"
     },
     {
       "id": "tag-0276",
@@ -6193,7 +6864,8 @@
         "#45638F",
         "#9EBEDF"
       ],
-      "solidColor": "#9EBEDF"
+      "solidColor": "#9EBEDF",
+      "kind": "character"
     },
     {
       "id": "tag-0277",
@@ -6217,7 +6889,8 @@
         "#3F5D88",
         "#9D3E4F"
       ],
-      "solidColor": "#9D3E4F"
+      "solidColor": "#9D3E4F",
+      "kind": "character"
     },
     {
       "id": "tag-0278",
@@ -6242,7 +6915,8 @@
         "#91B1D8",
         "#58749F"
       ],
-      "solidColor": "#58749F"
+      "solidColor": "#58749F",
+      "kind": "character"
     },
     {
       "id": "tag-0279",
@@ -6267,7 +6941,8 @@
         "#3B5A86",
         "#6E8DB8"
       ],
-      "solidColor": "#6E8DB8"
+      "solidColor": "#6E8DB8",
+      "kind": "character"
     },
     {
       "id": "tag-0280",
@@ -6292,7 +6967,8 @@
         "#7B9ECA",
         "#3F5D88"
       ],
-      "solidColor": "#3F5D88"
+      "solidColor": "#3F5D88",
+      "kind": "character"
     },
     {
       "id": "tag-0281",
@@ -6317,7 +6993,8 @@
         "#7799C6",
         "#1FC7E4"
       ],
-      "solidColor": "#1FC7E4"
+      "solidColor": "#1FC7E4",
+      "kind": "character"
     },
     {
       "id": "tag-0282",
@@ -6340,7 +7017,8 @@
         "#2E4463",
         "#D27D9D"
       ],
-      "solidColor": "#D27D9D"
+      "solidColor": "#D27D9D",
+      "kind": "character"
     },
     {
       "id": "tag-0283",
@@ -6365,7 +7043,8 @@
         "#A8C5E4",
         "#7799C7"
       ],
-      "solidColor": "#7799C7"
+      "solidColor": "#7799C7",
+      "kind": "character"
     },
     {
       "id": "tag-0284",
@@ -6390,7 +7069,8 @@
         "#5F6BCB",
         "#323D86"
       ],
-      "solidColor": "#323D86"
+      "solidColor": "#323D86",
+      "kind": "character"
     },
     {
       "id": "tag-0285",
@@ -6410,7 +7090,8 @@
         "#4B5F7F",
         "#6991C1"
       ],
-      "solidColor": "#6991C1"
+      "solidColor": "#6991C1",
+      "kind": "character"
     },
     {
       "id": "tag-0286",
@@ -6435,7 +7116,8 @@
         "#972528",
         "#5D718F"
       ],
-      "solidColor": "#5D718F"
+      "solidColor": "#5D718F",
+      "kind": "character"
     },
     {
       "id": "tag-0287",
@@ -6459,7 +7141,8 @@
         "#424662",
         "#7281A0"
       ],
-      "solidColor": "#7281A0"
+      "solidColor": "#7281A0",
+      "kind": "character"
     },
     {
       "id": "tag-0288",
@@ -6484,7 +7167,8 @@
         "#5B708F",
         "#879AB8"
       ],
-      "solidColor": "#879AB8"
+      "solidColor": "#879AB8",
+      "kind": "character"
     },
     {
       "id": "tag-0289",
@@ -6509,7 +7193,8 @@
         "#626E89",
         "#97282D"
       ],
-      "solidColor": "#97282D"
+      "solidColor": "#97282D",
+      "kind": "character"
     },
     {
       "id": "tag-0290",
@@ -6534,7 +7219,8 @@
         "#586E8C",
         "#95B5D6"
       ],
-      "solidColor": "#95B5D6"
+      "solidColor": "#95B5D6",
+      "kind": "character"
     },
     {
       "id": "tag-0291",
@@ -6559,7 +7245,8 @@
         "#536580",
         "#90BAE1"
       ],
-      "solidColor": "#90BAE1"
+      "solidColor": "#90BAE1",
+      "kind": "character"
     },
     {
       "id": "tag-0292",
@@ -6584,7 +7271,8 @@
         "#435169",
         "#95333D"
       ],
-      "solidColor": "#95333D"
+      "solidColor": "#95333D",
+      "kind": "character"
     },
     {
       "id": "tag-0293",
@@ -6609,7 +7297,8 @@
         "#5F7292",
         "#90B7D4"
       ],
-      "solidColor": "#90B7D4"
+      "solidColor": "#90B7D4",
+      "kind": "character"
     },
     {
       "id": "tag-0294",
@@ -6634,7 +7323,8 @@
         "#D24D62",
         "#732137"
       ],
-      "solidColor": "#732137"
+      "solidColor": "#732137",
+      "kind": "character"
     },
     {
       "id": "tag-0295",
@@ -6659,7 +7349,8 @@
         "#6C7990",
         "#8BA5C4"
       ],
-      "solidColor": "#8BA5C4"
+      "solidColor": "#8BA5C4",
+      "kind": "character"
     },
     {
       "id": "tag-0296",
@@ -6684,7 +7375,8 @@
         "#ACD0E5",
         "#87A8B9"
       ],
-      "solidColor": "#87A8B9"
+      "solidColor": "#87A8B9",
+      "kind": "character"
     },
     {
       "id": "tag-0297",
@@ -6709,7 +7401,8 @@
         "#89A9D1",
         "#5E6A7F"
       ],
-      "solidColor": "#5E6A7F"
+      "solidColor": "#5E6A7F",
+      "kind": "character"
     },
     {
       "id": "tag-0298",
@@ -6734,7 +7427,8 @@
         "#4B3D51",
         "#7A8FA8"
       ],
-      "solidColor": "#7A8FA8"
+      "solidColor": "#7A8FA8",
+      "kind": "character"
     },
     {
       "id": "tag-0299",
@@ -6759,7 +7453,8 @@
         "#4C5E8E",
         "#99B9E2"
       ],
-      "solidColor": "#99B9E2"
+      "solidColor": "#99B9E2",
+      "kind": "character"
     },
     {
       "id": "tag-0300",
@@ -6772,7 +7467,6 @@
       },
       "aliases": [
         "niko",
-        "妮可",
         "吉野妮可",
         "仁子",
         "吉野仁子",
@@ -6784,7 +7478,8 @@
         "#CC8E9E",
         "#3A4465"
       ],
-      "solidColor": "#3A4465"
+      "solidColor": "#3A4465",
+      "kind": "character"
     },
     {
       "id": "tag-0301",
@@ -6797,7 +7492,6 @@
       },
       "aliases": [
         "kurumi",
-        "胡桃",
         "高仓胡桃",
         "高倉胡桃",
         "Kurumi Takakura",
@@ -6808,7 +7502,8 @@
         "#3B4566",
         "#848EB4"
       ],
-      "solidColor": "#848EB4"
+      "solidColor": "#848EB4",
+      "kind": "character"
     },
     {
       "id": "tag-0302",
@@ -6831,7 +7526,8 @@
         "#1D2334",
         "#414B6A"
       ],
-      "solidColor": "#414B6A"
+      "solidColor": "#414B6A",
+      "kind": "character"
     },
     {
       "id": "tag-0303",
@@ -6856,7 +7552,8 @@
         "#6D6E92",
         "#2F2E43"
       ],
-      "solidColor": "#2F2E43"
+      "solidColor": "#2F2E43",
+      "kind": "character"
     },
     {
       "id": "tag-0304",
@@ -6881,7 +7578,8 @@
         "#B38181",
         "#A8C6E6"
       ],
-      "solidColor": "#A8C6E6"
+      "solidColor": "#A8C6E6",
+      "kind": "character"
     },
     {
       "id": "tag-0305",
@@ -6906,7 +7604,8 @@
         "#895880",
         "#ABCAE5"
       ],
-      "solidColor": "#ABCAE5"
+      "solidColor": "#ABCAE5",
+      "kind": "character"
     },
     {
       "id": "tag-0306",
@@ -6931,7 +7630,8 @@
         "#A44346",
         "#573635"
       ],
-      "solidColor": "#573635"
+      "solidColor": "#573635",
+      "kind": "character"
     },
     {
       "id": "tag-0307",
@@ -6956,7 +7656,8 @@
         "#81587F",
         "#2A2D38"
       ],
-      "solidColor": "#2A2D38"
+      "solidColor": "#2A2D38",
+      "kind": "character"
     },
     {
       "id": "tag-0308",
@@ -6981,7 +7682,8 @@
         "#9A3656",
         "#E5546B"
       ],
-      "solidColor": "#E5546B"
+      "solidColor": "#E5546B",
+      "kind": "character"
     },
     {
       "id": "tag-0309",
@@ -7006,7 +7708,8 @@
         "#3A3D54",
         "#916289"
       ],
-      "solidColor": "#916289"
+      "solidColor": "#916289",
+      "kind": "character"
     },
     {
       "id": "tag-0310",
@@ -7031,7 +7734,8 @@
         "#5689B3",
         "#323244"
       ],
-      "solidColor": "#323244"
+      "solidColor": "#323244",
+      "kind": "character"
     },
     {
       "id": "tag-0311",
@@ -7056,7 +7760,8 @@
         "#9ED2E6",
         "#7CB7D8"
       ],
-      "solidColor": "#7CB7D8"
+      "solidColor": "#7CB7D8",
+      "kind": "character"
     },
     {
       "id": "tag-0312",
@@ -7081,7 +7786,8 @@
         "#8B1B20",
         "#513B40"
       ],
-      "solidColor": "#513B40"
+      "solidColor": "#513B40",
+      "kind": "character"
     },
     {
       "id": "tag-0313",
@@ -7106,7 +7812,8 @@
         "#743538",
         "#93B0C3"
       ],
-      "solidColor": "#93B0C3"
+      "solidColor": "#93B0C3",
+      "kind": "character"
     },
     {
       "id": "tag-0314",
@@ -7131,7 +7838,8 @@
         "#834F57",
         "#98B5DA"
       ],
-      "solidColor": "#98B5DA"
+      "solidColor": "#98B5DA",
+      "kind": "character"
     },
     {
       "id": "tag-0315",
@@ -7156,7 +7864,8 @@
         "#4F686D",
         "#A2D3E0"
       ],
-      "solidColor": "#A2D3E0"
+      "solidColor": "#A2D3E0",
+      "kind": "character"
     },
     {
       "id": "tag-0316",
@@ -7181,7 +7890,8 @@
         "#DA7C9C",
         "#877CA4"
       ],
-      "solidColor": "#877CA4"
+      "solidColor": "#877CA4",
+      "kind": "character"
     },
     {
       "id": "tag-0317",
@@ -7206,7 +7916,8 @@
         "#D7949D",
         "#81ADBB"
       ],
-      "solidColor": "#81ADBB"
+      "solidColor": "#81ADBB",
+      "kind": "character"
     },
     {
       "id": "tag-0318",
@@ -7230,7 +7941,8 @@
         "#95D9D3",
         "#533B38"
       ],
-      "solidColor": "#533B38"
+      "solidColor": "#533B38",
+      "kind": "character"
     },
     {
       "id": "tag-0319",
@@ -7255,7 +7967,8 @@
         "#AF0C0F",
         "#8C6652"
       ],
-      "solidColor": "#8C6652"
+      "solidColor": "#8C6652",
+      "kind": "character"
     },
     {
       "id": "tag-0320",
@@ -7280,7 +7993,8 @@
         "#8D0B10",
         "#93BBCC"
       ],
-      "solidColor": "#93BBCC"
+      "solidColor": "#93BBCC",
+      "kind": "character"
     },
     {
       "id": "tag-0321",
@@ -7303,7 +8017,8 @@
         "#D9A84E",
         "#7CB7D8"
       ],
-      "solidColor": "#7CB7D8"
+      "solidColor": "#7CB7D8",
+      "kind": "character"
     },
     {
       "id": "tag-0322",
@@ -7326,7 +8041,8 @@
         "#83B2CA",
         "#DFA1AE"
       ],
-      "solidColor": "#DFA1AE"
+      "solidColor": "#DFA1AE",
+      "kind": "character"
     },
     {
       "id": "tag-0323",
@@ -7349,7 +8065,8 @@
         "#DEA5B0",
         "#81BCDC"
       ],
-      "solidColor": "#81BCDC"
+      "solidColor": "#81BCDC",
+      "kind": "character"
     },
     {
       "id": "tag-0324",
@@ -7373,7 +8090,8 @@
         "#BE4260",
         "#7AB2D0"
       ],
-      "solidColor": "#7AB2D0"
+      "solidColor": "#7AB2D0",
+      "kind": "character"
     },
     {
       "id": "tag-0325",
@@ -7398,7 +8116,8 @@
         "#85C4E2",
         "#7CB7D8"
       ],
-      "solidColor": "#7CB7D8"
+      "solidColor": "#7CB7D8",
+      "kind": "character"
     },
     {
       "id": "tag-0326",
@@ -7423,7 +8142,8 @@
         "#7A85A4",
         "#7CB7D8"
       ],
-      "solidColor": "#7CB7D8"
+      "solidColor": "#7CB7D8",
+      "kind": "character"
     },
     {
       "id": "tag-0327",
@@ -7447,7 +8167,8 @@
         "#7CB9DB",
         "#7CB7D8"
       ],
-      "solidColor": "#7CB7D8"
+      "solidColor": "#7CB7D8",
+      "kind": "character"
     },
     {
       "id": "tag-0328",
@@ -7472,7 +8193,8 @@
         "#2B2835",
         "#93C8E1"
       ],
-      "solidColor": "#93C8E1"
+      "solidColor": "#93C8E1",
+      "kind": "character"
     },
     {
       "id": "tag-0329",
@@ -7497,7 +8219,8 @@
         "#7595C9",
         "#51677A"
       ],
-      "solidColor": "#51677A"
+      "solidColor": "#51677A",
+      "kind": "character"
     },
     {
       "id": "tag-0330",
@@ -7522,7 +8245,8 @@
         "#8188AE",
         "#A0C9E1"
       ],
-      "solidColor": "#A0C9E1"
+      "solidColor": "#A0C9E1",
+      "kind": "character"
     },
     {
       "id": "tag-0331",
@@ -7547,7 +8271,8 @@
         "#A8D5E5",
         "#7CB7D8"
       ],
-      "solidColor": "#7CB7D8"
+      "solidColor": "#7CB7D8",
+      "kind": "character"
     },
     {
       "id": "tag-0332",
@@ -7570,7 +8295,8 @@
         "#94B6C8",
         "#7CB7D8"
       ],
-      "solidColor": "#7CB7D8"
+      "solidColor": "#7CB7D8",
+      "kind": "character"
     },
     {
       "id": "tag-0333",
@@ -7595,7 +8321,8 @@
         "#464E65",
         "#7CB7D8"
       ],
-      "solidColor": "#7CB7D8"
+      "solidColor": "#7CB7D8",
+      "kind": "character"
     },
     {
       "id": "tag-0334",
@@ -7618,7 +8345,8 @@
         "#CA6575",
         "#2B2735"
       ],
-      "solidColor": "#2B2735"
+      "solidColor": "#2B2735",
+      "kind": "character"
     },
     {
       "id": "tag-0335",
@@ -7643,7 +8371,8 @@
         "#D9A84E",
         "#7CB7D8"
       ],
-      "solidColor": "#7CB7D8"
+      "solidColor": "#7CB7D8",
+      "kind": "character"
     },
     {
       "id": "tag-0336",
@@ -7668,7 +8397,8 @@
         "#CE5B6E",
         "#5E2A36"
       ],
-      "solidColor": "#5E2A36"
+      "solidColor": "#5E2A36",
+      "kind": "character"
     },
     {
       "id": "tag-0337",
@@ -7692,7 +8422,8 @@
         "#617DBA",
         "#98AED7"
       ],
-      "solidColor": "#98AED7"
+      "solidColor": "#98AED7",
+      "kind": "character"
     },
     {
       "id": "tag-0338",
@@ -7716,7 +8447,8 @@
         "#465789",
         "#8EA5D0"
       ],
-      "solidColor": "#8EA5D0"
+      "solidColor": "#8EA5D0",
+      "kind": "character"
     },
     {
       "id": "tag-0339",
@@ -7741,7 +8473,8 @@
         "#6880B9",
         "#9CB0D9"
       ],
-      "solidColor": "#9CB0D9"
+      "solidColor": "#9CB0D9",
+      "kind": "character"
     },
     {
       "id": "tag-0340",
@@ -7764,7 +8497,8 @@
         "#8BA3CE",
         "#5474AC"
       ],
-      "solidColor": "#5474AC"
+      "solidColor": "#5474AC",
+      "kind": "character"
     },
     {
       "id": "tag-0341",
@@ -7787,7 +8521,8 @@
         "#5A577A",
         "#26273D"
       ],
-      "solidColor": "#26273D"
+      "solidColor": "#26273D",
+      "kind": "character"
     },
     {
       "id": "tag-0342",
@@ -7812,7 +8547,8 @@
         "#595678",
         "#507ABB"
       ],
-      "solidColor": "#507ABB"
+      "solidColor": "#507ABB",
+      "kind": "character"
     },
     {
       "id": "tag-0343",
@@ -7837,7 +8573,8 @@
         "#433549",
         "#42566F"
       ],
-      "solidColor": "#42566F"
+      "solidColor": "#42566F",
+      "kind": "character"
     },
     {
       "id": "tag-0344",
@@ -7862,7 +8599,8 @@
         "#C36468",
         "#7A3F45"
       ],
-      "solidColor": "#7A3F45"
+      "solidColor": "#7A3F45",
+      "kind": "character"
     },
     {
       "id": "tag-0345",
@@ -7887,7 +8625,8 @@
         "#3C54C9",
         "#A16F71"
       ],
-      "solidColor": "#A16F71"
+      "solidColor": "#A16F71",
+      "kind": "character"
     },
     {
       "id": "tag-0346",
@@ -7911,7 +8650,8 @@
         "#2F4199",
         "#3E7B68"
       ],
-      "solidColor": "#3E7B68"
+      "solidColor": "#3E7B68",
+      "kind": "character"
     },
     {
       "id": "tag-0347",
@@ -7935,7 +8675,8 @@
         "#49447A",
         "#3E56C8"
       ],
-      "solidColor": "#3E56C8"
+      "solidColor": "#3E56C8",
+      "kind": "character"
     },
     {
       "id": "tag-0348",
@@ -7959,7 +8700,8 @@
         "#3246A4",
         "#24275E"
       ],
-      "solidColor": "#24275E"
+      "solidColor": "#24275E",
+      "kind": "character"
     },
     {
       "id": "tag-0349",
@@ -7984,7 +8726,8 @@
         "#2F4095",
         "#664B58"
       ],
-      "solidColor": "#664B58"
+      "solidColor": "#664B58",
+      "kind": "character"
     },
     {
       "id": "tag-0350",
@@ -8006,7 +8749,8 @@
         "#76D4F7",
         "#F2A7C8"
       ],
-      "solidColor": "#F2A7C8"
+      "solidColor": "#F2A7C8",
+      "kind": "character"
     },
     {
       "id": "tag-0351",
@@ -8027,7 +8771,8 @@
         "#27304F",
         "#7C72B8"
       ],
-      "solidColor": "#7C72B8"
+      "solidColor": "#7C72B8",
+      "kind": "character"
     },
     {
       "id": "tag-0352",
@@ -8047,9 +8792,10 @@
       ],
       "colors": [
         "#39C5BB",
-        "#FFE211"
+        "#FFB000"
       ],
-      "solidColor": "#FFE211"
+      "solidColor": "#FFB000",
+      "kind": "character"
     },
     {
       "id": "tag-0353",
@@ -8069,9 +8815,10 @@
       ],
       "colors": [
         "#39C5BB",
-        "#FFB000"
+        "#FFE211"
       ],
-      "solidColor": "#FFB000"
+      "solidColor": "#FFE211",
+      "kind": "character"
     },
     {
       "id": "tag-0354",
@@ -8092,7 +8839,8 @@
         "#39C5BB",
         "#FF69B4"
       ],
-      "solidColor": "#FF69B4"
+      "solidColor": "#FF69B4",
+      "kind": "character"
     },
     {
       "id": "tag-0355",
@@ -8109,9 +8857,10 @@
       ],
       "colors": [
         "#39C5BB",
-        "#E44D98"
+        "#D80000"
       ],
-      "solidColor": "#E44D98"
+      "solidColor": "#D80000",
+      "kind": "character"
     },
     {
       "id": "tag-0356",
@@ -8130,7 +8879,8 @@
         "#39C5BB",
         "#0068B7"
       ],
-      "solidColor": "#0068B7"
+      "solidColor": "#0068B7",
+      "kind": "character"
     },
     {
       "id": "tag-0357",
@@ -8151,7 +8901,8 @@
         "#32C5FF",
         "#FFFFFF"
       ],
-      "solidColor": "#32C5FF"
+      "solidColor": "#32C5FF",
+      "kind": "work"
     },
     {
       "id": "tag-0358",
@@ -8170,7 +8921,8 @@
         "#8A3FB5",
         "#D68AF2"
       ],
-      "solidColor": "#D68AF2"
+      "solidColor": "#D68AF2",
+      "kind": "rating"
     },
     {
       "id": "tag-0359",
@@ -8189,7 +8941,8 @@
         "#9D3F28",
         "#F08A4B"
       ],
-      "solidColor": "#F08A4B"
+      "solidColor": "#F08A4B",
+      "kind": "rating"
     },
     {
       "id": "tag-0360",
@@ -8208,7 +8961,8 @@
         "#72BDE8",
         "#C4EDFF"
       ],
-      "solidColor": "#C4EDFF"
+      "solidColor": "#C4EDFF",
+      "kind": "rating"
     },
     {
       "id": "tag-0361",
@@ -8227,7 +8981,8 @@
         "#F2B705",
         "#FFE77A"
       ],
-      "solidColor": "#FFE77A"
+      "solidColor": "#FFE77A",
+      "kind": "rating"
     },
     {
       "id": "tag-0362",
@@ -8246,7 +9001,8 @@
         "#E8CF63",
         "#FFF8C4"
       ],
-      "solidColor": "#FFF8C4"
+      "solidColor": "#FFF8C4",
+      "kind": "rating"
     },
     {
       "id": "tag-0363",
@@ -8268,7 +9024,1672 @@
         "#43C7FF",
         "#9B6DFF"
       ],
-      "solidColor": "#9B6DFF"
+      "solidColor": "#9B6DFF",
+      "kind": "rating"
+    },
+    {
+      "id": "tag-0364",
+      "names": {
+        "zhHans": "博士",
+        "zhHantHK": "博士",
+        "zhHantTW": "博士",
+        "en": "Doctor",
+        "ja": "ドクター"
+      },
+      "aliases": [
+        "刀客塔"
+      ],
+      "colors": [
+        "#F2A900"
+      ],
+      "solidColor": "#F2A900",
+      "kind": "character",
+      "parentID": "tag-0091"
+    },
+    {
+      "id": "tag-0365",
+      "names": {
+        "zhHans": "银灰",
+        "zhHantHK": "銀灰",
+        "zhHantTW": "銀灰",
+        "en": "SilverAsh",
+        "ja": "シルバーアッシュ"
+      },
+      "aliases": [],
+      "colors": [
+        "#F2A900"
+      ],
+      "solidColor": "#F2A900",
+      "kind": "character",
+      "parentID": "tag-0091"
+    },
+    {
+      "id": "tag-0366",
+      "names": {
+        "zhHans": "斯卡蒂",
+        "zhHantHK": "斯卡蒂",
+        "zhHantTW": "斯卡蒂",
+        "en": "Skadi",
+        "ja": "スカジ"
+      },
+      "aliases": [],
+      "colors": [
+        "#F2A900"
+      ],
+      "solidColor": "#F2A900",
+      "kind": "character",
+      "parentID": "tag-0091"
+    },
+    {
+      "id": "tag-0367",
+      "names": {
+        "zhHans": "W",
+        "zhHantHK": "W",
+        "zhHantTW": "W",
+        "en": "W",
+        "ja": "W"
+      },
+      "aliases": [],
+      "colors": [
+        "#F2A900"
+      ],
+      "solidColor": "#F2A900",
+      "kind": "character",
+      "parentID": "tag-0091"
+    },
+    {
+      "id": "tag-0368",
+      "names": {
+        "zhHans": "开拓者",
+        "zhHantHK": "開拓者",
+        "zhHantTW": "開拓者",
+        "en": "Trailblazer",
+        "ja": "開拓者"
+      },
+      "aliases": [],
+      "colors": [
+        "#5D7EDB"
+      ],
+      "solidColor": "#5D7EDB",
+      "kind": "character",
+      "parentID": "tag-0103"
+    },
+    {
+      "id": "tag-0369",
+      "names": {
+        "zhHans": "三月七",
+        "zhHantHK": "三月七",
+        "zhHantTW": "三月七",
+        "en": "March 7th",
+        "ja": "三月なのか"
+      },
+      "aliases": [
+        "March7th",
+        "三月七",
+        "三月なのか"
+      ],
+      "colors": [
+        "#5D7EDB"
+      ],
+      "solidColor": "#5D7EDB",
+      "kind": "character",
+      "parentID": "tag-0103"
+    },
+    {
+      "id": "tag-0370",
+      "names": {
+        "zhHans": "丹恒",
+        "zhHantHK": "丹恆",
+        "zhHantTW": "丹恆",
+        "en": "Dan Heng",
+        "ja": "丹恒"
+      },
+      "aliases": [
+        "丹恒",
+        "丹恆"
+      ],
+      "colors": [
+        "#5D7EDB"
+      ],
+      "solidColor": "#5D7EDB",
+      "kind": "character",
+      "parentID": "tag-0103"
+    },
+    {
+      "id": "tag-0371",
+      "names": {
+        "zhHans": "姬子",
+        "zhHantHK": "姬子",
+        "zhHantTW": "姬子",
+        "en": "Himeko",
+        "ja": "姫子"
+      },
+      "aliases": [
+        "姬子",
+        "姫子"
+      ],
+      "colors": [
+        "#5D7EDB"
+      ],
+      "solidColor": "#5D7EDB",
+      "kind": "character",
+      "parentID": "tag-0103"
+    },
+    {
+      "id": "tag-0372",
+      "names": {
+        "zhHans": "瓦尔特",
+        "zhHantHK": "瓦爾特",
+        "zhHantTW": "瓦爾特",
+        "en": "Welt",
+        "ja": "ヴェルト"
+      },
+      "aliases": [
+        "Welt Yang",
+        "瓦尔特",
+        "瓦爾特",
+        "ヴェルト"
+      ],
+      "colors": [
+        "#5D7EDB"
+      ],
+      "solidColor": "#5D7EDB",
+      "kind": "character",
+      "parentID": "tag-0103"
+    },
+    {
+      "id": "tag-0373",
+      "names": {
+        "zhHans": "银狼",
+        "zhHantHK": "銀狼",
+        "zhHantTW": "銀狼",
+        "en": "Silver Wolf",
+        "ja": "銀狼"
+      },
+      "aliases": [
+        "银狼",
+        "銀狼"
+      ],
+      "colors": [
+        "#5D7EDB"
+      ],
+      "solidColor": "#5D7EDB",
+      "kind": "character",
+      "parentID": "tag-0103"
+    },
+    {
+      "id": "tag-0374",
+      "names": {
+        "zhHans": "刃",
+        "zhHantHK": "刃",
+        "zhHantTW": "刃",
+        "en": "Blade",
+        "ja": "刃"
+      },
+      "aliases": [
+        "刃"
+      ],
+      "colors": [
+        "#5D7EDB"
+      ],
+      "solidColor": "#5D7EDB",
+      "kind": "character",
+      "parentID": "tag-0103"
+    },
+    {
+      "id": "tag-0375",
+      "names": {
+        "zhHans": "景元",
+        "zhHantHK": "景元",
+        "zhHantTW": "景元",
+        "en": "Jing Yuan",
+        "ja": "景元"
+      },
+      "aliases": [
+        "景元"
+      ],
+      "colors": [
+        "#5D7EDB"
+      ],
+      "solidColor": "#5D7EDB",
+      "kind": "character",
+      "parentID": "tag-0103"
+    },
+    {
+      "id": "tag-0376",
+      "names": {
+        "zhHans": "丹恒·饮月",
+        "zhHantHK": "丹恆・飲月",
+        "zhHantTW": "丹恆・飲月",
+        "en": "Dan Heng • Imbibitor Lunae",
+        "ja": "丹恒・飲月"
+      },
+      "aliases": [
+        "饮月",
+        "飲月",
+        "Imbibitor Lunae",
+        "Dan Heng Imbibitor Lunae",
+        "丹恒•饮月",
+        "丹恆•飲月",
+        "丹恒・飲月"
+      ],
+      "colors": [
+        "#5D7EDB"
+      ],
+      "solidColor": "#5D7EDB",
+      "kind": "character",
+      "parentID": "tag-0370"
+    },
+    {
+      "id": "tag-0377",
+      "names": {
+        "zhHans": "黄泉",
+        "zhHantHK": "黃泉",
+        "zhHantTW": "黃泉",
+        "en": "Acheron",
+        "ja": "黄泉"
+      },
+      "aliases": [
+        "黄泉",
+        "黃泉"
+      ],
+      "colors": [
+        "#5D7EDB"
+      ],
+      "solidColor": "#5D7EDB",
+      "kind": "character",
+      "parentID": "tag-0103"
+    },
+    {
+      "id": "tag-0378",
+      "names": {
+        "zhHans": "星期日",
+        "zhHantHK": "星期日",
+        "zhHantTW": "星期日",
+        "en": "Sunday",
+        "ja": "サンデー"
+      },
+      "aliases": [
+        "星期日",
+        "サンデー"
+      ],
+      "colors": [
+        "#5D7EDB"
+      ],
+      "solidColor": "#5D7EDB",
+      "kind": "character",
+      "parentID": "tag-0103"
+    },
+    {
+      "id": "tag-0379",
+      "names": {
+        "zhHans": "旅行者",
+        "zhHantHK": "旅行者",
+        "zhHantTW": "旅行者",
+        "en": "Traveler",
+        "ja": "旅人"
+      },
+      "aliases": [
+        "Traveller"
+      ],
+      "colors": [
+        "#C9A063"
+      ],
+      "solidColor": "#C9A063",
+      "kind": "character",
+      "parentID": "tag-0107"
+    },
+    {
+      "id": "tag-0380",
+      "names": {
+        "zhHans": "荧",
+        "zhHantHK": "熒",
+        "zhHantTW": "熒",
+        "en": "Lumine",
+        "ja": "蛍"
+      },
+      "aliases": [],
+      "colors": [
+        "#C9A063"
+      ],
+      "solidColor": "#C9A063",
+      "kind": "character",
+      "parentID": "tag-0379"
+    },
+    {
+      "id": "tag-0381",
+      "names": {
+        "zhHans": "空",
+        "zhHantHK": "空",
+        "zhHantTW": "空",
+        "en": "Aether",
+        "ja": "空"
+      },
+      "aliases": [],
+      "colors": [
+        "#C9A063"
+      ],
+      "solidColor": "#C9A063",
+      "kind": "character",
+      "parentID": "tag-0379"
+    },
+    {
+      "id": "tag-0382",
+      "names": {
+        "zhHans": "派蒙",
+        "zhHantHK": "派蒙",
+        "zhHantTW": "派蒙",
+        "en": "Paimon",
+        "ja": "パイモン"
+      },
+      "aliases": [],
+      "colors": [
+        "#C9A063"
+      ],
+      "solidColor": "#C9A063",
+      "kind": "character",
+      "parentID": "tag-0107"
+    },
+    {
+      "id": "tag-0383",
+      "names": {
+        "zhHans": "温迪",
+        "zhHantHK": "溫迪",
+        "zhHantTW": "溫迪",
+        "en": "Venti",
+        "ja": "ウェンティ"
+      },
+      "aliases": [],
+      "colors": [
+        "#C9A063"
+      ],
+      "solidColor": "#C9A063",
+      "kind": "character",
+      "parentID": "tag-0107"
+    },
+    {
+      "id": "tag-0384",
+      "names": {
+        "zhHans": "钟离",
+        "zhHantHK": "鍾離",
+        "zhHantTW": "鍾離",
+        "en": "Zhongli",
+        "ja": "鍾離"
+      },
+      "aliases": [],
+      "colors": [
+        "#C9A063"
+      ],
+      "solidColor": "#C9A063",
+      "kind": "character",
+      "parentID": "tag-0107"
+    },
+    {
+      "id": "tag-0385",
+      "names": {
+        "zhHans": "雷电将军",
+        "zhHantHK": "雷電將軍",
+        "zhHantTW": "雷電將軍",
+        "en": "Raiden Shogun",
+        "ja": "雷電将軍"
+      },
+      "aliases": [
+        "雷神",
+        "Raiden Ei"
+      ],
+      "colors": [
+        "#C9A063"
+      ],
+      "solidColor": "#C9A063",
+      "kind": "character",
+      "parentID": "tag-0107"
+    },
+    {
+      "id": "tag-0386",
+      "names": {
+        "zhHans": "魈",
+        "zhHantHK": "魈",
+        "zhHantTW": "魈",
+        "en": "Xiao",
+        "ja": "魈"
+      },
+      "aliases": [],
+      "colors": [
+        "#C9A063"
+      ],
+      "solidColor": "#C9A063",
+      "kind": "character",
+      "parentID": "tag-0107"
+    },
+    {
+      "id": "tag-0387",
+      "names": {
+        "zhHans": "达达利亚",
+        "zhHantHK": "達達利亞",
+        "zhHantTW": "達達利亞",
+        "en": "Tartaglia",
+        "ja": "タルタリヤ"
+      },
+      "aliases": [
+        "Childe",
+        "公子"
+      ],
+      "colors": [
+        "#C9A063"
+      ],
+      "solidColor": "#C9A063",
+      "kind": "character",
+      "parentID": "tag-0107"
+    },
+    {
+      "id": "tag-0388",
+      "names": {
+        "zhHans": "胡桃",
+        "zhHantHK": "胡桃",
+        "zhHantTW": "胡桃",
+        "en": "Hu Tao",
+        "ja": "胡桃"
+      },
+      "aliases": [
+        "Hutao"
+      ],
+      "colors": [
+        "#C9A063"
+      ],
+      "solidColor": "#C9A063",
+      "kind": "character",
+      "parentID": "tag-0107"
+    },
+    {
+      "id": "tag-0389",
+      "names": {
+        "zhHans": "神里绫华",
+        "zhHantHK": "神里綾華",
+        "zhHantTW": "神里綾華",
+        "en": "Kamisato Ayaka",
+        "ja": "神里綾華"
+      },
+      "aliases": [
+        "Ayaka",
+        "绫华",
+        "綾華"
+      ],
+      "colors": [
+        "#C9A063"
+      ],
+      "solidColor": "#C9A063",
+      "kind": "character",
+      "parentID": "tag-0107"
+    },
+    {
+      "id": "tag-0390",
+      "names": {
+        "zhHans": "可莉",
+        "zhHantHK": "可莉",
+        "zhHantTW": "可莉",
+        "en": "Klee",
+        "ja": "クレー"
+      },
+      "aliases": [],
+      "colors": [
+        "#C9A063"
+      ],
+      "solidColor": "#C9A063",
+      "kind": "character",
+      "parentID": "tag-0107"
+    },
+    {
+      "id": "tag-0391",
+      "names": {
+        "zhHans": "μ's",
+        "zhHantHK": "μ's",
+        "zhHantTW": "μ's",
+        "en": "μ's",
+        "ja": "μ's"
+      },
+      "aliases": [
+        "Muse",
+        "缪斯",
+        "繆斯",
+        "ミューズ"
+      ],
+      "colors": [
+        "#E4007F"
+      ],
+      "solidColor": "#E4007F",
+      "kind": "group",
+      "parentID": "tag-0110"
+    },
+    {
+      "id": "tag-0392",
+      "names": {
+        "zhHans": "Aqours",
+        "zhHantHK": "Aqours",
+        "zhHantTW": "Aqours",
+        "en": "Aqours",
+        "ja": "Aqours"
+      },
+      "aliases": [
+        "水团",
+        "水團",
+        "アクア"
+      ],
+      "colors": [
+        "#E4007F"
+      ],
+      "solidColor": "#E4007F",
+      "kind": "group",
+      "parentID": "tag-0110"
+    },
+    {
+      "id": "tag-0393",
+      "names": {
+        "zhHans": "虹咲学园学园偶像同好会",
+        "zhHantHK": "虹咲學園學園偶像同好會",
+        "zhHantTW": "虹咲學園學園偶像同好會",
+        "en": "Nijigasaki High School Idol Club",
+        "ja": "虹ヶ咲学園スクールアイドル同好会"
+      },
+      "aliases": [
+        "虹咲",
+        "虹团",
+        "虹團",
+        "Nijigasaki"
+      ],
+      "colors": [
+        "#E4007F"
+      ],
+      "solidColor": "#E4007F",
+      "kind": "group",
+      "parentID": "tag-0110"
+    },
+    {
+      "id": "tag-0394",
+      "names": {
+        "zhHans": "Liella!",
+        "zhHantHK": "Liella!",
+        "zhHantTW": "Liella!",
+        "en": "Liella!",
+        "ja": "Liella!"
+      },
+      "aliases": [
+        "Liella",
+        "星团",
+        "星團",
+        "リエラ"
+      ],
+      "colors": [
+        "#E4007F"
+      ],
+      "solidColor": "#E4007F",
+      "kind": "group",
+      "parentID": "tag-0110"
+    },
+    {
+      "id": "tag-0395",
+      "names": {
+        "zhHans": "高坂穗乃果",
+        "zhHantHK": "高坂穗乃果",
+        "zhHantTW": "高坂穗乃果",
+        "en": "Honoka Kosaka",
+        "ja": "高坂穂乃果"
+      },
+      "aliases": [
+        "Honoka",
+        "穗乃果"
+      ],
+      "colors": [
+        "#FFA336"
+      ],
+      "solidColor": "#FFA336",
+      "kind": "character",
+      "parentID": "tag-0391"
+    },
+    {
+      "id": "tag-0396",
+      "names": {
+        "zhHans": "南小鸟",
+        "zhHantHK": "南小鳥",
+        "zhHantTW": "南小鳥",
+        "en": "Kotori Minami",
+        "ja": "南ことり"
+      },
+      "aliases": [
+        "Kotori",
+        "小鸟",
+        "小鳥"
+      ],
+      "colors": [
+        "#CEBFBF"
+      ],
+      "solidColor": "#CEBFBF",
+      "kind": "character",
+      "parentID": "tag-0391"
+    },
+    {
+      "id": "tag-0397",
+      "names": {
+        "zhHans": "园田海未",
+        "zhHantHK": "園田海未",
+        "zhHantTW": "園田海未",
+        "en": "Umi Sonoda",
+        "ja": "園田海未"
+      },
+      "aliases": [
+        "Umi",
+        "海未"
+      ],
+      "colors": [
+        "#1769FF"
+      ],
+      "solidColor": "#1769FF",
+      "kind": "character",
+      "parentID": "tag-0391"
+    },
+    {
+      "id": "tag-0398",
+      "names": {
+        "zhHans": "西木野真姬",
+        "zhHantHK": "西木野真姬",
+        "zhHantTW": "西木野真姬",
+        "en": "Maki Nishikino",
+        "ja": "西木野真姫"
+      },
+      "aliases": [
+        "Maki",
+        "真姬",
+        "真姫"
+      ],
+      "colors": [
+        "#FF503E"
+      ],
+      "solidColor": "#FF503E",
+      "kind": "character",
+      "parentID": "tag-0391"
+    },
+    {
+      "id": "tag-0399",
+      "names": {
+        "zhHans": "矢泽妮可",
+        "zhHantHK": "矢澤妮可",
+        "zhHantTW": "矢澤妮可",
+        "en": "Nico Yazawa",
+        "ja": "矢澤にこ"
+      },
+      "aliases": [
+        "Nico",
+        "妮可",
+        "にこ"
+      ],
+      "colors": [
+        "#FF4F91"
+      ],
+      "solidColor": "#FF4F91",
+      "kind": "character",
+      "parentID": "tag-0391"
+    },
+    {
+      "id": "tag-0400",
+      "names": {
+        "zhHans": "高海千歌",
+        "zhHantHK": "高海千歌",
+        "zhHantTW": "高海千歌",
+        "en": "Chika Takami",
+        "ja": "高海千歌"
+      },
+      "aliases": [
+        "Chika",
+        "千歌"
+      ],
+      "colors": [
+        "#FF9547"
+      ],
+      "solidColor": "#FF9547",
+      "kind": "character",
+      "parentID": "tag-0392"
+    },
+    {
+      "id": "tag-0401",
+      "names": {
+        "zhHans": "樱内梨子",
+        "zhHantHK": "櫻內梨子",
+        "zhHantTW": "櫻內梨子",
+        "en": "Riko Sakurauchi",
+        "ja": "桜内梨子"
+      },
+      "aliases": [
+        "Riko",
+        "梨子"
+      ],
+      "colors": [
+        "#FF9EAC"
+      ],
+      "solidColor": "#FF9EAC",
+      "kind": "character",
+      "parentID": "tag-0392"
+    },
+    {
+      "id": "tag-0402",
+      "names": {
+        "zhHans": "渡边曜",
+        "zhHantHK": "渡邊曜",
+        "zhHantTW": "渡邊曜",
+        "en": "You Watanabe",
+        "ja": "渡辺曜"
+      },
+      "aliases": [
+        "曜"
+      ],
+      "colors": [
+        "#66C0FF"
+      ],
+      "solidColor": "#66C0FF",
+      "kind": "character",
+      "parentID": "tag-0392"
+    },
+    {
+      "id": "tag-0403",
+      "names": {
+        "zhHans": "上原步梦",
+        "zhHantHK": "上原步夢",
+        "zhHantTW": "上原步夢",
+        "en": "Ayumu Uehara",
+        "ja": "上原歩夢"
+      },
+      "aliases": [
+        "Ayumu",
+        "步梦",
+        "步夢"
+      ],
+      "colors": [
+        "#FFBFE0"
+      ],
+      "solidColor": "#FFBFE0",
+      "kind": "character",
+      "parentID": "tag-0393"
+    },
+    {
+      "id": "tag-0404",
+      "names": {
+        "zhHans": "涩谷香音",
+        "zhHantHK": "澀谷香音",
+        "zhHantTW": "澀谷香音",
+        "en": "Kanon Shibuya",
+        "ja": "澁谷かのん"
+      },
+      "aliases": [
+        "香音",
+        "かのん",
+        "Shibuya Kanon"
+      ],
+      "colors": [
+        "#FF7F26"
+      ],
+      "solidColor": "#FF7F26",
+      "kind": "character",
+      "parentID": "tag-0394"
+    },
+    {
+      "id": "tag-0405",
+      "names": {
+        "zhHans": "唐可可",
+        "zhHantHK": "唐可可",
+        "zhHantTW": "唐可可",
+        "en": "Keke Tang",
+        "ja": "唐可可"
+      },
+      "aliases": [
+        "Keke",
+        "可可",
+        "Tang Keke"
+      ],
+      "colors": [
+        "#A0FFF9"
+      ],
+      "solidColor": "#A0FFF9",
+      "kind": "character",
+      "parentID": "tag-0394"
+    },
+    {
+      "id": "tag-0406",
+      "names": {
+        "zhHans": "明星昴流",
+        "zhHantHK": "明星昴流",
+        "zhHantTW": "明星昴流",
+        "en": "Subaru Akehoshi",
+        "ja": "明星スバル"
+      },
+      "aliases": [
+        "Subaru"
+      ],
+      "colors": [
+        "#F6B51D"
+      ],
+      "solidColor": "#F6B51D",
+      "kind": "character",
+      "parentID": "tag-0111"
+    },
+    {
+      "id": "tag-0407",
+      "names": {
+        "zhHans": "冰鹰北斗",
+        "zhHantHK": "冰鷹北斗",
+        "zhHantTW": "冰鷹北斗",
+        "en": "Hokuto Hidaka",
+        "ja": "氷鷹北斗"
+      },
+      "aliases": [
+        "Hokuto"
+      ],
+      "colors": [
+        "#F6B51D"
+      ],
+      "solidColor": "#F6B51D",
+      "kind": "character",
+      "parentID": "tag-0111"
+    },
+    {
+      "id": "tag-0408",
+      "names": {
+        "zhHans": "游木真",
+        "zhHantHK": "遊木真",
+        "zhHantTW": "遊木真",
+        "en": "Makoto Yuuki",
+        "ja": "遊木真"
+      },
+      "aliases": [],
+      "colors": [
+        "#F6B51D"
+      ],
+      "solidColor": "#F6B51D",
+      "kind": "character",
+      "parentID": "tag-0111"
+    },
+    {
+      "id": "tag-0409",
+      "names": {
+        "zhHans": "衣更真绪",
+        "zhHantHK": "衣更真緒",
+        "zhHantTW": "衣更真緒",
+        "en": "Mao Isara",
+        "ja": "衣更真緒"
+      },
+      "aliases": [],
+      "colors": [
+        "#F6B51D"
+      ],
+      "solidColor": "#F6B51D",
+      "kind": "character",
+      "parentID": "tag-0111"
+    },
+    {
+      "id": "tag-0410",
+      "names": {
+        "zhHans": "朔间零",
+        "zhHantHK": "朔間零",
+        "zhHantTW": "朔間零",
+        "en": "Rei Sakuma",
+        "ja": "朔間零"
+      },
+      "aliases": [],
+      "colors": [
+        "#F6B51D"
+      ],
+      "solidColor": "#F6B51D",
+      "kind": "character",
+      "parentID": "tag-0111"
+    },
+    {
+      "id": "tag-0411",
+      "names": {
+        "zhHans": "羽风薰",
+        "zhHantHK": "羽風薰",
+        "zhHantTW": "羽風薰",
+        "en": "Kaoru Hakaze",
+        "ja": "羽風薫"
+      },
+      "aliases": [],
+      "colors": [
+        "#F6B51D"
+      ],
+      "solidColor": "#F6B51D",
+      "kind": "character",
+      "parentID": "tag-0111"
+    },
+    {
+      "id": "tag-0412",
+      "names": {
+        "zhHans": "濑名泉",
+        "zhHantHK": "瀨名泉",
+        "zhHantTW": "瀨名泉",
+        "en": "Izumi Sena",
+        "ja": "瀬名泉"
+      },
+      "aliases": [],
+      "colors": [
+        "#F6B51D"
+      ],
+      "solidColor": "#F6B51D",
+      "kind": "character",
+      "parentID": "tag-0111"
+    },
+    {
+      "id": "tag-0413",
+      "names": {
+        "zhHans": "月永雷欧",
+        "zhHantHK": "月永雷歐",
+        "zhHantTW": "月永雷歐",
+        "en": "Leo Tsukinaga",
+        "ja": "月永レオ"
+      },
+      "aliases": [],
+      "colors": [
+        "#F6B51D"
+      ],
+      "solidColor": "#F6B51D",
+      "kind": "character",
+      "parentID": "tag-0111"
+    },
+    {
+      "id": "tag-0414",
+      "names": {
+        "zhHans": "朱樱司",
+        "zhHantHK": "朱櫻司",
+        "zhHantTW": "朱櫻司",
+        "en": "Tsukasa Suou",
+        "ja": "朱桜司"
+      },
+      "aliases": [],
+      "colors": [
+        "#F6B51D"
+      ],
+      "solidColor": "#F6B51D",
+      "kind": "character",
+      "parentID": "tag-0111"
+    },
+    {
+      "id": "tag-0415",
+      "names": {
+        "zhHans": "天城一彩",
+        "zhHantHK": "天城一彩",
+        "zhHantTW": "天城一彩",
+        "en": "Hiiro Amagi",
+        "ja": "天城一彩"
+      },
+      "aliases": [],
+      "colors": [
+        "#F6B51D"
+      ],
+      "solidColor": "#F6B51D",
+      "kind": "character",
+      "parentID": "tag-0111"
+    },
+    {
+      "id": "tag-0416",
+      "names": {
+        "zhHans": "天城燐音",
+        "zhHantHK": "天城燐音",
+        "zhHantTW": "天城燐音",
+        "en": "Rinne Amagi",
+        "ja": "天城燐音"
+      },
+      "aliases": [],
+      "colors": [
+        "#F6B51D"
+      ],
+      "solidColor": "#F6B51D",
+      "kind": "character",
+      "parentID": "tag-0111"
+    },
+    {
+      "id": "tag-0417",
+      "names": {
+        "zhHans": "白鸟蓝良",
+        "zhHantHK": "白鳥藍良",
+        "zhHantTW": "白鳥藍良",
+        "en": "Aira Shiratori",
+        "ja": "白鳥藍良"
+      },
+      "aliases": [],
+      "colors": [
+        "#F6B51D"
+      ],
+      "solidColor": "#F6B51D",
+      "kind": "character",
+      "parentID": "tag-0111"
+    },
+    {
+      "id": "tag-0418",
+      "names": {
+        "zhHans": "765PRO ALLSTARS",
+        "zhHantHK": "765PRO ALLSTARS",
+        "zhHantTW": "765PRO ALLSTARS",
+        "en": "765PRO ALLSTARS",
+        "ja": "765PRO ALLSTARS"
+      },
+      "aliases": [
+        "765",
+        "765AS"
+      ],
+      "colors": [
+        "#F34E7B"
+      ],
+      "solidColor": "#F34E7B",
+      "kind": "group",
+      "parentID": "tag-0112"
+    },
+    {
+      "id": "tag-0419",
+      "names": {
+        "zhHans": "偶像大师 灰姑娘女孩",
+        "zhHantHK": "偶像大師 灰姑娘女孩",
+        "zhHantTW": "偶像大師 灰姑娘女孩",
+        "en": "THE IDOLM@STER CINDERELLA GIRLS",
+        "ja": "アイドルマスター シンデレラガールズ"
+      },
+      "aliases": [
+        "灰姑娘",
+        "デレマス",
+        "Cinderella Girls"
+      ],
+      "colors": [
+        "#F34E7B"
+      ],
+      "solidColor": "#F34E7B",
+      "kind": "work",
+      "parentID": "tag-0112"
+    },
+    {
+      "id": "tag-0420",
+      "names": {
+        "zhHans": "偶像大师 百万现场",
+        "zhHantHK": "偶像大師 百萬人演唱會",
+        "zhHantTW": "偶像大師 百萬人演唱會",
+        "en": "THE IDOLM@STER MILLION LIVE!",
+        "ja": "アイドルマスター ミリオンライブ！"
+      },
+      "aliases": [
+        "百万现场",
+        "百萬現場",
+        "ミリマス",
+        "Million Live"
+      ],
+      "colors": [
+        "#F34E7B"
+      ],
+      "solidColor": "#F34E7B",
+      "kind": "work",
+      "parentID": "tag-0112"
+    },
+    {
+      "id": "tag-0421",
+      "names": {
+        "zhHans": "偶像大师 闪耀色彩",
+        "zhHantHK": "偶像大師 閃耀色彩",
+        "zhHantTW": "偶像大師 閃耀色彩",
+        "en": "THE IDOLM@STER SHINY COLORS",
+        "ja": "アイドルマスター シャイニーカラーズ"
+      },
+      "aliases": [
+        "闪耀色彩",
+        "閃耀色彩",
+        "シャニマス",
+        "Shiny Colors"
+      ],
+      "colors": [
+        "#F34E7B"
+      ],
+      "solidColor": "#F34E7B",
+      "kind": "work",
+      "parentID": "tag-0112"
+    },
+    {
+      "id": "tag-0422",
+      "names": {
+        "zhHans": "天海春香",
+        "zhHantHK": "天海春香",
+        "zhHantTW": "天海春香",
+        "en": "Haruka Amami",
+        "ja": "天海春香"
+      },
+      "aliases": [],
+      "colors": [
+        "#F34E7B"
+      ],
+      "solidColor": "#F34E7B",
+      "kind": "character",
+      "parentID": "tag-0418"
+    },
+    {
+      "id": "tag-0423",
+      "names": {
+        "zhHans": "如月千早",
+        "zhHantHK": "如月千早",
+        "zhHantTW": "如月千早",
+        "en": "Chihaya Kisaragi",
+        "ja": "如月千早"
+      },
+      "aliases": [],
+      "colors": [
+        "#F34E7B"
+      ],
+      "solidColor": "#F34E7B",
+      "kind": "character",
+      "parentID": "tag-0418"
+    },
+    {
+      "id": "tag-0424",
+      "names": {
+        "zhHans": "星井美希",
+        "zhHantHK": "星井美希",
+        "zhHantTW": "星井美希",
+        "en": "Miki Hoshii",
+        "ja": "星井美希"
+      },
+      "aliases": [],
+      "colors": [
+        "#F34E7B"
+      ],
+      "solidColor": "#F34E7B",
+      "kind": "character",
+      "parentID": "tag-0418"
+    },
+    {
+      "id": "tag-0425",
+      "names": {
+        "zhHans": "岛村卯月",
+        "zhHantHK": "島村卯月",
+        "zhHantTW": "島村卯月",
+        "en": "Uzuki Shimamura",
+        "ja": "島村卯月"
+      },
+      "aliases": [],
+      "colors": [
+        "#F34E7B"
+      ],
+      "solidColor": "#F34E7B",
+      "kind": "character",
+      "parentID": "tag-0419"
+    },
+    {
+      "id": "tag-0426",
+      "names": {
+        "zhHans": "涩谷凛",
+        "zhHantHK": "澀谷凜",
+        "zhHantTW": "澀谷凜",
+        "en": "Rin Shibuya",
+        "ja": "渋谷凛"
+      },
+      "aliases": [],
+      "colors": [
+        "#F34E7B"
+      ],
+      "solidColor": "#F34E7B",
+      "kind": "character",
+      "parentID": "tag-0419"
+    },
+    {
+      "id": "tag-0427",
+      "names": {
+        "zhHans": "本田未央",
+        "zhHantHK": "本田未央",
+        "zhHantTW": "本田未央",
+        "en": "Mio Honda",
+        "ja": "本田未央"
+      },
+      "aliases": [],
+      "colors": [
+        "#F34E7B"
+      ],
+      "solidColor": "#F34E7B",
+      "kind": "character",
+      "parentID": "tag-0419"
+    },
+    {
+      "id": "tag-0428",
+      "names": {
+        "zhHans": "春日未来",
+        "zhHantHK": "春日未來",
+        "zhHantTW": "春日未來",
+        "en": "Mirai Kasuga",
+        "ja": "春日未来"
+      },
+      "aliases": [],
+      "colors": [
+        "#F34E7B"
+      ],
+      "solidColor": "#F34E7B",
+      "kind": "character",
+      "parentID": "tag-0420"
+    },
+    {
+      "id": "tag-0429",
+      "names": {
+        "zhHans": "最上静香",
+        "zhHantHK": "最上靜香",
+        "zhHantTW": "最上靜香",
+        "en": "Shizuka Mogami",
+        "ja": "最上静香"
+      },
+      "aliases": [],
+      "colors": [
+        "#F34E7B"
+      ],
+      "solidColor": "#F34E7B",
+      "kind": "character",
+      "parentID": "tag-0420"
+    },
+    {
+      "id": "tag-0430",
+      "names": {
+        "zhHans": "伊吹翼",
+        "zhHantHK": "伊吹翼",
+        "zhHantTW": "伊吹翼",
+        "en": "Tsubasa Ibuki",
+        "ja": "伊吹翼"
+      },
+      "aliases": [],
+      "colors": [
+        "#F34E7B"
+      ],
+      "solidColor": "#F34E7B",
+      "kind": "character",
+      "parentID": "tag-0420"
+    },
+    {
+      "id": "tag-0431",
+      "names": {
+        "zhHans": "樱木真乃",
+        "zhHantHK": "櫻木真乃",
+        "zhHantTW": "櫻木真乃",
+        "en": "Mano Sakuragi",
+        "ja": "櫻木真乃"
+      },
+      "aliases": [],
+      "colors": [
+        "#F34E7B"
+      ],
+      "solidColor": "#F34E7B",
+      "kind": "character",
+      "parentID": "tag-0421"
+    },
+    {
+      "id": "tag-0432",
+      "names": {
+        "zhHans": "风野灯织",
+        "zhHantHK": "風野燈織",
+        "zhHantTW": "風野燈織",
+        "en": "Hiori Kazano",
+        "ja": "風野灯織"
+      },
+      "aliases": [],
+      "colors": [
+        "#F34E7B"
+      ],
+      "solidColor": "#F34E7B",
+      "kind": "character",
+      "parentID": "tag-0421"
+    },
+    {
+      "id": "tag-0433",
+      "names": {
+        "zhHans": "八宫巡",
+        "zhHantHK": "八宮巡",
+        "zhHantTW": "八宮巡",
+        "en": "Meguru Hachimiya",
+        "ja": "八宮めぐる"
+      },
+      "aliases": [],
+      "colors": [
+        "#F34E7B"
+      ],
+      "solidColor": "#F34E7B",
+      "kind": "character",
+      "parentID": "tag-0421"
+    },
+    {
+      "id": "tag-0434",
+      "names": {
+        "zhHans": "特别周",
+        "zhHantHK": "特別週",
+        "zhHantTW": "特別週",
+        "en": "Special Week",
+        "ja": "スペシャルウィーク"
+      },
+      "aliases": [],
+      "colors": [
+        "#EE6DCB"
+      ],
+      "solidColor": "#EE6DCB",
+      "kind": "character",
+      "parentID": "tag-0113"
+    },
+    {
+      "id": "tag-0435",
+      "names": {
+        "zhHans": "无声铃鹿",
+        "zhHantHK": "無聲鈴鹿",
+        "zhHantTW": "無聲鈴鹿",
+        "en": "Silence Suzuka",
+        "ja": "サイレンススズカ"
+      },
+      "aliases": [],
+      "colors": [
+        "#29BD70"
+      ],
+      "solidColor": "#29BD70",
+      "kind": "character",
+      "parentID": "tag-0113"
+    },
+    {
+      "id": "tag-0436",
+      "names": {
+        "zhHans": "东海帝王",
+        "zhHantHK": "東海帝王",
+        "zhHantTW": "東海帝王",
+        "en": "Tokai Teio",
+        "ja": "トウカイテイオー"
+      },
+      "aliases": [],
+      "colors": [
+        "#3376D2"
+      ],
+      "solidColor": "#3376D2",
+      "kind": "character",
+      "parentID": "tag-0113"
+    },
+    {
+      "id": "tag-0437",
+      "names": {
+        "zhHans": "小栗帽",
+        "zhHantHK": "小栗帽",
+        "zhHantTW": "小栗帽",
+        "en": "Oguri Cap",
+        "ja": "オグリキャップ"
+      },
+      "aliases": [],
+      "colors": [
+        "#3A7AD2"
+      ],
+      "solidColor": "#3A7AD2",
+      "kind": "character",
+      "parentID": "tag-0113"
+    },
+    {
+      "id": "tag-0438",
+      "names": {
+        "zhHans": "黄金船",
+        "zhHantHK": "黃金船",
+        "zhHantTW": "黃金船",
+        "en": "Gold Ship",
+        "ja": "ゴールドシップ"
+      },
+      "aliases": [],
+      "colors": [
+        "#DA3C57"
+      ],
+      "solidColor": "#DA3C57",
+      "kind": "character",
+      "parentID": "tag-0113"
+    },
+    {
+      "id": "tag-0439",
+      "names": {
+        "zhHans": "米浴",
+        "zhHantHK": "米浴",
+        "zhHantTW": "米浴",
+        "en": "Rice Shower",
+        "ja": "ライスシャワー"
+      },
+      "aliases": [],
+      "colors": [
+        "#384A86"
+      ],
+      "solidColor": "#384A86",
+      "kind": "character",
+      "parentID": "tag-0113"
+    },
+    {
+      "id": "tag-0440",
+      "names": {
+        "zhHans": "目白麦昆",
+        "zhHantHK": "目白麥昆",
+        "zhHantTW": "目白麥昆",
+        "en": "Mejiro McQueen",
+        "ja": "メジロマックイーン"
+      },
+      "aliases": [],
+      "colors": [
+        "#00B5BE"
+      ],
+      "solidColor": "#00B5BE",
+      "kind": "character",
+      "parentID": "tag-0113"
+    },
+    {
+      "id": "tag-0441",
+      "names": {
+        "zhHans": "北部玄驹",
+        "zhHantHK": "北部玄駒",
+        "zhHantTW": "北部玄駒",
+        "en": "Kitasan Black",
+        "ja": "キタサンブラック"
+      },
+      "aliases": [],
+      "colors": [
+        "#5A6065"
+      ],
+      "solidColor": "#5A6065",
+      "kind": "character",
+      "parentID": "tag-0113"
+    },
+    {
+      "id": "tag-0442",
+      "names": {
+        "zhHans": "里见光钻",
+        "zhHantHK": "里見光鑽",
+        "zhHantTW": "里見光鑽",
+        "en": "Satono Diamond",
+        "ja": "サトノダイヤモンド"
+      },
+      "aliases": [],
+      "colors": [
+        "#94BF01"
+      ],
+      "solidColor": "#94BF01",
+      "kind": "character",
+      "parentID": "tag-0113"
+    },
+    {
+      "id": "tag-0443",
+      "names": {
+        "zhHans": "十六夜咲夜",
+        "zhHantHK": "十六夜咲夜",
+        "zhHantTW": "十六夜咲夜",
+        "en": "Sakuya Izayoi",
+        "ja": "十六夜咲夜"
+      },
+      "aliases": [
+        "Sakuya"
+      ],
+      "colors": [
+        "#E60012"
+      ],
+      "solidColor": "#E60012",
+      "kind": "character",
+      "parentID": "tag-0136"
+    },
+    {
+      "id": "tag-0444",
+      "names": {
+        "zhHans": "魂魄妖梦",
+        "zhHantHK": "魂魄妖夢",
+        "zhHantTW": "魂魄妖夢",
+        "en": "Youmu Konpaku",
+        "ja": "魂魄妖夢"
+      },
+      "aliases": [
+        "Youmu"
+      ],
+      "colors": [
+        "#E60012"
+      ],
+      "solidColor": "#E60012",
+      "kind": "character",
+      "parentID": "tag-0136"
+    },
+    {
+      "id": "tag-0445",
+      "names": {
+        "zhHans": "蕾米莉亚·斯卡蕾特",
+        "zhHantHK": "蕾米莉亞·斯卡蕾特",
+        "zhHantTW": "蕾米莉亞·斯卡蕾特",
+        "en": "Remilia Scarlet",
+        "ja": "レミリア・スカーレット"
+      },
+      "aliases": [
+        "蕾米莉亚",
+        "蕾米莉亞",
+        "Remilia"
+      ],
+      "colors": [
+        "#E60012"
+      ],
+      "solidColor": "#E60012",
+      "kind": "character",
+      "parentID": "tag-0136"
+    },
+    {
+      "id": "tag-0446",
+      "names": {
+        "zhHans": "芙兰朵露·斯卡蕾特",
+        "zhHantHK": "芙蘭朵露·斯卡蕾特",
+        "zhHantTW": "芙蘭朵露·斯卡蕾特",
+        "en": "Flandre Scarlet",
+        "ja": "フランドール・スカーレット"
+      },
+      "aliases": [
+        "芙兰朵露",
+        "芙蘭朵露",
+        "Flandre"
+      ],
+      "colors": [
+        "#E60012"
+      ],
+      "solidColor": "#E60012",
+      "kind": "character",
+      "parentID": "tag-0136"
+    },
+    {
+      "id": "tag-0447",
+      "names": {
+        "zhHans": "琪露诺",
+        "zhHantHK": "琪露諾",
+        "zhHantTW": "琪露諾",
+        "en": "Cirno",
+        "ja": "チルノ"
+      },
+      "aliases": [],
+      "colors": [
+        "#E60012"
+      ],
+      "solidColor": "#E60012",
+      "kind": "character",
+      "parentID": "tag-0136"
+    },
+    {
+      "id": "tag-0448",
+      "names": {
+        "zhHans": "古明地恋",
+        "zhHantHK": "古明地戀",
+        "zhHantTW": "古明地戀",
+        "en": "Koishi Komeiji",
+        "ja": "古明地こいし"
+      },
+      "aliases": [
+        "Koishi"
+      ],
+      "colors": [
+        "#E60012"
+      ],
+      "solidColor": "#E60012",
+      "kind": "character",
+      "parentID": "tag-0136"
+    },
+    {
+      "id": "tag-0449",
+      "names": {
+        "zhHans": "轻音少女",
+        "zhHantHK": "輕音少女",
+        "zhHantTW": "K-ON！輕音部",
+        "en": "K-ON!",
+        "ja": "けいおん！"
+      },
+      "aliases": [
+        "k-on",
+        "kon",
+        "けいおん",
+        "轻音",
+        "輕音",
+        "轻音部",
+        "輕音部"
+      ],
+      "colors": [
+        "#F2C94C",
+        "#FF8FB3",
+        "#5AA0E6",
+        "#FFD23F",
+        "#CFA7FF",
+        "#61C28B"
+      ],
+      "solidColor": "#F2C94C",
+      "kind": "work"
+    },
+    {
+      "id": "tag-0450",
+      "names": {
+        "zhHans": "少女乐队的呐喊",
+        "zhHantHK": "少女樂隊的吶喊",
+        "zhHantTW": "少女樂隊的吶喊",
+        "en": "Girls Band Cry",
+        "ja": "ガールズバンドクライ"
+      },
+      "aliases": [
+        "gbc",
+        "girlsbandcry",
+        "ガルクラ",
+        "ガールズバンドくらい",
+        "少女乐队哭泣",
+        "少女樂隊哭泣"
+      ],
+      "colors": [
+        "#E60033",
+        "#F05A8A",
+        "#9B6DFF",
+        "#FFD447",
+        "#58A6FF",
+        "#5EC26A"
+      ],
+      "solidColor": "#E60033",
+      "kind": "work"
+    },
+    {
+      "id": "tag-0451",
+      "names": {
+        "zhHans": "米歇尔",
+        "zhHantHK": "米歇爾",
+        "zhHantTW": "米歇爾",
+        "en": "Michelle",
+        "ja": "ミッシェル"
+      },
+      "aliases": [],
+      "colors": [
+        "#FFC02A",
+        "#DD33CC"
+      ],
+      "solidColor": "#DD33CC",
+      "kind": "character",
+      "parentID": "tag-0035"
     }
   ]
 }

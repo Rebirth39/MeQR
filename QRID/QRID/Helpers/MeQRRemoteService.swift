@@ -22,6 +22,17 @@ enum MeQRRemoteService {
         return uploadResponse.url
     }
 
+    static func publishExchangeCode(_ record: MeQRExchangeCodeRecord) async throws {
+        var request = URLRequest(url: apiBaseURL.appendingPathComponent("encounter-sessions/\(record.sessionID)"))
+        request.httpMethod = "POST"
+        request.timeoutInterval = 15
+        request.setValue(record.ownerToken, forHTTPHeaderField: "X-MeQR-Owner")
+        request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(EncounterSessionCreationRequest(creatorProfile: record.onlineProfile, eventID: record.eventID?.uuidString))
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try validate(response: response, data: data)
+    }
+
     static func canFetchProfile(from string: String) -> Bool {
         guard let url = URL(string: string),
               url.scheme?.hasPrefix("http") == true,
@@ -46,12 +57,19 @@ enum MeQRRemoteService {
     }
 
     static func canFetchEncounterSession(from string: String) -> Bool {
+        encounterSessionID(from: string) != nil
+    }
+
+    static func encounterSessionID(from string: String) -> String? {
         guard let url = URL(string: string),
-              url.scheme?.hasPrefix("http") == true,
-              meqrHosts.contains(url.host() ?? "") else {
-            return false
-        }
-        return url.path().hasPrefix("/encounter-sessions/")
+              ["http", "https"].contains(url.scheme?.lowercased() ?? ""),
+              meqrHosts.contains(url.host()?.lowercased() ?? "") else { return nil }
+        let parts = url.path.split(separator: "/", omittingEmptySubsequences: false)
+        guard parts.count == 3, parts[1] == "encounter-sessions" else { return nil }
+        let id = String(parts[2])
+        guard !id.isEmpty, id.utf8.count <= 128,
+              id.utf8.allSatisfy({ (48...57).contains($0) || (65...90).contains($0) || (97...122).contains($0) || $0 == 45 || $0 == 95 }) else { return nil }
+        return id
     }
 
     static func createEncounterSession(creatorProfile: MeQRExchangeProfile, eventID: UUID?) async throws -> MeQREncounterSessionCreation {
@@ -70,12 +88,15 @@ enum MeQRRemoteService {
         return try JSONDecoder().decode(MeQREncounterSessionCreation.self, from: data)
     }
 
-    static func fetchEncounterSession(from string: String) async throws -> MeQREncounterSession {
+    static func fetchEncounterSession(from string: String, ownerToken: String? = nil) async throws -> MeQREncounterSession {
         guard let url = URL(string: string), canFetchEncounterSession(from: string) else {
             throw MeQRRemoteServiceError.unsupportedURL
         }
         var request = URLRequest(url: url, timeoutInterval: 10)
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        if let ownerToken {
+            request.setValue(ownerToken, forHTTPHeaderField: "X-MeQR-Owner")
+        }
         let (data, response) = try await URLSession.shared.data(for: request)
         try validate(response: response, data: data)
         return try JSONDecoder().decode(MeQREncounterSession.self, from: data)
@@ -121,6 +142,8 @@ struct MeQREncounterSession: Decodable {
     let peerProfile: MeQRExchangeProfile?
     let eventID: String?
     let status: String
+    let reusable: Bool?
+    let confirmations: [MeQREncounterConfirmation]?
 
     enum CodingKeys: String, CodingKey {
         case sessionID = "sessionId"
@@ -128,7 +151,15 @@ struct MeQREncounterSession: Decodable {
         case peerProfile
         case eventID = "eventId"
         case status
+        case reusable
+        case confirmations
     }
+}
+
+struct MeQREncounterConfirmation: Decodable {
+    let id: String
+    let profile: MeQRExchangeProfile
+    let confirmedAt: Double
 }
 
 private struct EncounterSessionCreationRequest: Encodable {

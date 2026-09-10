@@ -7,6 +7,12 @@ struct CardTagCatalogBrowser: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var remoteCatalog = RemoteTagCatalog.shared
     @State private var query = ""
+    @StateObject private var usage = CardTagUsageStore.shared
+    @State private var mode = 0
+    @State private var showingInfo = false
+    @State private var clearingHistory = false
+    @State private var requestingTag = false
+    @State private var showingOutbox = false
 
     private var language: AppLanguage { AppSettings.shared.resolvedLanguage }
     private var trimmedQuery: String { query.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -16,11 +22,24 @@ struct CardTagCatalogBrowser: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                if trimmedQuery.isEmpty {
+            VStack(spacing: 0) {
+                Picker(L.tagLibrary, selection: $mode) {
+                    Text(L.tagAll).tag(0)
+                    Text(L.tagRecent).tag(1)
+                    Text(L.tagFrequent).tag(2)
+                    Text(L.tagFavorites).tag(3)
+                }
+                .pickerStyle(.segmented)
+                .padding()
+                if mode != 0 {
+                    historyList
+                } else if trimmedQuery.isEmpty {
                     categoryList
                 } else if searchResults.isEmpty, !remoteCatalog.isLoading {
-                    ContentUnavailableView.search(text: trimmedQuery)
+                    VStack {
+                        ContentUnavailableView.search(text: trimmedQuery)
+                        Button(L.tagRequestNew) { requestingTag = true }.padding(.bottom)
+                    }
                 } else {
                     tagList(searchResults)
                 }
@@ -29,13 +48,46 @@ struct CardTagCatalogBrowser: View {
             .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $query, prompt: L.searchTags)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { showingInfo = true } label: {
+                        Image(systemName: "info.circle")
+                    }
+                    .accessibilityLabel(L.tagCatalogInfo)
+                }
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    Button { requestingTag = true } label: { Image(systemName: "square.and.pencil") }.accessibilityLabel(L.tagRequestNew)
+                    Button { showingOutbox = true } label: { Image(systemName: "tray") }.accessibilityLabel(L.tagOutbox)
                     Button(L.done) { dismiss() }
                 }
             }
         }
         .task {
             await remoteCatalog.refreshIfNeeded()
+        }
+        .sheet(isPresented: $showingInfo) { CardTagCatalogInfoView() }
+        .sheet(isPresented: $requestingTag) { CardTagReportView(tag: trimmedQuery, isNewTag: true) }
+        .sheet(isPresented: $showingOutbox) { CardTagOutboxView() }
+        .confirmationDialog(L.tagClearHistory, isPresented: $clearingHistory, titleVisibility: .visible) {
+            Button(L.tagClearHistory, role: .destructive) { usage.clear() }
+        }
+    }
+
+    private var historyList: some View {
+        let records = (mode == 3 ? usage.favorites : usage.sorted(frequent: mode == 2)).filter {
+            trimmedQuery.isEmpty || CardTagIndex.normalizedKey(usage.displayName(for: $0))
+                .contains(CardTagIndex.normalizedKey(trimmedQuery))
+        }
+        return List {
+            if records.isEmpty {
+                Text(trimmedQuery.isEmpty ? L.tagHistoryEmpty : L.noTagResults)
+                    .foregroundStyle(.secondary)
+            }
+            ForEach(records) { record in
+                CardTagCatalogRow(tag: usage.displayName(for: record), text: $text, colorOverrides: colorOverrides)
+            }
+            if mode != 3 && !usage.records.isEmpty {
+                Button(L.tagClearHistory, role: .destructive) { clearingHistory = true }
+            }
         }
     }
 
@@ -62,7 +114,7 @@ struct CardTagCatalogBrowser: View {
                         let entries = CardTagIndex.entries(in: category)
                         if let entry = entries.first, entries.count == 1 {
                             CardTagCatalogRow(
-                                entry: entry,
+                                tag: entry.names.value(for: language),
                                 text: $text,
                                 colorOverrides: colorOverrides
                             )
@@ -98,7 +150,7 @@ struct CardTagCatalogBrowser: View {
     private func tagList(_ entries: [RemoteTagEntry]) -> some View {
         List(entries) { entry in
             CardTagCatalogRow(
-                entry: entry,
+                tag: entry.names.value(for: language),
                 text: $text,
                 colorOverrides: colorOverrides
             )
@@ -116,7 +168,7 @@ private struct CardTagCategoryView: View {
     var body: some View {
         List(CardTagIndex.entries(in: category)) { entry in
             CardTagCatalogRow(
-                entry: entry,
+                tag: entry.names.value(for: language),
                 text: $text,
                 colorOverrides: colorOverrides
             )
@@ -127,16 +179,17 @@ private struct CardTagCategoryView: View {
 }
 
 private struct CardTagCatalogRow: View {
-    let entry: RemoteTagEntry
+    let tag: String
     @Binding var text: String
     var colorOverrides: [String: CardTagColorOverride]
+    @StateObject private var usage = CardTagUsageStore.shared
 
     private var language: AppLanguage { AppSettings.shared.resolvedLanguage }
-    private var displayName: String { entry.names.value(for: language) }
+    private var displayName: String { tag }
     private var tags: [String] { CardTagLimiter.tags(from: text) }
     private var isSelected: Bool {
-        let key = CardTagIndex.normalizedKey(displayName)
-        return tags.contains { CardTagIndex.normalizedKey($0) == key }
+        let key = CardTagIndex.selectionKey(displayName)
+        return tags.contains { CardTagIndex.selectionKey($0) == key }
     }
     private var canAdd: Bool { isSelected || tags.count < CardTagLimiter.maxTags }
 
@@ -150,9 +203,14 @@ private struct CardTagCatalogRow: View {
                     )
                 )
 
-                Text(displayName)
-                    .foregroundStyle(.primary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(displayName).foregroundStyle(.primary)
+                    if let entry = RemoteTagCatalogSnapshot.entry(matchingNormalizedKey: CardTagIndex.normalizedKey(tag)) {
+                        Text(RemoteTagCatalogSnapshot.subtitle(for: entry, language: language))
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                }.frame(maxWidth: .infinity, alignment: .leading)
+                if usage.isFavorite(tag) { Image(systemName: "star.fill").font(.caption).foregroundStyle(.orange) }
 
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "plus.circle")
                     .font(.title3)
@@ -161,18 +219,65 @@ private struct CardTagCatalogRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .disabled(!canAdd)
+        .opacity(canAdd ? 1 : 0.45)
+        .modifier(CardTagReportMenu(tag: tag))
     }
 
     private func toggleSelection() {
-        let selectedKey = CardTagIndex.normalizedKey(displayName)
+        let selectedKey = CardTagIndex.selectionKey(displayName)
         var nextTags = tags
         if isSelected {
-            nextTags.removeAll { CardTagIndex.normalizedKey($0) == selectedKey }
+            nextTags.removeAll { CardTagIndex.selectionKey($0) == selectedKey }
         } else if nextTags.count < CardTagLimiter.maxTags {
             nextTags.append(displayName)
+            CardTagUsageStore.shared.record(displayName)
         }
         text = nextTags.joined(separator: "\n")
+    }
+}
+
+struct CardTagCatalogInfoView: View {
+    @Environment(\.dismiss) private var dismiss
+    @StateObject private var catalog = RemoteTagCatalog.shared
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section(L.tagCatalogInfo) {
+                    LabeledContent(L.versionBuild, value: catalog.revision.isEmpty ? "-" : catalog.revision)
+                    LabeledContent(L.tagSource, value: catalog.sourceName)
+                    if let status = catalog.statusMessage {
+                        Text(status).font(.caption).foregroundStyle(.secondary)
+                    }
+                    Text(L.tagsAvailable(RemoteTagCatalogSnapshot.value().count))
+                        .foregroundStyle(.secondary)
+                }
+                Section(L.tagCatalogChanges) {
+                    if catalog.changelog.isEmpty {
+                        Text(L.tagCatalogNoChanges).foregroundStyle(.secondary)
+                    }
+                    ForEach(catalog.changelog) { change in
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(change.revision).font(.headline)
+                            Text(change.date).font(.caption).foregroundStyle(.secondary)
+                            Text(change.summary.value(for: AppSettings.shared.resolvedLanguage))
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+            }
+            .navigationTitle(L.tagCatalogInfo)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { Task { await catalog.refresh() } } label: { Image(systemName: "arrow.clockwise") }
+                        .disabled(catalog.isLoading)
+                        .accessibilityLabel(L.tagCatalogRefresh)
+                }
+                ToolbarItem(placement: .confirmationAction) { Button(L.done) { dismiss() } }
+            }
+        }
+        .task { await catalog.refreshIfNeeded() }
     }
 }
 

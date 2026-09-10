@@ -4,6 +4,10 @@ struct CardTagColorEditor: View {
     let tagInput: String
     @Binding var colorOverrides: [String: CardTagColorOverride]
     @State private var isExpanded = false
+    @State private var draggedColor: (tag: String, index: Int)?
+    @State private var colorDragOffset: CGFloat = 0
+    @State private var colorRowHeights: [String: CGFloat] = [:]
+    @State private var hexDrafts: [String: String] = [:]
 
     private var tags: [String] {
         CardTagLimiter.tags(from: tagInput)
@@ -28,21 +32,46 @@ struct CardTagColorEditor: View {
                 colorPreview(for: tag)
                     .frame(width: 28, height: 14)
                 Text(tag)
+                    .fontWeight(textWeight(for: tag).fontWeight)
                     .lineLimit(1)
                 Spacer(minLength: 8)
+                Button {
+                    let key = CardTagColorPalette.normalized(tag)
+                    var override = colorOverrides[key] ?? CardTagColorOverride(
+                        mode: CardTagColorPalette.presetMode(for: tag, overrides: colorOverrides), hexes: [])
+                    override.textWeight = textWeight(for: tag).next
+                    colorOverrides[key] = override
+                } label: {
+                    Image(systemName: "bold")
+                        .font(.system(size: 14, weight: textWeight(for: tag).fontWeight))
+                        .foregroundStyle(textWeight(for: tag) == .regular ? Color.secondary : Color.accentColor)
+                        .frame(width: 32, height: 32)
+                        .background(Color.secondary.opacity(textWeight(for: tag) == .bold ? 0.2 : 0.08), in: Circle())
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel(L.tagTextWeight)
+                .accessibilityValue(textWeightLabel(for: tag))
+                .accessibilityIdentifier("tag-weight-" + tag)
+                .help(textWeightLabel(for: tag))
             }
 
-            if CardTagColorPalette.hasPresetSplitStyle(for: tag) {
-                Picker("", selection: presetModeBinding(for: tag)) {
+            Picker(L.tagColors, selection: presetModeBinding(for: tag)) {
+                Text(L.tagColorSolid).tag(CardTagColorOverride.Mode.solid)
+                if CardTagColorPalette.hasPresetSplitStyle(for: tag, overrides: colorOverrides) {
                     Text(L.tagColorMixed).tag(CardTagColorOverride.Mode.preset)
-                    Text(L.tagColorSolid).tag(CardTagColorOverride.Mode.solid)
                 }
-                .pickerStyle(.segmented)
-            } else if CardTagColorPalette.isPresetColored(tag) {
-                Text(L.tagColorPresetLocked)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } else {
+                Text(L.tagColorCustom).tag(CardTagColorOverride.Mode.custom)
+            }
+            .pickerStyle(.segmented)
+
+            if presetModeBinding(for: tag).wrappedValue == .custom {
+                let style = CardTagColorPalette.colorStyle(for: tag, overrides: colorOverrides)
+                Text(tag)
+                    .font(.caption.weight(textWeight(for: tag).fontWeight))
+                    .lineLimit(1).padding(.horizontal, 10).padding(.vertical, 5)
+                    .modifier(CardTagInkModifier(style: style))
+                    .background { colorPreview(for: tag) }
+                    .accessibilityLabel(L.tagPreview + ": " + tag)
                 customColorControls(for: tag)
             }
         }
@@ -53,25 +82,47 @@ struct CardTagColorEditor: View {
     private func customColorControls(for tag: String) -> some View {
         let hexes = customHexes(for: tag)
         ForEach(hexes.indices, id: \.self) { index in
-            ColorPicker(selection: customColorBinding(for: tag, index: index), supportsOpacity: false) {
-                HStack(spacing: 8) {
-                    Text("\(L.tagColor) \(index + 1)")
-                    if hexes.count > 1 {
-                        Spacer()
-                        Button {
-                            removeCustomColor(for: tag, at: index)
-                        } label: {
-                            Image(systemName: "minus.circle")
-                                .foregroundStyle(.secondary)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(L.removeColor)
+            HStack(spacing: 8) {
+                CardTagColorDragHandle(identifier: "tag-color-handle-\(tag)-\(index)", onChange: { offset in
+                    draggedColor = (tag, index); colorDragOffset = offset
+                }, onEnd: { offset in
+                    if let offset {
+                            let step = (colorRowHeights["\(tag):\(index)"] ?? 36) + 8
+                            let target = min(hexes.count - 1, max(0, index + Int((offset / step).rounded())))
+                            moveColor(for: tag, from: index, to: target)
                     }
+                    draggedColor = nil; colorDragOffset = 0
+                })
+                    .frame(width: 28, height: 36)
+                    .accessibilityLabel(L.tagMoveColor)
+                    .accessibilityIdentifier("tag-color-handle-\(tag)-\(index)")
+                    .accessibilityAction(named: L.tagMoveUp) { moveColor(for: tag, from: index, to: index - 1) }
+                    .accessibilityAction(named: L.tagMoveDown) { moveColor(for: tag, from: index, to: index + 1) }
+                Text("\(index + 1)").font(.caption.monospacedDigit()).foregroundStyle(.secondary).frame(width: 12)
+                ColorPicker("\(L.tagColor) \(index + 1)", selection: customColorBinding(for: tag, index: index), supportsOpacity: false)
+                    .labelsHidden().frame(width: 32)
+                TextField(L.tagHex, text: hexBinding(for: tag, index: index))
+                    .font(.system(.caption, design: .monospaced)).frame(minWidth: 78)
+                    .textInputAutocapitalization(.characters).autocorrectionDisabled()
+                    .accessibilityIdentifier("tag-hex-\(index)")
+                if hexes.count > 1 {
+                    Button { removeCustomColor(for: tag, at: index) } label: {
+                        Image(systemName: "minus.circle").foregroundStyle(.secondary).frame(width: 28, height: 36)
+                    }.buttonStyle(.plain).accessibilityLabel(L.removeColor)
                 }
+            }
+            .frame(minHeight: 36)
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
+                colorRowHeights["\(tag):\(index)"] = height
+            }
+            .offset(y: draggedColor?.tag == tag && draggedColor?.index == index ? colorDragOffset : 0)
+            .zIndex(draggedColor?.tag == tag && draggedColor?.index == index ? 1 : 0)
+            if let draft = hexDrafts["\(tag):\(index)"], CardTagColorPalette.normalizedHex(draft) == nil {
+                Text(L.tagInvalidHex).font(.caption).foregroundStyle(.red)
             }
         }
 
-        if hexes.count < 3 {
+        if hexes.count < CardTagColorPalette.maxCustomColors {
             Button {
                 addCustomColor(for: tag)
             } label: {
@@ -79,6 +130,37 @@ struct CardTagColorEditor: View {
             }
             .buttonStyle(.borderless)
         }
+        if tags.count > 1 {
+            Menu {
+                ForEach(tags.filter { $0 != tag }, id: \.self) { target in
+                    Button(target) {
+                        let key = CardTagColorPalette.normalized(target)
+                        storeOverride(CardTagColorOverride(mode: .custom, hexes: hexes, textWeight: colorOverrides[key]?.textWeight), key: key)
+                        hexDrafts = [:]
+                    }
+                }
+            } label: { Label(L.tagCopyPalette, systemImage: "doc.on.doc") }
+        }
+    }
+
+    private func hexBinding(for tag: String, index: Int) -> Binding<String> {
+        let key = "\(tag):\(index)"
+        return Binding(get: {
+            let colors = customHexes(for: tag)
+            return hexDrafts[key] ?? (colors.indices.contains(index) ? colors[index] : "")
+        }, set: { value in
+            hexDrafts[key] = value
+            if let hex = CardTagColorPalette.normalizedHex(value) { setCustomHex(hex, for: tag, at: index) }
+        })
+    }
+
+    private func moveColor(for tag: String, from: Int, to: Int) {
+        var colors = customHexes(for: tag)
+        guard colors.indices.contains(from), colors.indices.contains(to), from != to else { return }
+        colors.insert(colors.remove(at: from), at: to)
+        let key = CardTagColorPalette.normalized(tag)
+        storeOverride(CardTagColorOverride(mode: .custom, hexes: colors, textWeight: colorOverrides[key]?.textWeight), key: key)
+        hexDrafts = [:]
     }
 
     private func presetModeBinding(for tag: String) -> Binding<CardTagColorOverride.Mode> {
@@ -86,11 +168,7 @@ struct CardTagColorEditor: View {
             CardTagColorPalette.presetMode(for: tag, overrides: colorOverrides)
         } set: { newMode in
             let key = CardTagColorPalette.normalized(tag)
-            if newMode == .solid {
-                colorOverrides[key] = CardTagColorOverride(mode: .solid, hexes: [])
-            } else {
-                colorOverrides.removeValue(forKey: key)
-            }
+            storeOverride(CardTagColorOverride(mode: newMode, hexes: customHexes(for: tag), textWeight: colorOverrides[key]?.textWeight), key: key)
         }
     }
 
@@ -101,6 +179,7 @@ struct CardTagColorEditor: View {
             return Color(hex: hex)
         } set: { newColor in
             if let hex = newColor.toHex() {
+                hexDrafts.removeValue(forKey: "\(tag):\(index)")
                 setCustomHex(hex, for: tag, at: index)
             }
         }
@@ -110,23 +189,35 @@ struct CardTagColorEditor: View {
         CardTagColorPalette.customHexes(for: tag, overrides: colorOverrides)
     }
 
+    private func textWeight(for tag: String) -> CardTagTextWeight {
+        CardTagColorPalette.textWeight(for: tag, overrides: colorOverrides)
+    }
+
+    private func textWeightLabel(for tag: String) -> String {
+        switch textWeight(for: tag) {
+        case .regular: L.tagWeightRegular
+        case .medium: L.tagWeightMedium
+        case .bold: L.tagWeightBold
+        }
+    }
+
     private func setCustomHex(_ hex: String, for tag: String, at index: Int) {
         let key = CardTagColorPalette.normalized(tag)
         var hexes = customHexes(for: tag)
-        while hexes.count <= index, hexes.count < 3 {
+        while hexes.count <= index, hexes.count < CardTagColorPalette.maxCustomColors {
             hexes.append(CardTagColorPalette.fallbackHex)
         }
         guard hexes.indices.contains(index) else { return }
         hexes[index] = hex
-        colorOverrides[key] = CardTagColorOverride(mode: .custom, hexes: Array(hexes.prefix(3)))
+        storeOverride(CardTagColorOverride(mode: .custom, hexes: Array(hexes.prefix(CardTagColorPalette.maxCustomColors)), textWeight: colorOverrides[key]?.textWeight), key: key)
     }
 
     private func addCustomColor(for tag: String) {
         let key = CardTagColorPalette.normalized(tag)
         var hexes = customHexes(for: tag)
-        guard hexes.count < 3 else { return }
+        guard hexes.count < CardTagColorPalette.maxCustomColors else { return }
         hexes.append(hexes.last ?? CardTagColorPalette.fallbackHex)
-        colorOverrides[key] = CardTagColorOverride(mode: .custom, hexes: hexes)
+        storeOverride(CardTagColorOverride(mode: .custom, hexes: hexes, textWeight: colorOverrides[key]?.textWeight), key: key)
     }
 
     private func removeCustomColor(for tag: String, at index: Int) {
@@ -134,7 +225,15 @@ struct CardTagColorEditor: View {
         var hexes = customHexes(for: tag)
         guard hexes.count > 1, hexes.indices.contains(index) else { return }
         hexes.remove(at: index)
-        colorOverrides[key] = CardTagColorOverride(mode: .custom, hexes: hexes)
+        hexDrafts = [:]
+        storeOverride(CardTagColorOverride(mode: .custom, hexes: hexes, textWeight: colorOverrides[key]?.textWeight), key: key)
+    }
+
+    private func storeOverride(_ value: CardTagColorOverride, key: String) {
+        var updated = value
+        updated.referenceColors = colorOverrides[key]?.referenceColors
+        updated.referenceSolid = colorOverrides[key]?.referenceSolid
+        colorOverrides[key] = updated
     }
 
     @ViewBuilder
@@ -154,6 +253,43 @@ struct CardTagColorEditor: View {
     }
 }
 
+private struct CardTagColorDragHandle: UIViewRepresentable {
+    let identifier: String
+    var onChange: (CGFloat) -> Void
+    var onEnd: (CGFloat?) -> Void
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+    func makeUIView(context: Context) -> UIImageView {
+        let view = UIImageView(image: UIImage(systemName: "line.3.horizontal"))
+        view.tintColor = .secondaryLabel
+        view.contentMode = .center
+        view.isUserInteractionEnabled = true
+        view.isAccessibilityElement = true
+        view.accessibilityLabel = L.tagMoveColor
+        view.accessibilityIdentifier = identifier
+        let gesture = UILongPressGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.drag(_:)))
+        gesture.minimumPressDuration = 0.2
+        view.addGestureRecognizer(gesture)
+        return view
+    }
+    func updateUIView(_ view: UIImageView, context: Context) { context.coordinator.parent = self }
+    final class Coordinator: NSObject {
+        var parent: CardTagColorDragHandle
+        private var startY: CGFloat = 0
+        init(_ parent: CardTagColorDragHandle) { self.parent = parent }
+        @objc func drag(_ gesture: UILongPressGestureRecognizer) {
+            let y = gesture.location(in: gesture.view?.window).y
+            switch gesture.state {
+            case .began: startY = y; parent.onChange(0)
+            case .changed: parent.onChange(y - startY)
+            case .ended: parent.onEnd(y - startY)
+            case .cancelled, .failed: parent.onEnd(nil)
+            default: break
+            }
+        }
+    }
+}
+
 struct CardTagInputView: View {
     @Binding var text: String
     var colorOverrides: [String: CardTagColorOverride] = [:]
@@ -161,6 +297,7 @@ struct CardTagInputView: View {
     @State private var draft = ""
     @State private var suggestions: [String] = []
     @State private var showingCatalog = false
+    @State private var showingInfo = false
 
     private var tags: [String] {
         CardTagLimiter.tags(from: text)
@@ -169,18 +306,16 @@ struct CardTagInputView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             if !tags.isEmpty {
-                CardTagFlowLayout(spacing: 7, rowSpacing: 6) {
-                    ForEach(tags, id: \.self) { tag in
-                        CardTagPreviewChip(tag: tag, colorOverrides: colorOverrides) {
-                            removeTag(tag)
-                        }
-                    }
-                }
+                CardTagReorderView(tags: tags, colorOverrides: colorOverrides,
+                                   onReorder: { text = $0.joined(separator: "\n") }, onRemove: removeTag)
                 .padding(.vertical, 2)
             }
 
             HStack(spacing: 8) {
-                TextField(L.tags, text: $draft)
+                TextField(L.tagInputHint, text: $draft)
+                    .font(.caption)
+                    .accessibilityLabel(L.tags)
+                    .accessibilityHint(L.tagInputHint)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .disabled(tags.count >= CardTagLimiter.maxTags)
@@ -215,18 +350,22 @@ struct CardTagInputView: View {
             }
 
             if !suggestions.isEmpty {
-                CardTagFlowLayout(spacing: 8, rowSpacing: 6) {
+                VStack(alignment: .leading, spacing: 0) {
                     ForEach(suggestions, id: \.self) { suggestion in
                         Button {
                             applySuggestion(suggestion)
                         } label: {
-                            Text(suggestion)
-                                .font(.caption.weight(.semibold))
-                                .lineLimit(1)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 6)
-                                .foregroundStyle(.primary)
-                                .background(.thinMaterial, in: Capsule())
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(suggestion).font(.subheadline)
+                                    if let entry = RemoteTagCatalogSnapshot.entry(matchingNormalizedKey: CardTagIndex.normalizedKey(suggestion)) {
+                                        Text(RemoteTagCatalogSnapshot.subtitle(for: entry, language: AppSettings.shared.resolvedLanguage))
+                                            .font(.caption).foregroundStyle(.secondary)
+                                    }
+                                }
+                                Spacer()
+                                Image(systemName: "plus.circle").foregroundStyle(.secondary)
+                            }.padding(.vertical, 8).contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
                     }
@@ -246,9 +385,12 @@ struct CardTagInputView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else if !remoteCatalog.revision.isEmpty {
-                Text(L.tagCatalogOnline)
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
+                Button { showingInfo = true } label: {
+                    Label("\(remoteCatalog.sourceName) · \(remoteCatalog.revision)", systemImage: "info.circle")
+                        .font(.caption)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
             }
 
             if tags.count < CardTagLimiter.maxTags {
@@ -272,6 +414,7 @@ struct CardTagInputView: View {
         .sheet(isPresented: $showingCatalog) {
             CardTagCatalogBrowser(text: $text, colorOverrides: colorOverrides)
         }
+        .sheet(isPresented: $showingInfo) { CardTagCatalogInfoView() }
     }
 
     private func commitDraft() {
@@ -299,14 +442,15 @@ struct CardTagInputView: View {
 
     private func appendTags(_ rawTags: [String]) {
         var nextTags = tags
-        var seen = Set(nextTags.map(CardTagIndex.normalizedKey))
+        var seen = Set(nextTags.map(CardTagIndex.selectionKey))
 
         for rawTag in rawTags {
             let tag = CardTagLimiter.normalizedTag(rawTag)
             guard !tag.isEmpty else { continue }
-            let key = CardTagIndex.normalizedKey(tag)
+            let key = CardTagIndex.selectionKey(tag)
             guard !seen.contains(key), nextTags.count < CardTagLimiter.maxTags else { continue }
             nextTags.append(tag)
+            CardTagUsageStore.shared.record(tag)
             seen.insert(key)
         }
 
@@ -319,54 +463,7 @@ struct CardTagInputView: View {
             .filter { CardTagIndex.normalizedKey($0) != removeKey }
             .joined(separator: "\n")
     }
-}
 
-private struct CardTagPreviewChip: View {
-    let tag: String
-    var colorOverrides: [String: CardTagColorOverride] = [:]
-    let onRemove: () -> Void
-
-    var body: some View {
-        let style = CardTagColorPalette.colorStyle(for: tag, overrides: colorOverrides)
-        let tagColor = Color(hex: style.leadingHex)
-        HStack(spacing: 5) {
-            Text(tag)
-                .font(.caption.weight(.semibold))
-                .lineLimit(1)
-            Image(systemName: "xmark")
-                .font(.system(size: 9, weight: .bold))
-                .accessibilityHidden(true)
-        }
-        .padding(.horizontal, 9)
-        .padding(.vertical, 6)
-        .foregroundStyle(tagColor.uiContrastColor.opacity(0.92))
-        .background {
-            tagBackground(for: style)
-        }
-        .overlay(
-            Capsule()
-                .stroke(.white.opacity(0.32), lineWidth: 1)
-        )
-        .onTapGesture {
-            onRemove()
-        }
-        .accessibilityLabel("\(tag), remove")
-    }
-
-    @ViewBuilder
-    private func tagBackground(for style: CardTagColorStyle) -> some View {
-        if style.isMulticolor {
-            LinearGradient(
-                stops: tagGradientStops(for: style, opacity: 0.86),
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-            .clipShape(Capsule())
-        } else {
-            Capsule()
-                .fill(Color(hex: style.leadingHex).opacity(0.86))
-        }
-    }
 }
 
 private func tagGradientStops(for style: CardTagColorStyle, opacity: Double = 1) -> [Gradient.Stop] {

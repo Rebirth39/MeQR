@@ -110,8 +110,6 @@ struct OnboardingView: View {
 
     var body: some View {
         ZStack {
-            ambientBackground
-
             if step == .welcome {
                 welcomeView
                     .transition(stepTransition)
@@ -126,6 +124,8 @@ struct OnboardingView: View {
                     .transition(stepTransition)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background { ambientBackground.clipped() }
         .tint(accent)
         .animation(reduceMotion ? nil : .spring(response: 0.42, dampingFraction: 0.86), value: step)
         .onChange(of: qrPhotosItem) { _, item in
@@ -489,6 +489,8 @@ struct OnboardingView: View {
     private var qrStep: some View {
         VStack(alignment: .leading, spacing: 26) {
             stepTitle(OnboardingCopy.qrTitle, body: OnboardingCopy.qrBody, number: "02", color: pink)
+            QRContentWarning(content: qrContent, platform: platformType)
+            if !isGenerated && !qrContent.isEmpty { Text(qrContent).textSelection(.enabled) }
 
             Picker(L.qrSource, selection: $isGenerated) {
                 Text(L.importQRImage).tag(false)
@@ -864,21 +866,24 @@ struct OnboardingView: View {
 
     private var welcomeCard: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 18) {
+            HStack(spacing: 10) {
                 avatarPreview
-                    .frame(width: 74, height: 74)
+                    .frame(width: 52, height: 52)
                 VStack(alignment: .leading, spacing: 8) {
                     Text(name.isEmpty ? "Miku39" : name)
-                        .font(.title2.weight(.black))
+                        .font(.system(size: 20, weight: .black))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                         .foregroundStyle(.black)
                     Text("QR PROFILE · 2026")
                         .font(.caption2.weight(.bold))
-                        .tracking(1)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                         .foregroundStyle(.black.opacity(0.58))
                 }
                 Spacer(minLength: 0)
                 Image(systemName: "qrcode")
-                    .font(.system(size: 52, weight: .medium))
+                    .font(.system(size: 36, weight: .medium))
                     .foregroundStyle(.black)
             }
 
@@ -898,8 +903,8 @@ struct OnboardingView: View {
                 }
             }
         }
-        .padding(22)
-        .frame(maxWidth: .infinity, minHeight: 210)
+        .padding(16)
+        .frame(maxWidth: .infinity, minHeight: 180)
         .background(.white, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
@@ -1302,10 +1307,11 @@ struct OnboardingView: View {
 
     private func toggleSuggestedTag(_ tag: String) {
         var tags = selectedTags
-        if let index = tags.firstIndex(where: { CardTagIndex.normalizedKey($0) == CardTagIndex.normalizedKey(tag) }) {
+        if let index = tags.firstIndex(where: { CardTagIndex.selectionKey($0) == CardTagIndex.selectionKey(tag) }) {
             tags.remove(at: index)
         } else if tags.count < CardTagLimiter.maxTags {
             tags.append(CardTagLimiter.normalizedTag(tag))
+            CardTagUsageStore.shared.record(tag)
         }
         tagInput = tags.joined(separator: "\n")
     }

@@ -81,6 +81,7 @@ private struct ModelContainerBootstrap {
 }
 
 struct AppRootView: View {
+    @Environment(\.modelContext) private var modelContext
     @Query(sort: \QRCluster.sortOrder, order: .forward) private var clusters: [QRCluster]
     @AppStorage(OnboardingStorage.completionKey) private var hasCompletedOnboarding = false
     @State private var startupError: String?
@@ -92,6 +93,12 @@ struct AppRootView: View {
 
     var body: some View {
         MainView()
+            .task {
+                await RemoteTagCatalog.shared.refreshIfNeeded()
+                for cluster in clusters { cluster.migrateTagReferences() }
+                do { try modelContext.save() } catch { startupError = error.localizedDescription }
+                await CardTagOutbox.shared.drain()
+            }
             .fullScreenCover(isPresented: onboardingPresentation) {
                 OnboardingView(
                     hasExistingCards: !clusters.isEmpty,
@@ -132,9 +139,12 @@ struct WidgetSyncView: View {
         Color.clear
             .onAppear {
                 WidgetDataHelper.sync(clusters: clusters)
+                Task { await EncounterStore.shared.syncPendingSessions() }
             }
             .onChange(of: scenePhase) { _, newValue in
                 if newValue == .active {
+                    Task { await CardTagOutbox.shared.drain() }
+                    Task { await EncounterStore.shared.syncPendingSessions() }
                     WidgetDataHelper.sync(clusters: clusters)
                 }
             }

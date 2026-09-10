@@ -84,12 +84,20 @@ struct ClusterCardView: View {
                         .frame(maxWidth: .infinity, alignment: .topLeading)
                 }
             }
+            .fixedSize(horizontal: false, vertical: true)
+
+            if !cluster.tags.isEmpty {
+                cardTagChips
+            }
 
             // QR code
             if let profile = currentProfile {
                 qrImage(for: profile)
+                    .padding(14)
                     .frame(width: size, height: size, alignment: .leading)
+                    .background(.white, in: RoundedRectangle(cornerRadius: 14))
                     .clipped()
+                    .accessibilityIdentifier("standard-card-qr")
             } else {
                 Image(systemName: "qrcode")
                     .resizable()
@@ -106,6 +114,7 @@ struct ClusterCardView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: containerWidth - 32, alignment: .leading)
+        .fixedSize(horizontal: false, vertical: true)
         .background(
             RoundedRectangle(cornerRadius: cluster.cornerRadius)
                 .fill(cluster.backgroundColor.opacity(cluster.cardOpacity ?? 0.7))
@@ -156,8 +165,8 @@ struct ClusterCardView: View {
             }
 
             HStack(alignment: .center, spacing: 12) {
-                qrSlot(side: min(size + 10, 190))
-                    .padding(9)
+                qrSlot(side: min(size + 10, 190) - 22)
+                    .padding(20)
                     .background(.white, in: RoundedRectangle(cornerRadius: 14))
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
@@ -204,7 +213,7 @@ struct ClusterCardView: View {
                 rhodesContent
             }
         }
-        .frame(maxWidth: containerWidth - 32, alignment: .leading)
+        .frame(width: max(0, containerWidth - 32), alignment: .leading)
         .background(.white.opacity(cluster.cardOpacity ?? 0.7), in: RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -264,6 +273,10 @@ struct ClusterCardView: View {
         VStack(alignment: .leading, spacing: 12) {
             rhodesHeroPanel
             rhodesDetailsRow
+            if !cluster.tags.isEmpty {
+                cardTagChips
+                    .accessibilityIdentifier("rhodes-front-tags")
+            }
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -271,8 +284,12 @@ struct ClusterCardView: View {
 
     private var rhodesHeroPanel: some View {
         ZStack(alignment: .bottomLeading) {
-            rhodesBannerPanel
-                .frame(height: 136)
+            GeometryReader { geometry in
+                rhodesBannerPanel
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                    .clipped()
+            }
+            .frame(height: 136)
 
             HStack(spacing: 9) {
                 avatarImage
@@ -315,18 +332,33 @@ struct ClusterCardView: View {
         return formatter.string(from: Date())
     }
 
+    @ViewBuilder
     private var rhodesDetailsRow: some View {
-        HStack(alignment: .top, spacing: 10) {
-            qrSlot(side: max(120, min(size - 26, 154)))
-                .padding(8)
+        if containerWidth < 360 {
+            VStack(alignment: .leading, spacing: 10) {
+                rhodesQRPanel
+                    .frame(maxWidth: .infinity)
+                if sortedProfiles.count > 1 { platformPicker }
+            }
+        } else {
+            HStack(alignment: .top, spacing: 10) {
+                rhodesQRPanel
+                rhodesInfoBlock
+            }
+        }
+    }
+
+    private var rhodesQRPanel: some View {
+            qrSlot(side: max(120, min(size - 26, 154)) - 24)
+                .accessibilityIdentifier("rhodes-platform-qr")
+                .padding(20)
                 .background(.white, in: RoundedRectangle(cornerRadius: 10))
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
                         .stroke(.black.opacity(0.12), lineWidth: 1)
                 )
+                .accessibilityIdentifier("rhodes-qr-panel")
 
-            rhodesInfoBlock
-        }
     }
 
     private var rhodesInfoBlock: some View {
@@ -354,7 +386,7 @@ struct ClusterCardView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .frame(maxWidth: containerWidth - 32, alignment: .leading)
+        .frame(width: max(0, containerWidth - 32), alignment: .leading)
         .background(.white.opacity(cluster.cardOpacity ?? 0.7), in: RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -447,14 +479,13 @@ struct ClusterCardView: View {
         CardTagFlowLayout(spacing: 7, rowSpacing: 6) {
             ForEach(cluster.tags, id: \.self) { tag in
                 let tagStyle = cluster.tagColorStyle(for: tag)
-                let tagColor = Color(hex: tagStyle.leadingHex)
                 Text(tag)
-                    .font(.caption2.weight(.black))
+                    .font(.caption2.weight(CardTagColorPalette.textWeight(for: tag, overrides: cluster.tagColorOverrides).fontWeight))
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
                     .padding(.horizontal, 9)
                     .padding(.vertical, 5)
-                    .foregroundStyle(tagColor.uiContrastColor.opacity(0.92))
+                    .modifier(CardTagInkModifier(style: tagStyle))
                     .background {
                         cardTagBackground(for: tagStyle)
                     }
@@ -637,6 +668,7 @@ struct ClusterCardView: View {
                 }
             }
         }
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     private var passPlatformPicker: some View {

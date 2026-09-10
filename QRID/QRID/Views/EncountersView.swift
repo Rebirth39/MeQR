@@ -6,13 +6,10 @@ struct EncounterPreviewView: View {
     var localProfile: MeQRExchangeProfile? = nil
 
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.openURL) private var openURL
     @ObservedObject private var store = EncounterStore.shared
     @ObservedObject private var eventStore = EventStore.shared
     @State private var saved = false
     @State private var selectedPlatformIndex = 0
-    @State private var pendingExternalURL: URL?
-    @AppStorage("meqr.allowExternalLinks") private var allowExternalAlways = false
 
     private var textColor: Color { Color(hex: profile.textColorHex ?? "#000000") }
     private var backgroundColor: Color { Color(hex: profile.backgroundColorHex ?? "#FFFFFF") }
@@ -28,19 +25,27 @@ struct EncounterPreviewView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                background
-                    .ignoresSafeArea()
-
                 ScrollView {
                     VStack(spacing: 16) {
                         card
+                        if sessionID == nil || localProfile == nil {
+                            Text(L.encounterLocalOnly)
+                                .font(.footnote)
+                                .foregroundStyle(textColor)
+                        }
                         saveButton
                     }
                     .padding(.horizontal, 16)
                     .padding(.top, 12)
                     .padding(.bottom, 24)
                 }
+            .background {
+                GeometryReader { geometry in
+                    background
+                        .frame(width: geometry.size.width, height: geometry.size.height)
+                        .clipped()
+                }
+                .ignoresSafeArea()
             }
             .navigationTitle(L.meqrProfileFound)
             .navigationBarTitleDisplayMode(.inline)
@@ -50,17 +55,8 @@ struct EncounterPreviewView: View {
                     Button(L.cancel) { dismiss() }
                 }
             }
-            .confirmationDialog("打开外部链接？", isPresented: Binding(
-                get: { pendingExternalURL != nil },
-                set: { if !$0 { pendingExternalURL = nil } }
-            ), titleVisibility: .visible) {
-                Button("本次允许") { openPendingURL(); }
-                Button("之后都允许") { allowExternalAlways = true; openPendingURL() }
-                Button("不允许", role: .cancel) { pendingExternalURL = nil }
-            } message: {
-                Text("将打开" + (currentPlatform?.platformName ?? "外部应用") + "。")
-            }
         }
+        .interactiveDismissDisabled()
     }
 
     @ViewBuilder
@@ -85,8 +81,10 @@ struct EncounterPreviewView: View {
                     Text(profile.name)
                         .font(.headline.bold())
                         .foregroundStyle(textColor)
-                        .lineLimit(1)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityIdentifier("encounter-preview-name")
                 }
+                .frame(width: 88, alignment: .leading)
 
                 if !profile.subtitle.isEmpty {
                     Rectangle()
@@ -101,10 +99,11 @@ struct EncounterPreviewView: View {
                         .fontWeight(.medium)
                         .foregroundStyle(textColor.opacity(0.8))
                         .multilineTextAlignment(.leading)
-                        .lineLimit(9)
+                        .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: .infinity, alignment: .topLeading)
                 }
             }
+            .fixedSize(horizontal: false, vertical: true)
 
             if let data = profile.bannerJPEGBase64.flatMap({ Data(base64Encoded: $0) }),
                let image = UIImage(data: data) {
@@ -119,6 +118,7 @@ struct EncounterPreviewView: View {
 
             if let currentPlatform {
                 platformQRCode(for: currentPlatform)
+                    .padding(12)
                     .frame(width: min(260, UIScreen.main.bounds.width * 0.58), height: min(260, UIScreen.main.bounds.width * 0.58))
                     .padding(12)
                     .background(.white, in: RoundedRectangle(cornerRadius: 18))
@@ -134,7 +134,7 @@ struct EncounterPreviewView: View {
                 platformPicker
             }
 
-            if let currentPlatform, currentPlatform.openURL != nil {
+            if let currentPlatform, QRLinkPolicy.webURL(currentPlatform.qrContent) != nil {
                 openPlatformButton(currentPlatform)
             }
 
@@ -239,14 +239,8 @@ struct EncounterPreviewView: View {
 
     @ViewBuilder
     private func openPlatformButton(_ platform: MeQRExchangePlatform) -> some View {
-        if let url = platform.openURL {
-            Button {
-                if allowExternalAlways {
-                    openURL(url)
-                } else {
-                    pendingExternalURL = url
-                }
-            } label: {
+        if QRLinkPolicy.webURL(platform.qrContent) != nil {
+            EncounterPlatformLink(content: platform.qrContent) {
                 Label(L.platformsFromMeQR + " · " + platform.platformName, systemImage: "arrow.up.forward.app")
                     .font(.subheadline.weight(.semibold))
                     .frame(maxWidth: .infinity)
@@ -257,23 +251,11 @@ struct EncounterPreviewView: View {
         }
     }
 
-    private func openPendingURL() {
-        guard let url = pendingExternalURL else { return }
-        pendingExternalURL = nil
-        openURL(url)
-    }
-
     private var saveButton: some View {
         Button {
-            store.add(profile, event: eventStore.activeEvent, sessionID: sessionID)
-            if let sessionID, let localProfile {
-                Task {
-                    try? await MeQRRemoteService.confirmEncounterSession(
-                        sessionID: sessionID,
-                        peerProfile: localProfile
-                    )
-                }
-            }
+            store.saveScannedProfile(profile, event: eventStore.activeEvent,
+                                     sessionID: sessionID, peerProfile: localProfile)
+            Task { await store.syncConfirmations() }
             saved = true
             dismiss()
         } label: {
@@ -312,6 +294,20 @@ struct EncountersView: View {
     var body: some View {
         NavigationStack {
             List {
+                if store.pendingConfirmationCount > 0 {
+                    Section {
+                        HStack {
+                            Label(L.encounterConfirmationsPending(store.pendingConfirmationCount), systemImage: "arrow.triangle.2.circlepath")
+                            Spacer()
+                            Button {
+                                Task { await store.syncConfirmations() }
+                            } label: { Image(systemName: "arrow.clockwise") }
+                            .accessibilityLabel(L.tryAgain)
+                            .disabled(store.isConfirming)
+                        }
+                        .foregroundStyle(.secondary)
+                    }
+                }
                 if store.pendingSessionCount > 0 {
                     Section {
                         Label(
@@ -796,14 +792,53 @@ private func avatar(base64: String?) -> some View {
 
 @ViewBuilder
 private func platformRow(_ platform: MeQRExchangePlatform) -> some View {
-    let row = PlatformContentRow(platform: platform)
-    if let url = platform.openURL {
-        Link(destination: url) {
-            row
+    ReviewedPlatformRow(platform: platform)
+}
+
+private struct ReviewedPlatformRow: View {
+    let platform: MeQRExchangePlatform
+    var body: some View {
+        EncounterPlatformLink(content: platform.qrContent) {
+            PlatformContentRow(platform: platform)
         }
         .buttonStyle(.plain)
-    } else {
-        row
+    }
+}
+
+private struct EncounterPlatformLink<Label: View>: View {
+    let content: String
+    @ViewBuilder let label: () -> Label
+    @State private var reviewing = false
+    @State private var openingURL: URL?
+    @State private var errorMessage: String?
+    @Environment(\.openURL) private var openURL
+    var body: some View {
+        Button {
+            if QRLinkPolicy.platformDestination(content) != nil, let url = QRLinkPolicy.webURL(content) {
+                openingURL = url
+            } else {
+                reviewing = true
+            }
+        } label: {
+            label()
+        }
+        .disabled(openingURL != nil)
+        .task(id: openingURL) {
+            guard let url = openingURL, let destination = QRLinkPolicy.platformDestination(url.absoluteString) else { return }
+            let error = await MeQRScannerView.openTrustedDestination(url, destination: destination)
+            guard !Task.isCancelled else { return }
+            openingURL = nil
+            errorMessage = error
+        }
+        .onDisappear { openingURL = nil }
+        .sheet(isPresented: $reviewing) {
+            QRLinkReviewView(content: content) { openURL($0) }
+        }
+        .alert(L.qrOpen, isPresented: Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
+            Button(L.ok, role: .cancel) { errorMessage = nil }
+        } message: {
+            Text(errorMessage ?? L.qrAppOpenFailed)
+        }
     }
 }
 
@@ -839,7 +874,7 @@ private struct PlatformContentRow: View {
 
             Spacer(minLength: 8)
 
-            if platform.openURL != nil {
+            if QRLinkPolicy.webURL(platform.qrContent) != nil {
                 Image(systemName: "arrow.up.forward.app")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(.secondary)
@@ -867,17 +902,5 @@ private struct PlatformContentRow: View {
                 .scaledToFit()
                 .foregroundStyle(.secondary)
         }
-    }
-}
-
-private extension MeQRExchangePlatform {
-    var openURL: URL? {
-        let trimmed = qrContent.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let url = URL(string: trimmed),
-              let scheme = url.scheme?.lowercased(),
-              ["http", "https", "qq", "mqq", "weixin", "wechat", "line", "instagram", "discord", "reddit"].contains(scheme) else {
-            return nil
-        }
-        return url
     }
 }

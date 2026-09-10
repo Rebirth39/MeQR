@@ -26,6 +26,9 @@ enum BackupManager {
         let templateStyleRawValue: String?
         let rhodesBannerImageData: Data?
         let passSubtitle: String?
+        let tagListRawValue: String?
+        let tagColorOverridesRawValue: String?
+        let tagReferencesRawValue: String?
         let cornerRadius: Double
         let cardOpacity: Double?
         let sortOrder: Int
@@ -63,6 +66,10 @@ enum BackupManager {
             templateStyleRawValue: cluster.templateStyleRawValue,
             rhodesBannerImageData: cluster.rhodesBannerImageData,
             passSubtitle: cluster.passSubtitle,
+            tagListRawValue: cluster.tagListRawValue,
+            tagColorOverridesRawValue: cluster.tagColorOverridesRawValue,
+            tagReferencesRawValue: CardTagReference.decode(cluster.tagReferencesRawValue)
+                .flatMap { CardTagReference.encode($0.map(\.snapshot)) } ?? cluster.tagReferencesRawValue,
             cornerRadius: cluster.cornerRadius,
             cardOpacity: cluster.cardOpacity,
             sortOrder: cluster.sortOrder,
@@ -154,6 +161,8 @@ enum BackupManager {
                     templateStyleRawValue: clusterBackup.templateStyleRawValue,
                     rhodesBannerImageData: clusterBackup.rhodesBannerImageData,
                     passSubtitle: clusterBackup.passSubtitle,
+                    tagListRawValue: clusterBackup.tagListRawValue,
+                    tagColorOverridesRawValue: clusterBackup.tagColorOverridesRawValue,
                     cornerRadius: clusterBackup.cornerRadius,
                     cardOpacity: clusterBackup.cardOpacity,
                     sortOrder: clusterBackup.sortOrder,
@@ -169,6 +178,10 @@ enum BackupManager {
                     widgetLargeOffsetX: clusterBackup.widgetLargeOffsetX,
                     widgetLargeOffsetY: clusterBackup.widgetLargeOffsetY
                 )
+                if let references = clusterBackup.tagReferencesRawValue {
+                    guard CardTagReference.decode(references) != nil else { throw CocoaError(.coderReadCorrupt) }
+                    cluster.tagReferencesRawValue = references
+                }
                 modelContext.insert(cluster)
 
                 for profileBackup in clusterBackup.profiles {

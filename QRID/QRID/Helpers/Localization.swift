@@ -1,6 +1,52 @@
 import Foundation
 
 struct L {
+    static var tagKindWork: String { tr("作品", "作品", "作品", "Work", "作品") }
+    static var tagKindCharacter: String { tr("角色", "角色", "角色", "Character", "キャラクター") }
+    static var tagKindGroup: String { tr("组合", "組合", "組合", "Group", "グループ") }
+    static var tagKindRating: String { tr("等级", "等級", "等級", "Rating", "レーティング") }
+    static var tagFavorites: String { tr("收藏", "收藏", "收藏", "Favorites", "お気に入り") }
+    static var tagFavorite: String { tr("收藏 Tag", "收藏 Tag", "收藏 Tag", "Favorite Tag", "お気に入りに追加") }
+    static var tagUnfavorite: String { tr("取消收藏", "取消收藏", "取消收藏", "Remove Favorite", "お気に入りから削除") }
+    static var tagRequestNew: String { tr("申请收录 Tag", "申請收錄 Tag", "申請收錄 Tag", "Request a Tag", "タグの追加を申請") }
+    static var tagRequestName: String { tr("角色 / Tag 名称", "角色 / Tag 名稱", "角色 / Tag 名稱", "Character / Tag Name", "キャラクター・タグ名") }
+    static var tagRequestIP: String { tr("所属作品 / IP", "所屬作品 / IP", "所屬作品 / IP", "Work / IP", "作品名") }
+    static var tagRequestColors: String { tr("建议配色（选填）", "建議配色（選填）", "建議配色（選填）", "Suggested Colors (Optional)", "希望する配色（任意）") }
+    static var tagRequestSource: String { tr("参考链接（选填）", "參考連結（選填）", "參考連結（選填）", "Reference URL (Optional)", "参考URL（任意）") }
+    static var tagOutbox: String { tr("上报记录", "回報紀錄", "回報紀錄", "Report Outbox", "報告履歴") }
+    static var tagQueued: String { tr("待提交", "待提交", "待提交", "Pending", "送信待ち") }
+    static var tagSending: String { tr("正在提交", "正在提交", "正在提交", "Sending", "送信中") }
+    static var tagRetry: String { tr("重试", "重試", "重試", "Retry", "再試行") }
+    static var tagQueueSaved: String { tr("已保存，等待提交", "已儲存，等待提交", "已儲存，等待提交", "Saved, Pending Submission", "保存済み・送信待ち") }
+    static var tagQueueEmpty: String { tr("暂无上报记录", "暫無回報紀錄", "暫無回報紀錄", "No Reports", "報告はありません") }
+    static var tagCancelPending: String { tr("取消待提交上报", "取消待提交回報", "取消待提交回報", "Cancel Pending Report", "送信待ちの報告を取り消す") }
+    static var tagQueueSaveFailed: String { tr("无法保存上报，请保留表单并重试。", "無法儲存回報，請保留表單並重試。", "無法儲存回報，請保留表單並重試。", "Could not save the report. Keep the form open and retry.", "報告を保存できません。フォームを閉じずに再試行してください。") }
+    static var tagCopyPalette: String { tr("复制配色到…", "複製配色到…", "複製配色到…", "Copy Colors To…", "配色のコピー先…") }
+    static var tagHex: String { tr("HEX 色值", "HEX 色值", "HEX 色值", "HEX Color", "HEXカラー") }
+    static var tagInvalidHex: String { tr("请输入有效的六位 HEX 色值", "請輸入有效的六位 HEX 色值", "請輸入有效的六位 HEX 色值", "Enter a valid six-digit HEX color", "6桁の有効なHEXカラーを入力してください") }
+    static var tagMoveColor: String { tr("调整色段顺序", "調整色段順序", "調整色段順序", "Reorder Color", "色の順番を変更") }
+    static var tagPreview: String { tr("预览", "預覽", "預覽", "Preview", "プレビュー") }
+    static var qrReviewTitle: String { tr("确认二维码内容", "確認 QR Code 內容", "確認 QR Code 內容", "Review QR Content", "QRコードの内容を確認") }
+    static var qrDestination: String { tr("目标域名", "目標網域", "目標網域", "Destination Host", "アクセス先ドメイン") }
+    static var qrOpen: String { tr("继续打开", "繼續開啟", "繼續開啟", "Continue", "開く") }
+    static var qrReviewWarning: String { tr("请核对完整网址。域名识别不能保证链接安全；非 HTTPS 链接可能不安全。", "請核對完整網址。網域識別不能保證連結安全；非 HTTPS 連結可能不安全。", "請核對完整網址。網域識別不能保證連結安全；非 HTTPS 連結可能不安全。", "Check the full URL. Recognizing a host does not guarantee safety; non-HTTPS links may be unsafe.", "URL全体を確認してください。ドメインの識別は安全性を保証しません。HTTPS以外のリンクには注意してください。") }
+    static var qrFormatWarning: String { tr("内容与所选平台的常用链接格式不符，请核对。仍可按原内容保存。", "內容與所選平台的常用連結格式不符，請核對。仍可按原內容儲存。", "內容與所選平台的常用連結格式不符，請核對。仍可按原內容儲存。", "This does not match the selected platform's usual link format. Check it before saving; the original content can still be saved.", "選択したサービスの一般的なリンク形式と異なります。確認してください。元の内容のまま保存できます。") }
+    static var qrDestinationWarning: String { tr("这是 HTTP 或 IP 地址链接，请确认目标是否可信。", "這是 HTTP 或 IP 位址連結，請確認目標是否可信。", "這是 HTTP 或 IP 位址連結，請確認目標是否可信。", "This link uses HTTP or an IP address. Verify the destination.", "HTTPまたはIPアドレスのリンクです。アクセス先を確認してください。") }
+    static var qrOfficialImportHint: String { tr("请从对应 App 的个人二维码页面保存图片后导入；单独填写账号不会生成官方加好友链接。", "請從對應 App 的個人 QR Code 頁面儲存圖片後匯入；單獨填寫帳號不會產生官方加好友連結。", "請從對應 App 的個人 QR Code 頁面儲存圖片後匯入；單獨填寫帳號不會產生官方加好友連結。", "Import an image saved from the app's personal QR code page. An account ID alone cannot generate its official add-contact link.", "各アプリの個人QRコード画面から画像を保存して読み込んでください。アカウントIDだけでは公式の友だち追加リンクを生成できません。") }
+    static var tagReport: String { tr("上报 Tag 问题", "回報 Tag 問題", "回報 Tag 問題", "Report Tag Issue", "タグの問題を報告") }
+    static var tagReportReason: String { tr("问题类型", "問題類型", "問題類型", "Issue Type", "問題の種類") }
+    static var tagReportName: String { tr("名称或翻译", "名稱或翻譯", "名稱或翻譯", "Name or Translation", "名前・翻訳") }
+    static var tagReportColor: String { tr("配色错误", "配色錯誤", "配色錯誤", "Incorrect Colors", "配色の誤り") }
+    static var tagReportDuplicate: String { tr("重复 Tag", "重複 Tag", "重複 Tag", "Duplicate Tag", "タグの重複") }
+    static var tagReportOther: String { tr("其他问题", "其他問題", "其他問題", "Other Issue", "その他") }
+    static var tagReportDescription: String { tr("问题描述", "問題描述", "問題描述", "Description", "問題の詳細") }
+    static var tagReportContact: String { tr("联系方式（选填）", "聯絡方式（選填）", "聯絡方式（選填）", "Contact (Optional)", "連絡先（任意）") }
+    static var tagReportSubmit: String { tr("提交", "提交", "送出", "Submit", "送信") }
+    static var tagReportSent: String { tr("已提交", "已提交", "已送出", "Submitted", "送信済み") }
+    static var tagReportTicket: String { tr("工单号", "工單編號", "工單編號", "Ticket ID", "受付番号") }
+    static var tagReportFailed: String { tr("未能确认提交结果，请重试。当前内容已保留。", "未能確認提交結果，請重試。目前內容已保留。", "未能確認送出結果，請重試。目前內容已保留。", "Could not confirm submission. Your text is retained; please retry.", "送信結果を確認できませんでした。入力内容は保持されています。再試行してください。") }
+    static var tagReportLimited: String { tr("提交过于频繁，请稍后重试。", "提交過於頻繁，請稍後重試。", "送出過於頻繁，請稍後重試。", "Too many submissions. Please try again later.", "送信回数が多すぎます。しばらくしてから再試行してください。") }
+    static var tagReportDiscard: String { tr("放弃本次上报？", "放棄本次回報？", "放棄本次回報？", "Discard This Report?", "報告を破棄しますか？") }
     static func tr(_ zhHans: String, _ zhHantHK: String, _ zhHantTW: String, _ en: String, _ ja: String) -> String {
         switch AppSettings.shared.resolvedLanguage {
         case .system, .en:
@@ -132,10 +178,10 @@ struct L {
     static var saveMeQRCode: String { tr("保存交换码到相册", "儲存交換碼到相簿", "儲存交換碼到照片", "Save Code to Photos", "交換コードを写真に保存") }
     static var meqrCodeHint: String { tr("对方用 MeQR 扫这个码，就能看到你的这张扩列卡并保存为认识记录。", "對方用 MeQR 掃這個碼，就能看到你的這張擴列卡並儲存為認識記錄。", "對方用 MeQR 掃描這個碼，就能看到你的這張擴列卡並儲存為認識紀錄。", "Someone can scan this with MeQR to save your profile as an encounter.", "相手がMeQRでこのコードを読み取ると、あなたのプロフィールを記録できます。") }
     static var meqrCodeSettings: String { tr("交换码设置", "交換碼設定", "交換碼設定", "Code Settings", "交換コード設定") }
-    static var meqrCodeUploading: String { tr("正在生成交换码...", "正在產生交換碼...", "正在產生交換碼...", "Preparing code...", "交換コードを準備中...") }
+    static var meqrCodeUploading: String { tr("交换码已保存，可离线扫描；正在同步在线资料…", "交換碼已儲存，可離線掃描；正在同步線上資料…", "交換碼已儲存，可離線掃描；正在同步線上資料…", "Code saved and available offline. Syncing online details…", "コードを保存しました。オフラインで読み取れます。オンライン情報を同期中…") }
     static var meqrCodeLocalReady: String { tr("本地交换码：不会上传资料，扫码直接读取。", "本地交換碼：不會上傳資料，掃碼直接讀取。", "本地交換碼：不會上傳資料，掃碼直接讀取。", "Local code: no upload, scan to read directly.", "ローカルコード：アップロードせず、スキャンして直接読み取ります。") }
-    static var meqrCodeOnlineReady: String { tr("在线交换码：已上传到 MeQR 云端，离线备用码也已写入。", "線上交換碼：已上傳到 MeQR 雲端，離線備用碼也已寫入。", "線上交換碼：已上傳到 MeQR 雲端，離線備用碼也已寫入。", "Online code: uploaded to MeQR Cloud with an offline backup.", "オンラインコード：MeQRクラウドにアップロードし、オフライン予備も含めました。") }
-    static func meqrCodeUploadFailed(_ reason: String) -> String { tr("上传失败，已使用本地备用码。\(reason)", "上傳失敗，已使用本地備用碼。\(reason)", "上傳失敗，已使用本地備用碼。\(reason)", "Upload failed; using the local backup code. \(reason)", "アップロードに失敗したため、ローカル予備コードを使います。\(reason)") }
+    static var meqrCodeOnlineReady: String { tr("交换码已保存，在线与离线使用同一码。", "交換碼已儲存，線上與離線使用同一碼。", "交換碼已儲存，線上與離線使用同一碼。", "Code saved. The same code works online and offline.", "保存済みの同じコードをオンラインでもオフラインでも使えます。") }
+    static func meqrCodeUploadFailed(_ reason: String) -> String { tr("交换码已保存，离线可用；在线资料暂未同步，下次打开会重试。", "交換碼已儲存，離線可用；線上資料暫未同步，下次開啟會重試。", "交換碼已儲存，離線可用；線上資料暫未同步，下次開啟會重試。", "Code saved and available offline. Online sync will retry next time you open it.", "コードは保存済みでオフラインでも使えます。次に開くとオンライン同期を再試行します。") }
     static var meqrCodeStillPreparing: String { tr("交换码还在生成，等它一下。", "交換碼還在產生，等它一下。", "交換碼還在產生，等它一下。", "The code is still being prepared.", "交換コードを準備中です。") }
     static var exchangeCardIntro: String { tr("展示文案", "展示文案", "展示文案", "Display Intro", "表示テキスト") }
     static var exchangeCardIntroHint: String { tr("显示在交换码页面和名片里，最多 25 个汉字；英文数字按半个汉字算。", "顯示在交換碼頁面和名片裡，最多 25 個漢字；英文數字按半個漢字算。", "顯示在交換碼頁面和名片裡，最多 25 個漢字；英文數字按半個漢字算。", "Shown on the exchange page and profile card. Up to 25 CJK characters; Latin letters count as half.", "交換コード画面とプロフィールに表示します。漢字25文字まで、英数字は半分換算。") }
@@ -162,6 +208,7 @@ struct L {
     static var wechatNotInstalled: String { tr("未安装微信，无法打开扫一扫", "未安裝微信，無法打開掃一掃", "未安裝微信，無法開啟掃一掃", "WeChat is not installed.", "WeChatがインストールされていません。") }
     static var meqrProfileFound: String { tr("发现 MeQR 名片", "發現 MeQR 名片", "發現 MeQR 名片", "MeQR Profile Found", "MeQRプロフィールを検出") }
     static var saveEncounter: String { tr("保存记录", "儲存記錄", "儲存紀錄", "Save Encounter", "記録を保存") }
+    static var qrAppOpenFailed: String { tr("无法打开对应 App，请确认已安装并重试。", "無法開啟對應 App，請確認已安裝並重試。", "無法開啟對應 App，請確認已安裝並重試。", "Unable to open the app. Check that it is installed and try again.", "アプリを開けません。インストール済みか確認して再試行してください。") }
     static var saved: String { tr("已保存", "已儲存", "已儲存", "Saved", "保存済み") }
     static var platformsFromMeQR: String { tr("交换的平台", "交換的平台", "交換的平台", "Shared Platforms", "共有されたプラットフォーム") }
     static var activeEvent: String { tr("当前活动", "目前活動", "目前活動", "Active Event", "現在のイベント") }
@@ -184,22 +231,47 @@ struct L {
     static var searchEncounters: String { tr("搜索昵称、备注、标签", "搜尋暱稱、備註、標籤", "搜尋暱稱、備註、標籤", "Search names, notes, tags", "名前、メモ、タグを検索") }
     static var noSearchResults: String { tr("没有搜索结果", "沒有搜尋結果", "沒有搜尋結果", "No Results", "結果がありません") }
     static var tryAnotherSearch: String { tr("换个关键词试试。", "換個關鍵字試試。", "換個關鍵字試試。", "Try another search.", "別のキーワードを試してください。") }
-    static func encounterWaitingForPeer(_ count: Int) -> String { tr("等待对方确认的认识记录：(count)", "等待對方確認的認識記錄：(count)", "等待對方確認的認識紀錄：(count)", "Waiting for peer confirmation: (count)", "相手の確認待ち：(count)") }
+    static func encounterWaitingForPeer(_ count: Int) -> String { tr("等待对方确认的认识记录：\(count)", "等待對方確認的認識記錄：\(count)", "等待對方確認的認識紀錄：\(count)", "Waiting for peer confirmation: \(count)", "相手の確認待ち：\(count)") }
+    static func encounterConfirmationsPending(_ count: Int) -> String { tr("交换确认待发送：\(count)", "交換確認待傳送：\(count)", "交換確認待傳送：\(count)", "Exchange confirmations pending: \(count)", "交換確認の送信待ち：\(count)") }
+    static var encounterLocalOnly: String { tr("仅保存到本机，无法向对方回传资料。", "僅儲存到本機，無法向對方回傳資料。", "僅儲存到本機，無法向對方回傳資料。", "Saved on this device only; your profile cannot be sent back.", "この端末にのみ保存され、相手にプロフィールは送信されません。") }
     static var encounterInfo: String { tr("记录信息", "記錄資料", "紀錄資訊", "Encounter Info", "記録情報") }
     static var metAt: String { tr("认识时间", "認識時間", "認識時間", "Met At", "会った日時") }
     static var note: String { tr("备注", "備註", "備註", "Note", "メモ") }
     static var tags: String { tr("标签", "標籤", "標籤", "Tags", "タグ") }
+    static var tagInputHint: String { tr("搜索或自定义 tag，或从右侧列表选择 →", "搜尋或自訂 tag，或從右側清單選擇 →", "搜尋或自訂 tag，或從右側清單選擇 →", "Search or create a tag, or choose from the list →", "タグを検索・作成、または右の一覧から選択 →") }
     static var tagColors: String { tr("标签颜色", "標籤顏色", "標籤顏色", "Tag Colors", "タグの色") }
     static var tagColor: String { tr("颜色", "顏色", "顏色", "Color", "色") }
     static var tagColorMixed: String { tr("拼色", "拼色", "拼色", "Mixed", "多色") }
+    static var tagColorCustom: String { tr("自定义", "自訂", "自訂", "Custom", "カスタム") }
+    static var tagTextWeight: String { tr("标签字重", "標籤字重", "標籤字重", "Tag font weight", "タグの文字の太さ") }
+    static var tagWeightRegular: String { tr("常规", "一般", "一般", "Regular", "標準") }
+    static var tagWeightMedium: String { tr("半粗", "半粗", "半粗", "Semibold", "セミボールド") }
+    static var tagWeightBold: String { tr("特粗", "特粗", "特粗", "Heavy", "極太") }
     static var tagColorSolid: String { tr("纯色", "純色", "純色", "Solid", "単色") }
     static var tagColorPresetLocked: String { tr("已使用内置颜色", "已使用內建顏色", "已使用內建顏色", "Using preset color", "プリセット色を使用中") }
     static var addColor: String { tr("增加颜色", "增加顏色", "新增顏色", "Add Color", "色を追加") }
     static var removeColor: String { tr("移除颜色", "移除顏色", "移除顏色", "Remove Color", "色を削除") }
     static var cardTagsHint: String { tr("输入后按回车添加，最多 10 个；会显示在通行证背面。", "輸入後按 Return 加入，最多 10 個；會顯示在通行證背面。", "輸入後按 Return 新增，最多 10 個；會顯示在通行證背面。", "Press Return to add. Up to 10 tags, shown on the pass back.", "入力後Returnで追加。最大10個、パス裏面に表示します。") }
-    static var tagCatalogLoading: String { tr("正在载入在线 Tag 库", "正在載入線上 Tag 庫", "正在載入線上 Tag 庫", "Loading the online Tag library", "オンラインTagライブラリを読み込み中") }
+    static var tagCatalogLoading: String { tr("正在载入 Tag 库", "正在載入 Tag 庫", "正在載入 Tag 庫", "Loading Tag library", "Tagライブラリを読み込み中") }
     static var tagCatalogRetry: String { tr("Tag 库载入失败，点按重试", "Tag 庫載入失敗，點按重試", "Tag 庫載入失敗，點按重試", "Tag library unavailable. Tap to retry.", "Tagライブラリを読み込めません。タップして再試行") }
-    static var tagCatalogOnline: String { tr("Tag 库由服务器实时更新", "Tag 庫由伺服器即時更新", "Tag 庫由伺服器即時更新", "Tag library updates from the server", "Tagライブラリはサーバーから更新されます") }
+    static var tagCatalogSource: String { tr("App 内置库", "App 內建庫", "App 內建庫", "Bundled library", "アプリ内蔵ライブラリ") }
+    static var tagCatalogRemote: String { tr("线上 Tag 库", "線上 Tag 庫", "線上 Tag 庫", "Online library", "オンラインライブラリ") }
+    static var tagCatalogCache: String { tr("线上库缓存", "線上庫快取", "線上庫快取", "Cached online library", "オンラインライブラリのキャッシュ") }
+    static var tagCatalogMaintenance: String { tr("线上库维护中，暂用本地数据", "線上庫維護中，暫用本機資料", "線上庫維護中，暫用本機資料", "Online library under maintenance; using local data", "オンラインライブラリはメンテナンス中のため、端末内のデータを使用しています") }
+    static var tagCatalogFallback: String { tr("线上库暂时无法连接，已保留本地数据", "暫時無法連接線上庫，已保留本機資料", "暫時無法連線至線上庫，已保留本機資料", "Online library unavailable; local data retained", "オンラインライブラリに接続できないため、端末内のデータを保持しています") }
+    static var tagCatalogRefresh: String { tr("刷新 Tag 库", "重新整理 Tag 庫", "重新整理 Tag 庫", "Refresh library", "ライブラリを更新") }
+    static var tagMoveUp: String { tr("上移", "上移", "上移", "Move up", "上へ") }
+    static var tagMoveDown: String { tr("下移", "下移", "下移", "Move down", "下へ") }
+    static var tagCatalogInfo: String { tr("Tag 库信息", "Tag 庫資訊", "Tag 庫資訊", "Library information", "ライブラリ情報") }
+    static var tagCatalogChanges: String { tr("变更日志", "變更日誌", "更新記錄", "Changelog", "更新履歴") }
+    static var tagCatalogNoChanges: String { tr("此版本未附带变更记录", "此版本未附帶變更記錄", "此版本未附帶更新記錄", "No changelog included in this version", "このバージョンに更新履歴はありません") }
+    static var tagOrder: String { tr("Tag 排序", "Tag 排序", "Tag 排序", "Reorder tags", "Tagの並べ替え") }
+    static var tagRecent: String { tr("最近", "最近", "最近", "Recent", "最近") }
+    static var tagFrequent: String { tr("常用", "常用", "常用", "Frequent", "よく使う") }
+    static var tagAll: String { tr("全部", "全部", "全部", "All", "すべて") }
+    static var tagHistoryEmpty: String { tr("暂无使用记录", "暫無使用記錄", "尚無使用記錄", "No usage history yet", "使用履歴はまだありません") }
+    static var tagClearHistory: String { tr("清空使用记录", "清空使用記錄", "清除使用記錄", "Clear usage history", "使用履歴を消去") }
+    static var tagSource: String { tr("来源", "來源", "來源", "Source", "提供元") }
     static var tagLibrary: String { tr("Tag 库", "Tag 庫", "Tag 庫", "Tag Library", "Tagライブラリ") }
     static var browseTagLibrary: String { tr("浏览 Tag 库", "瀏覽 Tag 庫", "瀏覽 Tag 庫", "Browse Tag Library", "Tagライブラリを見る") }
     static var searchTags: String { tr("搜索所有 IP 和 Tag", "搜尋所有 IP 和 Tag", "搜尋所有 IP 和 Tag", "Search all IPs and tags", "作品・Tagを検索") }

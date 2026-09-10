@@ -109,6 +109,7 @@ struct EditProfileView: View {
 
     private var qrSourceSection: some View {
         Section(L.qrSource) {
+            QRContentWarning(content: qrContent, platform: platformType)
             TextField(L.urlOrText, text: $qrContent, axis: .vertical)
                 .lineLimit(2...4)
                 .textInputAutocapitalization(.never)

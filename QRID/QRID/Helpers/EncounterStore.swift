@@ -19,6 +19,8 @@ struct EncounterRecord: Codable, Identifiable, Hashable {
     var needsPhotoReturn: Bool?
     var exchangedFreebie: Bool?
     var followStatus: String?
+    var pendingConfirmationProfile: MeQRExchangeProfile?
+    var confirmationSentAt: Date?
 
     init(exchangeProfile: MeQRExchangeProfile, event: MeQREvent? = nil, sessionID: String? = nil) {
         id = UUID()
@@ -44,6 +46,8 @@ struct EncounterRecord: Codable, Identifiable, Hashable {
 private struct PendingEncounterSession: Codable, Identifiable {
     let id: String
     let createdAt: Date
+    var ownerToken: String? = nil
+    var receivedIDs: Set<String>? = nil
 }
 
 struct MeQREvent: Codable, Identifiable, Hashable {
@@ -77,13 +81,55 @@ final class EncounterStore: ObservableObject {
 
     @Published private(set) var records: [EncounterRecord] = []
     @Published private(set) var pendingSessionCount = 0
+    @Published private(set) var isConfirming = false
+
+    var pendingConfirmationCount: Int { records.filter { $0.pendingConfirmationProfile != nil }.count }
 
     private let storageKey = "meqr_encounter_records_v1"
     private let pendingStorageKey = "meqr_encounter_pending_sessions_v1"
     private var pendingSessions: [PendingEncounterSession] = []
+    private var isSyncing = false
+    private let defaults: UserDefaults
 
-    private init() {
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
         load()
+    }
+
+    func saveScannedProfile(_ profile: MeQRExchangeProfile, event: MeQREvent? = nil,
+                            sessionID: String?, peerProfile: MeQRExchangeProfile?) {
+        if let sessionID, let index = records.firstIndex(where: { $0.sessionID == sessionID }) {
+            if records[index].confirmationSentAt == nil && records[index].pendingConfirmationProfile == nil {
+                records[index].pendingConfirmationProfile = peerProfile
+            }
+        } else {
+            var record = EncounterRecord(exchangeProfile: profile, event: event, sessionID: sessionID)
+            if sessionID != nil { record.pendingConfirmationProfile = peerProfile }
+            records.insert(record, at: 0)
+        }
+        // Persist the approved reply and the encounter together before attempting delivery.
+        save()
+    }
+
+    func syncConfirmations() async {
+        guard !isConfirming else { return }
+        isConfirming = true
+        defer { isConfirming = false }
+        for record in records {
+            guard !Task.isCancelled else { return }
+            guard let profile = record.pendingConfirmationProfile, let sessionID = record.sessionID,
+                  records.contains(where: { $0.id == record.id }) else { continue }
+            do {
+                try await MeQRRemoteService.confirmEncounterSession(sessionID: sessionID, peerProfile: profile)
+                if let index = records.firstIndex(where: { $0.id == record.id }) {
+                    records[index].pendingConfirmationProfile = nil
+                    records[index].confirmationSentAt = Date()
+                    save()
+                }
+            } catch {
+                // Keep the original approved snapshot for foreground/refresh retries.
+            }
+        }
     }
 
     func add(_ exchangeProfile: MeQRExchangeProfile, event: MeQREvent? = nil, sessionID: String? = nil) {
@@ -101,31 +147,65 @@ final class EncounterStore: ObservableObject {
         savePendingSessions()
     }
 
+    func registerOutgoingSession(_ sessionID: String, ownerToken: String) {
+        if let index = pendingSessions.firstIndex(where: { $0.id == sessionID }) {
+            guard pendingSessions[index].ownerToken != ownerToken else { return }
+            pendingSessions[index].ownerToken = ownerToken
+        } else {
+            pendingSessions.insert(PendingEncounterSession(id: sessionID, createdAt: Date(), ownerToken: ownerToken), at: 0)
+        }
+        pendingSessionCount = pendingSessions.count
+        savePendingSessions()
+    }
+
     func syncPendingSessions() async {
-        guard !pendingSessions.isEmpty else { return }
-        var remaining: [PendingEncounterSession] = []
+        await syncConfirmations()
+        guard !pendingSessions.isEmpty, !isSyncing else { return }
+        isSyncing = true
+        defer { isSyncing = false }
         for pending in pendingSessions {
             do {
                 let session = try await MeQRRemoteService.fetchEncounterSession(
-                    from: "https://api.meqrcode.cn/encounter-sessions/\(pending.id)"
+                    from: "https://api.meqrcode.cn/encounter-sessions/\(pending.id)", ownerToken: pending.ownerToken
                 )
-                if session.status == "confirmed", let peerProfile = session.peerProfile {
-                    add(peerProfile, event: EventStore.shared.activeEvent, sessionID: pending.id)
-                } else {
-                    remaining.append(pending)
+                let eventID = session.eventID.flatMap(UUID.init(uuidString:))
+                let event = EventStore.shared.events.first { $0.id == eventID }
+                if session.reusable == true, let index = pendingSessions.firstIndex(where: { $0.id == pending.id }) {
+                    var received = pendingSessions[index].receivedIDs ?? []
+                    for confirmation in session.confirmations ?? [] where !received.contains(confirmation.id) {
+                        add(confirmation.profile, event: nil, sessionID: pending.id + ":" + confirmation.id)
+                        if let recordIndex = records.firstIndex(where: { $0.sessionID == pending.id + ":" + confirmation.id }) {
+                            records[recordIndex].metAt = Date(timeIntervalSince1970: confirmation.confirmedAt / 1000)
+                            records[recordIndex].eventID = eventID
+                            records[recordIndex].eventTitle = event?.title
+                            records[recordIndex].eventVenue = event?.venue
+                        }
+                        received.insert(confirmation.id)
+                    }
+                    sortRecords()
+                    save()
+                    pendingSessions[index].receivedIDs = received
+                } else if session.status == "confirmed", let peerProfile = session.peerProfile {
+                    if !records.contains(where: { $0.sessionID == pending.id }) {
+                        var record = EncounterRecord(exchangeProfile: peerProfile, event: event, sessionID: pending.id)
+                        record.eventID = eventID
+                        records.insert(record, at: 0)
+                        save()
+                    }
+                    pendingSessions.removeAll { $0.id == pending.id }
                 }
-            } catch {
-                remaining.append(pending)
-            }
+            } catch {}
         }
-        pendingSessions = remaining
-        pendingSessionCount = remaining.count
+        pendingSessionCount = pendingSessions.count
         savePendingSessions()
     }
 
     func update(_ record: EncounterRecord) {
         guard let index = records.firstIndex(where: { $0.id == record.id }) else { return }
-        records[index] = record
+        var updated = record
+        updated.pendingConfirmationProfile = records[index].pendingConfirmationProfile
+        updated.confirmationSentAt = records[index].confirmationSentAt
+        records[index] = updated
         sortRecords()
         save()
     }
@@ -136,13 +216,13 @@ final class EncounterStore: ObservableObject {
     }
 
     private func load() {
-        if let data = UserDefaults.standard.data(forKey: storageKey),
+        if let data = defaults.data(forKey: storageKey),
            let decoded = try? JSONDecoder.meqrEncounter.decode([EncounterRecord].self, from: data) {
             records = decoded.sorted { $0.metAt > $1.metAt }
         } else {
             records = []
         }
-        if let data = UserDefaults.standard.data(forKey: pendingStorageKey),
+        if let data = defaults.data(forKey: pendingStorageKey),
            let decodedPending = try? JSONDecoder.meqrEncounter.decode([PendingEncounterSession].self, from: data) {
             pendingSessions = decodedPending
             pendingSessionCount = decodedPending.count
@@ -151,12 +231,12 @@ final class EncounterStore: ObservableObject {
 
     private func save() {
         guard let data = try? JSONEncoder.meqrEncounter.encode(records) else { return }
-        UserDefaults.standard.set(data, forKey: storageKey)
+        defaults.set(data, forKey: storageKey)
     }
 
     private func savePendingSessions() {
         guard let data = try? JSONEncoder.meqrEncounter.encode(pendingSessions) else { return }
-        UserDefaults.standard.set(data, forKey: pendingStorageKey)
+        defaults.set(data, forKey: pendingStorageKey)
     }
 
     private func sortRecords() {

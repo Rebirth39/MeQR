@@ -4,21 +4,32 @@ import AVFoundation
 import CoreImage
 import SwiftData
 
+struct MeQRDecodedScan: Identifiable {
+    let id = UUID()
+    let profile: MeQRExchangeProfile
+    let sessionID: String?
+    let localProfile: MeQRExchangeProfile?
+}
+
+@MainActor
 struct MeQRScannerView: View {
     let localCluster: QRCluster?
     @Environment(\.dismiss) private var dismiss
 
     @State private var pickedItem: PhotosPickerItem?
-    @State private var decodedProfile: MeQRExchangeProfile?
+    @State private var decodedScan: MeQRDecodedScan?
     @State private var errorMessage: String?
     @State private var showError = false
     @State private var cameraAuthorized = AVCaptureDevice.authorizationStatus(for: .video) == .authorized
-    @State private var pendingSessionID: String?
     @State private var showingMyCode = false
     @State private var lastRoutedPayload: String?
     @State private var lastRoutedDate = Date.distantPast
-    @State private var pendingExternalURL: URL?
-    @AppStorage("meqr.allowExternalLinks") private var allowExternalAlways = false
+    @State private var pendingContent: String?
+    @State private var decodeTask: Task<Void, Never>?
+    @State private var isScannerActive = false
+    @State private var showingPhotoPicker = false
+    @State private var trustedLinkTask: Task<Void, Never>?
+    @State private var isOpeningTrustedLink = false
 
     init(localCluster: QRCluster? = nil) {
         self.localCluster = localCluster
@@ -40,6 +51,7 @@ struct MeQRScannerView: View {
                     VStack(spacing: 12) {
                         if localCluster != nil {
                             Button {
+                                cancelDecode()
                                 showingMyCode = true
                             } label: {
                                 Label(L.myExchangeCode, systemImage: "qrcode")
@@ -49,12 +61,16 @@ struct MeQRScannerView: View {
                             .buttonStyle(ScannerGlassButtonStyle())
                         }
 
-                        PhotosPicker(selection: $pickedItem, matching: .images) {
+                        Button {
+                            cancelDecode()
+                            showingPhotoPicker = true
+                        } label: {
                             Label(L.importMeQRFromPhoto, systemImage: "photo.on.rectangle")
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 48)
                         }
                         .buttonStyle(ScannerGlassButtonStyle())
+                        .photosPicker(isPresented: $showingPhotoPicker, selection: $pickedItem, matching: .images)
                     }
                 }
                 .foregroundStyle(.white)
@@ -66,21 +82,32 @@ struct MeQRScannerView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(L.cancel) { dismiss() }
+                    Button(L.cancel) {
+                        isScannerActive = false
+                        cancelDecode()
+                        dismiss()
+                    }
                 }
             }
             .toolbarColorScheme(.dark, for: .navigationBar)
             .onAppear {
+                isScannerActive = true
                 requestCameraAccessIfNeeded()
             }
-            .onChange(of: pickedItem) { _, item in
-                Task { await decodePhoto(item) }
+            .onDisappear {
+                isScannerActive = false
+                cancelDecode()
             }
-            .sheet(item: $decodedProfile) { profile in
+            .onChange(of: pickedItem) { _, item in
+                guard let item else { return }
+                pickedItem = nil
+                handlePhoto(item)
+            }
+            .sheet(item: $decodedScan) { scan in
                 EncounterPreviewView(
-                    profile: profile,
-                    sessionID: pendingSessionID,
-                    localProfile: localProfile
+                    profile: scan.profile,
+                    sessionID: scan.sessionID,
+                    localProfile: scan.localProfile
                 )
             }
             .sheet(isPresented: $showingMyCode) {
@@ -93,15 +120,20 @@ struct MeQRScannerView: View {
             } message: {
                 Text(errorMessage ?? L.notMeQRProfileCode)
             }
-            .confirmationDialog("打开外部链接？", isPresented: Binding(
-                get: { pendingExternalURL != nil },
-                set: { if !$0 { pendingExternalURL = nil } }
-            ), titleVisibility: .visible) {
-                Button("本次允许") { openPendingExternalURL() }
-                Button("之后都允许") { allowExternalAlways = true; openPendingExternalURL() }
-                Button("不允许", role: .cancel) { pendingExternalURL = nil }
-            } message: {
-                Text("将离开喜劳转扩并打开其他 App 或网页。")
+            .sheet(isPresented: Binding(
+                get: { pendingContent != nil },
+                set: { if !$0 { pendingContent = nil } }
+            )) {
+                if let content = pendingContent {
+                    QRLinkReviewView(content: content) { url in
+                        pendingContent = nil
+                        switch Platform.detect(from: content) {
+                        case .wechat: openWeChatScan()
+                        case .xiaohongshu: openXiaohongshu(url)
+                        default: UIApplication.shared.open(url)
+                        }
+                    }
+                }
             }
         }
     }
@@ -144,8 +176,27 @@ private struct ScannerGlassButtonStyle: ButtonStyle {
         }
     }
 
+    private var canPresentScanResult: Bool {
+        isScannerActive && pendingContent == nil && decodedScan == nil && !showingMyCode && !showError && !isOpeningTrustedLink
+    }
+
+    private func cancelDecode() {
+        decodeTask?.cancel()
+        decodeTask = nil
+        trustedLinkTask?.cancel()
+        trustedLinkTask = nil
+        isOpeningTrustedLink = false
+    }
+
     private func handlePayload(_ payload: String, frame: UIImage?) {
-        Task { @MainActor in
+        guard canPresentScanResult, !showingPhotoPicker, pickedItem == nil, decodeTask == nil else { return }
+        // Reserve the slot synchronously so the next camera callback cannot start another decode.
+        decodeTask = Task { @MainActor in
+            defer {
+                // A cancelled task may finish after a replacement has taken the slot.
+                if !Task.isCancelled { decodeTask = nil }
+            }
+            guard !Task.isCancelled, canPresentScanResult else { return }
             // Fast path: only MeQR codes carry a color layer worth the expensive
             // decodeEnhanced pass. Social-platform and plain-URL codes route at once.
             let isMeQRPayload = (try? MeQRExchangeCodec.decode(payload)) != nil
@@ -166,41 +217,59 @@ private struct ScannerGlassButtonStyle: ButtonStyle {
                let decoded = try? await QRCodeGenerator.decodeEnhanced(from: frame) {
                 colorAvatarJPEG = decoded.colorAvatarJPEG
             }
+            guard !Task.isCancelled, canPresentScanResult else { return }
             await decodePayload(payload, colorAvatarJPEG: colorAvatarJPEG)
+        }
+    }
+
+    private func handlePhoto(_ item: PhotosPickerItem) {
+        guard canPresentScanResult else { return }
+        cancelDecode()
+        decodeTask = Task { @MainActor in
+            defer {
+                if !Task.isCancelled { decodeTask = nil }
+            }
+            await decodePhoto(item)
         }
     }
 
     @MainActor
     private func decodePayload(_ payload: String, colorAvatarJPEG: Data? = nil) async {
-        pendingSessionID = nil
-
+        guard !Task.isCancelled, canPresentScanResult else { return }
         if let localProfile = try? MeQRExchangeCodec.decode(payload) {
-            decodedProfile = applyingColorAvatar(colorAvatarJPEG, to: localProfile)
+            presentScan(applyingColorAvatar(colorAvatarJPEG, to: localProfile), isOffline: true)
             return
         }
 
         if MeQRRemoteService.canFetchEncounterSession(from: payload) {
             do {
                 let session = try await MeQRRemoteService.fetchEncounterSession(from: payload)
+                guard !Task.isCancelled, canPresentScanResult else { return }
                 guard let creatorProfile = session.creatorProfile else {
                     throw MeQRRemoteServiceError.server(L.notMeQRProfileCode)
                 }
-                pendingSessionID = session.sessionID
-                decodedProfile = applyingColorAvatar(colorAvatarJPEG, to: creatorProfile)
+                presentScan(applyingColorAvatar(colorAvatarJPEG, to: creatorProfile), sessionID: session.sessionID)
                 return
             } catch {
-                // Continue to the offline fragment below when the session is unavailable.
+                guard !Task.isCancelled, canPresentScanResult else { return }
+                if let fallbackProfile = MeQRExchangeCodec.offlineFallback(from: payload) {
+                    presentScan(applyingColorAvatar(colorAvatarJPEG, to: fallbackProfile),
+                                sessionID: MeQRRemoteService.encounterSessionID(from: payload), isOffline: true)
+                    return
+                }
             }
         }
 
         if MeQRRemoteService.canFetchProfile(from: payload) {
             do {
                 let profile = try await MeQRRemoteService.fetchProfile(from: payload)
-                decodedProfile = applyingColorAvatar(colorAvatarJPEG, to: profile)
+                guard !Task.isCancelled, canPresentScanResult else { return }
+                presentScan(applyingColorAvatar(colorAvatarJPEG, to: profile))
                 return
             } catch {
+                guard !Task.isCancelled, canPresentScanResult else { return }
                 if let fallbackProfile = MeQRExchangeCodec.offlineFallback(from: payload) {
-                    decodedProfile = applyingColorAvatar(colorAvatarJPEG, to: fallbackProfile)
+                    presentScan(applyingColorAvatar(colorAvatarJPEG, to: fallbackProfile), isOffline: true)
                     return
                 }
                 errorMessage = error.localizedDescription
@@ -210,7 +279,7 @@ private struct ScannerGlassButtonStyle: ButtonStyle {
         }
 
         if let fallbackProfile = MeQRExchangeCodec.offlineFallback(from: payload) {
-            decodedProfile = applyingColorAvatar(colorAvatarJPEG, to: fallbackProfile)
+            presentScan(applyingColorAvatar(colorAvatarJPEG, to: fallbackProfile), isOffline: true)
             return
         }
 
@@ -225,6 +294,7 @@ private struct ScannerGlassButtonStyle: ButtonStyle {
     @MainActor
     @discardableResult
     private func routeGenericQR(_ payload: String) -> Bool {
+        guard pendingContent == nil, decodedScan == nil, !showingMyCode else { return true }
         // Cooldown: avoid re-routing the same non-MeQR payload repeatedly as the
         // camera keeps firing the metadata callback on the same code.
         let now = Date()
@@ -232,35 +302,58 @@ private struct ScannerGlassButtonStyle: ButtonStyle {
             return true
         }
 
-        guard let platform = Platform.detect(from: payload) else {
-            // Not a known social platform: open http(s) URLs in the browser.
-            if let url = URL(string: payload), url.scheme?.hasPrefix("http") == true {
-                lastRoutedPayload = payload
-                lastRoutedDate = now
-                requestExternalOpen(url)
-                return true
-            }
-            return false
-        }
-
         lastRoutedPayload = payload
         lastRoutedDate = now
-
-        if platform == .wechat {
-            openWeChatScan()
+        if let destination = QRLinkPolicy.trustedDestination(payload), let url = QRLinkPolicy.webURL(payload) {
+            openTrustedLink(url, destination: destination)
             return true
         }
-
-        guard let url = URL(string: payload), url.scheme != nil else { return true }
-
-        if platform == .xiaohongshu {
-            openXiaohongshu(url)
-            return true
-        }
-
-        // Universal Link: opens the matching app if installed, falls back to Safari.
-        requestExternalOpen(url)
+        pendingContent = payload
         return true
+    }
+
+    private func openTrustedLink(_ url: URL, destination: QRLinkPolicy.TrustedDestination) {
+        isOpeningTrustedLink = true
+        trustedLinkTask = Task { @MainActor in
+            defer {
+                if !Task.isCancelled {
+                    isOpeningTrustedLink = false
+                    trustedLinkTask = nil
+                    lastRoutedDate = Date()
+                }
+            }
+            guard !Task.isCancelled, isScannerActive else { return }
+            let error = await Self.openTrustedDestination(url, destination: destination)
+            guard !Task.isCancelled, isScannerActive else { return }
+            if let error { errorMessage = error; showError = true }
+        }
+    }
+
+    static func openTrustedDestination(_ url: URL, destination: QRLinkPolicy.TrustedDestination) async -> String? {
+        guard !Task.isCancelled else { return nil }
+        switch destination {
+        case .wechatScan:
+            let opened = await UIApplication.shared.open(URL(string: "weixin://scanqrcode")!)
+            return opened ? nil : L.wechatNotInstalled
+        case .qq, .web:
+            let opened = await UIApplication.shared.open(url)
+            return opened ? nil : L.qrAppOpenFailed
+        case .xiaohongshu:
+            let key = url.absoluteString
+            var userID = xiaohongshuUserIDCache.object(forKey: key as NSString) as String?
+            if userID == nil, let resolved = await resolveXiaohongshuRedirect(url) {
+                userID = xiaohongshuUserID(from: resolved)
+            }
+            guard !Task.isCancelled else { return nil }
+            let opened: Bool
+            if let userID, let appURL = URL(string: "xhsdiscover://user/\(userID)") {
+                xiaohongshuUserIDCache.setObject(userID as NSString, forKey: key as NSString)
+                opened = await UIApplication.shared.open(appURL)
+            } else {
+                opened = await UIApplication.shared.open(url, options: [.universalLinksOnly: true])
+            }
+            return opened ? nil : L.qrAppOpenFailed
+        }
     }
 
     @MainActor
@@ -276,7 +369,7 @@ private struct ScannerGlassButtonStyle: ButtonStyle {
 
         // xhslink.com short links need one redirect hop to reveal the profile URL.
         Task { @MainActor in
-            let key = url.absoluteString.lowercased()
+            let key = url.absoluteString
             if let cached = Self.xiaohongshuUserIDCache.object(forKey: key as NSString) {
                 openXiaohongshuApp(userID: cached as String, fallback: url)
                 return
@@ -307,35 +400,31 @@ private struct ScannerGlassButtonStyle: ButtonStyle {
     private static let xiaohongshuUserIDCache = NSCache<NSString, NSString>()
 
     private static func xiaohongshuUserID(from url: URL) -> String? {
-        let s = url.absoluteString.lowercased()
-        guard let range = s.range(of: #"[0-9a-f]{24}"#, options: .regularExpression) else {
-            return nil
-        }
-        return String(s[range])
+        QRLinkPolicy.xiaohongshuProfileID(url)
     }
 
     private static func resolveXiaohongshuRedirect(_ url: URL) async -> URL? {
-        var url = url
-        if url.scheme == "http", var comps = URLComponents(url: url, resolvingAgainstBaseURL: false) {
-            comps.scheme = "https"
-            url = comps.url ?? url
+        guard var current = QRLinkPolicy.xiaohongshuRedirectURL(url) else { return nil }
+        var visited = Set<URL>()
+        for _ in 0..<4 {
+            guard !Task.isCancelled, visited.insert(current).inserted else { return nil }
+            if Self.xiaohongshuUserID(from: current) != nil { return current }
+            // Check every redirect before following it; short links can have multiple hops.
+            let delegate = RedirectStopDelegate()
+            let config = URLSessionConfiguration.ephemeral
+            config.timeoutIntervalForRequest = 5
+            config.timeoutIntervalForResource = 8
+            let session = URLSession(configuration: config, delegate: delegate, delegateQueue: nil)
+            defer { session.invalidateAndCancel() }
+            var request = URLRequest(url: current)
+            request.httpMethod = "GET"
+            request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15", forHTTPHeaderField: "User-Agent")
+            _ = try? await session.data(for: request)
+            guard !Task.isCancelled, let redirected = delegate.redirectURL,
+                  let checked = QRLinkPolicy.xiaohongshuRedirectURL(redirected) else { return nil }
+            current = checked
         }
-
-        // xhslink returns 302 only to GET (HEAD gives 404). We only need the
-        // Location header, not the body, so stop following redirects and read it
-        // from the response directly.
-        let delegate = RedirectStopDelegate()
-        let config = URLSessionConfiguration.ephemeral
-        config.timeoutIntervalForRequest = 5
-        config.timeoutIntervalForResource = 8
-        let session = URLSession(configuration: config, delegate: delegate, delegateQueue: nil)
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15", forHTTPHeaderField: "User-Agent")
-
-        _ = try? await session.data(for: request)
-        return delegate.redirectURL
+        return Self.xiaohongshuUserID(from: current) != nil ? current : nil
     }
 
     @MainActor
@@ -351,36 +440,50 @@ private struct ScannerGlassButtonStyle: ButtonStyle {
 
     @MainActor
     private func requestExternalOpen(_ url: URL) {
-        if allowExternalAlways {
-            UIApplication.shared.open(url)
-        } else {
-            pendingExternalURL = url
-        }
-    }
-
-    @MainActor
-    private func openPendingExternalURL() {
-        guard let url = pendingExternalURL else { return }
-        pendingExternalURL = nil
+        // Used by the manually approved flow; trusted links have their own App routing.
         UIApplication.shared.open(url)
     }
 
-    private var localProfile: MeQRExchangeProfile? {
+    private func presentScan(_ profile: MeQRExchangeProfile, sessionID: String? = nil, isOffline: Bool = false) {
+        // The sheet receives one snapshot; separate State values can be stale on first presentation.
+        decodedScan = MeQRDecodedScan(profile: profile, sessionID: sessionID, localProfile: localProfile(forOffline: isOffline))
+    }
+
+    private func localProfile(forOffline isOffline: Bool) -> MeQRExchangeProfile? {
         guard let localCluster else { return nil }
-        return MeQRExchangeProfile(cluster: localCluster, avatarMaxBytes: 256 * 1024)
+        let sorted = localCluster.profiles.sorted { $0.createdAt < $1.createdAt }
+        let savedIDs = UserDefaults.standard.stringArray(forKey: "meqr.exchange.selectedProfiles.\(localCluster.id.uuidString)") ?? []
+        let selected = sorted.filter { savedIDs.contains($0.id.uuidString) }
+        let included = Array((selected.isEmpty ? sorted : selected).prefix(3))
+        if isOffline {
+            let savedID = UserDefaults.standard.string(forKey: "meqr.exchange.offlineProfile.\(localCluster.id.uuidString)")
+            let platform = included.first { $0.id.uuidString == savedID } ?? included.first
+            var profile = MeQRExchangeProfile(offlineCluster: localCluster, profile: platform)
+            if let subtitle = UserDefaults.standard.string(forKey: "meqr.exchange.subtitle.\(localCluster.id.uuidString)") {
+                profile.subtitle = subtitle
+            }
+            return profile
+        }
+        var profile = MeQRExchangeProfile(cluster: localCluster, profiles: included, avatarMaxBytes: 256 * 1024)
+        profile.intro = ""
+        return profile
     }
 
     @MainActor
     private func decodePhoto(_ item: PhotosPickerItem?) async {
-        guard let item else { return }
+        guard let item, !Task.isCancelled, canPresentScanResult else { return }
         do {
-            guard let data = try await item.loadTransferable(type: Data.self),
+            let data = try await item.loadTransferable(type: Data.self)
+            guard !Task.isCancelled, canPresentScanResult else { return }
+            guard let data,
                   let image = QRCodeGenerator.imageForDecoding(from: data) else {
                 throw QRCodeGenerator.QRDecodeError.invalidImage
             }
             let decoded = try await QRCodeGenerator.decodeEnhanced(from: image)
+            guard !Task.isCancelled, canPresentScanResult else { return }
             await decodePayload(decoded.payload, colorAvatarJPEG: decoded.colorAvatarJPEG)
         } catch {
+            guard !Task.isCancelled, canPresentScanResult else { return }
             errorMessage = error.localizedDescription
             showError = true
         }

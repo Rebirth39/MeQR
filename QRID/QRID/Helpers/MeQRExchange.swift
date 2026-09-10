@@ -33,6 +33,7 @@ struct MeQRExchangeProfile: Codable, Identifiable, Hashable {
             maxProfiles: 3,
             avatarMaxBytes: avatarMaxBytes
         )
+        id = cluster.id
     }
 
     init(offlineCluster cluster: QRCluster, profile includedProfile: QRProfile?) {
@@ -51,6 +52,7 @@ struct MeQRExchangeProfile: Codable, Identifiable, Hashable {
             maxProfiles: 1,
             avatarMaxBytes: 0
         )
+        id = cluster.id
     }
 
     private init(
@@ -229,14 +231,13 @@ struct MeQRExchangeProfile: Codable, Identifiable, Hashable {
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
         try container.encode(version, forKey: .version)
         try container.encode(name, forKey: .name)
         if !subtitle.isEmpty {
             try container.encode(subtitle, forKey: .subtitle)
         }
-        if !intro.isEmpty {
-            try container.encode(intro, forKey: .intro)
-        }
+        try container.encode(intro, forKey: .intro)
         if let avatarJPEGBase64 {
             try container.encode(avatarJPEGBase64, forKey: .avatarJPEGBase64)
         }

@@ -52,6 +52,7 @@ final class QRCluster {
     var passSubtitle: String?
     var tagListRawValue: String?
     var tagColorOverridesRawValue: String?
+    var tagReferencesRawValue: String?
     var cornerRadius: Double
     var cardOpacity: Double?
     var createdAt: Date
@@ -129,6 +130,9 @@ final class QRCluster {
         self.widgetMediumOffsetY = widgetMediumOffsetY
         self.widgetLargeOffsetX = widgetLargeOffsetX
         self.widgetLargeOffsetY = widgetLargeOffsetY
+        if !RemoteTagCatalogSnapshot.value().isEmpty {
+            migrateTagReferences()
+        }
     }
 
     var backgroundColor: Color {
@@ -160,11 +164,35 @@ final class QRCluster {
     }
 
     var tags: [String] {
-        CardTagLimiter.tags(from: tagListRawValue ?? "")
+        if let references = CardTagReference.decode(tagReferencesRawValue) { return references.map(\.displayName) }
+        return CardTagLimiter.tags(from: tagListRawValue ?? "")
     }
 
     var tagColorOverrides: [String: CardTagColorOverride] {
-        CardTagColorPalette.overrides(from: tagColorOverridesRawValue)
+        if let references = CardTagReference.decode(tagReferencesRawValue) {
+            return references.reduce(into: [:]) { $0[CardTagColorPalette.normalized($1.displayName)] = $1.displayOverride }
+        }
+        return CardTagColorPalette.overrides(from: tagColorOverridesRawValue)
+    }
+
+    func migrateTagReferences() {
+        guard tagReferencesRawValue == nil, !RemoteTagCatalogSnapshot.value().isEmpty else { return }
+        // Keep original spellings until override keys have been associated with an ID.
+        let names = (tagListRawValue ?? "").components(separatedBy: .newlines).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        tagReferencesRawValue = CardTagReference.encode(CardTagReference.reconcile(names: names, overrides: CardTagColorPalette.overrides(from: tagColorOverridesRawValue), previous: []))
+    }
+
+    func setTags(_ names: [String], overrides: [String: CardTagColorOverride]) {
+        if tagReferencesRawValue == nil, RemoteTagCatalogSnapshot.value().isEmpty {
+            // Retain legacy state until catalog IDs can be resolved during migration.
+            tagListRawValue = names.joined(separator: "\n")
+            tagColorOverridesRawValue = CardTagColorPalette.rawValue(from: overrides, tags: names)
+            return
+        }
+        let references = CardTagReference.reconcile(names: names, overrides: overrides, previous: CardTagReference.decode(tagReferencesRawValue) ?? [])
+        tagReferencesRawValue = CardTagReference.encode(references)
+        tagListRawValue = names.joined(separator: "\n")
+        tagColorOverridesRawValue = CardTagColorPalette.rawValue(from: overrides, tags: names)
     }
 
     func tagColorHex(for tag: String) -> String {
@@ -239,6 +267,11 @@ enum CardTagLimiter {
 }
 
 enum CardTagIndex {
+    nonisolated static func selectionKey(_ tag: String) -> String {
+        let key = normalizedKey(tag)
+        return RemoteTagCatalogSnapshot.entry(matchingNormalizedKey: key).map { "catalog:" + $0.id } ?? "custom:" + key
+    }
+
     static func canonicalTag(for tag: String) -> String? {
         let key = normalizedKey(tag)
         guard !key.isEmpty else { return nil }
@@ -261,9 +294,10 @@ enum CardTagIndex {
         let key = normalizedKey(query)
         guard !key.isEmpty else { return [] }
 
-        let existingKeys = Set(existingTags.map(normalizedKey))
+        let existingKeys = Set(existingTags.map(selectionKey))
+        let tokens = query.split(whereSeparator: \.isWhitespace).map { normalizedKey(String($0)) }.filter { !$0.isEmpty }
         let ranked = RemoteTagCatalogSnapshot.searchRecordValue().compactMap { record -> (Int, RemoteTagEntry)? in
-            guard !record.searchableKeys.contains(where: existingKeys.contains) else { return nil }
+            guard !existingKeys.contains("catalog:" + record.entry.id) else { return nil }
 
             let score: Int
             if record.displayKeys.contains(key) {
@@ -276,6 +310,10 @@ enum CardTagIndex {
                 score = 3
             } else if record.searchableKeys.contains(where: { $0.contains(key) }) {
                 score = 4
+            } else if !tokens.isEmpty && tokens.allSatisfy({ token in
+                (record.searchableKeys + record.contextKeys).contains { $0.contains(token) }
+            }) {
+                score = 5
             } else {
                 return nil
             }
@@ -328,22 +366,22 @@ enum CardTagColorPalette {
             ["Wonderlands x Showtime 拼色", "Wonderlands x Showtime Mix", "ワンダショMIX", "wonderlandsxshowtimemix", "wonderlands x showtime mix", "wsmix", "wxs mix", "wxs多色", "wxs拼色", "ws多色", "ws拼色", "ワンダショmix", "ワンダショ多色", "ワンダショ拼色"]
         ),
         (
-            ["#39C5BB", "#FFE211", "#FFB000", "#FF69B4", "#E44D98", "#0068B7"],
+            ["#39C5BB", "#FFB000", "#FFE211", "#FF69B4", "#D80000", "#0068B7"],
             ["术力口", "ボカロ", "vocaloid", "vocalo", "VOCALOID"]
         ),
-        (["#00A0E9", "#33AAEE", "#FFDD45", "#EE6666", "#BBDD22"], ["leoneed", "leo/need", "l/n", "ln", "レオニ", "Leo/need"]),
+        (["#4455DD", "#33AAEE", "#FFDD44", "#EE6666", "#BBDD22"], ["leoneed", "leo/need", "l/n", "ln", "レオニ", "Leo/need"]),
         (["#88DD44", "#FFCCAA", "#99CCFF", "#FFAACC", "#99EEDD"], ["moremorejump", "MORE MORE JUMP!", "mmj", "モモジャン", "桃跳"]),
         (["#EE1166", "#FF6699", "#00BBDD", "#FF7722", "#0077DD"], ["vividbadsquad", "vbs", "ビビバス", "Vivid BAD SQUAD"]),
         (["#FF9900", "#FFBB00", "#FF66BB", "#33DD99", "#BB88EE"], ["wonderlandsxshowtime", "Wonderlands x Showtime", "wonderlandsxshowti", "Wonderlands x Showti", "ワンダーランズ x ショウタイム", "ワンダーランズ×ショウタイム", "ws", "wxs", "wxS", "ワンダショ", "ワショ"]),
-        (["#884499", "#BB6688", "#8889CC", "#CCAA88", "#DDAACC"], ["nightcord", "Nightcord at 25:00", "25点，Nightcord见。", "25點，Nightcord見。", "25時、ナイトコードで。", "n25", "25ji", "25時", "25时", "25點", "25点", "ニーゴ"]),
-        (["#FF3377", "#FF5522", "#3366CC", "#FF99CC", "#FFCC33", "#AA66CC"], ["poppinparty", "poppin'party", "ポピパ", "Poppin'Party"]),
-        (["#E53344", "#E5004F", "#55BB77", "#FF77AA", "#CC3333", "#FFCC66"], ["afterglow", "aglow", "美竹兰组", "美竹蘭組"]),
+        (["#884499", "#BB6688", "#8888CC", "#CCAA88", "#DDAACC"], ["nightcord", "Nightcord at 25:00", "25点，Nightcord见。", "25點，Nightcord見。", "25時、ナイトコードで。", "n25", "25ji", "25時", "25时", "25點", "25点", "ニーゴ"]),
+        (["#FF3377", "#FF5522", "#0077DD", "#FF55BB", "#FFCC11", "#AA66DD"], ["poppinparty", "poppin'party", "ポピパ", "Poppin'Party"]),
+        (["#E53344", "#EE0022", "#00CCAA", "#FF9999", "#BB0033", "#FFEE88"], ["afterglow", "aglow", "美竹兰组", "美竹蘭組"]),
         (["#33DDAA", "#FF66AA", "#66CCFF", "#FFEE99", "#88DD44", "#CC99FF"], ["pastelpalettes", "pastel*palettes", "pp", "パスパレ", "彩组", "彩組"]),
-        (["#3344AA", "#3344AA", "#66CCFF", "#DD2244", "#AA44DD", "#9999CC"], ["roselia", "roselia组"]),
-        (["#FFC02A", "#FFCC33", "#AA66CC", "#FF9933", "#66CCFF", "#996633"], ["hellohappyworld", "hhw", "ハロハピ", "hello happy world", "Hello Happy World!"]),
-        (["#33AADD", "#AABBFF", "#FF99CC", "#99DD66", "#FFCC66", "#6699CC"], ["morfonica", "モニカ", "Morfonica"]),
-        (["#66CC33", "#AA3333", "#77CC44", "#FF9933", "#FF77BB", "#66CCFF"], ["raiseasuilen", "raise a suilen", "ras", "RAISE A SUILEN"]),
-        (["#3381B0", "#77BBDD", "#FF8899", "#66CC99", "#DDBB66", "#4455AA"], ["mygo", "mygo!!!!!", "迷子", "MyGO!!!!!"]),
+        (["#3344AA", "#881188", "#00AABB", "#DD2200", "#DD0088", "#BBBBBB"], ["roselia", "roselia组"]),
+        (["#FFC02A", "#FFEE22", "#AA33CC", "#FF9922", "#44DDFF", "#006699"], ["hellohappyworld", "hhw", "ハロハピ", "hello happy world", "Hello Happy World!"]),
+        (["#33AADD", "#6677CC", "#EE6666", "#EE7744", "#EE7788", "#669988"], ["morfonica", "モニカ", "Morfonica"]),
+        (["#66CC33", "#CC0000", "#AAEE22", "#EEBB44", "#FF99BB", "#00BBFF"], ["raiseasuilen", "raise a suilen", "ras", "RAISE A SUILEN"]),
+        (["#3381B0", "#77BBDD", "#FF8899", "#77DD77", "#FFDD88", "#7777AA"], ["mygo", "mygo!!!!!", "迷子", "MyGO!!!!!"]),
         (["#881144", "#CC4466", "#884499", "#66AA66", "#336699", "#DDBB66"], ["avemujica", "母鸡卡", "Ave Mujica"]),
         (["#7D4CFF", "#FF66AA", "#66CCFF", "#FFCC66", "#99DD66", "#CC99FF"], ["mugendaimewtype", "mugendai mewtype", "夢限大みゅーたいぷ", "梦限大", "夢限大", "Mugendai Mewtype"]),
         (["#F4B6C2", "#FF99CC", "#FFD34E", "#5B8FE8", "#E94B4B"], ["kessokuband", "結束バンド", "结束乐队", "結束樂隊", "Kessoku Band"]),
@@ -354,10 +392,10 @@ enum CardTagColorPalette {
     ]
 
     private nonisolated static let splitDefaults: [(leadingHex: String, trailingHex: String, keywords: [String])] = [
-        ("#00A0E9", "#33AAEE", ["星乃一歌", "一歌", "Ichika Hoshino", "ichika", "hoshinoichika"]),
-        ("#00A0E9", "#FFDD45", ["天马咲希", "天馬咲希", "咲希", "Saki Tenma", "saki", "tenmasaki"]),
-        ("#00A0E9", "#EE6666", ["望月穗波", "望月穂波", "穗波", "穂波", "Honami Mochizuki", "honami", "mochizukihonami"]),
-        ("#00A0E9", "#BBDD22", ["日野森志步", "日野森志歩", "志步", "志歩", "Shiho Hinomori", "shiho", "hinomorishiho"]),
+        ("#4455DD", "#33AAEE", ["星乃一歌", "一歌", "Ichika Hoshino", "ichika", "hoshinoichika"]),
+        ("#4455DD", "#FFDD44", ["天马咲希", "天馬咲希", "咲希", "Saki Tenma", "saki", "tenmasaki"]),
+        ("#4455DD", "#EE6666", ["望月穗波", "望月穂波", "穗波", "穂波", "Honami Mochizuki", "honami", "mochizukihonami"]),
+        ("#4455DD", "#BBDD22", ["日野森志步", "日野森志歩", "志步", "志歩", "Shiho Hinomori", "shiho", "hinomorishiho"]),
         ("#88DD44", "#FFCCAA", ["花里实乃理", "花里實乃理", "花里実乃理", "花里みのり", "实乃理", "實乃理", "実乃理", "みのり", "Minori Hanasato", "minori", "hanasatominori"]),
         ("#88DD44", "#99CCFF", ["桐谷遥", "桐谷遙", "遥", "遙", "Haruka Kiritani", "haruka", "kiritaniharuka"]),
         ("#88DD44", "#FFAACC", ["桃井爱莉", "桃井愛莉", "爱莉", "愛莉", "Airi Momoi", "airi", "momoiairi"]),
@@ -371,49 +409,50 @@ enum CardTagColorPalette {
         ("#FF9900", "#33DD99", ["草薙宁宁", "草薙寧寧", "草薙寧々", "宁宁", "寧寧", "寧々", "Nene Kusanagi", "nene", "kusanaginene"]),
         ("#FF9900", "#BB88EE", ["神代类", "神代類", "类", "類", "Rui Kamishiro", "rui", "kamishirorui"]),
         ("#884499", "#BB6688", ["宵崎奏", "奏", "Kanade Yoisaki", "kanade", "yoisakikanade"]),
-        ("#884499", "#8889CC", ["朝比奈真冬", "朝比奈まふゆ", "真冬", "Mafuyu Asahina", "mafuyu", "asahinamafuyu"]),
+        ("#884499", "#8888CC", ["朝比奈真冬", "朝比奈まふゆ", "真冬", "Mafuyu Asahina", "mafuyu", "asahinamafuyu"]),
         ("#884499", "#CCAA88", ["东云绘名", "東雲繪名", "東雲絵名", "绘名", "繪名", "絵名", "Ena Shinonome", "ena", "shinonomeena"]),
         ("#884499", "#DDAACC", ["晓山瑞希", "曉山瑞希", "暁山瑞希", "瑞希", "Mizuki Akiyama", "mizuki", "akiyamamizuki"]),
         ("#FF3377", "#FF5522", ["户山香澄", "戸山香澄", "香澄", "Kasumi Toyama", "kasumi", "toyamakasumi"]),
-        ("#FF3377", "#3366CC", ["花园多惠", "花園たえ", "多惠", "たえ", "Tae Hanazono", "tae", "hanazonotae"]),
-        ("#FF3377", "#FF99CC", ["牛込里美", "牛込りみ", "里美", "りみ", "Rimi Ushigome", "rimi", "ushigomerimi"]),
-        ("#FF3377", "#FFCC33", ["山吹沙绫", "山吹沙綾", "山吹沙綾", "沙绫", "沙綾", "Saaya Yamabuki", "saaya", "yamabukisaaya"]),
-        ("#FF3377", "#AA66CC", ["市谷有咲", "有咲", "Arisa Ichigaya", "arisa", "ichigayaarisa"]),
-        ("#E53344", "#E5004F", ["美竹兰", "美竹蘭", "蘭", "Ran Mitake", "ran", "mitakeran"]),
-        ("#E53344", "#55BB77", ["青叶摩卡", "青葉モカ", "摩卡", "モカ", "Moca Aoba", "moca", "aobamoca"]),
-        ("#E53344", "#FF77AA", ["上原绯玛丽", "上原緋瑪麗", "上原ひまり", "绯玛丽", "緋瑪麗", "ひまり", "Himari Uehara", "himari", "ueharahimari"]),
-        ("#E53344", "#CC3333", ["宇田川巴", "巴", "Tomoe Udagawa", "tomoe", "udagawatomoe"]),
-        ("#E53344", "#FFCC66", ["羽泽鸫", "羽澤つぐみ", "鸫", "つぐみ", "Tsugumi Hazawa", "tsugumi", "hazawatsugumi"]),
-        ("#33DDAA", "#FF66AA", ["丸山彩", "彩", "Aya Maruyama", "aya", "maruyamaaya"]),
-        ("#33DDAA", "#66CCFF", ["冰川日菜", "氷川日菜", "日菜", "Hina Hikawa", "hina", "hikawahina"]),
-        ("#33DDAA", "#FFEE99", ["白鹭千圣", "白鷺千聖", "千圣", "千聖", "Chisato Shirasagi", "chisato", "shirasagichisato"]),
-        ("#33DDAA", "#88DD44", ["大和麻弥", "大和麻彌", "麻弥", "麻彌", "Maya Yamato", "maya", "yamatomaya"]),
-        ("#33DDAA", "#CC99FF", ["若宫伊芙", "若宮イヴ", "伊芙", "イヴ", "Eve Wakamiya", "eve", "wakamiyaeve"]),
-        ("#3344AA", "#3344AA", ["凑友希那", "湊友希那", "友希那", "Yukina Minato", "yukina", "minatoyukina"]),
-        ("#3344AA", "#66CCFF", ["冰川纱夜", "氷川紗夜", "纱夜", "紗夜", "Sayo Hikawa", "sayo", "hikawasayo"]),
-        ("#3344AA", "#DD2244", ["今井莉莎", "今井リサ", "莉莎", "リサ", "Lisa Imai", "lisa", "imailisa"]),
-        ("#3344AA", "#AA44DD", ["宇田川亚子", "宇田川あこ", "亚子", "あこ", "Ako Udagawa", "ako", "udagawaako"]),
-        ("#3344AA", "#9999CC", ["白金燐子", "燐子", "Rinko Shirokane", "rinko", "shirokanerinko"]),
-        ("#FFC02A", "#FFCC33", ["弦卷心", "弦巻こころ", "心", "こころ", "Kokoro Tsurumaki", "kokoro", "tsurumakikokoro"]),
-        ("#FFC02A", "#AA66CC", ["濑田薰", "瀬田薫", "薰", "薫", "Kaoru Seta", "kaoru", "setakaoru"]),
-        ("#FFC02A", "#FF9933", ["北泽育美", "北沢はぐみ", "育美", "はぐみ", "Hagumi Kitazawa", "hagumi", "kitazawahagumi"]),
-        ("#FFC02A", "#66CCFF", ["松原花音", "花音", "Kanon Matsubara", "kanon", "matsubarakanon"]),
-        ("#FFC02A", "#996633", ["奥泽美咲", "奥沢美咲", "美咲", "米歇尔", "ミッシェル", "Misaki Okusawa", "Michelle", "misaki", "okusawamisaki"]),
-        ("#33AADD", "#AABBFF", ["仓田真白", "倉田ましろ", "真白", "ましろ", "Mashiro Kurata", "mashiro", "kuratamashiro"]),
-        ("#33AADD", "#FF99CC", ["桐谷透子", "桐ヶ谷透子", "透子", "Toko Kirigaya", "toko", "kirigayatoko"]),
-        ("#33AADD", "#99DD66", ["广町七深", "広町七深", "七深", "Nanami Hiromachi", "nanami", "hiromachinanami"]),
-        ("#33AADD", "#FFCC66", ["二叶筑紫", "二葉つくし", "筑紫", "つくし", "Tsukushi Futaba", "tsukushi", "futabatukushi", "futabatsukushi"]),
-        ("#33AADD", "#6699CC", ["八潮瑠唯", "瑠唯", "Rui Yashio", "yashiorui"]),
-        ("#66CC33", "#AA3333", ["和奏蕾依", "和奏レイ", "蕾依", "レイヤ", "LAYER", "Rei Wakana", "reiwakana"]),
-        ("#66CC33", "#77CC44", ["朝日六花", "六花", "ロック", "LOCK", "Rokka Asahi", "rokka", "asahirokka"]),
-        ("#66CC33", "#FF9933", ["佐藤益木", "益木", "マスキング", "MASKING", "Masuki Sato", "masuki", "satomasuki"]),
-        ("#66CC33", "#FF77BB", ["鳰原令王那", "令王那", "パレオ", "PAREO", "Reona Nyubara", "reona", "nyubarareona"]),
-        ("#66CC33", "#66CCFF", ["珠手知由", "知由", "チュチュ", "CHU2", "Chiyu Tamade", "chiyu", "tamadechiyu"]),
+        ("#FF3377", "#0077DD", ["花园多惠", "花園たえ", "多惠", "たえ", "Tae Hanazono", "tae", "hanazonotae"]),
+        ("#FF3377", "#FF55BB", ["牛込里美", "牛込りみ", "里美", "りみ", "Rimi Ushigome", "rimi", "ushigomerimi"]),
+        ("#FF3377", "#FFCC11", ["山吹沙绫", "山吹沙綾", "山吹沙綾", "沙绫", "沙綾", "Saaya Yamabuki", "saaya", "yamabukisaaya"]),
+        ("#FF3377", "#AA66DD", ["市谷有咲", "有咲", "Arisa Ichigaya", "arisa", "ichigayaarisa"]),
+        ("#E53344", "#EE0022", ["美竹兰", "美竹蘭", "蘭", "Ran Mitake", "ran", "mitakeran"]),
+        ("#E53344", "#00CCAA", ["青叶摩卡", "青葉モカ", "摩卡", "モカ", "Moca Aoba", "moca", "aobamoca"]),
+        ("#E53344", "#FF9999", ["上原绯玛丽", "上原緋瑪麗", "上原ひまり", "绯玛丽", "緋瑪麗", "ひまり", "Himari Uehara", "himari", "ueharahimari"]),
+        ("#E53344", "#BB0033", ["宇田川巴", "巴", "Tomoe Udagawa", "tomoe", "udagawatomoe"]),
+        ("#E53344", "#FFEE88", ["羽泽鸫", "羽澤つぐみ", "鸫", "つぐみ", "Tsugumi Hazawa", "tsugumi", "hazawatsugumi"]),
+        ("#33DDAA", "#FF88BB", ["丸山彩", "彩", "Aya Maruyama", "aya", "maruyamaaya"]),
+        ("#33DDAA", "#55DDEE", ["冰川日菜", "氷川日菜", "日菜", "Hina Hikawa", "hina", "hikawahina"]),
+        ("#33DDAA", "#FFEEAA", ["白鹭千圣", "白鷺千聖", "千圣", "千聖", "Chisato Shirasagi", "chisato", "shirasagichisato"]),
+        ("#33DDAA", "#99DD88", ["大和麻弥", "大和麻彌", "麻弥", "麻彌", "Maya Yamato", "maya", "yamatomaya"]),
+        ("#33DDAA", "#DDBBFF", ["若宫伊芙", "若宮イヴ", "伊芙", "イヴ", "Eve Wakamiya", "eve", "wakamiyaeve"]),
+        ("#3344AA", "#881188", ["凑友希那", "湊友希那", "友希那", "Yukina Minato", "yukina", "minatoyukina"]),
+        ("#3344AA", "#00AABB", ["冰川纱夜", "氷川紗夜", "纱夜", "紗夜", "Sayo Hikawa", "sayo", "hikawasayo"]),
+        ("#3344AA", "#DD2200", ["今井莉莎", "今井リサ", "莉莎", "リサ", "Lisa Imai", "lisa", "imailisa"]),
+        ("#3344AA", "#DD0088", ["宇田川亚子", "宇田川あこ", "亚子", "あこ", "Ako Udagawa", "ako", "udagawaako"]),
+        ("#3344AA", "#BBBBBB", ["白金燐子", "燐子", "Rinko Shirokane", "rinko", "shirokanerinko"]),
+        ("#FFC02A", "#FFEE22", ["弦卷心", "弦巻こころ", "心", "こころ", "Kokoro Tsurumaki", "kokoro", "tsurumakikokoro"]),
+        ("#FFC02A", "#AA33CC", ["濑田薰", "瀬田薫", "薰", "薫", "Kaoru Seta", "kaoru", "setakaoru"]),
+        ("#FFC02A", "#FF9922", ["北泽育美", "北沢はぐみ", "育美", "はぐみ", "Hagumi Kitazawa", "hagumi", "kitazawahagumi"]),
+        ("#FFC02A", "#44DDFF", ["松原花音", "花音", "Kanon Matsubara", "kanon", "matsubarakanon"]),
+        ("#FFC02A", "#006699", ["奥泽美咲", "奥沢美咲", "美咲", "Misaki Okusawa", "misaki", "okusawamisaki"]),
+        ("#FFC02A", "#DD33CC", ["米歇尔", "米歇爾", "ミッシェル", "Michelle"]),
+        ("#33AADD", "#6677CC", ["仓田真白", "倉田ましろ", "真白", "ましろ", "Mashiro Kurata", "mashiro", "kuratamashiro"]),
+        ("#33AADD", "#EE6666", ["桐谷透子", "桐ヶ谷透子", "透子", "Toko Kirigaya", "toko", "kirigayatoko"]),
+        ("#33AADD", "#EE7744", ["广町七深", "広町七深", "七深", "Nanami Hiromachi", "nanami", "hiromachinanami"]),
+        ("#33AADD", "#EE7788", ["二叶筑紫", "二葉つくし", "筑紫", "つくし", "Tsukushi Futaba", "tsukushi", "futabatukushi", "futabatsukushi"]),
+        ("#33AADD", "#669988", ["八潮瑠唯", "瑠唯", "Rui Yashio", "yashiorui"]),
+        ("#66CC33", "#CC0000", ["和奏蕾依", "和奏レイ", "蕾依", "レイヤ", "LAYER", "Rei Wakana", "reiwakana"]),
+        ("#66CC33", "#AAEE22", ["朝日六花", "六花", "ロック", "LOCK", "Rokka Asahi", "rokka", "asahirokka"]),
+        ("#66CC33", "#EEBB44", ["佐藤益木", "益木", "マスキング", "MASKING", "Masuki Sato", "masuki", "satomasuki"]),
+        ("#66CC33", "#FF99BB", ["鳰原令王那", "令王那", "パレオ", "PAREO", "Reona Nyubara", "reona", "nyubarareona"]),
+        ("#66CC33", "#00BBFF", ["珠手知由", "知由", "チュチュ", "CHU2", "Chiyu Tamade", "chiyu", "tamadechiyu"]),
         ("#3381B0", "#77BBDD", ["高松灯", "高松燈", "灯", "燈", "Tomori Takamatsu", "tomori", "takamatsutomori"]),
         ("#3381B0", "#FF8899", ["千早爱音", "千早愛音", "爱音", "愛音", "Anon Chihaya", "anon", "chihayaanon"]),
-        ("#3381B0", "#66CC99", ["要乐奈", "要楽奈", "乐奈", "楽奈", "Raana Kaname", "raana", "kanameraana"]),
-        ("#3381B0", "#DDBB66", ["长崎素世", "長崎そよ", "素世", "そよ", "Soyo Nagasaki", "soyo", "nagasakisoyo"]),
-        ("#3381B0", "#4455AA", ["椎名立希", "立希", "Taki Shiina", "taki", "shiinataki"]),
+        ("#3381B0", "#77DD77", ["要乐奈", "要楽奈", "乐奈", "楽奈", "Raana Kaname", "raana", "kanameraana"]),
+        ("#3381B0", "#FFDD88", ["长崎素世", "長崎そよ", "素世", "そよ", "Soyo Nagasaki", "soyo", "nagasakisoyo"]),
+        ("#3381B0", "#7777AA", ["椎名立希", "立希", "Taki Shiina", "taki", "shiinataki"]),
         ("#881144", "#CC4466", ["三角初华", "三角初華", "初华", "初華", "Doloris", "Uika Misumi", "uika", "misumiuika"]),
         ("#881144", "#884499", ["丰川祥子", "豊川祥子", "祥子", "Oblivionis", "Sakiko Togawa", "sakiko", "togawasakiko"]),
         ("#881144", "#66AA66", ["若叶睦", "若葉睦", "睦", "Mortis", "Mutsumi Wakaba", "mutsumi", "wakabamutsumi"]),
@@ -463,7 +502,7 @@ enum CardTagColorPalette {
         ("#FF3377", ["poppinparty", "poppin'party", "ポピパ", "户山香澄", "戸山香澄", "花园多惠", "花園たえ", "牛込里美", "牛込りみ", "山吹沙绫", "山吹沙綾", "市谷有咲"]),
         ("#7D4CFF", ["mugendaimewtype", "mugendai mewtype", "夢限大みゅーたいぷ", "梦限大", "夢限大", "仲町阿拉蕾", "仲町あられ", "宫永野乃花", "宮永ののか", "峰月律", "藤都子", "千石由乃", "千石ユノ"]),
         ("#00A0E9", ["projectsekai", "project sekai", "pjsk", "啤酒烧烤", "啤酒燒烤", "プロセカ", "世界计划", "世界計畫", "世界計画", "世嘉彩舞", "彩舞", "世界计划彩色舞台", "世界計畫彩色舞台"]),
-        ("#00A0E9", ["leoneed", "leo/need", "l/n", "ln", "レオニ", "星乃一歌", "一歌", "天马咲希", "天馬咲希", "咲希", "望月穗波", "望月穂波", "穗波", "穂波", "日野森志步", "日野森志歩", "志步", "志歩"]),
+        ("#4455DD", ["leoneed", "leo/need", "l/n", "ln", "レオニ", "星乃一歌", "一歌", "天马咲希", "天馬咲希", "咲希", "望月穗波", "望月穂波", "穗波", "穂波", "日野森志步", "日野森志歩", "志步", "志歩"]),
         ("#88DD44", ["moremorejump", "MORE MORE JUMP!", "mmj", "モモジャン", "桃跳", "花里实乃理", "花里実乃理", "花里みのり", "实乃理", "実乃理", "みのり", "桐谷遥", "桃井爱莉", "桃井愛莉", "爱莉", "愛莉", "日野森雫"]),
         ("#EE1166", ["vividbadsquad", "vbs", "ビビバス", "小豆泽心羽", "小豆沢こはね", "こはね", "白石杏", "东云彰人", "東雲彰人", "彰人", "青柳冬弥", "青柳冬彌", "冬弥", "冬彌"]),
         ("#FF9900", ["wonderlandsxshowtime", "Wonderlands x Showtime", "ワンダーランズ x ショウタイム", "ワンダーランズ×ショウタイム", "ws", "wxS", "wxs", "ワンダショ", "ワショ", "天马司", "天馬司", "凤笑梦", "鳳えむ", "笑梦", "草薙宁宁", "草薙寧々", "宁宁", "寧々", "神代类", "神代類"]),
@@ -506,16 +545,18 @@ enum CardTagColorPalette {
 
     nonisolated static func colorStyle(for tag: String, overrides: [String: CardTagColorOverride] = [:]) -> CardTagColorStyle {
         let key = normalized(tag)
+        if let override = overrides[key], override.mode == .custom,
+           !normalizedHexes(override.hexes).isEmpty {
+            return CardTagColorStyle(segmentHexes: normalizedHexes(override.hexes))
+        }
+        if let override = overrides[key], let colors = override.referenceColors, !colors.isEmpty {
+            return CardTagColorStyle(segmentHexes: override.mode == .solid ? [override.referenceSolid ?? colors[0]] : colors)
+        }
         if let preset = presetStyle(for: tag) {
             if overrides[key]?.mode == .solid {
                 return CardTagColorStyle(leadingHex: preset.solidHex, trailingHex: nil)
             }
             return preset.style
-        }
-
-        if let override = overrides[key],
-           override.mode == .custom {
-            return CardTagColorStyle(segmentHexes: normalizedHexes(override.hexes))
         }
 
         return CardTagColorStyle(leadingHex: defaultHex(for: tag), trailingHex: nil)
@@ -559,17 +600,9 @@ enum CardTagColorPalette {
             let key = normalized(tag)
             guard validKeys.contains(key) else { continue }
 
-            if presetStyle(for: tag) != nil {
-                if override.mode == .solid {
-                    normalizedOverrides[key] = CardTagColorOverride(mode: .solid, hexes: [])
-                }
-                continue
-            }
-
-            guard !isPresetColored(tag) else { continue }
             let hexes = normalizedHexes(override.hexes)
-            if !hexes.isEmpty {
-                normalizedOverrides[key] = CardTagColorOverride(mode: .custom, hexes: hexes)
+            if !hexes.isEmpty || override.mode != .custom {
+                normalizedOverrides[key] = CardTagColorOverride(mode: override.mode, hexes: hexes, textWeight: override.textWeight)
             }
         }
 
@@ -589,12 +622,13 @@ enum CardTagColorPalette {
         presetStyle(for: tag) != nil || defaultHexMatch(for: tag) != nil
     }
 
-    nonisolated static func hasPresetSplitStyle(for tag: String) -> Bool {
-        presetStyle(for: tag) != nil
+    nonisolated static func hasPresetSplitStyle(for tag: String, overrides: [String: CardTagColorOverride] = [:]) -> Bool {
+        if let colors = overrides[normalized(tag)]?.referenceColors { return colors.count > 1 }
+        return presetStyle(for: tag)?.style.isMulticolor == true
     }
 
     nonisolated static func presetMode(for tag: String, overrides: [String: CardTagColorOverride]) -> CardTagColorOverride.Mode {
-        overrides[normalized(tag)]?.mode == .solid ? .solid : .preset
+        overrides[normalized(tag)]?.mode ?? (hasPresetSplitStyle(for: tag, overrides: overrides) ? .preset : .solid)
     }
 
     nonisolated static func presetSolidHex(for tag: String) -> String {
@@ -603,11 +637,11 @@ enum CardTagColorPalette {
 
     nonisolated static func customHexes(for tag: String, overrides: [String: CardTagColorOverride]) -> [String] {
         let key = normalized(tag)
-        if let override = overrides[key], override.mode == .custom {
+        if let override = overrides[key] {
             let hexes = normalizedHexes(override.hexes)
             if !hexes.isEmpty { return hexes }
         }
-        return [fallbackHex]
+        return [overrides[key]?.referenceSolid ?? presetSolidHex(for: tag)]
     }
 
     private nonisolated static func presetStyle(for tag: String) -> (style: CardTagColorStyle, solidHex: String)? {
@@ -622,7 +656,8 @@ enum CardTagColorPalette {
         for entry in multiDefaults {
             if entry.keywords.contains(where: { key == normalized($0) }) {
                 let hexes = normalizedPresetHexes(entry.hexes)
-                return (CardTagColorStyle(segmentHexes: hexes), hexes.first ?? fallbackHex)
+                let solidHex = entry.keywords.contains("projectsekai") ? "#00A0E9" : (hexes.first ?? fallbackHex)
+                return (CardTagColorStyle(segmentHexes: hexes), solidHex)
             }
         }
 
@@ -656,16 +691,17 @@ enum CardTagColorPalette {
     }
 
     private nonisolated static func normalized(_ override: CardTagColorOverride) -> CardTagColorOverride {
-        switch override.mode {
-        case .preset, .solid:
-            return CardTagColorOverride(mode: override.mode, hexes: [])
-        case .custom:
-            return CardTagColorOverride(mode: .custom, hexes: normalizedHexes(override.hexes))
-        }
+        CardTagColorOverride(mode: override.mode, hexes: normalizedHexes(override.hexes), textWeight: override.textWeight)
     }
 
+    nonisolated static func textWeight(for tag: String, overrides: [String: CardTagColorOverride]) -> CardTagTextWeight {
+        overrides[normalized(tag)]?.textWeight ?? .regular
+    }
+
+    nonisolated static let maxCustomColors = 5
+
     private nonisolated static func normalizedHexes(_ values: [String]) -> [String] {
-        Array(values.compactMap(normalizedHex).prefix(3))
+        Array(values.compactMap(normalizedHex).prefix(maxCustomColors))
     }
 
     private nonisolated static func normalizedPresetHexes(_ values: [String]) -> [String] {
@@ -694,6 +730,29 @@ struct CardTagColorOverride: Codable, Equatable {
 
     var mode: Mode
     var hexes: [String]
+    var textWeight: CardTagTextWeight? = nil
+    var referenceColors: [String]? = nil
+    var referenceSolid: String? = nil
+}
+
+enum CardTagTextWeight: String, Codable, CaseIterable {
+    case regular, medium, bold
+
+    nonisolated var next: Self {
+        switch self {
+        case .regular: .medium
+        case .medium: .bold
+        case .bold: .regular
+        }
+    }
+
+    nonisolated var fontWeight: Font.Weight {
+        switch self {
+        case .regular: .regular
+        case .medium: .semibold
+        case .bold: .heavy
+        }
+    }
 }
 
 struct CardTagColorStyle {
@@ -725,5 +784,40 @@ struct CardTagColorStyle {
 
     nonisolated var isMulticolor: Bool {
         segmentHexes.count > 1 && isSplit
+    }
+
+    nonisolated var ink: CardTagInk { CardTagInk(hexes: segmentHexes) }
+}
+
+struct CardTagInk {
+    let white: Bool
+    let outlined: Bool
+
+    nonisolated init(hexes: [String]) {
+        let luminances = hexes.map { hex -> Double in
+            let value = UInt32(hex.trimmingCharacters(in: CharacterSet(charactersIn: "#")), radix: 16) ?? 0
+            func channel(_ shift: UInt32) -> Double {
+                let c = Double((value >> shift) & 255) / 255
+                return c <= 0.04045 ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4)
+            }
+            return 0.2126 * channel(16) + 0.7152 * channel(8) + 0.0722 * channel(0)
+        }
+        let blackContrast = luminances.map { ($0 + 0.05) / 0.05 }.min() ?? 21
+        let whiteContrast = luminances.map { 1.05 / ($0 + 0.05) }.min() ?? 1
+        white = whiteContrast > blackContrast
+        outlined = max(blackContrast, whiteContrast) < 4.5
+    }
+
+    nonisolated var foreground: Color { white ? .white : .black }
+    nonisolated var outline: Color { white ? .black : .white }
+}
+
+struct CardTagInkModifier: ViewModifier {
+    let style: CardTagColorStyle
+    func body(content: Content) -> some View {
+        let ink = style.ink
+        let outline = ink.outlined ? ink.outline.opacity(0.8) : .clear
+        content.foregroundStyle(ink.foreground)
+            .shadow(color: outline, radius: 0.8, x: 0, y: 0)
     }
 }

@@ -16,6 +16,7 @@ struct MeQRProfileCodeView: View {
     @State private var exchangeSubtitle = ""
     @State private var codeModeText = ""
     @State private var uploadTask: Task<Void, Never>?
+    @State private var activeFingerprint: String?
 
     private var sortedProfiles: [QRProfile] {
         cluster.profiles.sorted { $0.createdAt < $1.createdAt }
@@ -48,14 +49,11 @@ struct MeQRProfileCodeView: View {
         NavigationStack {
             GeometryReader { geo in
                 let isCompactHeight = geo.size.height < 820
-                let availableWidth = geo.size.width - 44
-                let qrSide = min(isCompactHeight ? 168 : 182, availableWidth * 0.52)
-                let qrHorizontalPadding: CGFloat = isCompactHeight ? 18 : 20
-                let baseCardWidth = qrSide + qrHorizontalPadding * 2
-                let cardWidth = cluster.templateStyle == .rhodesPass
-                    ? min(availableWidth * 0.86, 330)
-                    : baseCardWidth
-                let cardHeight: CGFloat = isCompactHeight ? 360 : 386
+                let availableWidth = max(0, geo.size.width - 32)
+                let contentWidth = min(availableWidth, 370)
+                let cardWidth = min(contentWidth, cluster.templateStyle == .rhodesPass ? 336 : 342)
+                let qrHorizontalPadding: CGFloat = isCompactHeight ? 14 : 16
+                let qrSide = min(isCompactHeight ? 214 : 228, max(168, cardWidth - qrHorizontalPadding * 2 - 28))
                 let avatarSide: CGFloat = isCompactHeight ? 46 : 52
                 let titleSize: CGFloat = isCompactHeight ? 23 : 25
                 let subtitleSize: CGFloat = isCompactHeight ? 14 : 15
@@ -63,63 +61,70 @@ struct MeQRProfileCodeView: View {
                     exchangeBackground
                         .ignoresSafeArea()
 
-                    VStack(alignment: .leading, spacing: isCompactHeight ? 10 : 12) {
-                        VStack(alignment: .leading, spacing: isCompactHeight ? 5 : 6) {
-                            avatar
-                                .frame(width: avatarSide, height: avatarSide)
-                                .overlay(Circle().stroke(.white.opacity(0.75), lineWidth: 2))
-                                .shadow(color: .black.opacity(0.14), radius: 8, y: 4)
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: isCompactHeight ? 10 : 12) {
+                            VStack(alignment: .leading, spacing: isCompactHeight ? 5 : 6) {
+                                avatar
+                                    .frame(width: avatarSide, height: avatarSide)
+                                    .overlay(Circle().stroke(.white.opacity(0.75), lineWidth: 2))
+                                    .shadow(color: .black.opacity(0.14), radius: 8, y: 4)
 
-                            Text(cluster.name)
-                                .font(.system(size: titleSize, weight: .black))
-                                .foregroundStyle(.black)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.72)
+                                Text(cluster.name)
+                                    .font(.system(size: titleSize, weight: .black))
+                                    .foregroundStyle(.black)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.72)
 
-                            if !displaySubtitle.isEmpty {
-                                Text(displaySubtitle)
-                                    .font(.system(size: subtitleSize, weight: .semibold))
-                                    .foregroundStyle(.black.opacity(0.78))
-                                    .lineLimit(2)
-                                    .fixedSize(horizontal: false, vertical: true)
+                                if !displaySubtitle.isEmpty {
+                                    Text(displaySubtitle)
+                                        .font(.system(size: subtitleSize, weight: .semibold))
+                                        .foregroundStyle(.black.opacity(0.78))
+                                        .lineLimit(2)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
                             }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.top, 8)
+
+                            MeQRExchangeCard(
+                                codeString: codeString,
+                                colorAvatarJPEG: colorAvatarJPEG,
+                                codeModeText: codeModeText,
+                                includedProfiles: includedProfiles,
+                                includedPlatformSummary: includedPlatformSummary,
+                                templateStyle: cluster.templateStyle,
+                                textColor: cluster.textColor,
+                                backgroundColor: cluster.backgroundColor,
+                                qrColor: cluster.qrColor,
+                                qrSide: qrSide,
+                                qrHorizontalPadding: qrHorizontalPadding,
+                                cardWidth: cardWidth,
+                                isCompactHeight: isCompactHeight
+                            )
+                            .frame(maxWidth: .infinity, alignment: .center)
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.top, 8)
-
-                        MeQRExchangeCard(
-                            codeString: codeString,
-                            colorAvatarJPEG: colorAvatarJPEG,
-                            codeModeText: codeModeText,
-                            includedProfiles: includedProfiles,
-                            includedPlatformSummary: includedPlatformSummary,
-                            templateStyle: cluster.templateStyle,
-                            textColor: cluster.textColor,
-                            backgroundColor: cluster.backgroundColor,
-                            qrColor: cluster.qrColor,
-                            qrSide: qrSide,
-                            qrHorizontalPadding: qrHorizontalPadding,
-                            cardWidth: cardWidth,
-                            cardHeight: cardHeight,
-                            isCompactHeight: isCompactHeight
-                        )
-                        .frame(maxWidth: .infinity, alignment: .center)
-
-                        Spacer(minLength: 12)
-
-                        Button {
-                            saveCodeToPhotos()
-                        } label: {
-                            Label(L.saveMeQRCode, systemImage: "square.and.arrow.down")
-                                .font(.system(size: isCompactHeight ? 15 : 16, weight: .semibold))
-                                .frame(maxWidth: .infinity)
-                                .frame(height: isCompactHeight ? 44 : 48)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .clipShape(Capsule())
+                        .frame(width: contentWidth, alignment: .leading)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, isCompactHeight ? 10 : 18)
+                        .padding(.bottom, 96)
                     }
+                    .scrollIndicators(.hidden)
+                }
+                .safeAreaInset(edge: .bottom) {
+                    Button {
+                        saveCodeToPhotos()
+                    } label: {
+                        Label(L.saveMeQRCode, systemImage: "square.and.arrow.down")
+                            .font(.system(size: isCompactHeight ? 15 : 16, weight: .semibold))
+                            .frame(maxWidth: .infinity)
+                            .frame(height: isCompactHeight ? 44 : 48)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .clipShape(Capsule())
+                    .frame(maxWidth: max(0, min(geo.size.width - 44, 360)))
                     .padding(.horizontal, 22)
-                    .padding(.bottom, max(14, geo.safeAreaInsets.bottom + 8))
+                    .padding(.top, 8)
+                    .padding(.bottom, max(10, geo.safeAreaInsets.bottom + 6))
                 }
             }
             .navigationTitle(L.meqrProfileCode)
@@ -147,6 +152,7 @@ struct MeQRProfileCodeView: View {
             .onDisappear {
                 uploadTask?.cancel()
                 uploadTask = nil
+                activeFingerprint = nil
             }
             .onChange(of: selectedProfileIDs) { _, _ in
                 persistSelection()
@@ -243,61 +249,72 @@ struct MeQRProfileCodeView: View {
     }
 
     private func buildCode() {
-        uploadTask?.cancel()
-        uploadTask = nil
-
         do {
             let selectedProfiles = selectedProfilesForCode()
             let exchangeSubtitle = displaySubtitle
-            var localProfile = MeQRExchangeProfile(cluster: cluster, profiles: selectedProfiles, avatarMaxBytes: 0)
-            localProfile.subtitle = exchangeSubtitle
-            var offlineFallback = MeQRExchangeProfile(offlineCluster: cluster, profile: offlineProfile)
-            offlineFallback.subtitle = exchangeSubtitle
-            let localCode = colorEnhancedCode(for: try MeQRExchangeCodec.encode(localProfile))
-            codeString = localCode.payload
-            colorAvatarJPEG = localCode.avatarJPEG
-            codeModeText = L.meqrCodeUploading
-
-            uploadTask = Task {
+            let fingerprint = try exchangeFingerprint(selectedProfiles: selectedProfiles, subtitle: exchangeSubtitle)
+            guard activeFingerprint != fingerprint else { return }
+            uploadTask?.cancel()
+            activeFingerprint = fingerprint
+            let store = MeQRExchangeCodeStore()
+            var record: MeQRExchangeCodeRecord
+            if let cached = store.load(clusterID: cluster.id, fingerprint: fingerprint),
+               cached.onlineProfile.subtitle == cluster.subtitle {
+                record = cached
+            } else {
+                let credentials = MeQRExchangeCodeRecord.credentials()
+                var offline = MeQRExchangeProfile(offlineCluster: cluster, profile: offlineProfile)
+                offline.subtitle = exchangeSubtitle
+                var online = MeQRExchangeProfile(cluster: cluster, profiles: selectedProfiles, avatarMaxBytes: 256 * 1024)
+                online.intro = ""
+                let code = colorEnhancedCode(for: try MeQRExchangeCodec.encodeHybrid(
+                    remoteURL: "https://profile.meqrcode.cn/encounter-sessions/" + credentials.sessionID,
+                    offlineProfile: offline
+                ))
+                record = MeQRExchangeCodeRecord(fingerprint: fingerprint, payload: code.payload, avatarJPEG: code.avatarJPEG,
+                    sessionID: credentials.sessionID, ownerToken: credentials.ownerToken, onlineProfile: online,
+                    eventID: EventStore.shared.activeEvent?.id, synced: false)
+                try store.save(record, clusterID: cluster.id)
+            }
+            codeString = record.payload
+            colorAvatarJPEG = record.avatarJPEG
+            codeModeText = record.synced ? L.meqrCodeOnlineReady : L.meqrCodeUploading
+            EncounterStore.shared.registerOutgoingSession(record.sessionID, ownerToken: record.ownerToken)
+            guard !record.synced else { return }
+            let pending = record
+            uploadTask = Task { @MainActor in
                 do {
-                    var onlineProfile = MeQRExchangeProfile(cluster: cluster, profiles: selectedProfiles, avatarMaxBytes: 256 * 1024)
-                    onlineProfile.subtitle = cluster.subtitle
-                    onlineProfile.intro = ""
-                    let remoteURL = try await MeQRRemoteService.uploadProfile(onlineProfile)
-                    let sessionURL: String
-                    do {
-                        let session = try await MeQRRemoteService.createEncounterSession(
-                            creatorProfile: onlineProfile,
-                            eventID: EventStore.shared.activeEvent?.id
-                        )
-                        sessionURL = session.url
-                        await MainActor.run {
-                            EncounterStore.shared.registerOutgoingSession(session.sessionID)
-                        }
-                    } catch {
-                        // A profile URL still provides one-way exchange if session creation is unavailable.
-                        sessionURL = remoteURL
-                    }
-                    let hybridCode = colorEnhancedCode(
-                        for: try MeQRExchangeCodec.encodeHybrid(remoteURL: sessionURL, offlineProfile: offlineFallback)
-                    )
-                    await MainActor.run {
-                        guard !Task.isCancelled else { return }
-                        codeString = hybridCode.payload
-                        colorAvatarJPEG = hybridCode.avatarJPEG
-                        codeModeText = L.meqrCodeOnlineReady
-                    }
+                    try await MeQRRemoteService.publishExchangeCode(pending)
+                    try Task.checkCancellation()
+                    guard activeFingerprint == fingerprint else { return }
+                    try store.markSynced(pending, clusterID: cluster.id)
+                    codeModeText = L.meqrCodeOnlineReady
                 } catch {
-                    await MainActor.run {
-                        guard !Task.isCancelled else { return }
-                        codeModeText = L.meqrCodeUploadFailed(error.localizedDescription)
-                    }
+                    guard !Task.isCancelled, activeFingerprint == fingerprint else { return }
+                    codeModeText = L.meqrCodeUploadFailed(error.localizedDescription)
                 }
             }
         } catch {
+            activeFingerprint = nil
             saveError = error.localizedDescription
             showSaveError = true
         }
+    }
+
+    private func exchangeFingerprint(selectedProfiles: [QRProfile], subtitle: String) throws -> String {
+        var values = [
+            "exchange-v2", cluster.id.uuidString, cluster.name, cluster.subtitle, subtitle,
+            MeQRExchangeCodeRecord.digest(cluster.avatarImageData ?? Data()),
+            MeQRExchangeCodeRecord.digest(cluster.backgroundImageData ?? Data()),
+            MeQRExchangeCodeRecord.digest(cluster.rhodesBannerImageData ?? Data()),
+            cluster.backgroundColorHex, cluster.textColorHex ?? "", cluster.qrColorHex ?? "",
+            cluster.templateStyleRawValue ?? "", offlineProfile?.id.uuidString ?? "",
+            EventStore.shared.activeEvent?.id.uuidString ?? ""
+        ]
+        for profile in selectedProfiles {
+            values.append(contentsOf: [profile.id.uuidString, profile.platformType, profile.platformDisplayName, profile.qrContent])
+        }
+        return MeQRExchangeCodeRecord.digest(try JSONEncoder().encode(values))
     }
 
     private func selectedProfilesForCode() -> [QRProfile] {
@@ -396,7 +413,9 @@ struct MeQRProfileCodeView: View {
         let renderer = ImageRenderer(content: MeQRProfileCodeShareImage(
             cluster: cluster,
             codeString: codeString,
-            colorAvatarJPEG: colorAvatarJPEG
+            colorAvatarJPEG: colorAvatarJPEG,
+            codeModeText: codeModeText,
+            includedProfiles: includedProfiles
         ))
         renderer.scale = 3
         guard let image = renderer.uiImage else {
@@ -427,6 +446,9 @@ struct MeQRProfileCodeView: View {
                 DispatchQueue.main.async {
                     if newStatus == .authorized || newStatus == .limited {
                         save()
+                    } else {
+                        saveError = L.photoPermissionNeeded
+                        showSaveError = true
                     }
                 }
             }
@@ -455,7 +477,6 @@ private struct MeQRExchangeCard: View {
     let qrSide: CGFloat
     let qrHorizontalPadding: CGFloat
     let cardWidth: CGFloat
-    let cardHeight: CGFloat
     let isCompactHeight: Bool
 
     var body: some View {
@@ -471,6 +492,7 @@ private struct MeQRExchangeCard: View {
             templateHeader
 
             qrCode
+                .accessibilityIdentifier("exchange-code-qr")
                 .frame(width: qrSide, height: qrSide)
                 .padding(.horizontal, qrHorizontalPadding)
                 .padding(.vertical, isCompactHeight ? 12 : 14)
@@ -492,7 +514,7 @@ private struct MeQRExchangeCard: View {
                 .padding(.horizontal, 10)
         }
         .padding(.vertical, templateStyle == .standard ? (isCompactHeight ? 12 : 14) : (isCompactHeight ? 14 : 16))
-        .frame(width: cardWidth, height: cardHeight, alignment: .top)
+        .frame(width: cardWidth, alignment: .top)
         .background(cardBackground, in: RoundedRectangle(cornerRadius: cardCornerRadius))
         .overlay(
             RoundedRectangle(cornerRadius: cardCornerRadius)
@@ -509,6 +531,7 @@ private struct MeQRExchangeCard: View {
 
                 VStack(alignment: .leading, spacing: isCompactHeight ? 8 : 10) {
                     qrCode
+                        .accessibilityIdentifier("exchange-code-qr")
                         .frame(width: rhodesQRSide, height: rhodesQRSide)
                         .padding(isCompactHeight ? 10 : 12)
                         .background(.white, in: RoundedRectangle(cornerRadius: 18))
@@ -534,7 +557,7 @@ private struct MeQRExchangeCard: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             }
         }
-        .frame(width: cardWidth, height: cardHeight, alignment: .top)
+        .frame(width: cardWidth, alignment: .top)
         .background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -873,63 +896,91 @@ private struct MeQRProfileCodeShareImage: View {
     let cluster: QRCluster
     let codeString: String
     let colorAvatarJPEG: Data?
+    let codeModeText: String
+    let includedProfiles: [QRProfile]
+
+    private var includedPlatformSummary: String {
+        let names = includedProfiles.map(\.platformDisplayName).joined(separator: " / ")
+        return L.meqrIncludedPlatforms(includedProfiles.count, names)
+    }
 
     var body: some View {
         ZStack {
-            if let data = cluster.backgroundImageData,
+            shareBackground
+
+            VStack(alignment: .leading, spacing: 16) {
+                shareHeader
+
+                MeQRExchangeCard(
+                    codeString: codeString,
+                    colorAvatarJPEG: colorAvatarJPEG,
+                    codeModeText: codeModeText,
+                    includedProfiles: includedProfiles,
+                    includedPlatformSummary: includedPlatformSummary,
+                    templateStyle: cluster.templateStyle,
+                    textColor: cluster.textColor,
+                    backgroundColor: cluster.backgroundColor,
+                    qrColor: cluster.qrColor,
+                    qrSide: cluster.templateStyle == .rhodesPass ? 210 : 222,
+                    qrHorizontalPadding: 14,
+                    cardWidth: cluster.templateStyle == .rhodesPass ? 328 : 318,
+                    isCompactHeight: false
+                )
+                .frame(maxWidth: .infinity, alignment: .center)
+
+                Text("MeQR")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.black.opacity(0.62))
+                    .frame(maxWidth: .infinity, alignment: .center)
+            }
+            .frame(width: 334, alignment: .leading)
+            .padding(.vertical, 24)
+        }
+        .frame(width: 390, height: 640)
+        .clipped()
+    }
+
+    @ViewBuilder
+    private var shareBackground: some View {
+        if let data = cluster.backgroundImageData,
+           let image = UIImage(data: data) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .overlay(.white.opacity(0.34))
+        } else {
+            cluster.backgroundColor.opacity(0.72)
+        }
+    }
+
+    private var shareHeader: some View {
+        HStack(alignment: .center, spacing: 12) {
+            if let data = cluster.avatarImageData,
                let image = UIImage(data: data) {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
-            } else {
-                cluster.backgroundColor
+                    .frame(width: 58, height: 58)
+                    .clipShape(Circle())
+                    .overlay(Circle().stroke(.white.opacity(0.78), lineWidth: 2))
             }
 
-            VStack(spacing: 18) {
-                if let data = cluster.avatarImageData,
-                   let image = UIImage(data: data) {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 88, height: 88)
-                        .clipShape(Circle())
-                }
-
+            VStack(alignment: .leading, spacing: 4) {
                 Text(cluster.name)
-                    .font(.system(size: 32, weight: .bold))
-                    .foregroundStyle(cluster.textColor)
+                    .font(.system(size: 25, weight: .black))
+                    .foregroundStyle(.black)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
 
                 if !cluster.subtitle.isEmpty {
-                    Text(cluster.subtitle)
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundStyle(cluster.textColor.opacity(0.75))
-                        .multilineTextAlignment(.center)
-                        .lineLimit(3)
+                    Text(ExchangeSubtitleLimiter.limited(cluster.subtitle))
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.black.opacity(0.72))
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-
-                if let image = QRCodeGenerator.generateColorLayered(from: codeString, avatarJPEG: colorAvatarJPEG, correctionLevel: "M") {
-                    Image(uiImage: image)
-                        .resizable()
-                        .interpolation(.none)
-                        .scaledToFit()
-                        .frame(width: 260, height: 260)
-                        .padding(18)
-                        .background(RoundedRectangle(cornerRadius: 24).fill(.white))
-                }
-
-                Text("MeQR")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(cluster.textColor.opacity(0.65))
             }
-            .padding(28)
-            .background(
-                RoundedRectangle(cornerRadius: cluster.cornerRadius)
-                    .fill(cluster.backgroundColor.opacity(cluster.cardOpacity ?? 0.82))
-            )
-            .padding(30)
         }
-        .frame(width: 393, height: 852)
-        .clipped()
     }
 }
 

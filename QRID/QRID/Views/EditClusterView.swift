@@ -463,7 +463,8 @@ struct EditClusterView: View {
         qrColor = cluster.qrColor
         templateStyle = cluster.templateStyle
         passSubtitle = cluster.passSubtitleText
-        tagInput = cluster.tagListRawValue ?? ""
+        cluster.migrateTagReferences()
+        tagInput = cluster.tags.joined(separator: "\n")
         tagColorOverrides = cluster.tagColorOverrides
         cornerRadius = cluster.cornerRadius
         cardOpacity = cluster.cardOpacity ?? 0.7
@@ -496,11 +497,7 @@ struct EditClusterView: View {
         cluster.qrColorHex = qrColor.toHex() ?? "#000000"
         cluster.templateStyle = templateStyle
         cluster.passSubtitle = PassSubtitleLimiter.limited(passSubtitle)
-        cluster.tagListRawValue = CardTagLimiter.normalizedRawValue(tagInput)
-        cluster.tagColorOverridesRawValue = CardTagColorPalette.rawValue(
-            from: tagColorOverrides,
-            tags: CardTagLimiter.tags(from: tagInput)
-        )
+        cluster.setTags(CardTagLimiter.tags(from: tagInput), overrides: tagColorOverrides)
         cluster.cornerRadius = cornerRadius
         cluster.cardOpacity = cardOpacity
 
