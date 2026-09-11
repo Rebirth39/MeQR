@@ -221,7 +221,7 @@ nonisolated enum RemoteTagCatalogSnapshot {
 final class RemoteTagCatalog: ObservableObject {
     static let shared = RemoteTagCatalog()
     // Enable in the September 12 release after the online catalog maintenance is complete.
-    nonisolated static let onlineEnabled = false
+    nonisolated static let onlineEnabled = true
     private nonisolated static let catalogURL = URL(string: "https://meqrcode.cn/config/tags-v1.json")!
     private nonisolated static let cacheURL = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
         .appendingPathComponent("meqr-tags-v1.json")

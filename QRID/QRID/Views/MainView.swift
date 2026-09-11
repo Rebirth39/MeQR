@@ -58,14 +58,16 @@ struct MainView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                if clusters.isEmpty {
-                    emptyState
-                } else {
-                    contentView
+            VStack(spacing: 0) {
+                AnnouncementBanner(manager: announcementManager)
+                Group {
+                    if clusters.isEmpty {
+                        emptyState
+                    } else {
+                        contentView
+                    }
                 }
             }
-            .safeAreaInset(edge: .bottom) { AnnouncementBanner(manager: announcementManager) }
             .navigationTitle(L.qrID)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
