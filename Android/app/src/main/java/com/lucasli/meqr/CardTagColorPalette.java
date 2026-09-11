@@ -14,6 +14,7 @@ import java.util.Map;
  */
 final class CardTagColorPalette {
     private static final String SOLID_OVERRIDE = "@solid";
+    static final int MAX_CUSTOM_COLORS = 5;
     private static final Map<String, Integer> BY_KEYWORD = new HashMap<>();
     private static final Map<String, int[]> MULTI_BY_KEYWORD = new HashMap<>();
 
@@ -38,8 +39,8 @@ final class CardTagColorPalette {
         put("世界計畫", 0xFF39C5BB);
         put("彩舞", 0xFF39C5BB);
         put("世嘉彩舞", 0xFF39C5BB);
-        put("leoneed", 0xFF00A0E9);
-        put("ln", 0xFF00A0E9);
+        put("leoneed", 0xFF4455DD);
+        put("ln", 0xFF4455DD);
         put("mmj", 0xFF88DD44);
         put("moremorejump", 0xFF88DD44);
         put("wonderlands", 0xFFFF9900);
@@ -162,9 +163,9 @@ final class CardTagColorPalette {
 
         putMulti(new int[]{0xFF39C5BB, 0xFF00A0E9, 0xFF88DD44, 0xFFFF9900, 0xFFEE1166, 0xFF884499},
                 "projectsekai", "pjsk", "プロセカ", "世界计划", "世界計畫", "彩舞");
-        putMulti(new int[]{0xFF39C5BB, 0xFFFFE211, 0xFFFFB000, 0xFFFF69B4, 0xFFE44D98, 0xFF0068B7},
+        putMulti(new int[]{0xFF39C5BB, 0xFFFFB000, 0xFFFFE211, 0xFFFF69B4, 0xFFD80000, 0xFF0068B7},
                 "vocaloid", "术力口", "ボカロ");
-        putMulti(new int[]{0xFF00A0E9, 0xFF33AAEE, 0xFFFFDD45, 0xFFEE6666, 0xFFBBDD22},
+        putMulti(new int[]{0xFF4455DD, 0xFF33AAEE, 0xFFFFDD44, 0xFFEE6666, 0xFFBBDD22},
                 "leoneed", "ln", "レオニ");
         putMulti(new int[]{0xFF88DD44, 0xFFFFCCAA, 0xFF99CCFF, 0xFFFFAACC, 0xFF99EEDD},
                 "moremorejump", "mmj", "モモジャン", "桃跳");
@@ -174,36 +175,36 @@ final class CardTagColorPalette {
                 "wonderlandsxshowtime", "wonderlandsxshowtime拼色", "wsmix", "wxs", "ws", "ワンダショ", "ワンダショmix");
         putMulti(new int[]{0xFF884499, 0xFFBB6688, 0xFF8889CC, 0xFFCCAA88, 0xFFDDAACC},
                 "nightcordat2500", "nightcord", "n25", "25点nightcord见", "25時ナイトコードで", "ニーゴ");
-        putMulti(new int[]{0xFFFF3377, 0xFFFF5522, 0xFF3366CC, 0xFFFF99CC, 0xFFFFCC33, 0xFFAA66CC},
+        putMulti(new int[]{0xFFFF3377, 0xFFFF5522, 0xFF0077DD, 0xFFFF55BB, 0xFFFFCC11, 0xFFAA66DD},
                 "poppinparty", "popipa", "ポピパ");
-        putMulti(new int[]{0xFFE53344, 0xFFE5004F, 0xFF55BB77, 0xFFFF77AA, 0xFFCC3333, 0xFFFFCC66},
+        putMulti(new int[]{0xFFE53344, 0xFFEE0022, 0xFF00CCAA, 0xFFFF9999, 0xFFBB0033, 0xFFFFEE88},
                 "afterglow", "aglow");
         putMulti(new int[]{0xFF33DDAA, 0xFFFF66AA, 0xFF66CCFF, 0xFFFFEE99, 0xFF88DD44, 0xFFCC99FF},
                 "pastelpalettes", "pp", "パスパレ");
-        putMulti(new int[]{0xFF3344AA, 0xFF66CCFF, 0xFFDD2244, 0xFFAA44DD, 0xFF9999CC},
+        putMulti(new int[]{0xFF3344AA, 0xFF881188, 0xFF00AABB, 0xFFDD2200, 0xFFDD0088, 0xFFBBBBBB},
                 "roselia");
-        putMulti(new int[]{0xFFFFC02A, 0xFFFFCC33, 0xFFAA66CC, 0xFFFF9933, 0xFF66CCFF, 0xFF996633},
+        putMulti(new int[]{0xFFFFC02A, 0xFFFFEE22, 0xFFAA33CC, 0xFFFF9922, 0xFF44DDFF, 0xFF006699},
                 "hellohappyworld", "hhw", "ハロハピ");
-        putMulti(new int[]{0xFF33AADD, 0xFFAABBFF, 0xFFFF99CC, 0xFF99DD66, 0xFFFFCC66, 0xFF6699CC},
+        putMulti(new int[]{0xFF33AADD, 0xFF6677CC, 0xFFEE6666, 0xFFEE7744, 0xFFEE7788, 0xFF669988},
                 "morfonica", "monica", "モニカ");
-        putMulti(new int[]{0xFF66CC33, 0xFFAA3333, 0xFF77CC44, 0xFFFF9933, 0xFFFF77BB, 0xFF66CCFF},
+        putMulti(new int[]{0xFF66CC33, 0xFFCC0000, 0xFFAAEE22, 0xFFEEBB44, 0xFFFF99BB, 0xFF00BBFF},
                 "raiseasuilen", "ras");
-        putMulti(new int[]{0xFF3381B0, 0xFF77BBDD, 0xFFFF8899, 0xFF66CC99, 0xFFDDBB66, 0xFF4455AA},
+        putMulti(new int[]{0xFF3381B0, 0xFF77BBDD, 0xFFFF8899, 0xFF77DD77, 0xFFFFDD88, 0xFF7777AA},
                 "mygo", "迷子");
         putMulti(new int[]{0xFF881144, 0xFFCC4466, 0xFF884499, 0xFF66AA66, 0xFF336699, 0xFFDDBB66},
                 "avemujica", "母鸡卡", "母雞卡");
         putMulti(new int[]{0xFFF4B6C2, 0xFFFF99CC, 0xFFFFD34E, 0xFF5B8FE8, 0xFFE94B4B},
                 "孤独摇滚", "孤獨搖滾", "bocchitherock");
 
-        putSplit("星乃一歌", 0xFF00A0E9, 0xFF33AAEE);
-        putSplit("天马咲希", 0xFF00A0E9, 0xFFFFDD45);
-        putSplit("望月穗波", 0xFF00A0E9, 0xFFEE6666);
-        putSplit("日野森志步", 0xFF00A0E9, 0xFFBBDD22);
+        putSplit("星乃一歌", 0xFF4455DD, 0xFF33AAEE);
+        putSplit("天马咲希", 0xFF4455DD, 0xFFFFDD44);
+        putSplit("望月穗波", 0xFF4455DD, 0xFFEE6666);
+        putSplit("日野森志步", 0xFF4455DD, 0xFFBBDD22);
         putSplit("高松灯", 0xFF3381B0, 0xFF77BBDD);
         putSplit("千早爱音", 0xFF3381B0, 0xFFFF8899);
-        putSplit("要乐奈", 0xFF3381B0, 0xFF66CC99);
-        putSplit("长崎素世", 0xFF3381B0, 0xFFDDBB66);
-        putSplit("椎名立希", 0xFF3381B0, 0xFF4455AA);
+        putSplit("要乐奈", 0xFF3381B0, 0xFF77DD77);
+        putSplit("长崎素世", 0xFF3381B0, 0xFFFFDD88);
+        putSplit("椎名立希", 0xFF3381B0, 0xFF7777AA);
     }
 
     private static final int[] GENERIC = {
@@ -250,15 +251,43 @@ final class CardTagColorPalette {
     }
 
     static int[] colorsFor(String tag, String override) {
+        if (modeFor(tag, override).equals("custom")) {
+            int[] custom = parseColors(override);
+            if (custom.length > 0) return custom;
+        }
+        if (isSolidOverride(override)) return new int[]{solidColorFor(tag)};
         int[] preset = presetColorsFor(tag);
         if (preset.length > 0) {
             return isSolidOverride(override) ? new int[]{preset[0]} : preset;
         }
-        int[] custom = parseColors(override);
-        if (custom.length > 0) {
-            return custom;
-        }
         return new int[]{colorFor(tag)};
+    }
+
+    static int solidColorFor(String tag) {
+        Integer remote = RemoteTagCatalog.solidColorFor(tag);
+        if (remote != null) return remote;
+        int[] preset = presetColorsFor(tag);
+        if (preset.length == 6 && preset[0] == 0xFF39C5BB && preset[1] == 0xFF00A0E9) return preset[1];
+        return preset.length > 0 ? preset[preset.length == 2 ? 1 : 0] : colorFor(tag);
+    }
+
+    static String modeFor(String tag, String override) {
+        if (isSolidOverride(override)) return "solid";
+        if (override != null && (override.equals("@preset") || override.startsWith("@preset|"))) return "preset";
+        if (parseColors(override).length > 0) return "custom";
+        return hasPresetMulti(tag) ? "preset" : "solid";
+    }
+
+    static List<String> customColorsFor(String tag, String override) {
+        List<String> colors = new ArrayList<>();
+        for (int color : parseColors(override)) colors.add(hex(color));
+        if (colors.isEmpty()) colors.add(hex(solidColorFor(tag)));
+        return colors;
+    }
+
+    static String encodeMode(String mode, List<String> colors) {
+        String encoded = encodeColors(colors);
+        return mode.equals("custom") ? encoded : "@" + mode + (encoded.isEmpty() ? "" : "|" + encoded);
     }
 
     static boolean hasPresetMulti(String tag) {
@@ -284,7 +313,7 @@ final class CardTagColorPalette {
     }
 
     static boolean isSolidOverride(String override) {
-        return SOLID_OVERRIDE.equals(override);
+        return SOLID_OVERRIDE.equals(override) || (override != null && override.startsWith(SOLID_OVERRIDE + "|"));
     }
 
     static String solidOverrideValue() {
@@ -295,7 +324,7 @@ final class CardTagColorPalette {
         List<String> valid = new ArrayList<>();
         for (String value : values) {
             String normalized = normalizedHex(value);
-            if (normalized != null && valid.size() < 3) {
+            if (normalized != null && valid.size() < MAX_CUSTOM_COLORS) {
                 valid.add(normalized);
             }
         }
@@ -313,7 +342,7 @@ final class CardTagColorPalette {
         return normalized.matches("#[0-9A-F]{6}") ? normalized : null;
     }
 
-    private static int[] parseColors(String raw) {
+    static int[] parseColors(String raw) {
         if (raw == null || raw.trim().isEmpty()) {
             return new int[0];
         }
@@ -321,7 +350,7 @@ final class CardTagColorPalette {
         List<Integer> colors = new ArrayList<>();
         for (String part : parts) {
             String normalized = normalizedHex(part);
-            if (normalized != null && colors.size() < 3) {
+            if (normalized != null && colors.size() < MAX_CUSTOM_COLORS) {
                 colors.add(Color.parseColor(normalized));
             }
         }

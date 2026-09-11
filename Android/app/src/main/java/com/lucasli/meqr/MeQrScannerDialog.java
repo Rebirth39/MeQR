@@ -66,7 +66,7 @@ final class MeQrScannerDialog extends android.app.Dialog {
     private Size captureSize = new Size(1280, 720);
     private String lastPayload = "";
     private long lastPayloadAt;
-    private boolean payloadDelivered;
+    private volatile boolean payloadDelivered;
 
     MeQrScannerDialog(Context context, I18n i18n, Listener listener) {
         super(context, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
@@ -129,7 +129,8 @@ final class MeQrScannerDialog extends android.app.Dialog {
         setOnDismissListener(ignored -> closeCamera());
     }
 
-    private void startCamera() {
+    private synchronized void startCamera() {
+        if (payloadDelivered || cameraThread != null) return;
         if (!preview.isAvailable()) {
             preview.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
                 @Override
@@ -179,20 +180,30 @@ final class MeQrScannerDialog extends android.app.Dialog {
             manager.openCamera(cameraId, new CameraDevice.StateCallback() {
                 @Override
                 public void onOpened(CameraDevice device) {
-                    cameraDevice = device;
-                    configureSession();
+                    synchronized (MeQrScannerDialog.this) {
+                        if (payloadDelivered) {
+                            device.close();
+                            return;
+                        }
+                        cameraDevice = device;
+                        configureSession();
+                    }
                 }
 
                 @Override
                 public void onDisconnected(CameraDevice device) {
-                    device.close();
-                    cameraDevice = null;
+                    synchronized (MeQrScannerDialog.this) {
+                        device.close();
+                        if (cameraDevice == device) cameraDevice = null;
+                    }
                 }
 
                 @Override
                 public void onError(CameraDevice device, int error) {
-                    device.close();
-                    cameraDevice = null;
+                    synchronized (MeQrScannerDialog.this) {
+                        device.close();
+                        if (cameraDevice == device) cameraDevice = null;
+                    }
                 }
             }, cameraHandler);
         } catch (CameraAccessException | SecurityException exception) {
@@ -201,16 +212,16 @@ final class MeQrScannerDialog extends android.app.Dialog {
         }
     }
 
-    private void configureSession() {
+    private synchronized void configureSession() {
         android.graphics.SurfaceTexture texture = preview.getSurfaceTexture();
-        if (texture == null || cameraDevice == null) {
+        if (payloadDelivered || texture == null || cameraDevice == null) {
             return;
         }
         texture.setDefaultBufferSize(captureSize.getWidth(), captureSize.getHeight());
         android.view.Surface previewSurface = new android.view.Surface(texture);
 
         imageReader = ImageReader.newInstance(captureSize.getWidth(), captureSize.getHeight(), ImageFormat.YUV_420_888, 2);
-        imageReader.setOnImageAvailableListener(imageAvailable -> analyzeFrame(imageReader.acquireLatestImage()), cameraHandler);
+        imageReader.setOnImageAvailableListener(this::onImageAvailable, cameraHandler);
 
         try {
             final android.view.Surface readerSurface = imageReader.getSurface();
@@ -219,18 +230,24 @@ final class MeQrScannerDialog extends android.app.Dialog {
                 new CameraCaptureSession.StateCallback() {
                     @Override
                     public void onConfigured(CameraCaptureSession session) {
-                        captureSession = session;
-                        try {
-                            CaptureRequest.Builder builder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-                            builder.addTarget(previewSurface);
-                            builder.addTarget(readerSurface);
-                            builder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
-                            builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
-                            builder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
-                            builder.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO);
-                            session.setRepeatingRequest(builder.build(), null, cameraHandler);
-                        } catch (CameraAccessException exception) {
-                            Log.e(TAG, "Preview start failed", exception);
+                        synchronized (MeQrScannerDialog.this) {
+                            if (payloadDelivered || cameraDevice == null) {
+                                session.close();
+                                return;
+                            }
+                            captureSession = session;
+                            try {
+                                CaptureRequest.Builder builder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+                                builder.addTarget(previewSurface);
+                                builder.addTarget(readerSurface);
+                                builder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
+                                builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+                                builder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+                                builder.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO);
+                                session.setRepeatingRequest(builder.build(), null, cameraHandler);
+                            } catch (CameraAccessException | IllegalStateException exception) {
+                                Log.e(TAG, "Preview start failed", exception);
+                            }
                         }
                     }
 
@@ -244,6 +261,19 @@ final class MeQrScannerDialog extends android.app.Dialog {
         } catch (CameraAccessException exception) {
             Log.e(TAG, "Session create failed", exception);
         }
+    }
+
+    private void onImageAvailable(ImageReader reader) {
+        Image image;
+        synchronized (this) {
+            if (payloadDelivered || reader != imageReader) return;
+            try {
+                image = reader.acquireLatestImage();
+            } catch (IllegalStateException exception) {
+                return;
+            }
+        }
+        analyzeFrame(image);
     }
 
     private Size chooseCaptureSize(CameraCharacteristics characteristics) {
@@ -390,7 +420,7 @@ final class MeQrScannerDialog extends android.app.Dialog {
         }
     }
 
-    private void closeCamera() {
+    private synchronized void closeCamera() {
         payloadDelivered = true;
         if (captureSession != null) {
             captureSession.close();

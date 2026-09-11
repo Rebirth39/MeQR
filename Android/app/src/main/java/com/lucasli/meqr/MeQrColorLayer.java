@@ -29,10 +29,10 @@ final class MeQrColorLayer {
             Color.rgb(74, 31, 128)
     };
     private static final int[] LIGHT_PALETTE = new int[]{
-            Color.rgb(191, 217, 255),
-            Color.rgb(184, 242, 232),
-            Color.rgb(255, 204, 222),
-            Color.rgb(227, 204, 255)
+            Color.rgb(168, 207, 255),
+            Color.rgb(158, 230, 214),
+            Color.rgb(255, 194, 212),
+            Color.rgb(214, 184, 255)
     };
     private static final float[] TARGET_HUES = new float[]{219.6f, 169.2f, 334.8f, 270.0f};
 
@@ -75,25 +75,29 @@ final class MeQrColorLayer {
 
     static Bitmap generate(String content, byte[] avatarJpeg, int size) {
         ByteMatrix matrix = matrix(content);
-        if (matrix == null || avatarJpeg == null || avatarJpeg.length == 0
-                || avatarJpeg.length > payloadCapacity(content)) {
-            return null;
-        }
-        byte[] packet = packet(avatarJpeg, AVATAR_JPEG_TYPE);
-        if (packet == null) {
+        if (matrix == null) {
             return null;
         }
         int dimension = matrix.getWidth();
+        int[] symbols = null;
+        if (avatarJpeg != null && avatarJpeg.length > 0
+                && avatarJpeg.length <= payloadCapacity(content)) {
+            byte[] packet = packet(avatarJpeg, AVATAR_JPEG_TYPE);
+            if (packet != null) {
+                symbols = encodeSymbols(packet, dimension * dimension);
+            }
+        }
         int fullDimension = dimension + QUIET_ZONE * 2;
         int scale = Math.max(1, size / fullDimension);
         int renderedSize = fullDimension * scale;
         int offset = Math.max(0, (size - renderedSize) / 2);
         Bitmap bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
         bitmap.eraseColor(Color.WHITE);
-        int[] symbols = encodeSymbols(packet, dimension * dimension);
         for (int row = 0; row < dimension; row++) {
             for (int column = 0; column < dimension; column++) {
-                int symbol = symbols[row * dimension + column];
+                int symbol = symbols == null
+                        ? ((row * 3 + column * 5) & 3)
+                        : symbols[row * dimension + column];
                 int color = matrix.get(column, row) == 1 ? DARK_PALETTE[symbol] : LIGHT_PALETTE[symbol];
                 int left = offset + (column + QUIET_ZONE) * scale;
                 int top = offset + (row + QUIET_ZONE) * scale;
@@ -201,7 +205,8 @@ final class MeQrColorLayer {
     private static ByteMatrix matrix(String content) {
         String value = content == null || content.trim().isEmpty() ? "MeQR" : content.trim();
         try {
-            return Encoder.encode(value, ErrorCorrectionLevel.M).getMatrix();
+            return Encoder.encode(value, ErrorCorrectionLevel.M,
+                    java.util.Collections.singletonMap(com.google.zxing.EncodeHintType.CHARACTER_SET, "UTF-8")).getMatrix();
         } catch (Exception exception) {
             return null;
         }

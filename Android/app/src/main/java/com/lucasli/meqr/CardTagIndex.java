@@ -15,6 +15,26 @@ final class CardTagIndex {
         return RemoteTagCatalog.suggestions(query, i18n, excluding, limit);
     }
 
+    static List<String> featuredSuggestions(I18n i18n, int limit) {
+        List<String> result = new java.util.ArrayList<>();
+        for (RemoteTagCatalog.Entry entry : RemoteTagCatalog.featuredEntries(limit)) {
+            result.add(entry.display(i18n.resolvedLanguage()));
+        }
+        return result;
+    }
+
+    static List<RemoteTagCatalog.Category> categories() {
+        return RemoteTagCatalog.categories();
+    }
+
+    static List<RemoteTagCatalog.Entry> entriesIn(RemoteTagCatalog.Category category) {
+        return RemoteTagCatalog.entriesIn(category);
+    }
+
+    static boolean isLoaded() {
+        return !RemoteTagCatalog.entries().isEmpty();
+    }
+
     static String normalizedKey(String value) {
         return value == null ? "" : value.toLowerCase(Locale.US)
                 .replaceAll("[\\s_　・·'’!！:：,，.。/\\-×x]", "")

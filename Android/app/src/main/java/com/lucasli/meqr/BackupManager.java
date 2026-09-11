@@ -3,6 +3,8 @@ package com.lucasli.meqr;
 import android.content.Context;
 import android.net.Uri;
 
+import org.json.JSONArray;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -10,6 +12,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -24,6 +27,8 @@ import java.util.zip.ZipOutputStream;
  * before an import overwrites it.
  */
 final class BackupManager {
+    private static final int MAX_BACKUP_ENTRIES = 128;
+    private static final long MAX_BACKUP_BYTES = 100L * 1024L * 1024L;
     private final Context context;
 
     BackupManager(Context context) {
@@ -71,8 +76,13 @@ final class BackupManager {
         try (ZipInputStream zip = new ZipInputStream(input)) {
             ZipEntry entry;
             byte[] buffer = new byte[16 * 1024];
+            int entryCount = 0;
+            long totalBytes = 0;
             while ((entry = zip.getNextEntry()) != null) {
-                File out = new File(tempDir, entry.getName());
+                if (++entryCount > MAX_BACKUP_ENTRIES) {
+                    throw new IOException("Backup contains too many files.");
+                }
+                File out = safeRestoreFile(tempDir, entry.getName());
                 if (entry.isDirectory()) {
                     if (!out.mkdirs() && !out.isDirectory()) {
                         throw new IOException("Could not create restore entry.");
@@ -86,6 +96,10 @@ final class BackupManager {
                 try (FileOutputStream fileOutput = new FileOutputStream(out)) {
                     int read;
                     while ((read = zip.read(buffer)) != -1) {
+                        totalBytes += read;
+                        if (totalBytes > MAX_BACKUP_BYTES) {
+                            throw new IOException("Backup is too large.");
+                        }
                         fileOutput.write(buffer, 0, read);
                     }
                 }
@@ -96,6 +110,12 @@ final class BackupManager {
         if (!restoredData.exists()) {
             deleteRecursively(tempDir);
             throw new IOException("Backup file is missing profiles.json.");
+        }
+        try {
+            new JSONArray(new String(Files.readAllBytes(restoredData.toPath()), StandardCharsets.UTF_8));
+        } catch (Exception exception) {
+            deleteRecursively(tempDir);
+            throw new IOException("Backup contains invalid profile data.", exception);
         }
 
         if (dataFile.exists()) {
@@ -139,6 +159,16 @@ final class BackupManager {
             }
         }
         zip.closeEntry();
+    }
+
+    private static File safeRestoreFile(File directory, String entryName) throws IOException {
+        File output = new File(directory, entryName);
+        String directoryPath = directory.getCanonicalPath() + File.separator;
+        String outputPath = output.getCanonicalPath();
+        if (!outputPath.startsWith(directoryPath)) {
+            throw new IOException("Backup contains an invalid path.");
+        }
+        return output;
     }
 
     private static void deleteRecursively(File file) {

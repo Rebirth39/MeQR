@@ -39,7 +39,9 @@ final class ProfileStore {
             String json = new String(Files.readAllBytes(dataFile.toPath()), StandardCharsets.UTF_8);
             JSONArray array = new JSONArray(json);
             for (int i = 0; i < array.length(); i++) {
-                profiles.add(MeQrProfile.fromJson(array.getJSONObject(i)));
+                MeQrProfile profile = MeQrProfile.fromJson(array.getJSONObject(i));
+                profile.reconcileTags(new I18n(context).resolvedLanguage());
+                profiles.add(profile);
             }
         } catch (Exception ignored) {
             return profiles;
@@ -58,9 +60,15 @@ final class ProfileStore {
         } catch (Exception exception) {
             throw new IOException(exception);
         }
-        try (FileOutputStream output = new FileOutputStream(dataFile, false)) {
-            output.write(array.toString(2).getBytes(StandardCharsets.UTF_8));
+        android.util.AtomicFile atomic = new android.util.AtomicFile(dataFile);
+        FileOutputStream output = null;
+        try {
+            byte[] bytes = array.toString(2).getBytes(StandardCharsets.UTF_8);
+            output = atomic.startWrite();
+            output.write(bytes);
+            atomic.finishWrite(output);
         } catch (Exception exception) {
+            if (output != null) atomic.failWrite(output);
             throw new IOException(exception);
         }
     }

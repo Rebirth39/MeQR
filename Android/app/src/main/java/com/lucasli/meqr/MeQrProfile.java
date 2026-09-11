@@ -21,7 +21,67 @@ final class MeQrProfile {
     final List<MeQrItem> qrItems = new ArrayList<>();
     final List<String> tags = new ArrayList<>();
     final Map<String, String> tagColorOverrides = new HashMap<>();
+    final Map<String, Integer> tagTextWeights = new HashMap<>();
+    final List<TagReference> tagReferences = new ArrayList<>();
+
+    TagReference referenceFor(String name) {
+        for (TagReference reference : tagReferences) {
+            if (reference.lastName.equals(name) || reference.fallbackName.equals(name)) return reference;
+        }
+        return null;
+    }
+
+    void reconcileTags(String language) {
+        if (RemoteTagCatalog.entries().isEmpty() && tagReferences.isEmpty()) return;
+        List<TagReference> updated = new ArrayList<>();
+        List<String> names = new ArrayList<>();
+        Map<String, String> overrides = new HashMap<>();
+        Map<String, Integer> weights = new HashMap<>();
+        // Resolve old names before a rename can collide with a later tag's name.
+        Map<String, TagReference> referencesByName = new HashMap<>();
+        for (TagReference reference : tagReferences) referencesByName.putIfAbsent(reference.lastName, reference);
+        for (TagReference reference : tagReferences) referencesByName.putIfAbsent(reference.fallbackName, reference);
+        for (String tag : tags) {
+            TagReference reference = referencesByName.get(tag);
+            if (reference == null) reference = new TagReference(tag);
+            reference.override = tagColorOverrides.get(tag);
+            reference.textWeight = tagTextWeight(tag);
+            RemoteTagCatalog.Entry entry = RemoteTagCatalog.entryByID(reference.catalogID);
+            if (entry != null) {
+                reference.colors = entry.colors.clone();
+                reference.solid = entry.solidColor == null ? reference.colors[0] : entry.solidColor;
+            }
+            String display = language == null ? tag : reference.display(language);
+            if (entry != null) reference.fallbackName = display;
+            reference.lastName = display;
+            names.add(display); updated.add(reference);
+            if (reference.override != null) overrides.put(display, reference.override);
+            if (reference.textWeight != TagTextWeight.REGULAR) weights.put(display, reference.textWeight);
+        }
+        tagReferences.clear(); tagReferences.addAll(updated);
+        tags.clear(); tags.addAll(names);
+        tagColorOverrides.clear(); tagColorOverrides.putAll(overrides);
+        tagTextWeights.clear(); tagTextWeights.putAll(weights);
+    }
+
+    int tagTextWeight(String tag) {
+        return TagTextWeight.normalize(tagTextWeights.getOrDefault(tag, TagTextWeight.REGULAR));
+    }
+
+    void setTagTextWeight(String tag, int weight) {
+        int normalized = TagTextWeight.normalize(weight);
+        if (normalized == TagTextWeight.REGULAR) tagTextWeights.remove(tag);
+        else tagTextWeights.put(tag, normalized);
+    }
+
+    int[] tagColors(String tag) { return tagColors(tag, tagColorOverrides.get(tag)); }
+
+    int[] tagColors(String tag, String override) {
+        TagReference reference = referenceFor(tag);
+        return reference == null ? CardTagColorPalette.colorsFor(tag, override) : reference.colors(override);
+    }
     String template = "standard";
+    String passSubtitle = "";
     String avatarPath = "";
     String backgroundPath = "";
     String bannerPath = "";
@@ -58,6 +118,7 @@ final class MeQrProfile {
 
     JSONObject toJson() throws JSONException {
         syncLegacyFields();
+        reconcileTags(null);
         JSONObject object = new JSONObject();
         object.put("id", id);
         object.put("name", name);
@@ -80,7 +141,16 @@ final class MeQrProfile {
             tagColorObject.put(entry.getKey(), entry.getValue());
         }
         object.put("tagColorOverrides", tagColorObject);
+        JSONObject tagWeightObject = new JSONObject();
+        for (Map.Entry<String, Integer> entry : tagTextWeights.entrySet()) {
+            tagWeightObject.put(entry.getKey(), TagTextWeight.normalize(entry.getValue()));
+        }
+        object.put("tagTextWeights", tagWeightObject);
+        JSONArray referenceArray = new JSONArray();
+        for (TagReference reference : tagReferences) referenceArray.put(reference.toJson());
+        if (!tagReferences.isEmpty() || tags.isEmpty()) object.put("tagReferences", referenceArray);
         object.put("template", template);
+        object.put("passSubtitle", passSubtitle);
         object.put("avatarPath", avatarPath);
         object.put("backgroundPath", backgroundPath);
         object.put("bannerPath", bannerPath);
@@ -125,7 +195,7 @@ final class MeQrProfile {
         JSONArray tagArray = object.optJSONArray("tags");
         if (tagArray != null) {
             for (int i = 0; i < tagArray.length() && profile.tags.size() < 10; i++) {
-                String tag = normalizeTag(tagArray.optString(i, ""));
+                String tag = tagArray.optString(i, "").trim();
                 boolean duplicate = false;
                 for (String existing : profile.tags) {
                     if (CardTagIndex.canonicalKey(existing).equals(CardTagIndex.canonicalKey(tag))) {
@@ -149,7 +219,24 @@ final class MeQrProfile {
                 }
             }
         }
+        JSONObject tagWeightObject = object.optJSONObject("tagTextWeights");
+        if (tagWeightObject != null) {
+            for (String tag : profile.tags) profile.setTagTextWeight(tag, tagWeightObject.optInt(tag, TagTextWeight.REGULAR));
+        }
         profile.template = "rhodes".equals(object.optString("template", "standard")) ? "rhodes" : "standard";
+        JSONArray references = object.optJSONArray("tagReferences");
+        if (references != null) {
+            profile.tags.clear(); profile.tagColorOverrides.clear(); profile.tagTextWeights.clear();
+            for (int i = 0; i < references.length() && i < 10; i++) {
+                JSONObject raw = references.optJSONObject(i);
+                if (raw == null) continue;
+                TagReference reference = TagReference.fromJson(raw);
+                profile.tagReferences.add(reference); profile.tags.add(reference.lastName);
+                if (reference.override != null) profile.tagColorOverrides.put(reference.lastName, reference.override);
+                profile.setTagTextWeight(reference.lastName, reference.textWeight);
+            }
+        }
+        profile.passSubtitle = object.optString("passSubtitle", "");
         profile.avatarPath = object.optString("avatarPath", "");
         profile.backgroundPath = object.optString("backgroundPath", "");
         profile.bannerPath = object.optString("bannerPath", "");

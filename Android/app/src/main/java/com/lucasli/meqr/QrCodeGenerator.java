@@ -41,6 +41,7 @@ final class QrCodeGenerator {
         String value = content == null || content.trim().isEmpty() ? "MeQR" : content.trim();
         Map<EncodeHintType, Object> hints = new EnumMap<>(EncodeHintType.class);
         hints.put(EncodeHintType.MARGIN, 1);
+        hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
         try {
             BitMatrix matrix = new QRCodeWriter().encode(value, BarcodeFormat.QR_CODE, size, size, hints);
             Bitmap bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);

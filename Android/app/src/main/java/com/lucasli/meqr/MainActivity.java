@@ -42,6 +42,11 @@ import android.widget.FrameLayout;
 import android.widget.GridLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
+import android.widget.ImageButton;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.view.DragEvent;
+import android.content.ClipData;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
@@ -51,15 +56,23 @@ import android.widget.Toast;
 
 import com.google.zxing.Result;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class MainActivity extends Activity {
+    private static final int TAG_CATEGORY_PAGE_SIZE = 24;
     private static final int PICK_AVATAR = 1001;
     private static final int PICK_BACKGROUND = 1002;
     private static final int PICK_QR_IMAGE = 1003;
@@ -85,21 +98,63 @@ public final class MainActivity extends Activity {
     private EncounterStore encounterStore;
     private EventStore eventStore;
     private AppUpdateManager updateManager;
+    private AnnouncementManager announcementManager;
     private final List<MeQrProfile> profiles = new ArrayList<>();
     private LinearLayout list;
     private int currentPage = 0;
     private MeQrProfile editingProfile;
     private EditSession editSession;
-    private Bitmap pendingShareBitmap;
     private Bitmap pendingMeQrBitmap;
     private MeQrItem pendingQrItem;
     private EditText pendingQrField;
     private boolean scanningPhoto;
+    private boolean choosingScanImage;
     private boolean croppingBanner;
+
+    private static final Pattern XHS_USER_ID = Pattern.compile("[0-9a-f]{24}");
+    private final java.util.Map<String, String> xiaohongshuUserIDCache = new java.util.HashMap<>();
+    private String lastRoutedPayload = "";
+    private long lastRoutedAt;
+    private boolean showingCardList;
+    private int onboardingStep;
+
+    private void handleMainBack() {
+        if (!profiles.isEmpty() && !showingCardList) {
+            showingCardList = true;
+            renderMain();
+        } else {
+            moveTaskToBack(true);
+        }
+    }
+
+    @Override public void onBackPressed() { handleMainBack(); }
+
+    static void handleDialogBack(Dialog dialog, Runnable action) {
+        dialog.setCancelable(false);
+        dialog.setOnKeyListener((d, key, event) -> {
+            if (key != android.view.KeyEvent.KEYCODE_BACK) return false;
+            if (event.getAction() == android.view.KeyEvent.ACTION_UP) action.run();
+            return true;
+        });
+        if (Build.VERSION.SDK_INT >= 33) {
+            dialog.getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                    android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, action::run);
+        }
+    }
+
+    private void confirmDiscard(Runnable discard) {
+        new AlertDialog.Builder(this).setMessage(i18n.t("discardDraft"))
+                .setNegativeButton(i18n.t("cancel"), null)
+                .setPositiveButton(i18n.t("discardChanges"), (d, which) -> discard.run()).show();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (Build.VERSION.SDK_INT >= 33) {
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                    android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::handleMainBack);
+        }
         getWindow().setStatusBarColor(COLOR_BG);
         getWindow().setNavigationBarColor(COLOR_BG);
         i18n = new I18n(this);
@@ -108,27 +163,38 @@ public final class MainActivity extends Activity {
         encounterStore = new EncounterStore(this);
         eventStore = new EventStore(this);
         updateManager = new AppUpdateManager(this, i18n);
+        announcementManager = new AnnouncementManager(this);
         eventStore.refreshRemoteEvents();
-        RemoteTagCatalog.refresh(false, null);
+        RemoteTagCatalog.refresh(this, false, () -> {
+            for (MeQrProfile profile : profiles) profile.reconcileTags(i18n.resolvedLanguage());
+            try { store.save(profiles); } catch (Exception error) { Toast.makeText(this, i18n.t("saveFailed"), Toast.LENGTH_LONG).show(); }
+            if (editSession == null && !isFinishing()) renderMain();
+        });
         profiles.clear();
         profiles.addAll(store.load());
         renderMain();
+        announcementManager.refresh();
         getWindow().getDecorView().postDelayed(updateManager::checkAutomatically, 1600);
         if (profiles.isEmpty() && !getSharedPreferences("settings", MODE_PRIVATE).getBoolean(ONBOARDING_VERSION, false)) {
             getWindow().getDecorView().post(this::showOnboarding);
         }
     }
 
+    void renderAnnouncement(AnnouncementManager manager) { renderMain(); }
+
     @Override
     protected void onResume() {
         super.onResume();
+        try { TagReportOutbox.get(this).kick(); }
+        catch (Exception error) { Toast.makeText(this, new I18n(this).t("tagQueueSaveFailed"), Toast.LENGTH_LONG).show(); }
         if (updateManager != null) {
             updateManager.onResume();
         }
     }
 
-    private void renderMain() {
-        boolean immersive = !profiles.isEmpty();
+    void renderMain() {
+        for (MeQrProfile profile : profiles) profile.reconcileTags(i18n.resolvedLanguage());
+        boolean immersive = !profiles.isEmpty() && !showingCardList;
         if (currentPage >= profiles.size()) {
             currentPage = Math.max(0, profiles.size() - 1);
         }
@@ -180,32 +246,56 @@ public final class MainActivity extends Activity {
                         ? cardTitle(profiles.get(currentPage)) + "  ·  " + (currentPage + 1) + "/" + profiles.size()
                         : cardTitle(profiles.get(currentPage))));
         subtitle.setSingleLine(true);
+        if (!immersive && !profiles.isEmpty()) subtitle.setText(i18n.t("cardList") + " · " + profiles.size());
         subtitle.setEllipsize(android.text.TextUtils.TruncateAt.END);
         subtitle.setTextSize(13);
         subtitle.setTextColor(immersive ? Color.argb(190, 0, 0, 0) : COLOR_MUTED);
         titleBlock.addView(subtitle);
-        toolbar.addView(titleBlock, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        MeQrProfile current = profiles.isEmpty() ? null : profiles.get(currentPage);
+        Button menu = immersive ? lightIconButton("⋯") : iconButton("⋯");
+        menu.setContentDescription(i18n.t("settings"));
+        menu.setTooltipText(i18n.t("settings"));
+        menu.setOnClickListener(v -> {
+            if (current == null) showSettings();
+            else showCardMenu(current, currentPage);
+        });
+        toolbar.addView(menu, new LinearLayout.LayoutParams(dp(48), dp(48)));
+        toolbar.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
 
-        if (immersive) {
-            MeQrProfile current = profiles.get(currentPage);
-            Button shareMenu = lightIconButton("↗");
-            shareMenu.setContentDescription(i18n.t("share"));
-            shareMenu.setOnClickListener(v -> showShareMenu(current));
-            toolbar.addView(shareMenu, new LinearLayout.LayoutParams(dp(44), dp(44)));
-
-            Button cardMenu = lightIconButton("⋯");
-            cardMenu.setContentDescription(i18n.t("settings"));
-            cardMenu.setOnClickListener(v -> showCardMenu(current, currentPage));
-            LinearLayout.LayoutParams cardMenuParams = new LinearLayout.LayoutParams(dp(44), dp(44));
-            cardMenuParams.setMargins(dp(8), 0, 0, 0);
-            toolbar.addView(cardMenu, cardMenuParams);
-        } else {
-            Button settings = iconButton("⋯");
-            settings.setContentDescription(i18n.t("settings"));
-            settings.setOnClickListener(v -> showSettings());
-            toolbar.addView(settings, new LinearLayout.LayoutParams(dp(44), dp(44)));
+        LinearLayout actions = new LinearLayout(this);
+        actions.setOrientation(LinearLayout.HORIZONTAL);
+        actions.setGravity(Gravity.CENTER_VERTICAL);
+        actions.setPadding(dp(4), 0, dp(4), 0);
+        actions.setBackground(rounded(immersive ? Color.argb(235, 238, 244, 246) : COLOR_PANEL,
+                dp(26), immersive ? Color.argb(45, 70, 90, 100) : COLOR_SEPARATOR, dp(1)));
+        actions.setContentDescription(i18n.t("mainActions"));
+        addMainToolbarAction(actions, "▦", i18n.t("scanMeQr"), immersive, this::showScan);
+        if (current != null) {
+            addMainToolbarAction(actions, "share", i18n.t("meqrProfileCode"), immersive, () -> showShareMenu(current));
         }
+        addMainToolbarAction(actions, "+", i18n.t("newProfile"), immersive, () -> showEditor(null));
+        toolbar.addView(actions, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(52)));
         root.addView(toolbar);
+        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        titleParams.setMargins(dp(20), 0, dp(20), dp(10));
+        root.addView(titleBlock, titleParams);
+
+        if (announcementManager != null && announcementManager.summary().length() > 0) {
+            TextView notice = new TextView(this);
+            notice.setText(announcementManager.summary());
+            android.graphics.drawable.Drawable noticeArrow = getDrawable(R.drawable.ic_chevron_right).mutate();
+            noticeArrow.setTint(COLOR_MUTED);
+            noticeArrow.setBounds(0, 0, dp(24), dp(24));
+            notice.setCompoundDrawablesRelative(null, null, noticeArrow, null);
+            notice.setTextColor(COLOR_TEXT);
+            notice.setTextSize(13);
+            notice.setPadding(dp(16), dp(10), dp(16), dp(10));
+            notice.setBackground(Ui.rounded(COLOR_PANEL, dp(12)));
+            notice.setOnClickListener(v -> announcementManager.open());
+            LinearLayout.LayoutParams noticeParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            noticeParams.setMargins(dp(16), 0, dp(16), dp(8));
+            root.addView(notice, noticeParams);
+        }
 
         if (immersive) {
             root.addView(pageView(profiles.get(currentPage), currentPage),
@@ -218,19 +308,44 @@ public final class MainActivity extends Activity {
             list.setPadding(dp(16), dp(8), dp(16), dp(108));
             scroll.addView(list);
             root.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-            renderEmptyState();
+            if (profiles.isEmpty()) renderEmptyState();
+            else {
+                for (int index = 0; index < profiles.size(); index++) {
+                    final int selected = index;
+                    Button cardRow = actionButton(cardTitle(profiles.get(index)));
+                    cardRow.setTextColor(COLOR_TEXT);
+                    cardRow.setBackground(rounded(COLOR_PANEL_2, dp(8)));
+                    cardRow.setSingleLine(true);
+                    cardRow.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                    cardRow.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+                    cardRow.setPadding(dp(16), 0, dp(16), 0);
+                    android.graphics.drawable.Drawable chevron = getDrawable(R.drawable.ic_chevron_right).mutate();
+                    chevron.setTint(COLOR_MUTED);
+                    chevron.setBounds(0, 0, dp(24), dp(24));
+                    cardRow.setCompoundDrawablesRelative(null, null, chevron, null);
+                    cardRow.setOnClickListener(v -> { currentPage = selected; showingCardList = false; renderMain(); });
+                    LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(56));
+                    rowParams.bottomMargin = dp(8);
+                    list.addView(cardRow, rowParams);
+                }
+            }
         }
 
         shell.addView(root, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-        Button fab = immersive ? lightFabButton("+") : fabButton("+");
-        fab.setContentDescription(i18n.t("add"));
-        fab.setOnClickListener(v -> showEditor(null));
-        FrameLayout.LayoutParams fabParams = new FrameLayout.LayoutParams(dp(66), dp(66), Gravity.BOTTOM | Gravity.RIGHT);
-        fabParams.setMargins(0, 0, dp(22), dp(28));
-        shell.addView(fab, fabParams);
-
         setContentView(shell);
+    }
+
+    private void addMainToolbarAction(LinearLayout toolbar, String icon, String label,
+                                      boolean light, Runnable action) {
+        Button button = light ? lightIconButton(icon) : iconButton(icon);
+        android.util.TypedValue feedback = new android.util.TypedValue();
+        getTheme().resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, feedback, true);
+        button.setBackgroundResource(feedback.resourceId);
+        button.setContentDescription(label);
+        button.setTooltipText(label);
+        button.setOnClickListener(v -> action.run());
+        toolbar.addView(button, new LinearLayout.LayoutParams(dp(48), dp(48)));
     }
 
     private String cardTitle(MeQrProfile profile) {
@@ -407,7 +522,8 @@ public final class MainActivity extends Activity {
 
         Button cancel = iconButton("×");
         cancel.setTextSize(22);
-        cancel.setOnClickListener(v -> dialog.dismiss());
+        cancel.setContentDescription(i18n.t("cancel"));
+        cancel.setOnClickListener(v -> confirmDiscard(dialog::dismiss));
         topBar.addView(cancel, new LinearLayout.LayoutParams(dp(44), dp(44)));
 
         TextView title = new TextView(this);
@@ -421,8 +537,7 @@ public final class MainActivity extends Activity {
 
         Button save = filledButton(i18n.t("save"));
         save.setOnClickListener(v -> {
-            saveEdit();
-            dialog.dismiss();
+            if (saveEdit()) dialog.dismiss();
         });
         topBar.addView(save, new LinearLayout.LayoutParams(dp(82), dp(44)));
         page.addView(topBar);
@@ -460,24 +575,39 @@ public final class MainActivity extends Activity {
         LinearLayout templatePanel = panel();
         LinearLayout templateControl = new LinearLayout(this);
         templateControl.setOrientation(LinearLayout.HORIZONTAL);
+        templateControl.setBaselineAligned(false);
         templateControl.setPadding(dp(6), dp(6), dp(6), dp(6));
         Button standard = templateButton(i18n.t("standardTemplate"), "standard".equals(editSession.profile.template));
         Button rhodes = templateButton(i18n.t("rhodesTemplate"), "rhodes".equals(editSession.profile.template));
+        editSession.passSubtitle = field(i18n.t("passSubtitleLabel"), editSession.profile.passSubtitle, false);
+        TextView passHint = Ui.text(this, i18n.t("passSubtitleHint"), COLOR_MUTED, 12);
+        passHint.setPadding(dp(4), dp(6), dp(4), 0);
+        boolean rhodesSelected = "rhodes".equals(editSession.profile.template);
+        editSession.passSubtitle.setVisibility(rhodesSelected ? View.VISIBLE : View.GONE);
+        passHint.setVisibility(rhodesSelected ? View.VISIBLE : View.GONE);
         standard.setOnClickListener(v -> {
             editSession.profile.template = "standard";
             styleTemplateButtons(standard, rhodes);
+            editSession.passSubtitle.setVisibility(View.GONE);
+            passHint.setVisibility(View.GONE);
             updatePreview();
         });
         rhodes.setOnClickListener(v -> {
             editSession.profile.template = "rhodes";
             styleTemplateButtons(rhodes, standard);
+            editSession.passSubtitle.setVisibility(View.VISIBLE);
+            passHint.setVisibility(View.VISIBLE);
             updatePreview();
         });
-        templateControl.addView(standard, new LinearLayout.LayoutParams(0, dp(48), 1));
-        LinearLayout.LayoutParams templateParams = new LinearLayout.LayoutParams(0, dp(48), 1);
+        standard.setMinimumHeight(dp(48));
+        rhodes.setMinimumHeight(dp(48));
+        templateControl.addView(standard, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        LinearLayout.LayoutParams templateParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1);
         templateParams.setMargins(dp(6), 0, 0, 0);
         templateControl.addView(rhodes, templateParams);
         templatePanel.addView(templateControl);
+        templatePanel.addView(editSession.passSubtitle);
+        templatePanel.addView(passHint);
         form.addView(templatePanel);
 
         form.addView(section(i18n.t("platformCards")));
@@ -497,32 +627,18 @@ public final class MainActivity extends Activity {
         form.addView(addPlatform, addPlatformParams);
 
         form.addView(section(i18n.t("tags")));
-        LinearLayout tagsPanel = panel();
-        editSession.tags = field(i18n.t("tagsHint"), joinTags(editSession.profile.tags), true);
-        editSession.tags.setMinLines(3);
-        tagsPanel.addView(editSession.tags);
-        tagsPanel.addView(separator());
-        Button tagLibrary = actionButton("⌕  " + i18n.t("tagLibrary"));
-        tagLibrary.setOnClickListener(v -> showTagLibrary());
-        tagsPanel.addView(tagLibrary, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46)));
-        form.addView(tagsPanel);
+        form.addView(createTagInput(null));
 
         form.addView(section(i18n.t("tagColors")));
         editSession.tagColorPanel = new LinearLayout(this);
         editSession.tagColorPanel.setOrientation(LinearLayout.VERTICAL);
         form.addView(editSession.tagColorPanel);
-        editSession.tags.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-                rebuildTagColorPanel();
-            }
-            @Override public void afterTextChanged(Editable s) { }
-        });
         rebuildTagColorPanel();
+        rebuildSelectedTagChips(editSession.tagChips);
 
         form.addView(section(i18n.t("avatar")));
         LinearLayout avatarPanel = panel();
-        Button avatar = actionButton(editSession.profile.avatarPath.isEmpty() ? i18n.t("chooseImage") : i18n.t("removeImage") + " / " + i18n.t("chooseImage"));
+        Button avatar = actionButton(i18n.t("chooseImage"));
         avatar.setOnClickListener(v -> chooseImage(PICK_AVATAR));
         avatarPanel.addView(avatar, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52)));
         avatarPanel.addView(separator());
@@ -537,7 +653,7 @@ public final class MainActivity extends Activity {
 
         form.addView(section(i18n.t("backgroundImage")));
         LinearLayout backgroundPanel = panel();
-        Button background = actionButton(editSession.profile.backgroundPath.isEmpty() ? i18n.t("chooseImage") : i18n.t("removeImage") + " / " + i18n.t("chooseImage"));
+        Button background = actionButton(i18n.t("chooseImage"));
         background.setOnClickListener(v -> chooseImage(PICK_BACKGROUND));
         backgroundPanel.addView(background, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52)));
         backgroundPanel.addView(separator());
@@ -549,7 +665,7 @@ public final class MainActivity extends Activity {
         });
         backgroundPanel.addView(removeBackground, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
         backgroundPanel.addView(separator());
-        Button banner = actionButton(editSession.profile.bannerPath.isEmpty() ? i18n.t("bannerImage") + " · " + i18n.t("chooseImage") : i18n.t("bannerImage") + " · " + i18n.t("removeImage") + " / " + i18n.t("chooseImage"));
+        Button banner = actionButton(i18n.t("bannerImage") + " · " + i18n.t("chooseImage"));
         banner.setOnClickListener(v -> chooseImage(PICK_BANNER));
         backgroundPanel.addView(banner, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52)));
         backgroundPanel.addView(separator());
@@ -591,10 +707,10 @@ public final class MainActivity extends Activity {
         appearancePanel.addView(opacityValue);
         SeekBar opacity = new SeekBar(this);
         styleSeek(opacity);
-        opacity.setMax(100);
-        opacity.setProgress(Math.round(editSession.profile.cardOpacity * 100));
+        opacity.setMax(15);
+        opacity.setProgress(Math.round((Math.max(0.25f, editSession.profile.cardOpacity) * 100 - 25) / 5));
         opacity.setOnSeekBarChangeListener(simpleSeek(value -> {
-            editSession.profile.cardOpacity = Math.max(0.25f, value / 100f);
+            editSession.profile.cardOpacity = (25 + value * 5) / 100f;
             opacityValue.setText(i18n.t("opacity") + ": " + Math.round(editSession.profile.cardOpacity * 100) + "%");
             updatePreview();
         }));
@@ -603,6 +719,7 @@ public final class MainActivity extends Activity {
         attachPreviewUpdates();
 
         dialog.setContentView(page);
+        handleDialogBack(dialog, () -> confirmDiscard(dialog::dismiss));
         dialog.setOnDismissListener(d -> {
             editingProfile = null;
             editSession = null;
@@ -615,9 +732,13 @@ public final class MainActivity extends Activity {
         }
     }
 
-    private void saveEdit() {
+    private boolean saveEdit() {
+        if (!commitTagDraft()) return false;
         MeQrProfile profile = editSession.profile;
         applyEditFields(profile);
+        for (String tag : profile.tags) {
+            if (!editSession.recordedTagKeys.contains(CardTagIndex.canonicalKey(tag))) recordTagUse(tag);
+        }
         for (MeQrItem item : profile.qrItems) {
             if ("custom".equals(item.platform) && item.customPlatformName.trim().isEmpty()) {
                 item.platform = PlatformNames.detect(item.qrContent);
@@ -631,38 +752,58 @@ public final class MainActivity extends Activity {
             }
         }
         profile.syncLegacyFields();
+        List<MeQrProfile> updated = new ArrayList<>(profiles);
         if (editingProfile == null) {
-            profiles.add(profile);
+            updated.add(profile);
         } else {
-            int index = profiles.indexOf(editingProfile);
+            int index = updated.indexOf(editingProfile);
             if (index >= 0) {
-                profiles.set(index, profile);
+                updated.set(index, profile);
             }
         }
-        persistAndRefresh();
+        try { store.save(updated); }
+        catch (IOException error) { toast(i18n.t("saveFailed")); return false; }
+        profiles.clear();
+        profiles.addAll(updated);
+        currentPage = profiles.indexOf(profile);
+        showingCardList = false;
+        renderMain();
+        return true;
     }
 
     private void applyEditFields(MeQrProfile profile) {
-        profile.name = value(editSession.name, i18n.t("appName"));
-        profile.subtitle = value(editSession.subtitle, "");
-        profile.textColor = value(editSession.textColor, "#111111");
-        profile.qrColor = value(editSession.qrColor, "#111111");
-        profile.backgroundColor = value(editSession.backgroundColor, "#FFFFFF");
-        profile.borderColor = value(editSession.borderColor, "#111111");
-        profile.tags.clear();
-        if (editSession.tags != null) {
-            profile.tags.addAll(parseTags(editSession.tags.getText().toString()));
+        if (editSession.name != null) {
+            profile.name = value(editSession.name, i18n.t("appName"));
+        }
+        if (editSession.subtitle != null) {
+            profile.subtitle = value(editSession.subtitle, "");
+        }
+        if (editSession.passSubtitle != null) {
+            profile.passSubtitle = limitPassSubtitle(value(editSession.passSubtitle, ""));
+        }
+        if (editSession.textColor != null) {
+            profile.textColor = value(editSession.textColor, "#111111");
+        }
+        if (editSession.qrColor != null) {
+            profile.qrColor = value(editSession.qrColor, "#111111");
+        }
+        if (editSession.backgroundColor != null) {
+            profile.backgroundColor = value(editSession.backgroundColor, "#FFFFFF");
+        }
+        if (editSession.borderColor != null) {
+            profile.borderColor = value(editSession.borderColor, "#111111");
         }
         pruneTagOverrides(profile);
         profile.syncLegacyFields();
     }
 
     private void rebuildTagColorPanel() {
+        if (editSession != null) rebuildSelectedTagChips(editSession.tagChips);
         if (editSession == null || editSession.tagColorPanel == null || editSession.tags == null) {
             return;
         }
         editSession.tagColorPanel.removeAllViews();
-        List<String> tags = parseTags(editSession.tags.getText().toString());
+        List<String> tags = currentTags();
         if (tags.isEmpty()) {
             TextView hint = Ui.text(this, i18n.t("tagColorsHint"), COLOR_MUTED, 13);
             hint.setPadding(dp(4), 0, 0, 0);
@@ -687,17 +828,29 @@ public final class MainActivity extends Activity {
         row.setPadding(dp(12), dp(5), dp(8), dp(5));
 
         TextView label = Ui.boldText(this, "# " + tag, COLOR_TEXT, 15);
-        row.addView(label, new LinearLayout.LayoutParams(0, dp(48), 1));
+        label.setTypeface(TagTextWeight.typeface(editSession.profile.tagTextWeight(tag)));
+        label.setMaxLines(2);
+        label.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        label.setGravity(Gravity.CENTER_VERTICAL);
+        row.addView(label, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+
+        Button weightButton = tagWeightButton(tag, editSession.profile.tagTextWeight(tag));
+        weightButton.setOnClickListener(v -> {
+            editSession.profile.setTagTextWeight(tag, TagTextWeight.next(editSession.profile.tagTextWeight(tag)));
+            rebuildTagColorPanel();
+            updatePreview();
+        });
+        row.addView(weightButton, new LinearLayout.LayoutParams(dp(44), dp(44)));
 
         View swatch = new View(this);
-        int[] colors = CardTagColorPalette.colorsFor(tag, editSession.profile.tagColorOverrides.get(tag));
+        int[] colors = editSession.profile.tagColors(tag);
         swatch.setBackground(tagColorDrawable(colors, dp(10)));
-        LinearLayout.LayoutParams swatchParams = new LinearLayout.LayoutParams(dp(58), dp(24));
+        LinearLayout.LayoutParams swatchParams = new LinearLayout.LayoutParams(dp(40), dp(24));
         swatchParams.setMargins(dp(8), 0, dp(8), 0);
         row.addView(swatch, swatchParams);
 
-        boolean presetMulti = CardTagColorPalette.hasPresetMulti(tag);
-        boolean presetSingle = CardTagColorPalette.isPresetColored(tag) && !presetMulti;
+        boolean presetMulti = false;
+        boolean presetSingle = false;
         if (presetSingle) {
             TextView presetLabel = Ui.text(this, i18n.t("presetColor"), COLOR_MUTED, 13);
             presetLabel.setGravity(Gravity.CENTER);
@@ -711,10 +864,29 @@ public final class MainActivity extends Activity {
             row.addView(edit, new LinearLayout.LayoutParams(dp(72), dp(36)));
         }
 
-        parent.addView(row, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(56)));
+        row.setMinimumHeight(dp(56));
+        parent.addView(row, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    }
+
+    private Button tagWeightButton(String tag, int weight) {
+        Button button = smallButton("B");
+        button.setPadding(0, 0, 0, 0);
+        button.setMinWidth(0);
+        button.setMinimumWidth(0);
+        button.setTypeface(TagTextWeight.typeface(weight));
+        button.setTextColor(weight == TagTextWeight.REGULAR ? COLOR_MUTED : Ui.TEAL);
+        button.setBackground(rounded(Color.TRANSPARENT, dp(8), COLOR_SEPARATOR, dp(1)));
+        String description = tag + ", " + i18n.t("tagTextWeight") + ": " + i18n.t(TagTextWeight.labelKey(weight));
+        button.setContentDescription(description);
+        button.setTooltipText(description);
+        return button;
     }
 
     private void showTagLibrary() {
+        showTagLibrary(null);
+    }
+
+    private void showTagLibrary(Runnable onDismiss) {
         if (editSession == null || editSession.tags == null) {
             return;
         }
@@ -723,13 +895,39 @@ public final class MainActivity extends Activity {
         root.setPadding(dp(16), dp(12), dp(16), dp(12));
         root.setBackgroundColor(COLOR_BG);
 
-        EditText search = field(i18n.t("searchTags"), "", false);
+        EditText search = field(i18n.t("searchTags"), editSession.tags.getText().toString().trim(), false);
         search.setBackground(rounded(COLOR_PANEL, dp(12), COLOR_SEPARATOR, dp(1)));
         root.addView(search, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
 
-        TextView hint = Ui.text(this, i18n.t("tagLibraryHint"), COLOR_MUTED, 12);
+        TextView hint = Ui.text(this, RemoteTagCatalog.sourceName(i18n) + " · " + RemoteTagCatalog.revision(), COLOR_MUTED, 12);
         hint.setPadding(dp(4), dp(9), dp(4), dp(8));
-        root.addView(hint);
+        LinearLayout metadata = new LinearLayout(this);
+        metadata.setGravity(Gravity.CENTER_VERTICAL);
+        metadata.addView(hint, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        metadata.addView(tagIcon(android.R.drawable.ic_menu_info_details, i18n.t("tagCatalogInfo"), this::showTagCatalogInfo));
+        metadata.addView(tagIcon(android.R.drawable.ic_menu_add, i18n.t("tagRequestNew"), () -> TagReport.showNew(this, i18n, search.getText().toString())));
+        metadata.addView(tagIcon(android.R.drawable.ic_menu_send, i18n.t("tagOutbox"), () -> TagReportOutbox.show(this, i18n)));
+        root.addView(metadata);
+
+        RadioGroup modes = new RadioGroup(this);
+        modes.setOrientation(LinearLayout.HORIZONTAL);
+        modes.setPadding(dp(3), dp(3), dp(3), dp(3));
+        modes.setBackground(rounded(COLOR_PANEL, dp(8)));
+        String[] labels = {"tagAll", "tagRecent", "tagFrequent", "tagFavorites"};
+        for (int i = 0; i < labels.length; i++) {
+            RadioButton button = new RadioButton(this);
+            button.setId(View.generateViewId());
+            button.setTag(i);
+            button.setText(i18n.t(labels[i]));
+            button.setTextSize(13);
+            button.setMinWidth(0);
+            button.setButtonDrawable(null);
+            button.setGravity(Gravity.CENTER);
+            button.setPadding(dp(3), 0, dp(3), 0);
+            modes.addView(button, new LinearLayout.LayoutParams(0, dp(48), 1));
+        }
+        modes.check(modes.getChildAt(0).getId());
+        root.addView(modes);
 
         ScrollView scroll = new ScrollView(this);
         LinearLayout results = new LinearLayout(this);
@@ -742,21 +940,134 @@ public final class MainActivity extends Activity {
                 .setView(root)
                 .setNegativeButton(i18n.t("done"), null)
                 .create();
-        Runnable refresh = () -> rebuildTagLibraryResults(results, search.getText().toString(), dialog);
+        Runnable refresh = new Runnable() {
+            @Override public void run() {
+                hint.setText(RemoteTagCatalog.sourceName(i18n) + " · " + RemoteTagCatalog.revision());
+                View selectedMode = modes.findViewById(modes.getCheckedRadioButtonId());
+                int mode = (Integer) selectedMode.getTag();
+                for (int i = 0; i < modes.getChildCount(); i++) {
+                    RadioButton button = (RadioButton) modes.getChildAt(i);
+                    button.setTextColor(i == mode ? Ui.TEAL : COLOR_MUTED);
+                    button.setBackground(rounded(i == mode ? Color.argb(30, 57, 197, 187) : Color.TRANSPARENT, dp(6)));
+                }
+                if (mode == 0) rebuildTagLibraryResults(results, search.getText().toString(), dialog);
+                else rebuildTagHistory(results, search.getText().toString(), mode, this);
+            }
+        };
+        modes.setOnCheckedChangeListener((group, checkedId) -> refresh.run());
         search.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) { refresh.run(); }
             @Override public void afterTextChanged(Editable s) { }
         });
+        dialog.setOnDismissListener(ignored -> {
+            if (onDismiss != null) {
+                onDismiss.run();
+            }
+        });
         dialog.show();
         styleAlert(dialog);
         refresh.run();
-        RemoteTagCatalog.refresh(true, refresh);
+        RemoteTagCatalog.refresh(this, false, refresh);
+    }
+
+    private ImageButton tagIcon(int resource, String label, Runnable action) {
+        ImageButton button = new ImageButton(this);
+        button.setImageResource(resource);
+        button.setImageTintList(ColorStateList.valueOf(COLOR_MUTED));
+        button.setBackgroundColor(Color.TRANSPARENT);
+        button.setContentDescription(label);
+        button.setTooltipText(label);
+        button.setLayoutParams(new LinearLayout.LayoutParams(dp(48), dp(48)));
+        button.setOnClickListener(v -> action.run());
+        return button;
+    }
+
+    private void rebuildTagHistory(LinearLayout results, String query, int mode, Runnable refresh) {
+        results.removeAllViews();
+        CardTagUsageStore store = new CardTagUsageStore(this);
+        List<CardTagUsageStore.Record> history = mode == 3 ? store.favorites() : store.records(mode == 2);
+        int shown = 0;
+        String key = CardTagIndex.normalizedKey(query);
+        for (CardTagUsageStore.Record record : history.subList(0, mode == 3 ? history.size() : Math.min(20, history.size()))) {
+            String tag = record.display(i18n);
+            if (!CardTagIndex.normalizedKey(tag).contains(key)) continue;
+            addTagLibraryRow(results, tag, refresh);
+            shown++;
+        }
+        if (shown == 0) {
+            TextView empty = Ui.text(this, i18n.t(key.isEmpty() ? "tagHistoryEmpty" : "noTagResults"), COLOR_MUTED, 14);
+            empty.setPadding(dp(8), dp(20), dp(8), dp(20));
+            results.addView(empty);
+        }
+        if (mode != 3 && !history.isEmpty()) {
+            Button clear = quietButton(i18n.t("tagClearHistory"));
+            clear.setOnClickListener(v -> {
+                AlertDialog confirm = new AlertDialog.Builder(this)
+                        .setTitle(i18n.t("tagClearHistory"))
+                        .setNegativeButton(i18n.t("cancel"), null)
+                        .setPositiveButton(i18n.t("tagClearHistory"), (d, which) -> { store.clear(); refresh.run(); })
+                        .show();
+                styleAlert(confirm);
+            });
+            results.addView(clear, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
+        }
+    }
+
+    private void showTagCatalogInfo() {
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(dp(20), dp(12), dp(20), dp(20));
+        content.addView(Ui.boldText(this, RemoteTagCatalog.revision(), COLOR_TEXT, 17));
+        content.addView(Ui.text(this, RemoteTagCatalog.sourceName(i18n), COLOR_MUTED, 14));
+        if (RemoteTagCatalog.statusKey() != null) content.addView(Ui.text(this, i18n.t(RemoteTagCatalog.statusKey()), COLOR_MUTED, 13));
+        content.addView(section(i18n.t("tagCatalogChanges")));
+        if (RemoteTagCatalog.changelog().isEmpty()) {
+            content.addView(Ui.text(this, i18n.t("tagCatalogNoChanges"), COLOR_MUTED, 14));
+        }
+        for (RemoteTagCatalog.Change change : RemoteTagCatalog.changelog()) {
+            content.addView(Ui.boldText(this, change.revision + " · " + change.date, COLOR_TEXT, 15));
+            TextView summary = Ui.text(this, change.display(i18n.resolvedLanguage()), COLOR_TEXT, 14);
+            summary.setPadding(0, dp(8), 0, dp(16));
+            content.addView(summary);
+        }
+        ScrollView scroll = new ScrollView(this);
+        scroll.addView(content);
+        AlertDialog dialog = new AlertDialog.Builder(this).setTitle(i18n.t("tagCatalogInfo"))
+                .setView(scroll).setPositiveButton(i18n.t("done"), null).show();
+        styleAlert(dialog);
     }
 
     private void rebuildTagLibraryResults(LinearLayout results, String query, AlertDialog dialog) {
         results.removeAllViews();
-        List<String> existing = parseTags(editSession.tags.getText().toString());
+        List<String> existing = currentTags();
+
+        if (query.trim().isEmpty()) {
+            List<RemoteTagCatalog.Category> categories = CardTagIndex.categories();
+            if (!categories.isEmpty()) {
+                TextView heading = Ui.text(this, i18n.t("tagCategories"), COLOR_MUTED, 13);
+                heading.setPadding(dp(4), dp(4), dp(4), dp(8));
+                results.addView(heading);
+                for (int index = 0; index < categories.size(); index++) {
+                    RemoteTagCatalog.Category category = categories.get(index);
+                    List<RemoteTagCatalog.Entry> entries = CardTagIndex.entriesIn(category);
+                    if (entries.size() == 1) {
+                        String tag = entries.get(0).display(i18n.resolvedLanguage());
+                        addTagLibraryRow(results, tag, () -> rebuildTagLibraryResults(results, "", dialog));
+                    } else {
+                        addTagCategoryRow(results, category, entries.size(), dialog);
+                    }
+                }
+                return;
+            }
+            if (RemoteTagCatalog.isLoading()) {
+                TextView loading = Ui.text(this, i18n.t("tagCatalogLoading"), COLOR_MUTED, 14);
+                loading.setGravity(Gravity.CENTER);
+                results.addView(loading, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(84)));
+                return;
+            }
+        }
+
         List<String> matches = CardTagIndex.suggestions(query, i18n, existing, 8);
         if (matches.isEmpty()) {
             String message;
@@ -774,7 +1085,7 @@ public final class MainActivity extends Activity {
             if (RemoteTagCatalog.errorMessage() != null) {
                 empty.setTextColor(Ui.TEAL);
                 empty.setOnClickListener(v -> {
-                    RemoteTagCatalog.refresh(true, () -> rebuildTagLibraryResults(results, query, dialog));
+                    RemoteTagCatalog.refresh(this, true, () -> rebuildTagLibraryResults(results, query, dialog));
                     rebuildTagLibraryResults(results, query, dialog);
                 });
             }
@@ -783,36 +1094,262 @@ public final class MainActivity extends Activity {
         }
         for (int index = 0; index < matches.size(); index++) {
             String tag = matches.get(index);
-            LinearLayout row = new LinearLayout(this);
-            row.setOrientation(LinearLayout.HORIZONTAL);
-            row.setGravity(Gravity.CENTER_VERTICAL);
-            row.setPadding(dp(10), 0, dp(8), 0);
-            row.setBackground(rounded(COLOR_PANEL, dp(11), COLOR_SEPARATOR, dp(1)));
-
-            View swatch = new View(this);
-            swatch.setBackground(tagColorDrawable(CardTagColorPalette.colorsFor(tag, null), dp(9)));
-            row.addView(swatch, new LinearLayout.LayoutParams(dp(42), dp(20)));
-
-            TextView name = Ui.boldText(this, tag, COLOR_TEXT, 15);
-            name.setPadding(dp(12), 0, dp(8), 0);
-            row.addView(name, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
-
-            TextView add = Ui.boldText(this, "+", Ui.TEAL, 21);
-            add.setGravity(Gravity.CENTER);
-            row.addView(add, new LinearLayout.LayoutParams(dp(36), dp(36)));
-            row.setOnClickListener(v -> {
-                if (appendTag(tag)) {
-                    rebuildTagLibraryResults(results, query, dialog);
-                }
-            });
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48));
-            params.setMargins(0, 0, 0, dp(6));
-            results.addView(row, params);
+            addTagLibraryRow(results, tag, () -> rebuildTagLibraryResults(results, query, dialog));
         }
     }
 
+    private void addTagCategoryRow(LinearLayout parent, RemoteTagCatalog.Category category, int entryCount, AlertDialog dialog) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(dp(10), 0, dp(8), 0);
+        row.setBackground(rounded(COLOR_PANEL, dp(11), COLOR_SEPARATOR, dp(1)));
+
+        TextView name = Ui.boldText(this, category.display(i18n.resolvedLanguage()), COLOR_TEXT, 15);
+        name.setPadding(dp(12), 0, dp(8), 0);
+        row.addView(name, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+
+        TextView count = Ui.text(this, String.valueOf(entryCount), COLOR_MUTED, 13);
+        count.setGravity(Gravity.CENTER);
+        count.setPadding(dp(8), 0, 0, 0);
+        row.addView(count);
+
+        ImageView chevron = UiIcons.view(this, "›", COLOR_MUTED);
+        row.addView(chevron, new LinearLayout.LayoutParams(dp(30), dp(36)));
+
+        row.setOnClickListener(v -> showTagCategory(dialog, (LinearLayout) row.getParent(), category, 0));
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48));
+        params.setMargins(0, 0, 0, dp(6));
+        parent.addView(row, params);
+    }
+
+    private void addTagLibraryRow(LinearLayout parent, String tag, Runnable onChange) {
+        boolean selected = isTagSelected(tag);
+        boolean limitReached = !selected && currentTags().size() >= 10;
+
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(dp(10), 0, dp(8), 0);
+        row.setBackground(rounded(COLOR_PANEL, dp(11), COLOR_SEPARATOR, dp(1)));
+
+        View swatch = new View(this);
+        swatch.setBackground(tagColorDrawable(CardTagColorPalette.colorsFor(tag, null), dp(9)));
+        row.addView(swatch, new LinearLayout.LayoutParams(dp(42), dp(20)));
+
+        LinearLayout labels = new LinearLayout(this);
+        labels.setOrientation(LinearLayout.VERTICAL);
+        labels.setPadding(dp(12), dp(6), dp(8), dp(6));
+        TextView name = Ui.boldText(this, tag, COLOR_TEXT, 15);
+        name.setMaxLines(2);
+        name.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        labels.addView(name);
+        RemoteTagCatalog.Entry catalogEntry = RemoteTagCatalog.entryFor(tag);
+        if (catalogEntry != null) labels.addView(Ui.text(this, RemoteTagCatalog.subtitle(catalogEntry, i18n), COLOR_MUTED, 11));
+        row.addView(labels, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        CardTagUsageStore usage = new CardTagUsageStore(this);
+        if (usage.isFavorite(tag)) {
+            ImageView favorite = new ImageView(this);
+            favorite.setImageResource(android.R.drawable.btn_star_big_on);
+            favorite.setContentDescription(i18n.t("tagFavorites"));
+            row.addView(favorite, new LinearLayout.LayoutParams(dp(18), dp(18)));
+        }
+
+        ImageView trailing = UiIcons.view(this, selected ? "✓" : "+", selected ? Ui.TEAL : COLOR_MUTED);
+        row.addView(trailing, new LinearLayout.LayoutParams(dp(36), dp(36)));
+
+        if (limitReached) {
+            row.setAlpha(0.45f);
+        }
+        row.setOnClickListener(v -> {
+            if (toggleTag(tag)) {
+                onChange.run();
+            }
+        });
+        row.setOnLongClickListener(v -> {
+            android.widget.PopupMenu menu = new android.widget.PopupMenu(this, row);
+            menu.getMenu().add(0, 1, 0, i18n.t(usage.isFavorite(tag) ? "tagUnfavorite" : "tagFavorite"));
+            menu.getMenu().add(0, 2, 1, i18n.t("tagReport"));
+            menu.setOnMenuItemClickListener(item -> {
+                if (item.getItemId() == 1) { usage.toggleFavorite(tag); onChange.run(); }
+                else TagReport.show(this, i18n, tag);
+                return true;
+            });
+            menu.show();
+            return true;
+        });
+        row.setMinimumHeight(dp(64));
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.setMargins(0, 0, 0, dp(6));
+        parent.addView(row, params);
+    }
+
+    private void showTagCategory(AlertDialog dialog, LinearLayout results, RemoteTagCatalog.Category category, int requestedPage) {
+        results.removeAllViews();
+
+        Button back = actionButton("‹  " + i18n.t("back"));
+        back.setOnClickListener(v -> rebuildTagLibraryResults(results, "", dialog));
+        results.addView(back, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(44)));
+
+        List<RemoteTagCatalog.Entry> entries = CardTagIndex.entriesIn(category);
+        if (entries.isEmpty()) {
+            TextView empty = Ui.text(this, i18n.t("searchTags"), COLOR_MUTED, 14);
+            empty.setGravity(Gravity.CENTER);
+            results.addView(empty, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(84)));
+            return;
+        }
+
+        int pageCount = Math.max(1, (entries.size() + TAG_CATEGORY_PAGE_SIZE - 1) / TAG_CATEGORY_PAGE_SIZE);
+        int page = Math.max(0, Math.min(requestedPage, pageCount - 1));
+        TextView heading = Ui.boldText(this,
+                category.display(i18n.resolvedLanguage()) + "   " + (page + 1) + " / " + pageCount,
+                COLOR_TEXT, 17);
+        heading.setPadding(dp(4), dp(12), dp(4), dp(8));
+        results.addView(heading);
+
+        int start = page * TAG_CATEGORY_PAGE_SIZE;
+        int end = Math.min(entries.size(), start + TAG_CATEGORY_PAGE_SIZE);
+        for (int index = start; index < end; index++) {
+            String tag = entries.get(index).display(i18n.resolvedLanguage());
+            addTagLibraryRow(results, tag, () -> showTagCategory(dialog, results, category, page));
+        }
+
+        if (pageCount > 1) {
+            LinearLayout navigation = new LinearLayout(this);
+            navigation.setOrientation(LinearLayout.HORIZONTAL);
+            navigation.setGravity(Gravity.CENTER_VERTICAL);
+            navigation.setPadding(0, dp(4), 0, 0);
+
+            Button previous = quietButton(i18n.t("previousPage"));
+            previous.setEnabled(page > 0);
+            previous.setAlpha(previous.isEnabled() ? 1f : 0.35f);
+            previous.setOnClickListener(v -> showTagCategory(dialog, results, category, page - 1));
+            navigation.addView(previous, new LinearLayout.LayoutParams(0, dp(44), 1));
+
+            Button next = quietButton(i18n.t("nextPage"));
+            next.setEnabled(page + 1 < pageCount);
+            next.setAlpha(next.isEnabled() ? 1f : 0.35f);
+            next.setOnClickListener(v -> showTagCategory(dialog, results, category, page + 1));
+            LinearLayout.LayoutParams nextParams = new LinearLayout.LayoutParams(0, dp(44), 1);
+            nextParams.setMargins(dp(8), 0, 0, 0);
+            navigation.addView(next, nextParams);
+            results.addView(navigation);
+        }
+    }
+
+    private LinearLayout createTagInput(Runnable onTagsChanged) {
+        editSession.onTagsChanged = onTagsChanged;
+        LinearLayout section = new LinearLayout(this);
+        section.setOrientation(LinearLayout.VERTICAL);
+        editSession.tagChips = new TagFlowLayout(this);
+        section.addView(editSession.tagChips, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        LinearLayout input = new LinearLayout(this);
+        input.setGravity(Gravity.CENTER_VERTICAL);
+        input.setBackground(rounded(COLOR_PANEL_2, dp(8)));
+        editSession.tags = field(i18n.t("tagsHint"), editSession.tagDraft, false);
+        editSession.tags.setSingleLine(true);
+        editSession.tags.setTextSize(12);
+        editSession.tags.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_DONE);
+        editSession.tags.setContentDescription(i18n.t("tags"));
+        editSession.tags.setTag("tag-draft");
+        editSession.tags.setBackgroundColor(Color.TRANSPARENT);
+        input.addView(editSession.tags, new LinearLayout.LayoutParams(0, dp(48), 1));
+        editSession.tagCount = Ui.text(this, currentTags().size() + "/10", COLOR_MUTED, 12);
+        editSession.tagCount.setGravity(Gravity.CENTER);
+        input.addView(editSession.tagCount, new LinearLayout.LayoutParams(dp(42), dp(48)));
+        input.addView(tagIcon(android.R.drawable.ic_menu_search, i18n.t("tagLibrary"), () -> showTagLibrary()),
+                new LinearLayout.LayoutParams(dp(44), dp(48)));
+        LinearLayout.LayoutParams inputParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48));
+        inputParams.topMargin = dp(10);
+        section.addView(input, inputParams);
+        editSession.tagSuggestions = new LinearLayout(this);
+        editSession.tagSuggestions.setOrientation(LinearLayout.VERTICAL);
+        section.addView(editSession.tagSuggestions);
+        editSession.tags.setOnEditorActionListener((v, action, event) -> {
+            if (event != null && event.getKeyCode() == android.view.KeyEvent.KEYCODE_ENTER) {
+                if (event.getAction() == android.view.KeyEvent.ACTION_UP) commitTagDraft();
+                return true;
+            }
+            if (action == android.view.inputmethod.EditorInfo.IME_ACTION_DONE
+                    || action == android.view.inputmethod.EditorInfo.IME_ACTION_NEXT) {
+                commitTagDraft();
+                return true;
+            }
+            return false;
+        });
+        editSession.tags.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { }
+            @Override public void afterTextChanged(Editable s) {
+                if (editSession == null || editSession.committingTags
+                        || android.view.inputmethod.BaseInputConnection.getComposingSpanStart(s) >= 0) return;
+                String text = s.toString();
+                if (text.contains("\n") || text.contains(",") || text.contains("，")) commitTagDraft();
+                else rebuildTagInputSuggestions();
+            }
+        });
+        rebuildSelectedTagChips(editSession.tagChips);
+        rebuildTagInputSuggestions();
+        return section;
+    }
+
+    private void rebuildTagInputSuggestions() {
+        if (editSession == null || editSession.tagSuggestions == null || editSession.tags == null) return;
+        LinearLayout results = editSession.tagSuggestions;
+        results.removeAllViews();
+        String query = editSession.tags.getText().toString().trim();
+        if (query.isEmpty() || currentTags().size() >= 10) return;
+        for (String tag : CardTagIndex.suggestions(query, i18n, currentTags(), 4)) {
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setMinimumHeight(dp(48));
+            row.setPadding(dp(10), dp(6), dp(10), dp(6));
+            LinearLayout labels = new LinearLayout(this);
+            labels.setOrientation(LinearLayout.VERTICAL);
+            labels.addView(Ui.text(this, tag, COLOR_TEXT, 15));
+            RemoteTagCatalog.Entry entry = RemoteTagCatalog.entryFor(tag);
+            if (entry != null) labels.addView(Ui.text(this, RemoteTagCatalog.subtitle(entry, i18n), COLOR_MUTED, 12));
+            row.addView(labels, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+            row.addView(UiIcons.view(this, "+", COLOR_BLUE), new LinearLayout.LayoutParams(dp(24), dp(24)));
+            row.setContentDescription(i18n.t("add") + " " + tag);
+            row.setOnClickListener(view -> {
+                if (appendTag(tag)) {
+                    editSession.tags.setText("");
+                    editSession.tagDraft = "";
+                }
+            });
+            results.addView(row);
+        }
+    }
+
+    private boolean commitTagDraft() {
+        if (editSession == null || editSession.tags == null || editSession.committingTags) return true;
+        String raw = editSession.tags.getText().toString();
+        if (raw.trim().isEmpty()) return true;
+        List<String> selected = currentTags(), remaining = new ArrayList<>();
+        for (String part : raw.split("[\\n\\r,，]+")) {
+            String tag = part.trim();
+            if (tag.isEmpty()) continue;
+            String key = CardTagIndex.canonicalKey(tag);
+            boolean duplicate = false;
+            for (String existing : selected) if (CardTagIndex.canonicalKey(existing).equals(key)) duplicate = true;
+            if (duplicate) continue;
+            if (selected.size() >= 10) remaining.add(tag);
+            else { selected.add(tag); recordTagUse(tag); }
+        }
+        editSession.committingTags = true;
+        editSession.tags.setText(String.join(", ", remaining));
+        editSession.tagDraft = editSession.tags.getText().toString();
+        editSession.tags.setSelection(editSession.tags.length());
+        editSession.committingTags = false;
+        writeTags(selected);
+        if (!remaining.isEmpty()) toast(i18n.t("tagLimitReached"));
+        return remaining.isEmpty();
+    }
+
     private boolean appendTag(String tag) {
-        List<String> tags = parseTags(editSession.tags.getText().toString());
+        List<String> tags = currentTags();
         if (tags.size() >= 10) {
             toast(i18n.t("tagLimitReached"));
             return false;
@@ -823,60 +1360,134 @@ public final class MainActivity extends Activity {
                 return false;
             }
         }
-        tags.add(MeQrProfile.normalizeTag(tag));
-        editSession.tags.setText(joinTags(tags));
-        editSession.tags.setSelection(editSession.tags.length());
+        tags.add(tag == null ? "" : tag.trim());
+        recordTagUse(tag);
+        writeTags(tags);
         return true;
     }
 
-    private void showTagColorEditor(String tag) {
-        if (CardTagColorPalette.hasPresetMulti(tag)) {
-            showPresetTagColorEditor(tag);
-            return;
+    private boolean toggleTag(String tag) {
+        List<String> tags = currentTags();
+        String key = CardTagIndex.canonicalKey(tag);
+        boolean removed = false;
+        for (int index = 0; index < tags.size(); index++) {
+            if (CardTagIndex.canonicalKey(tags.get(index)).equals(key)) {
+                tags.remove(index);
+                removed = true;
+                break;
+            }
         }
-        if (CardTagColorPalette.isPresetColored(tag)) {
-            editSession.profile.tagColorOverrides.remove(tag);
-            rebuildTagColorPanel();
-            updatePreview();
-            return;
+        if (!removed) {
+            if (tags.size() >= 10) {
+                toast(i18n.t("tagLimitReached"));
+                return false;
+            }
+            tags.add(tag == null ? "" : tag.trim());
+            recordTagUse(tag);
         }
+        writeTags(tags);
+        return true;
+    }
 
-        String existingOverride = editSession.profile.tagColorOverrides.get(tag);
-        boolean[] usePreset = new boolean[]{false};
-        int[] initial = CardTagColorPalette.colorsFor(tag, existingOverride);
-        List<String> colors = new ArrayList<>();
-        for (int index = 0; index < Math.min(initial.length, 3); index++) {
-            colors.add(CardTagColorPalette.hex(initial[index]));
+    private List<String> currentTags() {
+        return new ArrayList<>(editSession.profile.tags);
+    }
+
+    private void recordTagUse(String tag) {
+        new CardTagUsageStore(this).record(tag);
+        editSession.recordedTagKeys.add(CardTagIndex.canonicalKey(tag));
+    }
+
+    private void writeTags(List<String> tags) {
+        editSession.profile.tags.clear();
+        editSession.profile.tags.addAll(tags);
+        pruneTagOverrides(editSession.profile);
+        rebuildSelectedTagChips(editSession.tagChips);
+        rebuildTagColorPanel();
+        if (editSession.tagCount != null) editSession.tagCount.setText(tags.size() + "/10");
+        rebuildTagInputSuggestions();
+        if (editSession.onTagsChanged != null) editSession.onTagsChanged.run();
+        updatePreview();
+    }
+
+    private boolean isTagSelected(String tag) {
+        String key = CardTagIndex.canonicalKey(tag);
+        for (String existing : currentTags()) {
+            if (CardTagIndex.canonicalKey(existing).equals(key)) {
+                return true;
+            }
         }
+        return false;
+    }
+
+    private void showTagColorEditor(String tag) {
+        String existingOverride = editSession.profile.tagColorOverrides.get(tag);
+        TagReference reference = editSession.profile.referenceFor(tag);
+        boolean[] usePreset = new boolean[]{false};
+        String[] mode = {reference == null ? CardTagColorPalette.modeFor(tag, existingOverride) : reference.modeFor(existingOverride)};
+        List<String> colors = reference == null ? CardTagColorPalette.customColorsFor(tag, existingOverride) : reference.customColorsFor(existingOverride);
+        java.util.Map<String, String> pendingCopies = new java.util.HashMap<>();
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(16), dp(8), dp(16), dp(8));
         root.setBackgroundColor(COLOR_BG);
 
-        TextView preview = Ui.boldText(this, "# " + tag, Color.WHITE, 14);
+        TextView preview = Ui.boldText(this, tag, Color.WHITE, 14);
+        preview.setTypeface(TagTextWeight.typeface(editSession.profile.tagTextWeight(tag)));
         preview.setGravity(Gravity.CENTER);
-        root.addView(preview, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(40)));
+        preview.setSingleLine(true);
+        preview.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        preview.setPadding(dp(12), 0, dp(12), 0);
+        LinearLayout.LayoutParams previewParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(28));
+        previewParams.gravity = Gravity.CENTER_HORIZONTAL;
+        root.addView(preview, previewParams);
 
+        LinearLayout modes = new LinearLayout(this);
+        modes.setOrientation(LinearLayout.HORIZONTAL);
+        root.addView(modes, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
         LinearLayout colorRows = new LinearLayout(this);
         colorRows.setOrientation(LinearLayout.VERTICAL);
         root.addView(colorRows);
 
-        rebuildTagColorEditorRows(colorRows, colors, tag, usePreset, preview);
+        rebuildTagColorEditorRows(colorRows, colors, tag, usePreset, preview, pendingCopies);
+        String[] values = {"solid", "preset", "custom"};
+        String[] labels = {"solidColor", "mixedColor", "customColor"};
+        List<Button> buttons = new ArrayList<>();
+        Runnable refresh = () -> {
+            colorRows.setVisibility(mode[0].equals("custom") ? View.VISIBLE : View.GONE);
+            int[] rendered = editSession.profile.tagColors(tag, CardTagColorPalette.encodeMode(mode[0], colors));
+            preview.setBackground(tagColorDrawable(rendered, dp(14)));
+            new TagTextContrast(rendered).apply(preview);
+            for (Button button : buttons) {
+                boolean selected = mode[0].equals(button.getTag());
+                button.setSelected(selected);
+                button.setTextColor(selected ? Color.WHITE : COLOR_TEXT);
+                button.setBackground(rounded(selected ? Ui.TEAL : COLOR_PANEL, dp(6), COLOR_SEPARATOR, dp(1)));
+            }
+        };
+        for (int index = 0; index < values.length; index++) {
+            if (values[index].equals("preset") && editSession.profile.tagColors(tag, "@preset").length < 2) continue;
+            String value = values[index];
+            Button button = templateButton(i18n.t(labels[index]), value.equals(mode[0]));
+            button.setTag(value);
+            button.setTextSize(12);
+            button.setPadding(0, 0, 0, 0);
+            button.setOnClickListener(v -> { mode[0] = value; refresh.run(); });
+            buttons.add(button);
+            modes.addView(button, new LinearLayout.LayoutParams(0, dp(44), 1));
+        }
+        refresh.run();
+        ScrollView scroll = new ScrollView(this);
+        scroll.addView(root);
 
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle(i18n.t("editTagColors"))
-                .setView(root)
+                .setView(scroll)
                 .setNegativeButton(i18n.t("cancel"), null)
                 .setPositiveButton(i18n.t("save"), (choiceDialog, which) -> {
-                    if (usePreset[0]) {
-                        editSession.profile.tagColorOverrides.remove(tag);
-                    } else {
-                        String encoded = CardTagColorPalette.encodeColors(colors);
-                        if (!encoded.isEmpty()) {
-                            editSession.profile.tagColorOverrides.put(tag, encoded);
-                        }
-                    }
+                    editSession.profile.tagColorOverrides.put(tag, CardTagColorPalette.encodeMode(mode[0], colors));
+                    editSession.profile.tagColorOverrides.putAll(pendingCopies);
                     rebuildTagColorPanel();
                     updatePreview();
                 })
@@ -947,27 +1558,55 @@ public final class MainActivity extends Activity {
     }
 
     private void rebuildTagColorEditorRows(LinearLayout container, List<String> colors, String tag,
-                                           boolean[] usePreset, TextView preview) {
+                                           boolean[] usePreset, TextView preview, java.util.Map<String, String> pendingCopies) {
         container.removeAllViews();
         int[] previewColors = usePreset[0]
                 ? CardTagColorPalette.colorsFor(tag, null)
                 : CardTagColorPalette.colorsFor(tag, CardTagColorPalette.encodeColors(colors));
         preview.setBackground(tagColorDrawable(previewColors, dp(12)));
+        new TagTextContrast(previewColors).apply(preview);
 
         for (int index = 0; index < colors.size(); index++) {
             int colorIndex = index;
             LinearLayout row = new LinearLayout(this);
             row.setOrientation(LinearLayout.HORIZONTAL);
             row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setTag(index);
+            ImageButton handle = tagIcon(android.R.drawable.ic_menu_sort_by_size, i18n.t("tagMoveColor"), () -> {
+                android.widget.PopupMenu menu = new android.widget.PopupMenu(this, row);
+                menu.getMenu().add(0, 1, 0, i18n.t("tagMoveUp")).setEnabled(colorIndex > 0);
+                menu.getMenu().add(0, 2, 1, i18n.t("tagMoveDown")).setEnabled(colorIndex < colors.size() - 1);
+                menu.setOnMenuItemClickListener(item -> {
+                    int target = colorIndex + (item.getItemId() == 1 ? -1 : 1);
+                    colors.add(target, colors.remove(colorIndex));
+                    rebuildTagColorEditorRows(container, colors, tag, usePreset, preview, pendingCopies);
+                    return true;
+                });
+                menu.show();
+            });
+            handle.setOnLongClickListener(v -> row.startDragAndDrop(ClipData.newPlainText("MeQR Color", String.valueOf(colorIndex)), new View.DragShadowBuilder(row), row, 0));
+            row.addView(handle, new LinearLayout.LayoutParams(dp(32), dp(44)));
+            row.setOnDragListener((view, event) -> {
+                if (!(event.getLocalState() instanceof View) || ((View) event.getLocalState()).getParent() != container) return false;
+                if (event.getAction() == DragEvent.ACTION_DROP) {
+                    int from = (Integer) ((View) event.getLocalState()).getTag();
+                    colors.add(colorIndex, colors.remove(from));
+                    container.post(() -> rebuildTagColorEditorRows(container, colors, tag, usePreset, preview, pendingCopies));
+                }
+                return true;
+            });
 
             TextView label = Ui.text(this, i18n.t("color") + " " + (index + 1), COLOR_TEXT, 14);
-            row.addView(label, new LinearLayout.LayoutParams(dp(72), dp(48)));
+            label.setGravity(Gravity.CENTER_VERTICAL);
+            row.addView(label, new LinearLayout.LayoutParams(dp(52), dp(48)));
 
             EditText field = new EditText(this);
             field.setText(colors.get(index));
             field.setSingleLine(true);
             field.setTextColor(COLOR_TEXT);
             field.setTextSize(14);
+            field.setHint(i18n.t("tagHex"));
+            field.setContentDescription(i18n.t("tagHex") + " " + (index + 1));
             field.setGravity(Gravity.CENTER);
             field.setBackground(rounded(COLOR_PANEL, dp(10), COLOR_SEPARATOR, dp(1)));
             row.addView(field, new LinearLayout.LayoutParams(0, dp(42), 1));
@@ -985,7 +1624,7 @@ public final class MainActivity extends Activity {
                 remove.setOnClickListener(v -> {
                     colors.remove(colorIndex);
                     usePreset[0] = false;
-                    rebuildTagColorEditorRows(container, colors, tag, usePreset, preview);
+                    rebuildTagColorEditorRows(container, colors, tag, usePreset, preview, pendingCopies);
                 });
                 LinearLayout.LayoutParams removeParams = new LinearLayout.LayoutParams(dp(36), dp(36));
                 removeParams.setMargins(dp(7), 0, 0, 0);
@@ -996,12 +1635,14 @@ public final class MainActivity extends Activity {
                 @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
                 @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                     String normalized = CardTagColorPalette.normalizedHex(s.toString());
+                    field.setError(normalized == null ? i18n.t("tagInvalidHex") : null);
                     if (normalized != null) {
                         colors.set(colorIndex, normalized);
                         usePreset[0] = false;
                         swatch.setBackground(rounded(Color.parseColor(normalized), dp(10), Color.WHITE, dp(1)));
                         preview.setBackground(tagColorDrawable(CardTagColorPalette.colorsFor(tag,
                                 CardTagColorPalette.encodeColors(colors)), dp(12)));
+                        new TagTextContrast(CardTagColorPalette.colorsFor(tag, CardTagColorPalette.encodeColors(colors))).apply(preview);
                     }
                 }
                 @Override public void afterTextChanged(Editable s) { }
@@ -1009,14 +1650,28 @@ public final class MainActivity extends Activity {
             container.addView(row, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52)));
         }
 
-        if (colors.size() < 3) {
+        if (colors.size() < CardTagColorPalette.MAX_CUSTOM_COLORS) {
             Button add = actionButton("＋  " + i18n.t("addColor"));
             add.setOnClickListener(v -> {
                 colors.add(colors.isEmpty() ? "#39C5BB" : colors.get(colors.size() - 1));
                 usePreset[0] = false;
-                rebuildTagColorEditorRows(container, colors, tag, usePreset, preview);
+                rebuildTagColorEditorRows(container, colors, tag, usePreset, preview, pendingCopies);
             });
             container.addView(add, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(42)));
+        }
+        if (currentTags().size() > 1) {
+            Button copy = actionButton(i18n.t("tagCopyPalette"));
+            copy.setCompoundDrawablesWithIntrinsicBounds(android.R.drawable.ic_menu_set_as, 0, 0, 0);
+            copy.setOnClickListener(v -> {
+                List<String> targets = new ArrayList<>(currentTags());
+                targets.remove(tag);
+                new AlertDialog.Builder(this).setTitle(i18n.t("tagCopyPalette"))
+                        .setItems(targets.toArray(new String[0]), (dialog, which) -> {
+                            pendingCopies.put(targets.get(which), CardTagColorPalette.encodeMode("custom", colors));
+                            Toast.makeText(this, targets.get(which), Toast.LENGTH_SHORT).show();
+                        }).show();
+            });
+            container.addView(copy);
         }
     }
 
@@ -1276,14 +1931,9 @@ public final class MainActivity extends Activity {
         }
     }
 
-    private GradientDrawable tagColorDrawable(int[] colors, int radius) {
+    private android.graphics.drawable.Drawable tagColorDrawable(int[] colors, int radius) {
         int[] safeColors = colors == null || colors.length == 0 ? new int[]{Ui.TEAL} : colors;
-        GradientDrawable drawable = safeColors.length == 1
-                ? rounded(safeColors[0], radius, Color.argb(100, 255, 255, 255), dp(1))
-                : new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, safeColors);
-        drawable.setCornerRadius(radius);
-        drawable.setStroke(dp(1), Color.argb(100, 255, 255, 255));
-        return drawable;
+        return new TagSegmentDrawable(safeColors, radius);
     }
 
     private List<String> parseTags(String raw) {
@@ -1293,7 +1943,7 @@ public final class MainActivity extends Activity {
             return tags;
         }
         for (String part : raw.split("[\\n\\r,，]+", -1)) {
-            String tag = MeQrProfile.normalizeTag(part);
+            String tag = part == null ? "" : part.trim();
             String key = CardTagIndex.canonicalKey(tag);
             if (!tag.isEmpty() && !keys.contains(key)) {
                 tags.add(tag);
@@ -1306,16 +1956,208 @@ public final class MainActivity extends Activity {
         return tags;
     }
 
+    private int contrastTextOn(int color) {
+        int red = Color.red(color);
+        int green = Color.green(color);
+        int blue = Color.blue(color);
+        double luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+        return luminance > 150 ? Color.rgb(20, 20, 20) : Color.WHITE;
+    }
+
+    private void rebuildSelectedTagChips(LinearLayout container) {
+        if (container == null) {
+            return;
+        }
+        container.removeAllViews();
+        List<String> tags = currentTags();
+        if (tags.isEmpty()) return;
+        for (int index = 0; index < tags.size(); index++) {
+            String tag = tags.get(index);
+            int[] colors = editSession.profile.tagColors(tag);
+            TagTextContrast ink = new TagTextContrast(colors);
+            int textColor = ink.foreground;
+
+            LinearLayout chip = new LinearLayout(this);
+            chip.setOrientation(LinearLayout.HORIZONTAL);
+            chip.setGravity(Gravity.CENTER_VERTICAL);
+            chip.setPadding(dp(8), 0, dp(2), 0);
+            chip.setBackground(new TagSegmentDrawable(colors, dp(14)));
+            chip.setTag(tag);
+            chip.setOnLongClickListener(v -> v.startDragAndDrop(
+                    ClipData.newPlainText("MeQR Tag", tag), new View.DragShadowBuilder(chip), chip, 0));
+            chip.setOnDragListener((target, event) -> {
+                if (!(event.getLocalState() instanceof View) || ((View) event.getLocalState()).getParent() != container) return false;
+                switch (event.getAction()) {
+                    case DragEvent.ACTION_DRAG_STARTED: return true;
+                    case DragEvent.ACTION_DRAG_ENTERED: chip.setAlpha(0.55f); return true;
+                    case DragEvent.ACTION_DRAG_LOCATION:
+                        android.view.ViewParent ancestor = container.getParent();
+                        while (ancestor instanceof View && !(ancestor instanceof ScrollView)) ancestor = ancestor.getParent();
+                        if (ancestor instanceof ScrollView) {
+                            ScrollView scroll = (ScrollView) ancestor;
+                            int[] chipLocation = new int[2], scrollLocation = new int[2];
+                            chip.getLocationOnScreen(chipLocation);
+                            scroll.getLocationOnScreen(scrollLocation);
+                            float y = chipLocation[1] + event.getY() - scrollLocation[1];
+                            if (y < dp(48)) scroll.smoothScrollBy(0, -dp(12));
+                            else if (y > scroll.getHeight() - dp(48)) scroll.smoothScrollBy(0, dp(12));
+                        }
+                        return true;
+                    case DragEvent.ACTION_DROP:
+                        String source = (String) ((View) event.getLocalState()).getTag();
+                        container.post(() -> moveSelectedTag(source, tag, container));
+                        return true;
+                    case DragEvent.ACTION_DRAG_EXITED:
+                    case DragEvent.ACTION_DRAG_ENDED: chip.setAlpha(1f); return true;
+                    default: return true;
+                }
+            });
+            final int moveUp = View.generateViewId(), moveDown = View.generateViewId();
+            chip.setAccessibilityDelegate(new View.AccessibilityDelegate() {
+                @Override public void onInitializeAccessibilityNodeInfo(View host, android.view.accessibility.AccessibilityNodeInfo info) {
+                    super.onInitializeAccessibilityNodeInfo(host, info);
+                    info.addAction(new android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction(moveUp, i18n.t("tagMoveUp")));
+                    info.addAction(new android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction(moveDown, i18n.t("tagMoveDown")));
+                }
+                @Override public boolean performAccessibilityAction(View host, int action, Bundle args) {
+                    if (action == moveUp || action == moveDown) {
+                        List<String> current = currentTags();
+                        int from = current.indexOf(tag), to = from + (action == moveUp ? -1 : 1);
+                        if (from >= 0 && to >= 0 && to < current.size()) moveSelectedTag(tag, current.get(to), container);
+                        return true;
+                    }
+                    return super.performAccessibilityAction(host, action, args);
+                }
+            });
+
+            TextView label = Ui.boldText(this, tag, textColor, 14);
+            label.setTypeface(TagTextWeight.typeface(editSession.profile.tagTextWeight(tag)));
+            ink.apply(label);
+            label.setSingleLine(true);
+            label.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            label.setPadding(0, 0, dp(3), 0);
+            chip.addView(label, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+
+            android.widget.ImageButton remove = new android.widget.ImageButton(this);
+            remove.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
+            remove.setColorFilter(textColor);
+            remove.setPadding(dp(4), dp(5), dp(4), dp(5));
+            remove.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            remove.setBackgroundColor(Color.TRANSPARENT);
+            remove.setContentDescription(i18n.t("delete") + " " + tag);
+            remove.setOnClickListener(v -> {
+                List<String> current = currentTags();
+                current.remove(tag);
+                writeTags(current);
+                rebuildSelectedTagChips(container);
+            });
+            chip.addView(remove, new LinearLayout.LayoutParams(dp(26), dp(28)));
+
+            LinearLayout.LayoutParams chipParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(28));
+            container.addView(chip, chipParams);
+        }
+    }
+
+    private void moveSelectedTag(String source, String target, LinearLayout container) {
+        List<String> ordered = currentTags();
+        int destination = ordered.indexOf(target);
+        if (source.equals(target) || destination < 0 || !ordered.remove(source)) return;
+        ordered.add(destination, source);
+        writeTags(ordered);
+        rebuildSelectedTagChips(container);
+    }
+
+    private void rebuildOnboardingSuggestions(LinearLayout container, LinearLayout chipsContainer) {
+        if (container == null) {
+            return;
+        }
+        container.removeAllViews();
+        List<String> featured = CardTagIndex.featuredSuggestions(i18n, 8);
+        if (featured.isEmpty()) {
+            TextView empty = Ui.text(this, RemoteTagCatalog.isLoading()
+                    ? i18n.t("tagCatalogLoading")
+                    : i18n.t("tagCatalogRetry"), COLOR_MUTED, 13);
+            empty.setPadding(dp(4), dp(2), dp(4), dp(2));
+            container.addView(empty);
+            return;
+        }
+        for (int index = 0; index < featured.size(); index++) {
+            String tag = featured.get(index);
+            boolean selected = false;
+            String key = CardTagIndex.canonicalKey(tag);
+            for (String existing : editSession.profile.tags) {
+                if (CardTagIndex.canonicalKey(existing).equals(key)) {
+                    selected = true;
+                    break;
+                }
+            }
+            int color = CardTagColorPalette.colorFor(tag);
+            int textColor = contrastTextOn(color);
+
+            LinearLayout chip = new LinearLayout(this);
+            chip.setOrientation(LinearLayout.HORIZONTAL);
+            chip.setGravity(Gravity.CENTER_VERTICAL);
+            chip.setPadding(dp(4), dp(6), dp(4), dp(6));
+            chip.setBackground(rounded(selected ? color : COLOR_PANEL, dp(18)));
+            if (!selected) {
+                chip.setBackground(rounded(COLOR_PANEL, dp(18), color, dp(1)));
+            }
+
+            TextView label = Ui.boldText(this, tag, selected ? textColor : COLOR_TEXT, 14);
+            label.setPadding(dp(12), 0, dp(4), 0);
+            chip.addView(label, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+            chip.setOnClickListener(v -> {
+                List<String> current = new ArrayList<>(editSession.profile.tags);
+                boolean exists = false;
+                for (String existing : current) {
+                    if (CardTagIndex.canonicalKey(existing).equals(CardTagIndex.canonicalKey(tag))) {
+                        exists = true;
+                        break;
+                    }
+                }
+                if (exists) {
+                    current.removeIf(existing -> CardTagIndex.canonicalKey(existing).equals(CardTagIndex.canonicalKey(tag)));
+                } else if (current.size() >= 10) {
+                    toast(i18n.t("tagLimitReached"));
+                } else {
+                    current.add(tag);
+                    recordTagUse(tag);
+                }
+                writeTags(current);
+            });
+
+            LinearLayout.LayoutParams chipParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            chipParams.setMargins(0, 0, 0, dp(6));
+            container.addView(chip, chipParams);
+        }
+    }
+
     private void pruneTagOverrides(MeQrProfile profile) {
         profile.tagColorOverrides.keySet().removeIf(tag -> !profile.tags.contains(tag));
+        profile.tagTextWeights.keySet().removeIf(tag -> !profile.tags.contains(tag));
     }
 
     private void updatePreview() {
-        if (editSession == null || editSession.preview == null) {
+        if (editSession == null) {
             return;
         }
         applyEditFields(editSession.profile);
-        editSession.preview.setImageBitmap(CardRenderer.render(editSession.profile, i18n, 720, editSession.selectedQrIndex));
+        if (editSession.preview != null) {
+            editSession.preview.setImageBitmap(CardRenderer.render(editSession.profile, i18n, 720, editSession.selectedQrIndex));
+        }
+        if (editSession.avatarPreview != null) {
+            editSession.avatarPreview.setImageBitmap(renderAvatarPreview(editSession.profile));
+        }
+    }
+
+    private Bitmap renderAvatarPreview(MeQrProfile profile) {
+        Bitmap avatar = decodeBitmap(profile.avatarPath);
+        int size = dp(96);
+        if (avatar == null) {
+            return initialBitmap(profile.name, size, Ui.TEAL, Color.WHITE);
+        }
+        return circleBitmap(avatar, size);
     }
 
     private void attachPreviewUpdates() {
@@ -1335,35 +2177,125 @@ public final class MainActivity extends Activity {
         };
         editSession.name.addTextChangedListener(watcher);
         editSession.subtitle.addTextChangedListener(watcher);
-        editSession.tags.addTextChangedListener(watcher);
+        editSession.passSubtitle.addTextChangedListener(watcher);
         editSession.textColor.addTextChangedListener(watcher);
         editSession.qrColor.addTextChangedListener(watcher);
         editSession.backgroundColor.addTextChangedListener(watcher);
         editSession.borderColor.addTextChangedListener(watcher);
     }
 
+    private void attachOnboardingAppearanceUpdates() {
+        TextWatcher watcher = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                updatePreview();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        };
+        if (editSession.passSubtitle != null) {
+            editSession.passSubtitle.addTextChangedListener(watcher);
+        }
+        if (editSession.textColor != null) {
+            editSession.textColor.addTextChangedListener(watcher);
+        }
+        if (editSession.qrColor != null) {
+            editSession.qrColor.addTextChangedListener(watcher);
+        }
+        if (editSession.backgroundColor != null) {
+            editSession.backgroundColor.addTextChangedListener(watcher);
+        }
+    }
+
+    private void attachQRWarning(LinearLayout parent, MeQrItem item, EditText field, Button platform) {
+        TextView warning = Ui.text(this, "", COLOR_MUTED, 13);
+        warning.setPadding(dp(12), dp(8), dp(12), dp(8));
+        Runnable refresh = () -> {
+            String key = QRLinkPolicy.warningKey(field.getText().toString(), item.platform);
+            String message = key == null ? "" : i18n.t(key);
+            if ("qq".equals(item.platform) || "wechat".equals(item.platform)) {
+                message += (message.isEmpty() ? "" : "\n") + i18n.t("qrOfficialImportHint");
+            }
+            warning.setText(message);
+            warning.setVisibility(message.isEmpty() ? View.GONE : View.VISIBLE);
+        };
+        platform.setTag(refresh);
+        field.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { }
+            @Override public void afterTextChanged(Editable s) { refresh.run(); }
+        });
+        parent.addView(warning);
+        refresh.run();
+    }
+
     private void showPlatformPicker(MeQrItem item, Button platformButton, EditText customPlatformName) {
-        List<String> ids = new ArrayList<>();
-        List<String> labels = new ArrayList<>();
-        addPlatformGroup(ids, labels, i18n.t("commonPlatforms"), PlatformNames.COMMON_IDS);
-        addPlatformGroup(ids, labels, i18n.t("socialPlatforms"), PlatformNames.SOCIAL_IDS);
-        addPlatformGroup(ids, labels, i18n.t("professionalPlatforms"), PlatformNames.PROFESSIONAL_IDS);
-        ids.add("custom");
-        labels.add(PlatformNames.displayName("custom", i18n));
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        android.widget.HorizontalScrollView tabsScroll = new android.widget.HorizontalScrollView(this);
+        android.widget.RadioGroup tabs = new android.widget.RadioGroup(this);
+        tabs.setOrientation(LinearLayout.HORIZONTAL);
+        String[] names = {"commonPlatforms", "socialPlatforms", "professionalPlatforms", "custom"};
+        List<List<String>> groups = java.util.Arrays.asList(PlatformNames.COMMON_IDS,
+                PlatformNames.SOCIAL_IDS, PlatformNames.PROFESSIONAL_IDS, java.util.Collections.singletonList("custom"));
+        for (int i = 0; i < names.length; i++) {
+            android.widget.RadioButton tab = new android.widget.RadioButton(this);
+            tab.setId(View.generateViewId());
+            tab.setButtonDrawable((android.graphics.drawable.Drawable) null);
+            tab.setSingleLine(true);
+            tab.setTextSize(14);
+            tab.setGravity(Gravity.CENTER);
+            tab.setPadding(dp(12), dp(14), dp(12), dp(14));
+            tab.setTextColor(new android.content.res.ColorStateList(
+                    new int[][]{new int[]{android.R.attr.state_checked}, new int[]{}},
+                    new int[]{Ui.TEAL, COLOR_MUTED}));
+            android.graphics.drawable.StateListDrawable background = new android.graphics.drawable.StateListDrawable();
+            background.addState(new int[]{android.R.attr.state_checked}, new ColorDrawable(COLOR_PANEL_2));
+            background.addState(new int[]{}, new ColorDrawable(Color.TRANSPARENT));
+            tab.setBackground(background);
+            tab.setText(i == 3 ? PlatformNames.displayName("custom", i18n) : i18n.t(names[i]));
+            tabs.addView(tab);
+        }
+        tabsScroll.addView(tabs);
+        content.addView(tabsScroll);
+        android.widget.ListView rows = new android.widget.ListView(this);
+        content.addView(rows, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(330)));
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle(i18n.t("platform"))
-                .setItems(labels.toArray(new String[0]), (choiceDialog, which) -> {
+                .setView(content).setNegativeButton(i18n.t("cancel"), null).create();
+        tabs.setOnCheckedChangeListener((group, checked) -> {
+            List<String> ids = groups.get(tabs.indexOfChild(tabs.findViewById(checked)));
+            List<String> labels = new ArrayList<>();
+            for (String id : ids) labels.add(PlatformNames.displayName(id, i18n));
+            rows.setAdapter(new android.widget.ArrayAdapter<>(this, android.R.layout.simple_list_item_single_choice, labels));
+            rows.setChoiceMode(android.widget.ListView.CHOICE_MODE_SINGLE);
+            for (int i = 0; i < ids.size(); i++) {
+                if (PlatformNames.actualId(ids.get(i), i18n).equals(item.platform)) rows.setItemChecked(i, true);
+            }
+            rows.setOnItemClickListener((parent, view, which, id) -> {
                     String selected = ids.get(which);
-                    if (selected.isEmpty()) {
-                        showPlatformPicker(item, platformButton, customPlatformName);
-                        return;
-                    }
                     item.platform = PlatformNames.actualId(selected, i18n);
-                    platformButton.setText(PlatformNames.displayName(item.platform, i18n) + "   ⌄");
+                    platformButton.setText(PlatformNames.displayName(item.platform, i18n));
                     customPlatformName.setVisibility("custom".equals(item.platform) ? View.VISIBLE : View.GONE);
+                    if (platformButton.getTag() instanceof Runnable) ((Runnable) platformButton.getTag()).run();
                     updatePreview();
-                })
-                .show();
+                    dialog.dismiss();
+            });
+        });
+        int initialGroup = 0;
+        for (int g = 0; g < groups.size(); g++) {
+            for (String id : groups.get(g)) {
+                if (PlatformNames.actualId(id, i18n).equals(item.platform)) { initialGroup = g; break; }
+            }
+        }
+        tabs.check(tabs.getChildAt(initialGroup).getId());
+        dialog.show();
         styleAlert(dialog);
     }
 
@@ -1440,6 +2372,7 @@ public final class MainActivity extends Activity {
             };
             qrContent.addTextChangedListener(itemWatcher);
             custom.addTextChangedListener(itemWatcher);
+            attachQRWarning(card, item, qrContent, platform);
             card.setOnClickListener(v -> {
                 editSession.selectedQrIndex = editSession.profile.qrItems.indexOf(item);
                 updatePreview();
@@ -1504,26 +2437,43 @@ public final class MainActivity extends Activity {
     private void persistAndRefresh() {
         try {
             store.save(profiles);
-        } catch (IOException exception) {
+        } catch (Exception exception) {
+            toast(i18n.t("saveFailed"));
+        } catch (OutOfMemoryError error) {
+            System.gc();
             toast(i18n.t("saveFailed"));
         }
         renderMain();
     }
 
     private void chooseImage(int requestCode) {
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("image/*");
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        startActivityForResult(intent, requestCode);
+        try {
+            startActivityForResult(intent, requestCode);
+        } catch (Exception exception) {
+            Intent fallback = new Intent(Intent.ACTION_GET_CONTENT);
+            fallback.addCategory(Intent.CATEGORY_OPENABLE);
+            fallback.setType("image/*");
+            fallback.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            try {
+                startActivityForResult(fallback, requestCode);
+            } catch (Exception ignored) {
+                toast(i18n.t("saveFailed"));
+                if (requestCode == PICK_SCAN_QR) restoreScannerAfterImagePicker();
+            }
+        }
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode != RESULT_OK || data == null || data.getData() == null) {
+            if (requestCode == PICK_SCAN_QR) restoreScannerAfterImagePicker();
             return;
         }
+        if (requestCode == PICK_SCAN_QR) choosingScanImage = false;
         Uri uri = data.getData();
         if (requestCode == PICK_EXPORT_BACKUP) {
             exportBackup(uri);
@@ -1534,10 +2484,7 @@ public final class MainActivity extends Activity {
             return;
         }
         try {
-            Bitmap source;
-            try (InputStream input = getContentResolver().openInputStream(uri)) {
-                source = BitmapFactory.decodeStream(input);
-            }
+            Bitmap source = decodeSelectedImage(uri, requestCode);
             if (source == null) {
                 toast(i18n.t("saveFailed"));
                 return;
@@ -1558,6 +2505,30 @@ public final class MainActivity extends Activity {
             }
         } catch (IOException exception) {
             toast(i18n.t("saveFailed"));
+        }
+    }
+
+    private Bitmap decodeSelectedImage(Uri uri, int requestCode) throws IOException {
+        int maxDimension = requestCode == PICK_SCAN_QR || requestCode == PICK_QR_IMAGE ? 4096 : 3072;
+        BitmapFactory.Options bounds = new BitmapFactory.Options();
+        bounds.inJustDecodeBounds = true;
+        try (InputStream input = getContentResolver().openInputStream(uri)) {
+            BitmapFactory.decodeStream(input, null, bounds);
+        }
+
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
+            return null;
+        }
+
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inSampleSize = 1;
+        while (Math.max(bounds.outWidth / options.inSampleSize,
+                bounds.outHeight / options.inSampleSize) > maxDimension) {
+            options.inSampleSize *= 2;
+        }
+        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+        try (InputStream input = getContentResolver().openInputStream(uri)) {
+            return BitmapFactory.decodeStream(input, null, options);
         }
     }
 
@@ -1608,6 +2579,12 @@ public final class MainActivity extends Activity {
         } finally {
             scanningPhoto = false;
         }
+    }
+
+    private void restoreScannerAfterImagePicker() {
+        if (!choosingScanImage) return;
+        choosingScanImage = false;
+        showScan();
     }
 
     private void showCropper(Bitmap source, CropMode mode) {
@@ -1699,38 +2676,6 @@ public final class MainActivity extends Activity {
         }
     }
 
-    private void confirmShareProfile(MeQrProfile profile) {
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle(i18n.t("shareConfirmTitle"))
-                .setMessage(i18n.t("shareConfirmBody"))
-                .setNegativeButton(i18n.t("cancel"), null)
-                .setPositiveButton(i18n.t("continueShare"), (choiceDialog, which) -> shareProfile(profile))
-                .show();
-        styleAlert(dialog);
-    }
-
-    private void shareProfile(MeQrProfile profile) {
-        MeQrProfile shareProfile = copy(profile);
-        shareProfile.cardOpacity = 1f;
-        Bitmap bitmap = CardRenderer.render(shareProfile, i18n, 1080);
-        if (Build.VERSION.SDK_INT <= 28 && checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            pendingShareBitmap = bitmap;
-            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_WRITE_PHOTOS);
-            return;
-        }
-        Uri uri = saveBitmapToGallery(bitmap);
-        if (uri == null) {
-            toast(i18n.t("saveFailed"));
-            return;
-        }
-        toast(i18n.t("saved"));
-        Intent share = new Intent(Intent.ACTION_SEND);
-        share.setType("image/png");
-        share.putExtra(Intent.EXTRA_STREAM, uri);
-        share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        startActivity(Intent.createChooser(share, i18n.t("share")));
-    }
-
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -1739,20 +2684,6 @@ public final class MainActivity extends Activity {
                 openScanner();
             } else {
                 toast(i18n.t("cameraPermissionNeeded"));
-            }
-        } else if (requestCode == REQUEST_WRITE_PHOTOS && pendingShareBitmap != null) {
-            Bitmap bitmap = pendingShareBitmap;
-            pendingShareBitmap = null;
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Uri uri = saveBitmapToGallery(bitmap);
-                if (uri != null) {
-                    toast(i18n.t("saved"));
-                    Intent share = new Intent(Intent.ACTION_SEND);
-                    share.setType("image/png");
-                    share.putExtra(Intent.EXTRA_STREAM, uri);
-                    share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                    startActivity(Intent.createChooser(share, i18n.t("share")));
-                }
             }
         } else if (requestCode == REQUEST_WRITE_PHOTOS && pendingMeQrBitmap != null) {
             Bitmap bitmap = pendingMeQrBitmap;
@@ -1791,20 +2722,22 @@ public final class MainActivity extends Activity {
         return uri;
     }
 
-    // Top-right share menu (mirrors iOS trailing share menu), acts on the current card.
+    // Top-right MeQR menu, acts on the current card.
     private void showShareMenu(MeQrProfile profile) {
         List<ActionSheetItem> actions = new ArrayList<>();
-        actions.add(new ActionSheetItem("↗", i18n.t("share"), false, () -> confirmShareProfile(profile)));
         actions.add(new ActionSheetItem("QR", i18n.t("meqrProfileCode"), false, () -> showMeQrCode(profile)));
-        actions.add(new ActionSheetItem("▦", i18n.t("scanMeQr"), false, this::showScan));
         actions.add(new ActionSheetItem("◎", i18n.t("encounters"), false, this::showEncounters));
         actions.add(new ActionSheetItem("▤", i18n.t("events"), false, this::showEventCenter));
         showActionSheet(cardTitle(profile), actions);
     }
 
-    // Top-right overflow menu (mirrors iOS leading menu), acts on the current card.
+    // Leading menu acts on the current card.
     private void showCardMenu(MeQrProfile profile, int index) {
         List<ActionSheetItem> actions = new ArrayList<>();
+        actions.add(new ActionSheetItem("list", i18n.t("cardList"), false, () -> {
+            showingCardList = true;
+            renderMain();
+        }));
         actions.add(new ActionSheetItem("✎", i18n.t("edit"), false, () -> showEditor(profile)));
         if (profiles.size() > 1) {
             if (index > 0) {
@@ -1934,13 +2867,7 @@ public final class MainActivity extends Activity {
         });
 
         int textColor = item.destructive ? Color.rgb(255, 116, 116) : COLOR_TEXT;
-        TextView icon = new TextView(this);
-        icon.setText(item.icon);
-        icon.setTextColor(item.destructive ? Color.rgb(255, 116, 116) : Ui.SKY);
-        icon.setTextSize(item.icon.length() > 1 ? 12 : 20);
-        icon.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        icon.setGravity(Gravity.CENTER);
-        icon.setIncludeFontPadding(false);
+        ImageView icon = UiIcons.view(this, item.icon, item.destructive ? Color.rgb(255, 116, 116) : Ui.SKY);
         icon.setBackground(rounded(item.destructive ? Color.argb(30, 255, 116, 116) : Color.argb(30, 161, 209, 234), dp(10)));
         row.addView(icon, new LinearLayout.LayoutParams(dp(36), dp(36)));
 
@@ -1954,12 +2881,7 @@ public final class MainActivity extends Activity {
         label.setPadding(dp(14), 0, 0, 0);
         row.addView(label, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
 
-        TextView trailing = new TextView(this);
-        trailing.setText("›");
-        trailing.setTextColor(item.destructive ? Color.argb(160, 255, 116, 116) : COLOR_MUTED);
-        trailing.setTextSize(24);
-        trailing.setGravity(Gravity.CENTER);
-        trailing.setIncludeFontPadding(false);
+        ImageView trailing = UiIcons.view(this, "›", COLOR_MUTED);
         row.addView(trailing, new LinearLayout.LayoutParams(dp(24), dp(36)));
         return row;
     }
@@ -1977,8 +2899,7 @@ public final class MainActivity extends Activity {
         topBar.setGravity(Gravity.CENTER_VERTICAL);
         topBar.setPadding(dp(20), statusTop() + dp(12), dp(18), dp(12));
 
-        TextView badge = Ui.boldText(this, "⚙", Ui.TEAL, 22);
-        badge.setGravity(Gravity.CENTER);
+        ImageView badge = UiIcons.view(this, "⚙", Ui.TEAL);
         badge.setBackground(rounded(Color.argb(38, 57, 197, 187), dp(14)));
         topBar.addView(badge, new LinearLayout.LayoutParams(dp(46), dp(46)));
 
@@ -2087,8 +3008,7 @@ public final class MainActivity extends Activity {
         row.setClickable(true);
         row.setFocusable(true);
 
-        TextView icon = Ui.boldText(this, iconText, Ui.SKY, iconText.length() > 1 ? 12 : 19);
-        icon.setGravity(Gravity.CENTER);
+        ImageView icon = UiIcons.view(this, iconText, Ui.SKY);
         icon.setBackground(rounded(Color.argb(30, 161, 209, 234), dp(12)));
         row.addView(icon, new LinearLayout.LayoutParams(dp(40), dp(40)));
 
@@ -2098,20 +3018,15 @@ public final class MainActivity extends Activity {
         textBlock.setPadding(dp(14), 0, dp(8), 0);
         TextView label = Ui.text(this, labelText, COLOR_TEXT, 16);
         label.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        label.setSingleLine(true);
-        label.setEllipsize(android.text.TextUtils.TruncateAt.END);
         textBlock.addView(label);
         if (subtitleText != null && !subtitleText.trim().isEmpty()) {
             TextView subtitle = Ui.text(this, subtitleText, COLOR_MUTED, 12);
-            subtitle.setSingleLine(true);
-            subtitle.setEllipsize(android.text.TextUtils.TruncateAt.END);
             subtitle.setPadding(0, dp(3), 0, 0);
             textBlock.addView(subtitle);
         }
         row.addView(textBlock, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
 
-        TextView trailing = Ui.text(this, "›", COLOR_MUTED, 24);
-        trailing.setGravity(Gravity.CENTER);
+        ImageView trailing = UiIcons.view(this, "›", COLOR_MUTED);
         row.addView(trailing, new LinearLayout.LayoutParams(dp(24), dp(44)));
         row.setOnClickListener(v -> {
             dialog.dismiss();
@@ -2127,7 +3042,21 @@ public final class MainActivity extends Activity {
         draft.borderColor = "#39C5BB";
         draft.textColor = "#183752";
         draft.qrColor = "#183752";
+        int restoredStep = 0;
+        String savedDraft = getSharedPreferences("settings", MODE_PRIVATE).getString("onboardingDraft", "");
+        if (!savedDraft.isEmpty()) {
+            try {
+                org.json.JSONObject saved = new org.json.JSONObject(savedDraft);
+                draft = MeQrProfile.fromJson(saved.getJSONObject("profile"));
+                restoredStep = Math.max(0, Math.min(5, saved.optInt("step")));
+            } catch (org.json.JSONException ignored) { }
+        }
         editSession = new EditSession(draft);
+        editSession.onboarding = true;
+        if (!savedDraft.isEmpty()) {
+            try { editSession.tagDraft = new org.json.JSONObject(savedDraft).optString("tagDraft", ""); }
+            catch (org.json.JSONException ignored) { }
+        }
 
         Dialog dialog = new Dialog(this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -2137,7 +3066,22 @@ public final class MainActivity extends Activity {
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
         page.addView(content, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        renderOnboardingStep(dialog, content, 0);
+        renderOnboardingStep(dialog, content, restoredStep);
+        handleDialogBack(dialog, () -> {
+            if (onboardingStep > 0 && onboardingStep <= 5) {
+                syncOnboardingFields();
+                renderOnboardingStep(dialog, content, onboardingStep - 1);
+            } else if (onboardingStep >= 6) {
+                showingCardList = false;
+                dialog.dismiss();
+                renderMain();
+            } else {
+                confirmDiscard(() -> {
+                    getSharedPreferences("settings", MODE_PRIVATE).edit().remove("onboardingDraft").apply();
+                    dialog.dismiss();
+                });
+            }
+        });
         dialog.setContentView(page);
         dialog.setOnDismissListener(ignored -> {
             editingProfile = null;
@@ -2152,6 +3096,11 @@ public final class MainActivity extends Activity {
     }
 
     private void renderOnboardingStep(Dialog dialog, LinearLayout content, int step) {
+        if (editSession.tags != null && editSession.onboarding) {
+            editSession.tagDraft = editSession.tags.getText().toString();
+        }
+        onboardingStep = step;
+        saveOnboardingDraft();
         content.removeAllViews();
         if (step == 0) {
             renderOnboardingWelcome(dialog, content);
@@ -2159,6 +3108,10 @@ public final class MainActivity extends Activity {
         }
         if (step == 6) {
             renderOnboardingComplete(dialog, content);
+            return;
+        }
+        if (step == 7) {
+            renderOnboardingSupport(dialog, content);
             return;
         }
 
@@ -2207,6 +3160,26 @@ public final class MainActivity extends Activity {
         body.addView(onboardingStepTitle(String.format(Locale.US, "%02d", step), i18n.t(titles[step]), i18n.t(bodies[step])));
 
         if (step == 1) {
+            LinearLayout avatarRow = new LinearLayout(this);
+            avatarRow.setOrientation(LinearLayout.HORIZONTAL);
+            avatarRow.setGravity(Gravity.CENTER_VERTICAL);
+            avatarRow.setPadding(dp(4), 0, dp(4), dp(12));
+            editSession.avatarPreview = new ImageView(this);
+            editSession.avatarPreview.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            editSession.avatarPreview.setImageBitmap(renderAvatarPreview(editSession.profile));
+            avatarRow.addView(editSession.avatarPreview, new LinearLayout.LayoutParams(dp(96), dp(96)));
+            Button avatar = actionButton(editSession.profile.avatarPath.isEmpty()
+                    ? i18n.t("chooseImage") + " · " + i18n.t("avatar")
+                    : i18n.t("chooseImage") + " · " + i18n.t("avatar"));
+            avatar.setOnClickListener(v -> {
+                syncOnboardingFields();
+                chooseImage(PICK_AVATAR);
+            });
+            LinearLayout.LayoutParams avatarParams = new LinearLayout.LayoutParams(0, dp(52), 1);
+            avatarParams.setMargins(dp(16), 0, 0, 0);
+            avatarRow.addView(avatar, avatarParams);
+            body.addView(avatarRow);
+
             LinearLayout identity = panel();
             editSession.name = field(i18n.t("profileName"), editSession.profile.name, false);
             editSession.subtitle = field(i18n.t("bio"), editSession.profile.subtitle, true);
@@ -2214,14 +3187,6 @@ public final class MainActivity extends Activity {
             identity.addView(separator());
             identity.addView(editSession.subtitle);
             body.addView(identity);
-            Button avatar = actionButton(i18n.t("chooseImage") + " · " + i18n.t("avatar"));
-            avatar.setOnClickListener(v -> {
-                syncOnboardingFields();
-                chooseImage(PICK_AVATAR);
-            });
-            LinearLayout.LayoutParams avatarParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52));
-            avatarParams.setMargins(0, dp(10), 0, 0);
-            body.addView(avatar, avatarParams);
         } else if (step == 2) {
             MeQrItem item = editSession.profile.firstItem();
             LinearLayout qrPanel = panel();
@@ -2235,9 +3200,28 @@ public final class MainActivity extends Activity {
             qrPanel.addView(separator());
             qrPanel.addView(qr);
             body.addView(qrPanel);
+            attachQRWarning(qrPanel, item, qr, platform);
             TextWatcher watcher = directItemWatcher(item, qr, custom);
             qr.addTextChangedListener(watcher);
             custom.addTextChangedListener(watcher);
+            qr.addTextChangedListener(new TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    String detected = PlatformNames.detect(s.toString());
+                    if ("custom".equals(detected)) {
+                        return;
+                    }
+                    if (PlatformNames.actualId(detected, i18n).equals(item.platform)) {
+                        return;
+                    }
+                    item.platform = PlatformNames.actualId(detected, i18n);
+                    item.customPlatformName = "";
+                    platform.setText(item.platformDisplayName(i18n));
+                    custom.setVisibility("custom".equals(item.platform) ? View.VISIBLE : View.GONE);
+                    updatePreview();
+                }
+                @Override public void afterTextChanged(Editable s) { }
+            });
             Button importQr = actionButton(i18n.t("importQrImage"));
             importQr.setOnClickListener(v -> {
                 pendingQrItem = item;
@@ -2248,25 +3232,54 @@ public final class MainActivity extends Activity {
             importParams.setMargins(0, dp(10), 0, 0);
             body.addView(importQr, importParams);
         } else if (step == 3) {
+            editSession.preview = new ImageView(this);
+            editSession.preview.setAdjustViewBounds(true);
+            editSession.preview.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            editSession.preview.setImageBitmap(CardRenderer.render(editSession.profile, i18n, 720, editSession.selectedQrIndex));
+            LinearLayout previewPanel = panel();
+            previewPanel.setGravity(Gravity.CENTER);
+            previewPanel.addView(editSession.preview, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(320)));
+            body.addView(previewPanel);
+
             LinearLayout templates = panel();
             LinearLayout row = new LinearLayout(this);
             row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setBaselineAligned(false);
             row.setPadding(dp(6), dp(6), dp(6), dp(6));
             Button standard = templateButton(i18n.t("standardTemplate"), "standard".equals(editSession.profile.template));
             Button rhodes = templateButton(i18n.t("rhodesTemplate"), "rhodes".equals(editSession.profile.template));
+            editSession.passSubtitle = field(i18n.t("passSubtitleLabel"), editSession.profile.passSubtitle, false);
+            TextView passHint = Ui.text(this, i18n.t("passSubtitleHint"), COLOR_MUTED, 12);
+            passHint.setPadding(dp(4), dp(6), dp(4), 0);
+            boolean rhodesSelected = "rhodes".equals(editSession.profile.template);
+            editSession.passSubtitle.setVisibility(rhodesSelected ? View.VISIBLE : View.GONE);
+            passHint.setVisibility(rhodesSelected ? View.VISIBLE : View.GONE);
+            Button banner = actionButton(i18n.t("bannerImage") + " · " + i18n.t("chooseImage"));
             standard.setOnClickListener(v -> {
                 editSession.profile.template = "standard";
                 styleTemplateButtons(standard, rhodes);
+                editSession.passSubtitle.setVisibility(View.GONE);
+                passHint.setVisibility(View.GONE);
+                banner.setVisibility(View.GONE);
+                updatePreview();
             });
             rhodes.setOnClickListener(v -> {
                 editSession.profile.template = "rhodes";
                 styleTemplateButtons(rhodes, standard);
+                editSession.passSubtitle.setVisibility(View.VISIBLE);
+                passHint.setVisibility(View.VISIBLE);
+                banner.setVisibility(View.VISIBLE);
+                updatePreview();
             });
-            row.addView(standard, new LinearLayout.LayoutParams(0, dp(48), 1));
-            LinearLayout.LayoutParams rhodesParams = new LinearLayout.LayoutParams(0, dp(48), 1);
+            standard.setMinimumHeight(dp(48));
+            rhodes.setMinimumHeight(dp(48));
+            row.addView(standard, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+            LinearLayout.LayoutParams rhodesParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1);
             rhodesParams.setMargins(dp(6), 0, 0, 0);
             row.addView(rhodes, rhodesParams);
             templates.addView(row);
+            templates.addView(editSession.passSubtitle);
+            templates.addView(passHint);
             body.addView(templates);
             LinearLayout colors = panel();
             editSession.textColor = addColorRow(colors, i18n.t("textColor"), editSession.profile.textColor);
@@ -2275,6 +3288,7 @@ public final class MainActivity extends Activity {
             colors.addView(separator());
             editSession.backgroundColor = addColorRow(colors, i18n.t("backgroundColor"), editSession.profile.backgroundColor);
             body.addView(colors);
+            attachOnboardingAppearanceUpdates();
             Button background = actionButton(i18n.t("chooseImage") + " · " + i18n.t("backgroundImage"));
             background.setOnClickListener(v -> {
                 syncOnboardingFields();
@@ -2283,22 +3297,48 @@ public final class MainActivity extends Activity {
             LinearLayout.LayoutParams backgroundParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52));
             backgroundParams.setMargins(0, dp(10), 0, 0);
             body.addView(background, backgroundParams);
+            banner.setVisibility(rhodesSelected ? View.VISIBLE : View.GONE);
+            banner.setOnClickListener(v -> {
+                syncOnboardingFields();
+                chooseImage(PICK_BANNER);
+            });
+            LinearLayout.LayoutParams bannerParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52));
+            bannerParams.setMargins(0, dp(10), 0, 0);
+            body.addView(banner, bannerParams);
         } else if (step == 4) {
-            LinearLayout tagsPanel = panel();
-            editSession.tags = field(i18n.t("tagsHint"), joinTags(editSession.profile.tags), true);
-            editSession.tags.setMinLines(5);
-            tagsPanel.addView(editSession.tags);
-            tagsPanel.addView(separator());
-            Button tagLibrary = actionButton("⌕  " + i18n.t("tagLibrary"));
-            tagLibrary.setOnClickListener(v -> showTagLibrary());
-            tagsPanel.addView(tagLibrary, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46)));
-            body.addView(tagsPanel);
+            final LinearLayout suggestionsContainer = new LinearLayout(this);
+            suggestionsContainer.setOrientation(LinearLayout.VERTICAL);
+            body.addView(createTagInput(() -> rebuildOnboardingSuggestions(suggestionsContainer, editSession.tagChips)));
+            LinearLayout chipsContainer = editSession.tagChips;
+
+            TextView suggestionsLabel = Ui.text(this, i18n.t("tagSuggestions"), COLOR_MUTED, 13);
+            suggestionsLabel.setPadding(dp(4), dp(18), dp(4), dp(8));
+            body.addView(suggestionsLabel);
+            body.addView(suggestionsContainer);
+            rebuildOnboardingSuggestions(suggestionsContainer, chipsContainer);
+
+            rebuildSelectedTagChips(chipsContainer);
         } else {
             editSession.preview = new ImageView(this);
             editSession.preview.setAdjustViewBounds(true);
             editSession.preview.setScaleType(ImageView.ScaleType.FIT_CENTER);
             editSession.preview.setImageBitmap(CardRenderer.render(editSession.profile, i18n, 900));
-            body.addView(editSession.preview);
+            LinearLayout previewPanel = panel();
+            previewPanel.setGravity(Gravity.CENTER);
+            previewPanel.addView(editSession.preview, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(340)));
+            body.addView(previewPanel);
+
+            LinearLayout summary = panel();
+            MeQrItem item = editSession.profile.firstItem();
+            addSummaryRow(summary, editSession.profile.name,
+                    editSession.profile.subtitle.trim().isEmpty() ? i18n.t("bio") : editSession.profile.subtitle);
+            summary.addView(separator());
+            addSummaryRow(summary, item.platformDisplayName(i18n), i18n.t("qrContent"));
+            if (!editSession.profile.tags.isEmpty()) {
+                summary.addView(separator());
+                addSummaryRow(summary, joinTagsInline(editSession.profile.tags), i18n.t("tags"));
+            }
+            body.addView(summary);
         }
 
         LinearLayout navigation = new LinearLayout(this);
@@ -2316,6 +3356,7 @@ public final class MainActivity extends Activity {
         navigation.addView(back, new LinearLayout.LayoutParams(dp(54), dp(52)));
         Button next = filledButton(step == 5 ? i18n.t("finishSetup") : i18n.t("continue"));
         next.setOnClickListener(v -> {
+            if (step == 4 && !commitTagDraft()) return;
             syncOnboardingFields();
             if (step == 1 && editSession.profile.name.trim().isEmpty()) {
                 toast(i18n.t("nameRequired"));
@@ -2407,11 +3448,14 @@ public final class MainActivity extends Activity {
         intro.setLineSpacing(dp(5), 1f);
         intro.setPadding(0, dp(14), 0, dp(26));
         body.addView(intro);
-        Button start = filledButton(i18n.t("setupStart") + "  →");
+        Button start = filledButton(i18n.t("setupStart"));
         start.setOnClickListener(v -> renderOnboardingStep(dialog, content, 1));
         body.addView(start, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(56)));
         Button later = quietButton(i18n.t("cancel"));
-        later.setOnClickListener(v -> dialog.dismiss());
+        later.setOnClickListener(v -> confirmDiscard(() -> {
+            getSharedPreferences("settings", MODE_PRIVATE).edit().remove("onboardingDraft").apply();
+            dialog.dismiss();
+        }));
         LinearLayout.LayoutParams laterParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(50));
         laterParams.setMargins(0, dp(8), 0, 0);
         body.addView(later, laterParams);
@@ -2448,12 +3492,49 @@ public final class MainActivity extends Activity {
         copy.setLineSpacing(dp(4), 1f);
         copy.setPadding(dp(10), dp(12), dp(10), dp(24));
         body.addView(copy);
-        Button enter = filledButton(i18n.t("setupEnter") + "  →");
+        Button enter = filledButton(i18n.t("setupEnter"));
+        enter.setOnClickListener(v -> renderOnboardingStep(dialog, content, 7));
+        body.addView(enter, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(56)));
+    }
+
+    private void renderOnboardingSupport(Dialog dialog, LinearLayout content) {
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
+        LinearLayout body = new LinearLayout(this);
+        body.setOrientation(LinearLayout.VERTICAL);
+        body.setGravity(Gravity.CENTER_HORIZONTAL);
+        body.setPadding(dp(28), statusTop() + dp(48), dp(28), dp(28) + navigationBottom());
+        scroll.addView(body);
+        content.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        TextView mark = onboardingMark();
+        mark.setText("?");
+        mark.setGravity(Gravity.CENTER);
+        body.addView(mark, new LinearLayout.LayoutParams(dp(56), dp(56)));
+
+        TextView title = Ui.boldText(this, i18n.t("supportTitle"), COLOR_TEXT, 28);
+        title.setGravity(Gravity.CENTER);
+        title.setPadding(0, dp(22), 0, 0);
+        body.addView(title);
+
+        TextView copy = Ui.text(this, i18n.t("supportBody"), COLOR_MUTED, 15);
+        copy.setGravity(Gravity.CENTER);
+        copy.setLineSpacing(dp(4), 1f);
+        copy.setPadding(dp(10), dp(12), dp(10), dp(26));
+        body.addView(copy);
+
+        Button enter = filledButton(i18n.t("setupEnter"));
         enter.setOnClickListener(v -> {
             dialog.dismiss();
             renderMain();
         });
         body.addView(enter, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(56)));
+
+        Button support = quietButton(i18n.t("openSupport"));
+        support.setOnClickListener(v -> startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://support.meqrcode.cn/"))));
+        LinearLayout.LayoutParams supportParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(50));
+        supportParams.setMargins(0, dp(10), 0, 0);
+        body.addView(support, supportParams);
     }
 
     private View onboardingStepTitle(String number, String titleText, String bodyText) {
@@ -2505,8 +3586,28 @@ public final class MainActivity extends Activity {
             toast(i18n.t("saveFailed"));
             return false;
         }
-        getSharedPreferences("settings", MODE_PRIVATE).edit().putBoolean(ONBOARDING_VERSION, true).apply();
+        getSharedPreferences("settings", MODE_PRIVATE).edit().putBoolean(ONBOARDING_VERSION, true).remove("onboardingDraft").apply();
+        currentPage = Math.max(0, profiles.size() - 1);
+        showingCardList = false;
         return true;
+    }
+
+    private void saveOnboardingDraft() {
+        if (editSession == null || !editSession.onboarding || onboardingStep > 5) return;
+        try {
+            org.json.JSONObject saved = new org.json.JSONObject().put("step", onboardingStep)
+                    .put("profile", editSession.profile.toJson())
+                    .put("tagDraft", editSession.tags == null ? editSession.tagDraft : editSession.tags.getText().toString());
+            getSharedPreferences("settings", MODE_PRIVATE).edit().putString("onboardingDraft", saved.toString()).apply();
+        } catch (org.json.JSONException ignored) { }
+    }
+
+    @Override protected void onStop() {
+        if (editSession != null && editSession.onboarding && onboardingStep <= 5) {
+            syncOnboardingFields();
+            saveOnboardingDraft();
+        }
+        super.onStop();
     }
 
     private TextWatcher directItemWatcher(MeQrItem item, EditText qr, EditText custom) {
@@ -2530,6 +3631,9 @@ public final class MainActivity extends Activity {
         if (editSession.subtitle != null) {
             editSession.profile.subtitle = editSession.subtitle.getText().toString().trim();
         }
+        if (editSession.passSubtitle != null) {
+            editSession.profile.passSubtitle = limitPassSubtitle(value(editSession.passSubtitle, ""));
+        }
         if (editSession.textColor != null) {
             editSession.profile.textColor = value(editSession.textColor, editSession.profile.textColor);
         }
@@ -2538,11 +3642,6 @@ public final class MainActivity extends Activity {
         }
         if (editSession.backgroundColor != null) {
             editSession.profile.backgroundColor = value(editSession.backgroundColor, editSession.profile.backgroundColor);
-        }
-        if (editSession.tags != null) {
-            editSession.profile.tags.clear();
-            editSession.profile.tags.addAll(parseTags(editSession.tags.getText().toString()));
-            pruneTagOverrides(editSession.profile);
         }
     }
 
@@ -2600,8 +3699,7 @@ public final class MainActivity extends Activity {
             TextView label = Ui.text(this, labels[index], COLOR_TEXT, 16);
             row.addView(label, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
             if (modes[index].equals(current)) {
-                TextView check = Ui.boldText(this, "✓", Ui.TEAL, 18);
-                check.setGravity(Gravity.CENTER);
+                ImageView check = UiIcons.view(this, "✓", Ui.TEAL);
                 row.addView(check, new LinearLayout.LayoutParams(dp(28), dp(44)));
             }
             rows.addView(row, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(56)));
@@ -2686,10 +3784,26 @@ public final class MainActivity extends Activity {
         version.setPadding(0, dp(4), 0, dp(14));
         root.addView(version);
 
-        root.addView(linkButton(i18n.t("website"), "https://meqrcode.cn/"));
-        root.addView(linkButton(i18n.t("privacy"), privacyUrl()));
-        root.addView(linkButton(i18n.t("email") + ": lucas_and_miku@icloud.com", "mailto:lucas_and_miku@icloud.com"));
-        root.addView(linkButton("QID: Rebirth39", "https://qm.qq.com/q/ErpPGQuaAi"));
+        root.addView(section(i18n.t("website")));
+        LinearLayout webPanel = panel();
+        webPanel.addView(linkButton("?  " + i18n.t("openSupport"), "https://support.meqrcode.cn/"));
+        webPanel.addView(separator());
+        webPanel.addView(linkButton(i18n.t("website"), "https://meqrcode.cn/"));
+        root.addView(webPanel);
+
+        root.addView(section(i18n.t("privacy")));
+        LinearLayout legalPanel = panel();
+        legalPanel.addView(linkButton("♢  " + i18n.t("privacy"), privacyUrl()));
+        legalPanel.addView(separator());
+        legalPanel.addView(linkButton(i18n.t("icpFiling") + "    粤ICP备2026097629号-2A", "https://beian.miit.gov.cn/"));
+        root.addView(legalPanel);
+
+        root.addView(section(i18n.t("contactDeveloper")));
+        LinearLayout contactPanel = panel();
+        contactPanel.addView(linkButton(i18n.t("email") + "    lucas_and_miku@icloud.com", "mailto:lucas_and_miku@icloud.com"));
+        contactPanel.addView(separator());
+        contactPanel.addView(linkButton("QID    Rebirth39", "https://qm.qq.com/q/ErpPGQuaAi"));
+        root.addView(contactPanel);
 
         root.addView(section(i18n.t("developerIntro")));
         TextView developer = new TextView(this);
@@ -2735,95 +3849,203 @@ public final class MainActivity extends Activity {
     }
 
     private void showMeQrCode(MeQrProfile profile) {
-        String fallbackPayload;
+        MeQrExchangeCodeStore codeStore = new MeQrExchangeCodeStore(this);
+        final MeQrExchangeCodeStore.Record code;
         try {
-            fallbackPayload = MeQrExchangeCodec.offlinePayload(profile, i18n);
+            String eventId = eventStore.activeEvent() == null ? null : eventStore.activeEvent().id;
+            String fingerprint = MeQrExchangeCodeStore.fingerprint(profile, i18n, eventId);
+            MeQrExchangeCodeStore.Record cached = codeStore.load(profile.id, fingerprint);
+            code = cached == null ? MeQrExchangeCodeStore.create(profile, i18n, fingerprint, eventId) : cached;
+            if (cached == null) codeStore.save(profile.id, code);
         } catch (Exception exception) {
             toast(i18n.t("meqrCodeFailed"));
             return;
         }
-        String fallbackCode = QrCodeGenerator.paddedForColorLayer(
-                "meqr://profile?data=" + fallbackPayload,
-                800
-        );
-        byte[] fallbackAvatar = MeQrExchangeCodec.colorLayerAvatarJpeg(
-                profile,
-                QrCodeGenerator.colorLayerPayloadCapacity(fallbackCode)
-        );
-        final Bitmap[] currentCode = new Bitmap[]{QrCodeGenerator.generateColorLayered(fallbackCode, fallbackAvatar, 960)};
+        encounterStore.registerOutgoingSession(code.sessionId, code.ownerToken);
+        TextView mode = showExchangeCodeSheet(profile, code);
+
+        if (code.synced) return;
+        new Thread(() -> {
+            try {
+                MeQrRemoteService.publishExchangeCode(code);
+                codeStore.markSynced(profile.id, code);
+                runOnUiThread(() -> {
+                    if (mode.isAttachedToWindow()) mode.setText(i18n.t("meqrOnlineReady"));
+                });
+            } catch (Exception exception) {
+                runOnUiThread(() -> {
+                    if (mode.isAttachedToWindow()) mode.setText(i18n.t("meqrOnlineFallback"));
+                });
+            }
+        }).start();
+    }
+
+    private TextView showExchangeCodeSheet(MeQrProfile profile, MeQrExchangeCodeStore.Record code) {
+        Bitmap currentCode = QrCodeGenerator.generateColorLayered(code.payload, code.avatar, 960);
+        Dialog dialog = new Dialog(this, android.R.style.Theme_Material_Light_NoActionBar);
+        FrameLayout shell = new FrameLayout(this);
+        addPageBackground(shell, profile);
+        LinearLayout page = new LinearLayout(this);
+        page.setOrientation(LinearLayout.VERTICAL);
+        page.setPadding(0, statusTop(), 0, navigationBottom());
+        shell.addView(page, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        FrameLayout toolbar = new FrameLayout(this);
+        toolbar.setBackgroundColor(Color.argb(185, 255, 255, 255));
+        TextView title = new TextView(this);
+        title.setText(i18n.t("meqrProfileCode"));
+        title.setTextColor(Color.BLACK);
+        title.setTextSize(18);
+        title.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        title.setGravity(Gravity.CENTER);
+        title.setSingleLine(true);
+        title.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        title.setPadding(dp(84), 0, dp(84), 0);
+        toolbar.addView(title, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(60)));
+        Button done = lightIconButton(i18n.t("done"));
+        done.setTextSize(15);
+        done.setContentDescription(i18n.t("done"));
+        done.setOnClickListener(v -> dialog.dismiss());
+        FrameLayout.LayoutParams doneParams = new FrameLayout.LayoutParams(dp(76), dp(44), Gravity.START | Gravity.CENTER_VERTICAL);
+        doneParams.leftMargin = dp(8);
+        toolbar.addView(done, doneParams);
+        page.addView(toolbar, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(60)));
+
+        int contentWidth = Math.min(dp(370), getResources().getDisplayMetrics().widthPixels - dp(32));
+        boolean rhodes = "rhodes".equals(profile.template);
+        int cardWidth = Math.min(contentWidth, dp(rhodes ? 336 : 342));
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(false);
+        page.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        LinearLayout center = new LinearLayout(this);
+        center.setOrientation(LinearLayout.VERTICAL);
+        center.setGravity(Gravity.CENTER_HORIZONTAL);
+        scroll.addView(center);
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setGravity(Gravity.CENTER_HORIZONTAL);
-        root.setPadding(dp(20), dp(14), dp(20), dp(12));
-        root.setBackgroundColor(COLOR_BG);
+        root.setPadding(0, dp(18), 0, dp(24));
+        center.addView(root, new LinearLayout.LayoutParams(contentWidth, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         ImageView avatar = new ImageView(this);
         Bitmap avatarBitmap = decodeBitmap(profile.avatarPath);
         if (avatarBitmap != null) {
-            avatar.setImageBitmap(circleBitmap(avatarBitmap, dp(72)));
+            avatar.setImageBitmap(circleBitmap(avatarBitmap, dp(52)));
         } else {
-            avatar.setImageBitmap(initialBitmap(profile.name, dp(72), Color.rgb(62, 62, 68), Color.WHITE));
+            avatar.setImageBitmap(initialBitmap(profile.name, dp(52), Color.DKGRAY, Color.WHITE));
         }
-        root.addView(avatar, new LinearLayout.LayoutParams(dp(72), dp(72)));
+        root.addView(avatar, new LinearLayout.LayoutParams(dp(52), dp(52)));
 
-        TextView name = heading(profile.name == null || profile.name.trim().isEmpty() ? i18n.t("appName") : profile.name.trim());
-        name.setGravity(Gravity.CENTER);
-        name.setTextSize(21);
+        TextView name = new TextView(this);
+        name.setText(cardTitle(profile));
+        name.setTextColor(Color.BLACK);
+        name.setTextSize(25);
+        name.setTypeface(android.graphics.Typeface.create("sans-serif-black", android.graphics.Typeface.NORMAL));
+        name.setPadding(0, dp(6), 0, dp(4));
         root.addView(name);
+        MeQrExchangeProfile offline = MeQrExchangeCodec.offlineFallback(code.payload);
+        if (offline != null && !offline.subtitle.isEmpty()) {
+            TextView subtitle = new TextView(this);
+            subtitle.setText(offline.subtitle);
+            subtitle.setTextColor(Color.argb(200, 0, 0, 0));
+            subtitle.setTextSize(14);
+            subtitle.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            root.addView(subtitle);
+        }
+
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setBackground(rounded(Color.argb(rhodes ? 224 : 190, 255, 255, 255), dp(14), Color.argb(180, 255, 255, 255), dp(1)));
+        card.setClipToOutline(true);
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(cardWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
+        cardParams.gravity = Gravity.CENTER_HORIZONTAL;
+        cardParams.topMargin = dp(14);
+        root.addView(card, cardParams);
+        if (rhodes) {
+            LinearLayout strip = new LinearLayout(this);
+            for (String color : new String[]{profile.qrColor, profile.textColor, profile.backgroundColor}) {
+                View segment = new View(this);
+                segment.setBackgroundColor(CardRenderer.parseColor(color, Color.WHITE));
+                segment.setAlpha(0.82f);
+                strip.addView(segment, new LinearLayout.LayoutParams(0, dp(24), 1));
+            }
+            card.addView(strip);
+        }
+        LinearLayout cardBody = new LinearLayout(this);
+        cardBody.setOrientation(LinearLayout.HORIZONTAL);
+        card.addView(cardBody);
+        if (rhodes) {
+            View rail = new View(this) {
+                @Override protected void onDraw(Canvas canvas) {
+                    CardRenderer.drawRhodesRail(canvas, new RectF(0, 0, getWidth(), getHeight()),
+                            CardRenderer.parseColor(profile.textColor, Color.BLACK), getResources().getDisplayMetrics().density, true);
+                }
+            };
+            cardBody.addView(rail, new LinearLayout.LayoutParams(dp(52), ViewGroup.LayoutParams.MATCH_PARENT));
+        }
+        LinearLayout details = new LinearLayout(this);
+        details.setOrientation(LinearLayout.VERTICAL);
+        details.setPadding(dp(12), dp(12), dp(12), dp(14));
+        cardBody.addView(details, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
 
         ImageView qr = new ImageView(this);
-        qr.setImageBitmap(currentCode[0]);
-        qr.setBackground(rounded(Color.WHITE, dp(24)));
-        qr.setPadding(dp(14), dp(14), dp(14), dp(14));
-        LinearLayout.LayoutParams qrParams = new LinearLayout.LayoutParams(dp(290), dp(290));
-        qrParams.setMargins(0, dp(8), 0, dp(14));
-        root.addView(qr, qrParams);
+        qr.setImageBitmap(currentCode);
+        qr.setContentDescription(i18n.t("meqrProfileCode"));
+        qr.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        qr.setBackground(rounded(Color.WHITE, dp(18), Color.argb(22, 0, 0, 0), dp(1)));
+        qr.setPadding(dp(10), dp(10), dp(10), dp(10));
+        int qrSide = Math.min(dp(rhodes ? 234 : 246), cardWidth - dp(rhodes ? 76 : 24));
+        LinearLayout.LayoutParams qrParams = new LinearLayout.LayoutParams(qrSide, qrSide);
+        qrParams.gravity = Gravity.CENTER_HORIZONTAL;
+        qrParams.bottomMargin = dp(10);
+        details.addView(qr, qrParams);
 
         TextView mode = new TextView(this);
-        mode.setText(i18n.t("meqrPreparingOnline"));
-        mode.setTextColor(COLOR_MUTED);
-        mode.setTextSize(13);
-        mode.setGravity(Gravity.CENTER);
-        mode.setPadding(dp(8), 0, dp(8), dp(8));
-        root.addView(mode);
+        mode.setText(i18n.t(code.synced ? "meqrOnlineReady" : "meqrPreparingOnline"));
+        mode.setTextColor(Color.argb(170, 0, 0, 0));
+        mode.setTextSize(11);
+        mode.setPadding(dp(4), 0, dp(4), dp(8));
+        details.addView(mode);
 
         TextView hint = new TextView(this);
         hint.setText(i18n.t("meqrCodeHint"));
-        hint.setTextColor(COLOR_MUTED);
-        hint.setTextSize(14);
-        hint.setGravity(Gravity.CENTER);
-        hint.setPadding(dp(8), 0, dp(8), dp(14));
-        root.addView(hint);
+        hint.setTextColor(Color.argb(184, 0, 0, 0));
+        hint.setTextSize(11);
+        hint.setPadding(dp(4), 0, dp(4), dp(10));
+        details.addView(hint);
+        TagFlowLayout platforms = new TagFlowLayout(this);
+        for (int i = 0; i < Math.min(3, profile.qrItems.size()); i++) {
+            TextView chip = new TextView(this);
+            chip.setText(profile.qrItems.get(i).platformDisplayName(i18n));
+            chip.setTextColor(Color.BLACK);
+            chip.setTextSize(13);
+            chip.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            chip.setPadding(dp(11), dp(7), dp(11), dp(7));
+            chip.setBackground(rounded(Color.argb(194, 255, 255, 255), dp(24)));
+            platforms.addView(chip, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        }
+        details.addView(platforms);
 
+        LinearLayout footer = new LinearLayout(this);
+        footer.setGravity(Gravity.CENTER);
+        footer.setPadding(dp(22), dp(8), dp(22), dp(12));
+        footer.setBackgroundColor(Color.argb(110, 255, 255, 255));
         Button save = filledButton(i18n.t("saveMeQrCode"));
-        save.setOnClickListener(v -> saveMeQrBitmap(currentCode[0]));
-        root.addView(save, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52)));
-
-        AlertDialog dialog = new AlertDialog.Builder(this).setView(root).setPositiveButton(i18n.t("done"), null).show();
-        styleAlert(dialog);
-
-        new Thread(() -> {
-            try {
-                String remoteUrl = MeQrRemoteService.uploadProfile(MeQrExchangeCodec.onlineProfile(profile, i18n));
-                String hybridCode = QrCodeGenerator.paddedForColorLayer(
-                        MeQrExchangeCodec.hybridCode(remoteUrl, fallbackPayload),
-                        800
-                );
-                byte[] onlineAvatar = MeQrExchangeCodec.colorLayerAvatarJpeg(
-                        profile,
-                        QrCodeGenerator.colorLayerPayloadCapacity(hybridCode)
-                );
-                Bitmap onlineBitmap = QrCodeGenerator.generateColorLayered(hybridCode, onlineAvatar, 960);
-                runOnUiThread(() -> {
-                    currentCode[0] = onlineBitmap;
-                    qr.setImageBitmap(onlineBitmap);
-                    mode.setText(i18n.t("meqrOnlineReady"));
-                });
-            } catch (Exception exception) {
-                runOnUiThread(() -> mode.setText(i18n.t("meqrOnlineFallback")));
-            }
-        }).start();
+        save.setOnClickListener(v -> saveMeQrBitmap(currentCode));
+        footer.addView(save, new LinearLayout.LayoutParams(Math.min(dp(360), getResources().getDisplayMetrics().widthPixels - dp(44)), dp(48)));
+        page.addView(footer);
+        dialog.setContentView(shell);
+        handleDialogBack(dialog, dialog::dismiss);
+        dialog.show();
+        Window window = dialog.getWindow();
+        if (window != null) {
+            window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+            window.setStatusBarColor(Color.TRANSPARENT);
+            window.setNavigationBarColor(Color.TRANSPARENT);
+            window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+        }
+        return mode;
     }
 
     private void saveMeQrBitmap(Bitmap bitmap) {
@@ -2861,7 +4083,7 @@ public final class MainActivity extends Activity {
 
             @Override
             public void onImportRequest() {
-                scanningPhoto = true;
+                choosingScanImage = true;
                 chooseImage(PICK_SCAN_QR);
             }
         }).show();
@@ -2872,11 +4094,27 @@ public final class MainActivity extends Activity {
     }
 
     private void handleMeQrPayload(String payload, byte[] colorAvatarJpeg) {
-        try {
-            MeQrExchangeProfile profile = MeQrExchangeCodec.decode(payload);
-            showEncounterPreview(applyColorAvatar(profile, colorAvatarJpeg));
+        if (MeQrRemoteService.isEncounterSessionUrl(payload)) {
+            new Thread(() -> {
+                try {
+                    MeQrRemoteService.EncounterSession session = MeQrRemoteService.fetchEncounterSession(payload);
+                    if (session.creatorProfile == null) {
+                        throw new IllegalStateException("Encounter session has no creator profile.");
+                    }
+                    MeQrExchangeProfile profile = applyColorAvatar(session.creatorProfile, colorAvatarJpeg);
+                    runOnUiThread(() -> showEncounterPreview(profile, session.sessionId));
+                } catch (Exception exception) {
+                    MeQrExchangeProfile fallback = MeQrExchangeCodec.offlineFallback(payload);
+                    runOnUiThread(() -> {
+                        if (fallback != null) {
+                            showEncounterPreview(applyColorAvatar(fallback, colorAvatarJpeg));
+                        } else {
+                            toast(i18n.t("couldNotDecode"));
+                        }
+                    });
+                }
+            }).start();
             return;
-        } catch (Exception ignored) {
         }
         if (MeQrExchangeCodec.isRemoteUrl(payload)) {
             new Thread(() -> {
@@ -2896,12 +4134,168 @@ public final class MainActivity extends Activity {
             }).start();
             return;
         }
-        MeQrExchangeProfile fallback = MeQrExchangeCodec.offlineFallback(payload);
-        if (fallback != null) {
-            showEncounterPreview(applyColorAvatar(fallback, colorAvatarJpeg));
+        try {
+            MeQrExchangeProfile profile = MeQrExchangeCodec.decode(payload);
+            showEncounterPreview(applyColorAvatar(profile, colorAvatarJpeg));
+            return;
+        } catch (Exception ignored) {
+        }
+        if (routeGenericQR(payload)) {
+            // Routed to an external app or the browser.
         } else {
             toast(i18n.t("notMeQrCode"));
         }
+    }
+
+    private boolean routeGenericQR(String payload) {
+        if (payload == null || payload.isEmpty()) {
+            return false;
+        }
+        long now = System.currentTimeMillis();
+        if (payload.equals(lastRoutedPayload) && now - lastRoutedAt < 3000) {
+            return true;
+        }
+
+        lastRoutedPayload = payload;
+        lastRoutedAt = now;
+        reviewQRLink(payload);
+        return true;
+    }
+
+    private boolean reviewingQRLink;
+
+    private void reviewQRLink(String content) {
+        if (reviewingQRLink) return;
+        java.net.URI url = QRLinkPolicy.webURL(content);
+        TextView text = new TextView(this);
+        text.setText(i18n.t("qrReviewWarning") + "\n\n" + (url == null ? "" : url.getHost() + "\n\n") + content);
+        String warning = QRLinkPolicy.warningKey(content, QRLinkPolicy.platformID(content));
+        if (warning != null) text.append("\n\n" + i18n.t(warning));
+        text.setTextIsSelectable(true);
+        text.setPadding(dp(24), dp(16), dp(24), dp(16));
+        ScrollView scroll = new ScrollView(this);
+        scroll.addView(text);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this).setTitle(i18n.t("qrReviewTitle"))
+                .setView(scroll).setNegativeButton(i18n.t("cancel"), null);
+        if (url != null) builder.setPositiveButton(i18n.t("openLink"), (d, w) -> {
+            String platform = PlatformNames.detect(content);
+            if ("wechat".equals(platform)) openWeChatScan();
+            else if ("xiaohongshu".equals(platform)) openXiaohongshu(url.toString());
+            else openExternal(Uri.parse(url.toString()));
+        });
+        reviewingQRLink = true;
+        AlertDialog dialog = builder.create();
+        dialog.setOnDismissListener(d -> { reviewingQRLink = false; lastRoutedAt = System.currentTimeMillis(); });
+        dialog.show();
+        styleAlert(dialog);
+    }
+
+    private void openWeChatScan() {
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("weixin://scanqrcode"));
+        if (resolveActivity(intent)) {
+            startActivity(intent);
+        } else {
+            toast(i18n.t("wechatNotInstalled"));
+        }
+    }
+
+    private void openXiaohongshu(String payload) {
+        String userID = xiaohongshuUserID(payload);
+        if (userID != null) {
+            openXiaohongshuApp(userID, payload);
+            return;
+        }
+        new Thread(() -> {
+            String resolved = resolveXiaohongshuRedirect(payload);
+            String id = resolved == null ? null : xiaohongshuUserID(resolved);
+            runOnUiThread(() -> {
+                if (id != null) {
+                    openXiaohongshuApp(id, resolved);
+                } else {
+                    openExternal(Uri.parse(payload));
+                }
+            });
+        }).start();
+    }
+
+    private void openXiaohongshuApp(String userID, String fallback) {
+        Uri schemeUri = Uri.parse("xhsdiscover://user/" + userID);
+        if (resolveActivity(new Intent(Intent.ACTION_VIEW, schemeUri))) {
+            startActivity(new Intent(Intent.ACTION_VIEW, schemeUri));
+        } else {
+            openExternal(Uri.parse(fallback));
+        }
+    }
+
+    private String resolveXiaohongshuRedirect(String raw) {
+        String url = raw;
+        if (url.startsWith("http://")) {
+            url = "https://" + url.substring("http://".length());
+        }
+        String key = url.toLowerCase(Locale.US);
+        synchronized (xiaohongshuUserIDCache) {
+            if (xiaohongshuUserIDCache.containsKey(key)) {
+                return xiaohongshuUserIDCache.get(key);
+            }
+        }
+        HttpURLConnection connection = null;
+        try {
+            connection = (HttpURLConnection) new URL(url).openConnection();
+            connection.setInstanceFollowRedirects(false);
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(5000);
+            connection.setReadTimeout(8000);
+            connection.setRequestProperty("User-Agent",
+                    "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Mobile Safari/537.36");
+            int status = connection.getResponseCode();
+            if (status >= 300 && status < 400) {
+                String location = connection.getHeaderField("Location");
+                if (location != null && !location.isEmpty()) {
+                    String resolved = new URL(new URL(url), location).toString();
+                    synchronized (xiaohongshuUserIDCache) {
+                        xiaohongshuUserIDCache.put(key, resolved);
+                    }
+                    return resolved;
+                }
+            }
+        } catch (Exception ignored) {
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+        return url;
+    }
+
+    private String xiaohongshuUserID(String value) {
+        java.net.URI url = QRLinkPolicy.webURL(value);
+        if (url == null || !"xiaohongshu".equals(QRLinkPolicy.platformID(value))) {
+            return null;
+        }
+        String path = url.getPath().toLowerCase(Locale.US);
+        if (!path.matches("/user/profile/[0-9a-f]{24}")) return null;
+        Matcher matcher = XHS_USER_ID.matcher(path);
+        return matcher.find() ? matcher.group() : null;
+    }
+
+    private void openExternal(Uri uri) {
+        if (QRLinkPolicy.webURL(uri.toString()) == null) return;
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, uri));
+        } catch (Exception ignored) {
+        }
+    }
+
+    private boolean isHttpUrl(String value) {
+        if (value == null) {
+            return false;
+        }
+        String lower = value.toLowerCase(Locale.US);
+        return lower.startsWith("http://") || lower.startsWith("https://");
+    }
+
+    private boolean resolveActivity(Intent intent) {
+        return intent.resolveActivity(getPackageManager()) != null;
     }
 
     private MeQrExchangeProfile applyColorAvatar(MeQrExchangeProfile profile, byte[] colorAvatarJpeg) {
@@ -2920,6 +4314,10 @@ public final class MainActivity extends Activity {
     }
 
     private void showEncounterPreview(MeQrExchangeProfile profile) {
+        showEncounterPreview(profile, null);
+    }
+
+    private void showEncounterPreview(MeQrExchangeProfile profile, String sessionID) {
         if (profile == null) {
             toast(i18n.t("couldNotDecode"));
             return;
@@ -2953,9 +4351,10 @@ public final class MainActivity extends Activity {
         name.setTextColor(COLOR_TEXT);
         name.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         nameBlock.addView(name);
-        if (profile.subtitle != null && !profile.subtitle.trim().isEmpty()) {
+        String profileIntro = profile.intro == null || profile.intro.trim().isEmpty() ? profile.subtitle : profile.intro;
+        if (profileIntro != null && !profileIntro.trim().isEmpty()) {
             TextView subtitle = new TextView(this);
-            subtitle.setText(profile.subtitle.trim());
+            subtitle.setText(profileIntro.trim());
             subtitle.setTextSize(14);
             subtitle.setTextColor(COLOR_MUTED);
             subtitle.setPadding(0, dp(4), 0, 0);
@@ -2963,6 +4362,17 @@ public final class MainActivity extends Activity {
         }
         header.addView(nameBlock, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
         root.addView(header);
+
+        Bitmap bannerBitmap = base64Bitmap(profile.bannerBase64);
+        if (bannerBitmap != null) {
+            ImageView banner = new ImageView(this);
+            banner.setImageBitmap(bannerBitmap);
+            banner.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            banner.setBackground(rounded(COLOR_SURFACE, dp(14)));
+            LinearLayout.LayoutParams bannerParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(110));
+            bannerParams.setMargins(0, dp(12), 0, 0);
+            root.addView(banner, bannerParams);
+        }
 
         if (!profile.platforms.isEmpty()) {
             root.addView(section(i18n.t("platformsFromMeQr")));
@@ -3000,7 +4410,22 @@ public final class MainActivity extends Activity {
 
         Button save = filledButton(i18n.t("saveEncounter"));
         save.setOnClickListener(v -> {
-            encounterStore.add(profile, eventStore.activeEvent());
+            encounterStore.add(profile, eventStore.activeEvent(), sessionID);
+            if (sessionID != null && !sessionID.isEmpty()) {
+                MeQrProfile local = currentEncounterProfile();
+                if (local != null) {
+                    try {
+                        org.json.JSONObject localJson = MeQrExchangeCodec.onlineProfile(local, i18n);
+                        new Thread(() -> {
+                            try {
+                                MeQrRemoteService.confirmEncounterSession(sessionID, localJson);
+                            } catch (Exception ignored) {
+                            }
+                        }).start();
+                    } catch (Exception ignored) {
+                    }
+                }
+            }
             toast(i18n.t("savedEncounter"));
             AlertDialog dialog = (AlertDialog) root.getTag();
             if (dialog != null) {
@@ -3014,6 +4439,14 @@ public final class MainActivity extends Activity {
         AlertDialog dialog = new AlertDialog.Builder(this).setView(root).setPositiveButton(i18n.t("done"), null).show();
         root.setTag(dialog);
         styleAlert(dialog);
+    }
+
+    private MeQrProfile currentEncounterProfile() {
+        if (profiles.isEmpty()) {
+            return null;
+        }
+        int index = Math.max(0, Math.min(currentPage, profiles.size() - 1));
+        return profiles.get(index);
     }
 
     private LinearLayout encounterPlatformRow(MeQrExchangeProfile.Platform platform) {
@@ -3053,36 +4486,27 @@ public final class MainActivity extends Activity {
         if (canOpenLink(content)) {
             Button open = lightActionButton("↗");
             open.setContentDescription(i18n.t("openLink"));
-            open.setOnClickListener(v -> {
-                try {
-                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(content)));
-                } catch (Exception ignored) {
-                }
-            });
+            open.setOnClickListener(v -> reviewQRLink(content));
             row.addView(open, new LinearLayout.LayoutParams(dp(52), dp(48)));
         }
         return row;
     }
 
     private boolean canOpenLink(String content) {
-        if (content == null || content.isEmpty()) {
-            return false;
-        }
-        try {
-            String scheme = new java.net.URI(content).getScheme();
-            if (scheme == null) {
-                return false;
-            }
-            String lower = scheme.toLowerCase(Locale.US);
-            return lower.equals("http") || lower.equals("https") || lower.equals("qq") || lower.equals("mqq")
-                    || lower.equals("weixin") || lower.equals("wechat") || lower.equals("line")
-                    || lower.equals("discord") || lower.equals("reddit");
-        } catch (Exception exception) {
-            return false;
-        }
+        return QRLinkPolicy.webURL(content) != null;
     }
 
     private void showEncounters() {
+        int pendingBeforeSync = encounterStore.pendingCount();
+        final AlertDialog[] dialogRef = new AlertDialog[1];
+        encounterStore.syncPendingSessions(() -> runOnUiThread(() -> {
+            if (pendingBeforeSync > 0 && encounterStore.pendingCount() < pendingBeforeSync) {
+                if (dialogRef[0] != null && dialogRef[0].isShowing()) {
+                    dialogRef[0].dismiss();
+                }
+                showEncounters();
+            }
+        }));
         List<EncounterRecord> records = encounterStore.records();
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -3095,6 +4519,12 @@ public final class MainActivity extends Activity {
         TextView title = heading(i18n.t("encounters"));
         header.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
         root.addView(header);
+
+        if (encounterStore.pendingCount() > 0) {
+            TextView pending = Ui.text(this, i18n.t("encounterWaiting"), COLOR_MUTED, 13);
+            pending.setPadding(0, dp(2), 0, dp(8));
+            root.addView(pending);
+        }
 
         MeQrEvent currentEvent = eventStore.activeEvent();
         Button eventButton = actionButton(i18n.t("activeEvent") + ": " + (currentEvent == null ? i18n.t("noActiveEvent") : eventDisplayTitle(currentEvent)));
@@ -3189,6 +4619,7 @@ public final class MainActivity extends Activity {
         }
 
         AlertDialog dialog = new AlertDialog.Builder(this).setView(root).setPositiveButton(i18n.t("done"), null).show();
+        dialogRef[0] = dialog;
         styleAlert(dialog);
     }
 
@@ -3211,6 +4642,32 @@ public final class MainActivity extends Activity {
         root.setPadding(dp(18), dp(12), dp(18), dp(12));
         root.setBackgroundColor(COLOR_BG);
         root.addView(heading(record.name == null || record.name.trim().isEmpty() ? i18n.t("unknownContact") : record.name.trim()));
+
+        LinearLayout identity = panel();
+        identity.setGravity(Gravity.CENTER_VERTICAL);
+        identity.setOrientation(LinearLayout.HORIZONTAL);
+        identity.setPadding(dp(16), dp(14), dp(16), dp(14));
+        ImageView identityAvatar = new ImageView(this);
+        Bitmap identityBitmap = base64Bitmap(record.avatarBase64);
+        identityAvatar.setImageBitmap(identityBitmap != null
+                ? circleBitmap(identityBitmap, dp(64))
+                : initialBitmap(record.name, dp(64), Color.rgb(57, 197, 187), Color.WHITE));
+        identity.addView(identityAvatar, new LinearLayout.LayoutParams(dp(64), dp(64)));
+        LinearLayout identityText = new LinearLayout(this);
+        identityText.setOrientation(LinearLayout.VERTICAL);
+        identityText.setPadding(dp(14), 0, 0, 0);
+        identityText.addView(Ui.boldText(this,
+                record.name == null || record.name.trim().isEmpty() ? i18n.t("unknownContact") : record.name.trim(),
+                COLOR_TEXT, 20));
+        if (record.subtitle != null && !record.subtitle.trim().isEmpty()) {
+            TextView identitySubtitle = Ui.text(this, record.subtitle.trim(), COLOR_MUTED, 14);
+            identitySubtitle.setMaxLines(4);
+            identitySubtitle.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            identitySubtitle.setPadding(0, dp(4), 0, 0);
+            identityText.addView(identitySubtitle);
+        }
+        identity.addView(identityText, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        root.addView(identity);
 
         ScrollView scroll = new ScrollView(this);
         LinearLayout form = new LinearLayout(this);
@@ -3279,7 +4736,7 @@ public final class MainActivity extends Activity {
                 dialog.dismiss();
             }
         });
-        root.addView(delete, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(50)));
+        form.addView(delete, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(50)));
 
         AlertDialog dialog = new AlertDialog.Builder(this).setView(root).setPositiveButton(i18n.t("done"), null).show();
         root.setTag(dialog);
@@ -3294,14 +4751,10 @@ public final class MainActivity extends Activity {
         TextView text = Ui.text(this, label, COLOR_TEXT, 16);
         text.setPadding(dp(14), 0, 0, 0);
         row.addView(text, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
-        final boolean[] state = {initial};
-        Button toggle = pillButton(state[0] ? "✓ " + i18n.t("on") : i18n.t("off"), true);
-        toggle.setTextSize(14);
-        toggle.setOnClickListener(v -> {
-            state[0] = !state[0];
-            toggle.setText(state[0] ? "✓ " + i18n.t("on") : i18n.t("off"));
-            onChange.accept(state[0]);
-        });
+        android.widget.Switch toggle = new android.widget.Switch(this);
+        toggle.setContentDescription(label);
+        toggle.setChecked(initial);
+        toggle.setOnCheckedChangeListener((button, checked) -> onChange.accept(checked));
         row.addView(toggle, new LinearLayout.LayoutParams(dp(84), dp(42)));
         return row;
     }
@@ -3425,10 +4878,31 @@ public final class MainActivity extends Activity {
             return null;
         }
         try {
-            byte[] bytes = android.util.Base64.decode(base64, android.util.Base64.DEFAULT);
+            String value = base64.trim();
+            int comma = value.indexOf(',');
+            if (value.startsWith("data:") && comma >= 0) {
+                value = value.substring(comma + 1);
+            }
+            byte[] bytes;
+            try {
+                bytes = android.util.Base64.decode(value, android.util.Base64.DEFAULT);
+            } catch (IllegalArgumentException exception) {
+                bytes = android.util.Base64.decode(value, android.util.Base64.URL_SAFE | android.util.Base64.NO_WRAP);
+            }
             return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
         } catch (Exception exception) {
             return null;
+        }
+    }
+
+    private int parseUiColor(String value, int fallback) {
+        if (value == null || value.trim().isEmpty()) {
+            return fallback;
+        }
+        try {
+            return Color.parseColor(value.trim());
+        } catch (IllegalArgumentException exception) {
+            return fallback;
         }
     }
 
@@ -3454,7 +4928,13 @@ public final class MainActivity extends Activity {
         copy.tags.addAll(source.tags);
         copy.tagColorOverrides.clear();
         copy.tagColorOverrides.putAll(source.tagColorOverrides);
+        copy.tagTextWeights.putAll(source.tagTextWeights);
+        for (TagReference reference : source.tagReferences) {
+            try { copy.tagReferences.add(TagReference.fromJson(reference.toJson())); }
+            catch (org.json.JSONException error) { throw new IllegalStateException("Could not copy Tag reference", error); }
+        }
         copy.template = source.template;
+        copy.passSubtitle = source.passSubtitle;
         copy.avatarPath = source.avatarPath;
         copy.backgroundPath = source.backgroundPath;
         copy.bannerPath = source.bannerPath;
@@ -3478,6 +4958,35 @@ public final class MainActivity extends Activity {
             builder.append(tag);
         }
         return builder.toString();
+    }
+
+    private String joinTagsInline(List<String> tags) {
+        StringBuilder builder = new StringBuilder();
+        for (String tag : tags) {
+            if (builder.length() > 0) {
+                builder.append(" · ");
+            }
+            builder.append(tag);
+        }
+        return builder.toString();
+    }
+
+    private void addSummaryRow(LinearLayout parent, String title, String detail) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(dp(14), dp(12), dp(14), dp(12));
+
+        LinearLayout text = new LinearLayout(this);
+        text.setOrientation(LinearLayout.VERTICAL);
+        TextView titleView = Ui.boldText(this, title, COLOR_TEXT, 15);
+        text.addView(titleView);
+        TextView detailView = Ui.text(this, detail, COLOR_MUTED, 13);
+        detailView.setPadding(0, dp(2), 0, 0);
+        text.addView(detailView);
+        row.addView(text, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+
+        parent.addView(row, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
     }
 
     private Button templateButton(String text, boolean selected) {
@@ -3574,7 +5083,7 @@ public final class MainActivity extends Activity {
     }
 
     private Button iconButton(String text) {
-        Button button = new Button(this);
+        Button button = new UiIcons.IconButton(this);
         normalizeButton(button);
         button.setText(text);
         button.setAllCaps(false);
@@ -3586,7 +5095,7 @@ public final class MainActivity extends Activity {
     }
 
     private Button fabButton(String text) {
-        Button button = new Button(this);
+        Button button = new UiIcons.IconButton(this);
         normalizeButton(button);
         button.setText(text);
         button.setAllCaps(false);
@@ -3599,7 +5108,7 @@ public final class MainActivity extends Activity {
     }
 
     private Button lightFabButton(String text) {
-        Button button = new Button(this);
+        Button button = new UiIcons.IconButton(this);
         normalizeButton(button);
         button.setText(text);
         button.setAllCaps(false);
@@ -3612,7 +5121,7 @@ public final class MainActivity extends Activity {
     }
 
     private Button lightIconButton(String text) {
-        Button button = new Button(this);
+        Button button = new UiIcons.IconButton(this);
         normalizeButton(button);
         button.setText(text);
         button.setAllCaps(false);
@@ -3625,7 +5134,7 @@ public final class MainActivity extends Activity {
     }
 
     private Button lightActionButton(String text) {
-        Button button = new Button(this);
+        Button button = new UiIcons.IconButton(this);
         normalizeButton(button);
         button.setText(text);
         button.setAllCaps(false);
@@ -3664,7 +5173,11 @@ public final class MainActivity extends Activity {
     private Button rowButton(String leading, String trailing) {
         Button button = new Button(this);
         normalizeButton(button);
-        button.setText(leading + "   " + trailing);
+        button.setText(leading);
+        android.graphics.drawable.Drawable arrow = getDrawable(R.drawable.ic_expand_more).mutate();
+        arrow.setTint(COLOR_MUTED);
+        arrow.setBounds(0, 0, dp(24), dp(24));
+        button.setCompoundDrawablesRelative(null, null, arrow, null);
         button.setAllCaps(false);
         button.setTextColor(COLOR_TEXT);
         button.setTextSize(18);
@@ -3781,7 +5294,7 @@ public final class MainActivity extends Activity {
     }
 
     private Button quietButton(String text) {
-        Button button = new Button(this);
+        Button button = new UiIcons.IconButton(this);
         normalizeButton(button);
         button.setText(text);
         button.setAllCaps(false);
@@ -3933,6 +5446,23 @@ public final class MainActivity extends Activity {
         return value.isEmpty() ? fallback : value;
     }
 
+    private String limitPassSubtitle(String value) {
+        String normalized = value == null ? "" : value.replace("\r\n", "\n").replace('\r', '\n').replace('\n', ' ').trim();
+        StringBuilder result = new StringBuilder();
+        int units = 0;
+        for (int offset = 0; offset < normalized.length();) {
+            int codePoint = normalized.codePointAt(offset);
+            int next = units + (codePoint <= 0x7f ? 1 : 2);
+            if (next > 20) {
+                break;
+            }
+            result.appendCodePoint(codePoint);
+            units = next;
+            offset += Character.charCount(codePoint);
+        }
+        return result.toString();
+    }
+
     private void toast(String text) {
         Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
     }
@@ -3975,20 +5505,31 @@ public final class MainActivity extends Activity {
 
     private static final class EditSession {
         final MeQrProfile profile;
+        final java.util.Set<String> recordedTagKeys = new java.util.HashSet<>();
         EditText name;
         EditText subtitle;
+        EditText passSubtitle;
         EditText tags;
+        TextView tagCount;
+        Runnable onTagsChanged;
+        boolean committingTags;
+        String tagDraft = "";
         EditText textColor;
         EditText qrColor;
         EditText backgroundColor;
         EditText borderColor;
         ImageView preview;
+        ImageView avatarPreview;
         LinearLayout qrItemsPanel;
         LinearLayout tagColorPanel;
+        LinearLayout tagChips;
+        LinearLayout tagSuggestions;
         int selectedQrIndex;
+        boolean onboarding;
 
         EditSession(MeQrProfile profile) {
             this.profile = profile;
+            for (String tag : profile.tags) recordedTagKeys.add(CardTagIndex.canonicalKey(tag));
         }
     }
 

@@ -4,10 +4,12 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.text.StaticLayout;
 import android.text.TextPaint;
@@ -51,8 +53,8 @@ final class CardRenderer {
 
         canvas.save();
         canvas.clipPath(roundedClip(bounds, radius));
-        drawCardBackground(canvas, profile, bounds, paint);
-        paint.setColor(applyAlpha(backgroundColor, profile.backgroundPath == null || profile.backgroundPath.isEmpty() ? 0.18f : 0.80f));
+        paint.setAlpha(255);
+        paint.setColor(applyAlpha(backgroundColor, Math.max(profile.cardOpacity, 0.72f)));
         canvas.drawRect(bounds, paint);
 
         if ("rhodes".equals(profile.template)) {
@@ -86,8 +88,7 @@ final class CardRenderer {
         String intro = profile.subtitle == null || profile.subtitle.trim().isEmpty() ? i18n.t("bioEmpty") : profile.subtitle.trim();
         drawText(canvas, intro, textPaint(adjustAlpha(textColor, 0.88f), 15f * density, false), introPanel.left + 14f * density, introPanel.top + 14f * density, introPanel.width() - 28f * density, 10);
 
-        drawTagChips(canvas, profile, padding, 360f * density, width - padding * 2f, textColor, paint, density);
-        drawPlatformChips(canvas, profile, i18n, -1, padding, 414f * density, width - padding * 2f, textColor, paint, density);
+        drawTagChips(canvas, profile, padding, 360f * density, width - padding * 2f, textColor, paint, density, 1.25f);
         canvas.restore();
         drawBorder(canvas, bounds, radius, profile.borderColor, density, paint);
         return bitmap;
@@ -158,22 +159,7 @@ final class CardRenderer {
         canvas.drawRect(third * 2, 0, width, strip, paint);
 
         float railWidth = 50f * density;
-        paint.setColor(adjustAlpha(textColor, 0.88f));
-        canvas.drawRect(0, strip, railWidth, height, paint);
-        paint.setColor(Color.WHITE);
-        paint.setTypeface(Typeface.DEFAULT_BOLD);
-        paint.setTextAlign(Paint.Align.CENTER);
-        paint.setTextSize(17f * density);
-        canvas.save();
-        canvas.rotate(-90, railWidth / 2f, 78f * density);
-        canvas.drawText("MEQR", railWidth / 2f, 83f * density, paint);
-        canvas.restore();
-        drawBarcode(canvas, railWidth / 2f, 146f * density, paint, density);
-        paint.setTextSize(14f * density);
-        String date = new SimpleDateFormat("MM\ndd", Locale.US).format(new Date());
-        String[] parts = date.split("\n");
-        canvas.drawText(parts[0], railWidth / 2f, 276f * density, paint);
-        canvas.drawText(parts[1], railWidth / 2f, 294f * density, paint);
+        drawRhodesRail(canvas, new RectF(0, strip, railWidth, height), textColor, density, false);
 
         float contentLeft = railWidth + 12f * density;
         float contentRight = width - 12f * density;
@@ -185,9 +171,15 @@ final class CardRenderer {
         if (backgroundBitmap != null) {
             canvas.save();
             canvas.clipPath(roundedClip(hero, 8f * density));
+            paint.setAlpha(255);
             drawCenterCrop(canvas, backgroundBitmap, hero, paint);
-            paint.setColor(Color.argb(110, 0, 0, 0));
-            canvas.drawRect(hero.left, hero.centerY(), hero.right, hero.bottom, paint);
+            paint.setShader(new LinearGradient(
+                    hero.left, hero.top, hero.left, hero.bottom,
+                    new int[]{Color.TRANSPARENT, Color.TRANSPARENT, Color.argb(133, 0, 0, 0)},
+                    new float[]{0f, 0.48f, 1f}, Shader.TileMode.CLAMP));
+            paint.setAlpha(255);
+            canvas.drawRect(hero, paint);
+            paint.setShader(null);
             canvas.restore();
         } else {
             paint.setColor(background);
@@ -196,11 +188,15 @@ final class CardRenderer {
             canvas.drawCircle(hero.right - 35f * density, hero.top + 32f * density, 70f * density, paint);
         }
         RectF avatar = new RectF(contentLeft + 10f * density, hero.bottom - 58f * density, contentLeft + 56f * density, hero.bottom - 12f * density);
+        paint.setAlpha(255);
         drawAvatar(canvas, profile, avatar, Color.WHITE, paint, density);
         TextPaint title = textPaint(Color.WHITE, 20f * density, true);
         drawText(canvas, displayName(profile, i18n), title, avatar.right + 9f * density, hero.bottom - 51f * density, contentRight - avatar.right - 15f * density, 1);
         TextPaint pass = textPaint(Color.argb(210, 255, 255, 255), 9.5f * density, true);
-        drawText(canvas, "RHODES ISLAND PASS", pass, avatar.right + 9f * density, hero.bottom - 25f * density, contentRight - avatar.right - 15f * density, 1);
+        String passLabel = profile.passSubtitle == null || profile.passSubtitle.trim().isEmpty()
+                ? i18n.t("passLabel")
+                : profile.passSubtitle.trim();
+        drawText(canvas, passLabel, pass, avatar.right + 9f * density, hero.bottom - 25f * density, contentRight - avatar.right - 15f * density, 1);
 
         MeQrItem item = profile.qrItems.get(index);
         float qrTop = hero.bottom + 14f * density;
@@ -217,13 +213,13 @@ final class CardRenderer {
     }
 
     private static void drawCardBackground(Canvas canvas, MeQrProfile profile, RectF bounds, Paint paint) {
-        paint.setColor(parseColor(profile.backgroundColor, Color.WHITE));
+        paint.setColor(applyAlpha(parseColor(profile.backgroundColor, Color.WHITE), profile.cardOpacity));
         canvas.drawRect(bounds, paint);
         Bitmap background = decode(profile.backgroundPath);
         if (background != null) {
+            paint.setAlpha(Math.round(255 * profile.cardOpacity));
             drawCenterCrop(canvas, background, bounds, paint);
-            paint.setColor(applyAlpha(parseColor(profile.backgroundColor, Color.WHITE), 1f - profile.cardOpacity));
-            canvas.drawRect(bounds, paint);
+            paint.setAlpha(255);
         }
     }
 
@@ -317,20 +313,25 @@ final class CardRenderer {
     }
 
     private static void drawTagChips(Canvas canvas, MeQrProfile profile, float left, float top, float maxWidth, int textColor, Paint paint, float density) {
+        drawTagChips(canvas, profile, left, top, maxWidth, textColor, paint, density, 1f);
+    }
+
+    private static void drawTagChips(Canvas canvas, MeQrProfile profile, float left, float top, float maxWidth, int textColor, Paint paint, float density, float sizeScale) {
         float x = left;
         float y = top;
         for (int i = 0; i < profile.tags.size(); i++) {
             String tag = profile.tags.get(i);
-            paint.setTextSize(10f * density);
-            paint.setTypeface(Typeface.DEFAULT_BOLD);
-            float width = Math.min(maxWidth, paint.measureText(tag) + 20f * density);
+            paint.setTextSize(10f * density * sizeScale);
+            paint.setTypeface(TagTextWeight.typeface(profile.tagTextWeight(tag)));
+            float chipHeight = 21f * density * sizeScale;
+            float width = Math.min(maxWidth, paint.measureText(tag) + 20f * density * sizeScale);
             if (x + width > left + maxWidth) {
                 x = left;
-                y += 27f * density;
+                y += (chipHeight + 6f * density);
             }
             String override = profile.tagColorOverrides.get(tag);
-            int[] colors = CardTagColorPalette.colorsFor(tag, override);
-            RectF chipBounds = new RectF(x, y, x + width, y + 21f * density);
+            int[] colors = profile.tagColors(tag, override);
+            RectF chipBounds = new RectF(x, y, x + width, y + chipHeight);
             Path chipPath = new Path();
             chipPath.addRoundRect(chipBounds, 11f * density, 11f * density, Path.Direction.CW);
             canvas.save();
@@ -339,13 +340,12 @@ final class CardRenderer {
             for (int colorIndex = 0; colorIndex < colors.length; colorIndex++) {
                 paint.setColor(adjustAlpha(colors[colorIndex], 0.90f));
                 float segmentLeft = x + colorIndex * segmentWidth;
-                canvas.drawRect(segmentLeft, y, segmentLeft + segmentWidth + 1f, y + 21f * density, paint);
+                canvas.drawRect(segmentLeft, y, segmentLeft + segmentWidth + 1f, y + chipHeight, paint);
             }
             canvas.restore();
-            paint.setColor(contrastColor(colors[0]));
             paint.setTextAlign(Paint.Align.CENTER);
             Paint.FontMetrics metrics = paint.getFontMetrics();
-            canvas.drawText(tag, x + width / 2f, y + 10.5f * density - (metrics.ascent + metrics.descent) / 2f, paint);
+            new TagTextContrast(colors).draw(canvas, tag, x + width / 2f, y + chipHeight / 2f - (metrics.ascent + metrics.descent) / 2f, paint, density);
             x += width + 6f * density;
         }
         paint.setTextAlign(Paint.Align.LEFT);
@@ -358,6 +358,7 @@ final class CardRenderer {
         canvas.save();
         canvas.clipPath(clip);
         if (avatar != null) {
+            paint.setAlpha(255);
             drawCenterCrop(canvas, avatar, bounds, paint);
         } else {
             paint.setColor(adjustAlpha(textColor, 0.14f));
@@ -375,14 +376,48 @@ final class CardRenderer {
         paint.setTextAlign(Paint.Align.LEFT);
     }
 
-    private static void drawBarcode(Canvas canvas, float center, float top, Paint paint, float density) {
-        float x = center - 17f * density;
+    static void drawRhodesRail(Canvas canvas, RectF bounds, int textColor, float density, boolean exchange) {
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setColor(adjustAlpha(textColor, 0.86f));
+        canvas.save();
+        canvas.clipRect(bounds);
+        canvas.drawRect(bounds, paint);
+        float titleHeight = (exchange ? 64f : 72f) * density;
+        float barcodeHeight = (exchange ? 86f : 92f) * density;
+        float groupHeight = titleHeight + barcodeHeight + 66f * density;
+        float top = bounds.top + (bounds.height() - groupHeight) / 2f;
+        float center = bounds.centerX();
+        paint.setColor(Color.argb(224, 255, 255, 255));
+        paint.setTypeface(Typeface.create("sans-serif-black", Typeface.NORMAL));
+        paint.setTextAlign(Paint.Align.CENTER);
+        paint.setTextSize((exchange ? 16f : 18f) * density);
+        Paint.FontMetrics metrics = paint.getFontMetrics();
+        float titleCenter = top + titleHeight / 2f;
+        canvas.save();
+        canvas.rotate(-90, center, titleCenter);
+        canvas.drawText("MEQR", center, titleCenter - (metrics.ascent + metrics.descent) / 2f, paint);
+        canvas.restore();
+        float barcodeTop = top + titleHeight + 10f * density;
+        float x = center - 26f * density;
         for (int i = 0; i < 12; i++) {
-            float width = (i % 4 == 0 ? 3f : 1.5f) * density;
-            paint.setColor(Color.argb(i % 3 == 0 ? 235 : 165, 255, 255, 255));
-            canvas.drawRect(x, top, x + width, top + 92f * density, paint);
-            x += width + 1.5f * density;
+            float width = (i % 4 == 0 ? 4f : 2f) * density;
+            paint.setColor(Color.argb(i % 3 == 0 ? 235 : 158, 255, 255, 255));
+            canvas.drawRect(x, barcodeTop, x + width, barcodeTop + barcodeHeight, paint);
+            x += width + 2f * density;
         }
+        paint.setColor(Color.argb(224, 255, 255, 255));
+        paint.setTypeface(Typeface.create(Typeface.MONOSPACE, Typeface.BOLD));
+        paint.setFakeBoldText(true);
+        paint.setStyle(Paint.Style.FILL_AND_STROKE);
+        paint.setStrokeWidth(0.5f * density);
+        paint.setTextSize(18f * density);
+        metrics = paint.getFontMetrics();
+        float dateCenter = barcodeTop + barcodeHeight + 33f * density;
+        String[] date = new SimpleDateFormat("MM\ndd", Locale.US).format(new Date()).split("\n");
+        float baseline = dateCenter - (metrics.ascent + metrics.descent) / 2f;
+        canvas.drawText(date[0], center, baseline - 10f * density, paint);
+        canvas.drawText(date[1], center, baseline + 10f * density, paint);
+        canvas.restore();
     }
 
     private static String displayName(MeQrProfile profile, I18n i18n) {

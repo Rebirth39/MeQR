@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.app.DownloadManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.database.Cursor;
 import android.net.Uri;
@@ -30,6 +31,9 @@ final class AppUpdateManager {
     private final I18n i18n;
     private Uri pendingInstallUri;
     private boolean checkedAutomatically;
+    private static final String UPDATE_PREFS = "app_update";
+    private static final String DOWNLOAD_ID_KEY = "download_id";
+    private static final String DOWNLOAD_URL_KEY = "download_url";
 
     AppUpdateManager(Activity activity, I18n i18n) {
         this.activity = activity;
@@ -129,7 +133,32 @@ final class AppUpdateManager {
                     .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                     .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
             DownloadManager manager = (DownloadManager) activity.getSystemService(Context.DOWNLOAD_SERVICE);
+            SharedPreferences preferences = activity.getSharedPreferences(UPDATE_PREFS, Context.MODE_PRIVATE);
+            long existingId = preferences.getLong(DOWNLOAD_ID_KEY, -1L);
+            String existingUrl = preferences.getString(DOWNLOAD_URL_KEY, "");
+            if (existingId != -1L && update.apkUrl.equals(existingUrl)) {
+                DownloadManager.Query existingQuery = new DownloadManager.Query().setFilterById(existingId);
+                try (Cursor cursor = manager.query(existingQuery)) {
+                    if (cursor != null && cursor.moveToFirst()) {
+                        int status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
+                        if (status == DownloadManager.STATUS_PENDING || status == DownloadManager.STATUS_RUNNING || status == DownloadManager.STATUS_PAUSED) {
+                            toast(i18n.t("downloadingUpdate"));
+                            waitForDownload(manager, existingId, update.sha256);
+                            return;
+                        }
+                        if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                            Uri existingUri = manager.getUriForDownloadedFile(existingId);
+                            if (existingUri != null && verifySha256(existingUri, update.sha256)) {
+                                requestInstall(existingUri);
+                                return;
+                            }
+                        }
+                    }
+                }
+                manager.remove(existingId);
+            }
             long downloadId = manager.enqueue(request);
+            preferences.edit().putLong(DOWNLOAD_ID_KEY, downloadId).putString(DOWNLOAD_URL_KEY, update.apkUrl).apply();
             toast(i18n.t("downloadingUpdate"));
             waitForDownload(manager, downloadId, update.sha256);
         } catch (Exception exception) {

@@ -13,6 +13,7 @@ import java.util.UUID;
 
 final class MeQrExchangeCodec {
     private static final int ONLINE_AVATAR_TARGET_BYTES = 256 * 1024;
+    private static final int ONLINE_JSON_TARGET_BYTES = 820_000;
     private static final String OFFLINE_FRAGMENT_PREFIX = "offline=";
 
     private MeQrExchangeCodec() {
@@ -27,7 +28,14 @@ final class MeQrExchangeCodec {
     }
 
     static JSONObject onlineProfile(MeQrProfile profile, I18n i18n) throws Exception {
-        return profileJson(profile, i18n, 10, ONLINE_AVATAR_TARGET_BYTES);
+        JSONObject root = profileJson(profile, i18n, 3, ONLINE_AVATAR_TARGET_BYTES);
+        String banner = imageBase64(profile.bannerPath, 80_000, 1280);
+        if (!banner.isEmpty()) root.put("bn", banner);
+        // Base64 expands image bytes; leave room below the server's 900 KiB limit.
+        int remaining = ONLINE_JSON_TARGET_BYTES - root.toString().getBytes(StandardCharsets.UTF_8).length - 16_000;
+        String background = imageBase64(profile.backgroundPath, Math.max(0, remaining) * 3 / 4, 2048);
+        if (!background.isEmpty()) root.put("b", background);
+        return root;
     }
 
     static byte[] colorLayerAvatarJpeg(MeQrProfile profile, int targetBytes) {
@@ -103,13 +111,25 @@ final class MeQrExchangeCodec {
         try {
             java.net.URL url = new java.net.URL(raw);
             String host = url.getHost();
-            if (!MeQrRemoteService.API_HOST.equalsIgnoreCase(host)) {
+            if (!MeQrRemoteService.isMeQrHost(host)) {
                 return false;
             }
             return url.getPath().startsWith("/profiles/");
         } catch (Exception exception) {
             return false;
         }
+    }
+
+    /** True when a scanned string is a MeQR payload (local/offline, remote profile, or encounter URL). */
+    static boolean isMeQrPayload(String raw) {
+        try {
+            decode(raw);
+            return true;
+        } catch (Exception ignored) {
+        }
+        return MeQrRemoteService.isEncounterSessionUrl(raw)
+                || isRemoteUrl(raw)
+                || offlineFallback(raw) != null;
     }
 
     static final class MeQrExchangeException extends Exception {
@@ -151,6 +171,9 @@ final class MeQrExchangeCodec {
                 root.put("g", tags);
             }
             root.put("m", profile.template);
+            root.put("tc", safe(profile.textColor));
+            root.put("bc", safe(profile.backgroundColor));
+            root.put("qc", safe(profile.qrColor));
         }
         root.put("t", System.currentTimeMillis() / 1000L);
         return root;
@@ -189,6 +212,45 @@ final class MeQrExchangeCodec {
     private static String tinyAvatarBase64(String path, int targetBytes) {
         byte[] jpeg = tinyAvatarJpeg(path, targetBytes, false);
         return jpeg == null ? "" : Base64.encodeToString(jpeg, Base64.NO_WRAP);
+    }
+
+    private static String imageBase64(String path, int targetBytes, int maxDimension) {
+        if (path == null || path.trim().isEmpty() || targetBytes <= 0) return "";
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(path, options);
+        if (options.outWidth <= 0 || options.outHeight <= 0) return "";
+        options.inSampleSize = 1;
+        while (Math.max(options.outWidth, options.outHeight) / options.inSampleSize > maxDimension * 2) {
+            options.inSampleSize *= 2;
+        }
+        options.inJustDecodeBounds = false;
+        Bitmap bitmap = BitmapFactory.decodeFile(path, options);
+        if (bitmap == null) return "";
+        try {
+            float scale = Math.min(1f, (float) maxDimension / Math.max(bitmap.getWidth(), bitmap.getHeight()));
+            if (scale < 1f) {
+                Bitmap resized = Bitmap.createScaledBitmap(bitmap, Math.max(1, Math.round(bitmap.getWidth() * scale)),
+                        Math.max(1, Math.round(bitmap.getHeight() * scale)), true);
+                if (resized != bitmap) bitmap.recycle();
+                bitmap = resized;
+            }
+            while (true) {
+                for (int quality : new int[]{88, 76, 64, 52, 40}) {
+                    ByteArrayOutputStream output = new ByteArrayOutputStream();
+                    if (bitmap.compress(Bitmap.CompressFormat.JPEG, quality, output) && output.size() <= targetBytes) {
+                        return Base64.encodeToString(output.toByteArray(), Base64.NO_WRAP);
+                    }
+                }
+                if (Math.max(bitmap.getWidth(), bitmap.getHeight()) <= 32) return "";
+                Bitmap resized = Bitmap.createScaledBitmap(bitmap, Math.max(1, bitmap.getWidth() * 3 / 4),
+                        Math.max(1, bitmap.getHeight() * 3 / 4), true);
+                bitmap.recycle();
+                bitmap = resized;
+            }
+        } finally {
+            bitmap.recycle();
+        }
     }
 
     private static byte[] tinyAvatarJpeg(String path, int targetBytes, boolean strict) {

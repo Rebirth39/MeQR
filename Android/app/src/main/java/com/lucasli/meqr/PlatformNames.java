@@ -74,27 +74,7 @@ final class PlatformNames {
     }
 
     static String detect(String text) {
-        String lower = text == null ? "" : text.toLowerCase();
-        if (lower.contains("u.wechat.com") || lower.contains("wechat.com") || lower.contains("weixin")) return "wechat";
-        if (lower.contains("qm.qq.com") || lower.contains("qq.com") || lower.startsWith("mqq")
-                || lower.startsWith("qq://") || lower.startsWith("tencent://")) return "qq";
-        if (lower.contains("wa.me") || lower.contains("whatsapp.com")) return "whatsapp";
-        if (lower.contains("instagram.com") || lower.contains("instagr.am")) return "instagram";
-        if (lower.contains("twitter.com") || lower.contains("x.com")) return "twitter";
-        if (lower.contains("tiktok.com") || lower.contains("vm.tiktok.com")) return "tiktok";
-        if (lower.contains("snapchat.com")) return "snapchat";
-        if (lower.contains("linkedin.com")) return "linkedin";
-        if (lower.contains("github.com")) return "github";
-        if (lower.contains("facebook.com") || lower.contains("fb.com") || lower.contains("fb.me")) return "facebook";
-        if (lower.contains("reddit.com")) return "reddit";
-        if (lower.contains("threads.net")) return "threads";
-        if (lower.contains("twitch.tv")) return "twitch";
-        if (lower.contains("testflight.apple.com")) return "testflight";
-        if (lower.contains("xiaohongshu.com") || lower.contains("xhslink.com")) return "xiaohongshu";
-        if (lower.contains("bilibili.com") || lower.contains("b23.tv")) return "bilibili";
-        if (lower.contains("douyin.com") || lower.contains("iesdouyin.com")) return "douyin";
-        if (lower.contains("weibo.com") || lower.contains("weibo.cn")) return "weibo";
-        return "custom";
+        return QRLinkPolicy.platformID(text);
     }
 
     static String matchingName(String name, I18n i18n) {

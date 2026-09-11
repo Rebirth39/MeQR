@@ -10,6 +10,7 @@ import java.util.UUID;
 
 final class EncounterRecord {
     String id = UUID.randomUUID().toString();
+    String sessionID;
     String name = "";
     String subtitle = "";
     String avatarBase64 = "";
@@ -30,14 +31,20 @@ final class EncounterRecord {
     }
 
     static EncounterRecord fromExchangeProfile(MeQrExchangeProfile profile, MeQrEvent event) {
+        return fromExchangeProfile(profile, event, null);
+    }
+
+    static EncounterRecord fromExchangeProfile(MeQrExchangeProfile profile, MeQrEvent event, String sessionID) {
         EncounterRecord record = new EncounterRecord();
+        record.sessionID = sessionID;
         record.name = profile.name;
-        record.subtitle = profile.subtitle;
+        record.subtitle = profile.intro == null || profile.intro.trim().isEmpty() ? profile.subtitle : profile.intro;
         record.avatarBase64 = profile.avatarBase64;
         record.backgroundBase64 = profile.backgroundBase64;
         for (MeQrExchangeProfile.Platform platform : profile.platforms) {
             record.profiles.add(platform);
         }
+        record.tags.addAll(profile.tags);
         record.metAt = System.currentTimeMillis();
         record.sourceSharedAt = profile.sharedAt * 1000L;
         if (event != null) {
@@ -51,6 +58,7 @@ final class EncounterRecord {
     JSONObject toJson() throws JSONException {
         JSONObject object = new JSONObject();
         object.put("id", id);
+        object.put("sessionID", sessionID == null ? JSONObject.NULL : sessionID);
         object.put("name", name);
         object.put("subtitle", subtitle);
         object.put("avatarBase64", avatarBase64);
@@ -84,6 +92,7 @@ final class EncounterRecord {
     static EncounterRecord fromJson(JSONObject object) {
         EncounterRecord record = new EncounterRecord();
         record.id = object.optString("id", record.id);
+        record.sessionID = object.isNull("sessionID") ? null : object.optString("sessionID", null);
         record.name = object.optString("name", "");
         record.subtitle = object.optString("subtitle", "");
         record.avatarBase64 = object.optString("avatarBase64", "");
