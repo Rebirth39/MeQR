@@ -6,7 +6,15 @@ nonisolated struct RemoteTagCatalogDocument: Decodable, Sendable {
     let revision: String
     let entries: [RemoteTagEntry]
     let categories: [RemoteTagCategory]?
+    let groups: [RemoteTagGroup]?
     let changelog: [RemoteTagCatalogChange]?
+}
+
+nonisolated struct RemoteTagGroup: Decodable, Identifiable, Sendable {
+    let id: String
+    let categoryID: String
+    let names: RemoteTagEntry.Names
+    let ranges: [RemoteTagCategory.EntryRange]
 }
 
 nonisolated struct RemoteTagCatalogChange: Decodable, Identifiable, Sendable {
@@ -91,6 +99,7 @@ nonisolated enum RemoteTagCatalogSnapshot {
     private static let lock = NSLock()
     nonisolated(unsafe) private static var entries: [RemoteTagEntry] = []
     nonisolated(unsafe) private static var categories: [RemoteTagCategory] = []
+    nonisolated(unsafe) private static var groups: [RemoteTagGroup] = []
     nonisolated(unsafe) private static var searchRecords: [RemoteTagSearchRecord] = []
     nonisolated(unsafe) private static var exactEntryByKey: [String: RemoteTagEntry] = [:]
     nonisolated(unsafe) private static var ambiguousKeys: Set<String> = []
@@ -138,6 +147,7 @@ nonisolated enum RemoteTagCatalogSnapshot {
         lock.lock()
         entries = document.entries
         categories = document.categories ?? []
+        groups = document.groups ?? []
         searchRecords = records
         exactEntryByKey = exactLookup
         ambiguousKeys = ambiguous
@@ -154,8 +164,24 @@ nonisolated enum RemoteTagCatalogSnapshot {
         value().first { $0.id == id }
     }
 
+    /// Groups follow the online catalog order; the first matching group wins.
+    static func groups(in categoryID: String) -> [RemoteTagGroup] {
+        lock.lock()
+        defer { lock.unlock() }
+        return groups.filter { $0.categoryID == categoryID }
+    }
+
+    static func group(for entryID: String) -> RemoteTagGroup? {
+        lock.lock()
+        defer { lock.unlock() }
+        return groups.first { group in group.ranges.contains { $0.contains(entryID) } }
+    }
+
     @MainActor static func subtitle(for entry: RemoteTagEntry, language: AppLanguage) -> String {
         let category = categoryValue().first { $0.ranges.contains { $0.contains(entry.id) } }
+        if let group = group(for: entry.id) {
+            return [category?.displayName(for: language), group.names.value(for: language)].compactMap { $0 }.joined(separator: " · ")
+        }
         if let parentID = entry.parentID, let parent = self.entry(id: parentID) {
             return [category?.displayName(for: language), parent.names.value(for: language)].compactMap { $0 }.joined(separator: " · ")
         }
@@ -265,7 +291,7 @@ final class RemoteTagCatalog: ObservableObject {
 
     func refreshIfNeeded() async {
         guard !isLoading else { return }
-        if hasLoaded, let lastAttempt, Date().timeIntervalSince(lastAttempt) < 900 { return }
+        if hasLoaded, let lastAttempt, Date().timeIntervalSince(lastAttempt) < 300 { return }
         await refresh()
     }
 
@@ -287,7 +313,7 @@ final class RemoteTagCatalog: ObservableObject {
                 errorMessage = error.localizedDescription
             }
             if onlineMode, let cached = try? await Self.loadDocument(from: storedURL),
-               !Self.isMaintenance(cached) {
+               !Self.isMaintenance(cached), (revision.isEmpty || cached.revision.compare(revision, options: .numeric) == .orderedDescending) {
                 install(cached, source: .cached)
             }
         }
@@ -309,6 +335,7 @@ final class RemoteTagCatalog: ObservableObject {
             install(document, source: .online)
             try? data.write(to: storedURL, options: .atomic)
         } catch {
+            lastAttempt = nil
             if hasLoaded { statusMessage = L.tagCatalogFallback }
             else { errorMessage = error.localizedDescription }
         }

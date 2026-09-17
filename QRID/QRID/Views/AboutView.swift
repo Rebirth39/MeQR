@@ -19,7 +19,7 @@ struct AboutView: View {
 
     private let websiteURL = URL(string: "https://meqrcode.cn/")!
     private let supportURL = URL(string: "https://support.meqrcode.cn/")!
-    private let privacyPolicyURL = URL(string: "https://meqrcode.cn/privacy.html")!
+    private let privacyPolicyURL = URL(string: "https://meqrcode.cn/legal")!
     private let icpFilingURL = URL(string: "https://beian.miit.gov.cn/")!
     private let mailURL = URL(string: "mailto:lucas_and_miku@icloud.com")!
     private let qqURL = URL(string: "https://qm.qq.com/q/ErpPGQuaAi")!

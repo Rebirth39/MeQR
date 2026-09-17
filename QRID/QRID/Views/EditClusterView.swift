@@ -462,7 +462,7 @@ struct EditClusterView: View {
         backgroundColor = cluster.backgroundColor
         qrColor = cluster.qrColor
         templateStyle = cluster.templateStyle
-        passSubtitle = cluster.passSubtitleText
+        passSubtitle = cluster.passSubtitle ?? ""
         cluster.migrateTagReferences()
         tagInput = cluster.tags.joined(separator: "\n")
         tagColorOverrides = cluster.tagColorOverrides

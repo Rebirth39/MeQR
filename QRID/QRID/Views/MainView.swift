@@ -377,6 +377,13 @@ struct MainView: View {
         let impact = UIImpactFeedbackGenerator(style: .heavy)
         impact.impactOccurred()
         guard let cluster = currentCluster else { return }
+        do {
+            if try ProfileSync.binding(cluster.id) != nil {
+                saveError = L.deleteStopSyncFirst
+                showSaveError = true
+                return
+            }
+        } catch { saveError = error.localizedDescription; showSaveError = true; return }
         let previousPage = currentPage
         let previousSelectedProfileIndex = currentSelectedProfileIndex
         modelContext.delete(cluster)

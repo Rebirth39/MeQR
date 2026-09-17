@@ -25,6 +25,9 @@ struct MoreSettingsView: View {
                 }
 
                 Section {
+                    NavigationLink { ProfileSyncView() } label: {
+                        Label(L.syncTitle, systemImage: "arrow.triangle.2.circlepath")
+                    }
                     NavigationLink { AnnouncementHistoryView() } label: {
                         Label("历史通知", systemImage: "bell.and.waves.left.and.right")
                     }

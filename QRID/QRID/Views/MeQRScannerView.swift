@@ -563,7 +563,7 @@ private final class QRScannerViewController: UIViewController, AVCaptureMetadata
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         if session.isRunning {
-            session.stopRunning()
+            DispatchQueue.global(qos: .userInitiated).async { self.session.stopRunning() }
         }
     }
 

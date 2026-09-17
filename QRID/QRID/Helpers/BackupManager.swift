@@ -15,6 +15,7 @@ enum BackupManager {
     }
 
     struct ClusterBackup: Codable {
+        let id: UUID?
         let name: String
         let subtitle: String
         let avatarImageData: Data?
@@ -55,6 +56,7 @@ enum BackupManager {
 
     private static func makeClusterBackup(_ cluster: QRCluster) -> ClusterBackup {
         ClusterBackup(
+            id: cluster.id,
             name: cluster.name,
             subtitle: cluster.subtitle,
             avatarImageData: cluster.avatarImageData,
@@ -137,6 +139,7 @@ enum BackupManager {
         do {
             let data = try Data(contentsOf: url)
             let backup = try JSONDecoder().decode(Backup.self, from: data)
+            guard backup.version == 1 else { throw CocoaError(.coderReadCorrupt) }
 
             let existingDescriptor = FetchDescriptor<QRCluster>()
             let existingClusters = try modelContext.fetch(existingDescriptor)
@@ -178,6 +181,7 @@ enum BackupManager {
                     widgetLargeOffsetX: clusterBackup.widgetLargeOffsetX,
                     widgetLargeOffsetY: clusterBackup.widgetLargeOffsetY
                 )
+                if let restoredID = clusterBackup.id { cluster.id = restoredID }
                 if let references = clusterBackup.tagReferencesRawValue {
                     guard CardTagReference.decode(references) != nil else { throw CocoaError(.coderReadCorrupt) }
                     cluster.tagReferencesRawValue = references

@@ -349,4 +349,99 @@ struct L {
     static var bilibili: String { tr("B站", "B站", "B站", "Bilibili", "Bilibili") }
     static var douyinTikTok: String { tr("抖音", "抖音", "TikTok", "TikTok", "TikTok") }
     static var weibo: String { tr("微博", "微博", "微博", "Weibo", "微博") }
+
+    // Legal & Sync — shared
+    static var legalImportantUpdate: String { tr("重要更新", "重要更新", "重要更新", "Important Update", "重要なお知らせ") }
+    static var legalReadAndAgree: String { tr("我已阅读并同意", "我已閱讀並同意", "我已閱讀並同意", "I have read and agree", "内容を確認し、同意します") }
+
+    // 启动守则弹窗（用户使用守则）
+    static var termsUpdateTitle: String { tr("我们更新了「用户使用守则」", "我們更新了「用戶使用守則」", "我們更新了「使用者守則」", "We've updated our Terms of Use", "利用規約を更新しました") }
+    static var termsUpdateBody: String { tr("请阅读更新后的使用守则。多设备同步需你主动开启，开启后所选卡片资料和图片会上传到同步服务器。", "請閱讀更新後的使用守則。多設備同步需你主動開啟，開啟後所選卡片資料和圖片會上傳到同步伺服器。", "請閱讀更新後的使用者守則。多裝置同步需你主動開啟，開啟後所選卡片資料和圖片會上傳到同步伺服器。", "Please review the updated Terms of Use. Multi-device sync is opt-in; once enabled, the selected card data and images are uploaded to the sync server.", "更新後の利用規約をご確認ください。複数端末同期は任意で、有効にすると選択したカードのデータと画像が同期サーバーにアップロードされます。") }
+    static var termsViewFull: String { tr("查看完整的用户使用守则", "查看完整的用戶使用守則", "查看完整的使用者守則", "View the full Terms of Use", "利用規約の全文を見る") }
+
+    // 同步页隐私弹窗（隐私政策）
+    static var privacySyncTitle: String { tr("多设备同步与隐私政策", "多設備同步與私隱政策", "多裝置同步與隱私權政策", "Multi-Device Sync & Privacy Policy", "複数端末同期とプライバシーポリシー") }
+    static var privacySyncBody: String { tr("开启同步前请阅读隐私政策。同步会把你所选卡片和图片上传到 MeQR 服务器，传输使用 HTTPS，但不是端到端加密。", "開啟同步前請閱讀私隱政策。同步會把你所選卡片和圖片上傳到 MeQR 伺服器，傳輸使用 HTTPS，但不是端到端加密。", "開啟同步前請閱讀隱私權政策。同步會把你所選卡片和圖片上傳到 MeQR 伺服器，傳輸使用 HTTPS，但不是端對端加密。", "Please review the Privacy Policy before enabling sync. Syncing uploads your selected card and images to the MeQR server over HTTPS, but it is not end-to-end encrypted.", "同期を有効にする前にプライバシーポリシーをご確認ください。同期は選択したカードと画像をMeQRサーバーにアップロードします。通信はHTTPSですが、エンドツーエンド暗号化ではありません。") }
+    static var privacyViewFull: String { tr("查看完整的隐私政策", "查看完整的私隱政策", "查看完整的隱私權政策", "View the full Privacy Policy", "プライバシーポリシーの全文を見る") }
+
+    // 多设备同步主界面
+    static var syncTitle: String { tr("多设备同步", "多設備同步", "多裝置同步", "Multi-Device Sync", "複数端末同期") }
+    static var syncIntro1: String { tr("在多台手机上使用同一张卡片，包含二维码、Tag、头像、背景和头图。修改后请在本机点“立即同步”，再到另一台手机点一次。", "在多台手機上使用同一張卡片，包含 QR Code、Tag、頭像、背景和頭圖。修改後請在本機點「立即同步」，再到另一台手機點一次。", "在多台手機上使用同一張卡片，包含 QR Code、Tag、頭像、背景和頭圖。修改後請在本機點「立即同步」，再到另一台手機點一次。", "Use the same card on multiple phones, including QR codes, tags, avatar, background, and banner. After editing, tap “Sync Now” here, then tap it again on the other phone.", "複数のスマートフォンで同じカード（QRコード、タグ、アイコン、背景、ヘッダー）を利用できます。編集後はこの端末で「今すぐ同期」をタップし、もう一方の端末でもう一度タップしてください。") }
+    static var syncIntro2: String { tr("开启后，所选卡片和图片会存储在 MeQR 服务器。绑定码与公开交换码分开；只有经主设备确认的手机才能同步。每张卡片最多五台设备。", "開啟後，所選卡片和圖片會儲存在 MeQR 伺服器。綁定碼與公開交換碼分開；只有經主設備確認的手機才能同步。每張卡片最多五台設備。", "開啟後，所選卡片和圖片會儲存在 MeQR 伺服器。綁定碼與公開交換碼分開；只有經主裝置確認的手機才能同步。每張卡片最多五台裝置。", "Once enabled, the selected card and images are stored on the MeQR server. Binding codes are separate from public exchange codes; only phones approved by the owner device can sync. Each card supports up to five devices.", "有効にすると、選択したカードと画像がMeQRサーバーに保存されます。バインドコードは公開交換コードとは別で、所有者端末が承認したスマートフォンのみが同期できます。1枚のカードにつき最大5台までです。") }
+    static var syncIntro3: String { tr("同步传输使用 HTTPS，但不是端到端加密；服务器会保存可读取的资料。请只上传你愿意存入云端的内容。", "同步傳輸使用 HTTPS，但不是端到端加密；伺服器會保存可讀取的資料。請只上傳你願意存入雲端的內容。", "同步傳輸使用 HTTPS，但不是端對端加密；伺服器會保存可讀取的資料。請只上傳你願意存入雲端的內容。", "Sync transfers use HTTPS but are not end-to-end encrypted; the server stores readable data. Only upload content you are comfortable storing in the cloud.", "同期はHTTPSを使用しますがエンドツーエンド暗号化ではありません。サーバーは読み取り可能なデータを保存します。クラウドに保存してもよい内容だけをアップロードしてください。") }
+    static var syncLocalCards: String { tr("本机卡片", "本機卡片", "本機卡片", "Cards on This Device", "この端末のカード") }
+    static var syncSelectCard: String { tr("选择卡片", "選擇卡片", "選擇卡片", "Select Card", "カードを選択") }
+    static var syncSelectPlaceholder: String { tr("请选择", "請選擇", "請選擇", "Select", "選択してください") }
+    static var syncRoleOwner: String { tr("主设备", "主設備", "主裝置", "Owner", "所有者端末") }
+    static var syncRoleBound: String { tr("已绑定", "已綁定", "已綁定", "Bound", "バインド済み") }
+    static var syncCloudVersion: String { tr("云端版本", "雲端版本", "雲端版本", "Cloud Version", "クラウドバージョン") }
+    static var syncNow: String { tr("立即同步", "立即同步", "立即同步", "Sync Now", "今すぐ同期") }
+    static var syncRefreshDevices: String { tr("刷新设备列表", "重新整理設備列表", "重新整理裝置列表", "Refresh Devices", "端末一覧を更新") }
+    static var syncGenerateCode: String { tr("生成绑定码（10 分钟有效）", "生成綁定碼（10 分鐘有效）", "生成綁定碼（10 分鐘有效）", "Generate Binding Code (valid 10 min)", "バインドコードを生成（10分間有効）") }
+    static var syncCopyCode: String { tr("复制绑定码", "複製綁定碼", "複製綁定碼", "Copy Binding Code", "バインドコードをコピー") }
+    static var syncCopied: String { tr("已复制，请交给你自己的另一台手机", "已複製，請交給你自己的另一台手機", "已複製，請交給你自己的另一台手機", "Copied. Send it to your other phone.", "コピーしました。もう一方の端末で入力してください。") }
+    static var syncStopOwner: String { tr("删除云端资料并停止同步", "刪除雲端資料並停止同步", "刪除雲端資料並停止同步", "Delete Cloud Data & Stop Sync", "クラウドデータを削除して同期を停止") }
+    static var syncUnbind: String { tr("解除本机绑定", "解除本機綁定", "解除本機綁定", "Unbind This Device", "この端末のバインドを解除") }
+    static var syncClearCredential: String { tr("清除本机同步凭证", "清除本機同步憑證", "清除本機同步憑證", "Clear Local Sync Credential", "この端末の同期資格情報を消去") }
+    static var syncEnable: String { tr("将此卡片开启云端同步", "將此卡片開啟雲端同步", "將此卡片開啟雲端同步", "Enable Cloud Sync for This Card", "このカードのクラウド同期を有効にする") }
+    static var syncBoundDevices: String { tr("已绑定设备", "已綁定設備", "已綁定裝置", "Bound Devices", "バインド済み端末") }
+    static var syncThisDevice: String { tr("（本机）", "（本機）", "（本機）", "(this device)", "（この端末）") }
+    static var syncRemove: String { tr("移除", "移除", "移除", "Remove", "削除") }
+    static var syncPendingDevices: String { tr("待确认设备 · 请核对设备名称", "待確認設備 · 請核對設備名稱", "待確認裝置 · 請核對裝置名稱", "Pending Devices · Verify the device name", "承認待ちの端末 · 端末名を確認してください") }
+    static func syncAllow(_ name: String) -> String { tr("允许 \(name) 加入", "允許 \(name) 加入", "允許 \(name) 加入", "Allow \(name) to Join", "\(name) の参加を許可") }
+    static var syncAllowed: String { tr("已允许，请在新手机上检查确认结果", "已允許，請在新手機上檢查確認結果", "已允許，請在新手機上檢查確認結果", "Approved. Check the result on the new phone.", "承認しました。新しい端末で結果を確認してください。") }
+    static var syncJoinSection: String { tr("从另一台手机加入", "從另一台手機加入", "從另一台手機加入", "Join from Another Phone", "別の端末から参加") }
+    static var syncJoinPlaceholder: String { "XXXX-XXXX-XXXX-XXXX" }
+    static var syncApplyJoin: String { tr("申请加入", "申請加入", "申請加入", "Request to Join", "参加を申請") }
+    static var syncCheckJoin: String { tr("检查主设备确认结果", "檢查主設備確認結果", "檢查主裝置確認結果", "Check Approval Result", "所有者端末の承認結果を確認") }
+    static var syncCancelJoin: String { tr("取消本机申请", "取消本機申請", "取消本機申請", "Cancel This Request", "この端末の申請をキャンセル") }
+    static var syncJoinHint: String { tr("加入会新增一张卡片，不覆盖本机已有卡片。申请后，请在主设备刷新设备列表并确认。取消本机申请不会撤销已获确认的设备，请由主设备移除。", "加入會新增一張卡片，不覆蓋本機已有卡片。申請後，請在主設備重新整理設備列表並確認。取消本機申請不會撤銷已獲確認的設備，請由主設備移除。", "加入會新增一張卡片，不覆蓋本機已有卡片。申請後，請在主裝置重新整理裝置列表並確認。取消本機申請不會撤銷已獲確認的裝置，請由主裝置移除。", "Joining adds a new card without overwriting existing cards. After requesting, refresh the device list on the owner device to approve. Canceling your request does not revoke an already-approved device; remove it from the owner device instead.", "参加すると新しいカードが追加され、既存のカードは上書きされません。申請後は所有者端末で端末一覧を更新して承認してください。申請のキャンセルは承認済み端末を取り消しません。所有者端末から削除してください。") }
+    static var syncSyncing: String { tr("正在同步…", "正在同步…", "正在同步…", "Syncing…", "同期中…") }
+    static var syncDone: String { tr("同步完成", "同步完成", "同步完成", "Sync Complete", "同期が完了しました") }
+    static var syncEnabled: String { tr("已开启同步，可以生成绑定码了", "已開啟同步，可以生成綁定碼了", "已開啟同步，可以生成綁定碼了", "Sync enabled. You can now generate a binding code.", "同期を有効にしました。バインドコードを生成できます。") }
+    static var syncWaitingOwner: String { tr("等待主设备确认。请在主设备刷新设备列表。", "等待主設備確認。請在主設備重新整理設備列表。", "等待主裝置確認。請在主裝置重新整理裝置列表。", "Waiting for owner approval. Refresh the device list on the owner device.", "所有者端末の承認待ちです。所有者端末で端末一覧を更新してください。") }
+    static var syncJoined: String { tr("已加入，卡片和图片已下载", "已加入，卡片和圖片已下載", "已加入，卡片和圖片已下載", "Joined. Card and images downloaded.", "参加しました。カードと画像をダウンロードしました。") }
+    static var syncStopped: String { tr("已停止同步，本机卡片已保留", "已停止同步，本機卡片已保留", "已停止同步，本機卡片已保留", "Sync stopped. Cards on this device are kept.", "同期を停止しました。この端末のカードは保持されています。") }
+    static var syncStoppedLocal: String { tr("本机已停止同步", "本機已停止同步", "本機已停止同步", "Sync stopped on this device", "この端末の同期を停止しました") }
+
+    // 同步冲突/确认弹窗
+    static var syncConflictTitle: String { tr("两台设备都有修改", "兩台設備都有修改", "兩台裝置都有修改", "Both Devices Have Changes", "両方の端末で変更があります") }
+    static var syncConflictLocal: String { tr("用本机版本更新云端", "用本機版本更新雲端", "用本機版本更新雲端", "Keep Local & Update Cloud", "ローカルを保持してクラウドを更新") }
+    static var syncConflictRemote: String { tr("使用云端版本覆盖本机", "使用雲端版本覆蓋本機", "使用雲端版本覆蓋本機", "Use Cloud & Overwrite Local", "クラウドを使用してローカルを上書き") }
+    static var syncConflictLater: String { tr("暂不处理", "暫不處理", "暫不處理", "Not Now", "後で") }
+    static var syncConflictMessage: String { tr("被覆盖的修改不会合并。需要保留两份时，请先备份本机卡片。", "被覆蓋的修改不會合併。需要保留兩份時，請先備份本機卡片。", "被覆蓋的修改不會合併。需要保留兩份時，請先備份本機卡片。", "Overwritten changes are not merged. If you need to keep both, back up the local card first.", "上書きされる変更は統合されません。両方を残す必要がある場合は、先にローカルのカードをバックアップしてください。") }
+    static var syncDisconnectTitle: String { tr("停止同步？", "停止同步？", "停止同步？", "Stop Sync?", "同期を停止しますか？") }
+    static var syncDisconnectOwner: String { tr("删除云端资料", "刪除雲端資料", "刪除雲端資料", "Delete Cloud Data", "クラウドデータを削除") }
+    static var syncDisconnectMember: String { tr("解除绑定", "解除綁定", "解除綁定", "Unbind", "バインド解除") }
+    static var syncDisconnectMessage: String { tr("本机卡片会保留。删除云端资料后，所有设备都将停止同步；其他手机已经下载的副本仍会保留。", "本機卡片會保留。刪除雲端資料後，所有設備都將停止同步；其他手機已經下載的副本仍會保留。", "本機卡片會保留。刪除雲端資料後，所有裝置都將停止同步；其他手機已經下載的副本仍會保留。", "Cards on this device are kept. Deleting cloud data stops sync for all devices; copies already downloaded on other phones remain.", "この端末のカードは保持されます。クラウドデータを削除すると全端末の同期が停止します。他の端末にダウンロード済みのコピーは残ります。") }
+    static var syncClearTitle: String { tr("清除本机凭证？", "清除本機憑證？", "清除本機憑證？", "Clear Local Credential?", "この端末の資格情報を消去しますか？") }
+    static var syncClearAction: String { tr("清除凭证", "清除憑證", "清除憑證", "Clear Credential", "資格情報を消去") }
+    static var syncClearMessage: String { tr("此操作不删除云端资料，不撤销其他设备。主设备清除凭证后会失去云端管理权限，请优先使用上方的停止同步。", "此操作不刪除雲端資料，不撤銷其他設備。主設備清除憑證後會失去雲端管理權限，請優先使用上方的停止同步。", "此操作不刪除雲端資料，不撤銷其他裝置。主裝置清除憑證後會失去雲端管理權限，請優先使用上方的停止同步。", "This does not delete cloud data or revoke other devices. Clearing the owner credential removes cloud management access; prefer “Stop Sync” above.", "この操作はクラウドデータを削除せず、他の端末も取り消しません。所有者端末で資格情報を消去するとクラウド管理権限を失います。上記の「同期を停止」を優先してください。") }
+
+    // 同步错误串
+    static var syncErrToken: String { tr("无法生成设备凭证", "無法生成設備憑證", "無法生成裝置憑證", "Could not generate a device credential.", "端末の資格情報を生成できませんでした。") }
+    static var syncErrReadCredential: String { tr("无法读取同步凭证，请解锁手机后重试", "無法讀取同步憑證，請解鎖手機後重試", "無法讀取同步憑證，請解鎖手機後重試", "Could not read the sync credential. Unlock your phone and retry.", "同期資格情報を読み取れません。端末のロックを解除して再試行してください。") }
+    static var syncErrSaveCredential: String { tr("无法保存同步凭证", "無法儲存同步憑證", "無法儲存同步憑證", "Could not save the sync credential.", "同期資格情報を保存できませんでした。") }
+    static var syncErrUpdateCredential: String { tr("无法更新同步凭证", "無法更新同步憑證", "無法更新同步憑證", "Could not update the sync credential.", "同期資格情報を更新できませんでした。") }
+    static func syncErrUnavailable(_ code: Int) -> String { tr("同步服务暂时不可用（\(code)）", "同步服務暫時不可用（\(code)）", "同步服務暫時不可用（\(code)）", "Sync service unavailable (\(code)).", "同期サービスは現在利用できません（\(code)）。") }
+    static var syncErrResponseLarge: String { tr("同步响应过大", "同步回應過大", "同步回應過大", "Sync response too large.", "同期レスポンスが大きすぎます。") }
+    static func syncErrImageRead(_ kind: String) -> String { tr("无法读取\(kind)图片", "無法讀取\(kind)圖片", "無法讀取\(kind)圖片", "Could not read the \(kind) image.", "\(kind)画像を読み取れませんでした。") }
+    static var syncErrImageLarge: String { tr("图片过大，请先调整图片", "圖片過大，請先調整圖片", "圖片過大，請先調整圖片", "Image too large. Resize it first.", "画像が大きすぎます。先にサイズを調整してください。") }
+    static var syncErrUploadVerify: String { tr("上传图片校验失败", "上傳圖片校驗失敗", "上傳圖片校驗失敗", "Image upload verification failed.", "画像アップロードの検証に失敗しました。") }
+    static var syncErrFormatUnsupported: String { tr("同步资料格式不支持", "同步資料格式不支援", "同步資料格式不支援", "Unsupported sync data format.", "同期データの形式がサポートされていません。") }
+    static var syncErrImageVerify: String { tr("图片校验失败，未修改本地资料", "圖片校驗失敗，未修改本地資料", "圖片校驗失敗，未修改本地資料", "Image verification failed; local data unchanged.", "画像の検証に失敗しました。ローカルデータは変更されていません。") }
+    static var syncErrConflict: String { tr("两台设备都修改了资料。请选择保留本机版本或使用云端版本；使用云端前可先复制本地卡片。", "兩台設備都修改了資料。請選擇保留本機版本或使用雲端版本；使用雲端前可先複製本地卡片。", "兩台裝置都修改了資料。請選擇保留本機版本或使用雲端版本；使用雲端前可先複製本地卡片。", "Both devices changed the data. Choose to keep the local version or use the cloud version; copy the local card before using the cloud version.", "両方の端末でデータが変更されています。ローカル版を保持するかクラウド版を使用するかを選択してください。クラウド版を使用する前にローカルのカードをコピーしてください。") }
+    static var syncErrDeviceIncomplete: String { tr("同步服务返回的设备信息不完整", "同步服務返回的設備資訊不完整", "同步服務返回的裝置資訊不完整", "The sync service returned incomplete device information.", "同期サービスが返した端末情報が不完全です。") }
+    static var syncErrInvalidCode: String { tr("请输入 XXXX-XXXX-XXXX-XXXX 格式的绑定码", "請輸入 XXXX-XXXX-XXXX-XXXX 格式的綁定碼", "請輸入 XXXX-XXXX-XXXX-XXXX 格式的綁定碼", "Enter a binding code in XXXX-XXXX-XXXX-XXXX format.", "XXXX-XXXX-XXXX-XXXX 形式のバインドコードを入力してください。") }
+    static var syncErrJoinCorrupt: String { tr("本机加入信息已损坏，请重新申请", "本機加入資訊已損壞，請重新申請", "本機加入資訊已損壞，請重新申請", "This device's join data is corrupted. Request again.", "この端末の参加情報が破損しています。再度申請してください。") }
+
+    // 同步撤销 alert
+    static var syncRevokedTitle: String { tr("同步已被主设备移除", "同步已被主設備移除", "同步已被主裝置移除", "Sync Removed by Owner", "所有者端末により同期が解除されました") }
+    static var syncRevokedMessage: String { tr("主设备已取消本机的同步权限，本机上对应的同步卡片已自动删除。", "主設備已取消本機的同步權限，本機上對應的同步卡片已自動刪除。", "主裝置已取消本機的同步權限，本機上對應的同步卡片已自動刪除。", "The owner device revoked this device's sync access. The corresponding synced cards on this device were removed.", "所有者端末がこの端末の同期権限を取り消しました。この端末上の対応する同期カードは削除されました。") }
+
+    // 删除同步卡片保护（MainView）
+    static var deleteStopSyncFirst: String { tr("请先在“更多设置 → 多设备同步”中停止此卡片的同步，再删除本机卡片。", "請先在「更多設定 → 多設備同步」中停止此卡片的同步，再刪除本機卡片。", "請先在「更多設定 → 多裝置同步」中停止此卡片的同步，再刪除本機卡片。", "Stop sync for this card in “More Settings → Multi-Device Sync” before deleting it.", "このカードを削除する前に、「その他の設定 → 複数端末同期」で同期を停止してください。") }
+
+    // 引导页快捷入口
+    static var onboardingSyncEntry: String { tr("使用同步码，从另一台手机快速开始", "使用同步碼，從另一台手機快速開始", "使用同步碼，從另一台手機快速開始", "Start quickly from another phone with a sync code", "同期コードを使って別の端末からすばやく始める") }
 }

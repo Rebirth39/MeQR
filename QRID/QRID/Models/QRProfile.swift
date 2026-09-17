@@ -155,7 +155,7 @@ enum Platform: String, CaseIterable, Identifiable {
         case .whatsapp: return "WhatsApp"
         case .instagram: return "Instagram"
         case .twitter: return L.twitter
-        case .tiktok: return L.douyinTikTok
+        case .tiktok: return "TikTok"
         case .snapchat: return "Snapchat"
         case .telegram: return "Telegram"
         case .discord: return "Discord"

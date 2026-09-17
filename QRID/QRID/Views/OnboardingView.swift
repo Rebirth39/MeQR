@@ -104,6 +104,7 @@ struct OnboardingView: View {
     @State private var errorMessage: String?
     @State private var showError = false
     @State private var isSaving = false
+    @State private var showProfileSync = false
 
     private let accent = Color(hex: "#39C5BB")
     private let pink = Color(hex: "#FF4D8D")
@@ -128,6 +129,7 @@ struct OnboardingView: View {
         .background { ambientBackground.clipped() }
         .tint(accent)
         .animation(reduceMotion ? nil : .spring(response: 0.42, dampingFraction: 0.86), value: step)
+        .sheet(isPresented: $showProfileSync) { ProfileSyncView() }
         .onChange(of: qrPhotosItem) { _, item in
             guard let item else { return }
             Task { await decodeImportedQR(item) }
@@ -299,6 +301,16 @@ struct OnboardingView: View {
                 }
                 .buttonStyle(OnboardingPrimaryButtonStyle(color: .black))
                 .padding(.top, 36)
+
+                Button {
+                    showProfileSync = true
+                } label: {
+                    Label(L.onboardingSyncEntry, systemImage: "arrow.triangle.2.circlepath")
+                        .frame(maxWidth: .infinity)
+                }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.primary)
+                .padding(.top, 10)
 
                 Button(hasExistingCards ? OnboardingCopy.keepCards : OnboardingCopy.later) {
                     onSkip()

@@ -85,7 +85,11 @@ struct AppRootView: View {
     @Query(sort: \QRCluster.sortOrder, order: .forward) private var clusters: [QRCluster]
     @AppStorage(OnboardingStorage.completionKey) private var hasCompletedOnboarding = false
     @State private var startupError: String?
+    @State private var syncRevoked = false
     @EnvironmentObject private var announcementManager: AnnouncementManager
+    @AppStorage("meqr_legal_ack_version") private var legalAckVersion = ""
+    @State private var showLegalUpdate = false
+    private let legalVersion = "2026-09-16"
 
     init(startupError: String? = nil) {
         _startupError = State(initialValue: startupError)
@@ -94,10 +98,15 @@ struct AppRootView: View {
     var body: some View {
         MainView()
             .task {
+                if legalAckVersion != legalVersion { showLegalUpdate = true }
                 await RemoteTagCatalog.shared.refreshIfNeeded()
                 for cluster in clusters { cluster.migrateTagReferences() }
                 do { try modelContext.save() } catch { startupError = error.localizedDescription }
                 await CardTagOutbox.shared.drain()
+                if await ProfileSync.verifyBindings(context: modelContext, clusters: clusters) > 0 { syncRevoked = true }
+            }
+            .sheet(isPresented: $showLegalUpdate) {
+                LegalUpdateView(kind: .terms) { legalAckVersion = legalVersion; showLegalUpdate = false }
             }
             .fullScreenCover(isPresented: onboardingPresentation) {
                 OnboardingView(
@@ -106,6 +115,11 @@ struct AppRootView: View {
                     onSkip: { hasCompletedOnboarding = true }
                 )
                 .interactiveDismissDisabled()
+            }
+            .alert(L.syncRevokedTitle, isPresented: $syncRevoked) {
+                Button("好", role: .cancel) { }
+            } message: {
+                Text(L.syncRevokedMessage)
             }
             .alert("本地数据暂时无法载入", isPresented: startupErrorPresentation) {
                 Button("好", role: .cancel) {
@@ -128,6 +142,39 @@ struct AppRootView: View {
             get: { startupError != nil },
             set: { if !$0 { startupError = nil } }
         )
+    }
+}
+
+struct LegalUpdateView: View {
+    enum Kind {
+        case terms, privacy
+        var title: String { self == .terms ? L.termsUpdateTitle : L.privacySyncTitle }
+        var body: String { self == .terms ? L.termsUpdateBody : L.privacySyncBody }
+        var linkLabel: String { self == .terms ? L.termsViewFull : L.privacyViewFull }
+        var linkURL: URL { URL(string: self == .terms ? "https://meqrcode.cn/legal#terms" : "https://meqrcode.cn/legal#privacy")! }
+    }
+    let kind: Kind
+    let onAccept: () -> Void
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text(kind.title)
+                        .font(.title2.bold())
+                    Text(kind.body)
+                        .foregroundStyle(.secondary)
+                    Link(kind.linkLabel, destination: kind.linkURL)
+                        .font(.headline)
+                    Button(L.legalReadAndAgree) { onAccept() }
+                        .buttonStyle(.borderedProminent)
+                        .frame(maxWidth: .infinity)
+                }
+                .padding(24)
+            }
+            .navigationTitle(L.legalImportantUpdate)
+            .navigationBarTitleDisplayMode(.inline)
+        }
+        .interactiveDismissDisabled()
     }
 }
 

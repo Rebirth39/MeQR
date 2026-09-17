@@ -65,7 +65,8 @@ enum WidgetDataHelper {
 
         guard let url = sharedFileURL else { return }
         if let data = try? JSONEncoder().encode(items) {
-            try? data.write(to: url)
+            do { try data.write(to: url, options: [.atomic, .completeFileProtection]) }
+            catch { }
         }
 
         WidgetCenter.shared.reloadAllTimelines()

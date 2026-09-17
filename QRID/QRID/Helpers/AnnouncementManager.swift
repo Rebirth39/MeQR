@@ -17,12 +17,15 @@ final class AnnouncementManager: ObservableObject {
     func refresh() {
         guard let url = URL(string: "https://meqrcode.cn/announcements/feed.json") else { return }
         Task {
-            guard let (data, _) = try? await URLSession.shared.data(from: url),
-                  let wrapper = try? JSONDecoder().decode(Feed.self, from: data),
-                  !wrapper.announcements.isEmpty else { return }
-            history = wrapper.announcements
-            guard wrapper.latest.id != UserDefaults.standard.string(forKey: readKey) else { return }
-            latest = wrapper.latest
+            do {
+                var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData)
+                request.timeoutInterval = 12
+                let (data, _) = try await URLSession.shared.data(for: request)
+                let wrapper = try JSONDecoder().decode(Feed.self, from: data)
+                history = wrapper.announcements
+                guard wrapper.latest.id != UserDefaults.standard.string(forKey: readKey) else { return }
+                latest = wrapper.latest
+            } catch { }
         }
     }
     func markRead() { if let id = latest?.id { UserDefaults.standard.set(id, forKey: readKey); latest = nil } }

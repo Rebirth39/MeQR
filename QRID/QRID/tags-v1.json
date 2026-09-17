@@ -1,8 +1,19 @@
 {
   "schemaVersion": 1,
-  "revision": "2026.09.08.2",
-  "updatedAt": "2026-09-08",
+  "revision": "2026.09.15.1",
+  "updatedAt": "2026-09-15",
   "changelog": [
+    {
+      "revision": "2026.09.15.1",
+      "date": "2026-09-15",
+      "summary": {
+        "zhHans": "新增洛天依与温迪 Tag；洛天依使用单色，温迪加入原神角色拼色。",
+        "zhHantHK": "新增洛天依與溫迪 Tag；洛天依使用單色，溫迪加入原神角色拼色。",
+        "zhHantTW": "新增洛天依與溫迪 Tag；洛天依使用單色，溫迪加入原神角色拼色。",
+        "en": "Added Luo Tianyi and Venti; Luo Tianyi uses a solid color, while Venti joins Genshin character palettes.",
+        "ja": "洛天依とウェンティを追加。洛天依は単色、ウェンティは原神キャラクターパレットに参加。"
+      }
+    },
     {
       "revision": "2026.09.08.2",
       "date": "2026-09-08",
@@ -82,6 +93,10 @@
         {
           "start": "tag-0352",
           "end": "tag-0356"
+        },
+        {
+          "start": "tag-0452",
+          "end": "tag-0452"
         }
       ]
     },
@@ -182,6 +197,10 @@
         {
           "start": "tag-0379",
           "end": "tag-0390"
+        },
+        {
+          "start": "tag-0453",
+          "end": "tag-0453"
         }
       ]
     },
@@ -10690,6 +10709,45 @@
       "solidColor": "#DD33CC",
       "kind": "character",
       "parentID": "tag-0035"
+    },
+    {
+      "id": "tag-0452",
+      "names": {
+        "zhHans": "洛天依",
+        "zhHantHK": "洛天依",
+        "zhHantTW": "洛天依",
+        "en": "Luo Tianyi",
+        "ja": "洛天依"
+      },
+      "aliases": [
+        "Luo Tianyi"
+      ],
+      "colors": [
+        "#66CCFF"
+      ],
+      "solidColor": "#66CCFF",
+      "kind": "character",
+      "parentID": "tag-0028"
+    },
+    {
+      "id": "tag-0453",
+      "names": {
+        "zhHans": "温迪",
+        "zhHantHK": "温迪",
+        "zhHantTW": "温迪",
+        "en": "Venti",
+        "ja": "ウェンティ"
+      },
+      "aliases": [
+        "Wendy",
+        "Venti"
+      ],
+      "colors": [
+        "#74C2A8"
+      ],
+      "solidColor": "#74C2A8",
+      "kind": "character",
+      "parentID": "tag-0107"
     }
   ]
 }

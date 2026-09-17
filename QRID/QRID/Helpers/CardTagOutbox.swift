@@ -4,7 +4,7 @@ import Network
 
 @MainActor final class CardTagOutbox: ObservableObject {
     struct Job: Codable, Identifiable {
-        var id: String { payload["request_id"]! }
+        var id: String { payload["request_id"] ?? "" }
         var payload: [String: String]
         var created = Date()
         var status = "pending"

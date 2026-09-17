@@ -165,14 +165,36 @@ private struct CardTagCategoryView: View {
 
     private var language: AppLanguage { AppSettings.shared.resolvedLanguage }
 
-    var body: some View {
-        List(CardTagIndex.entries(in: category)) { entry in
-            CardTagCatalogRow(
-                tag: entry.names.value(for: language),
-                text: $text,
-                colorOverrides: colorOverrides
-            )
+    private var sections: [(String, [RemoteTagEntry])] {
+        let entries = CardTagIndex.entries(in: category)
+        let groups = RemoteTagCatalogSnapshot.groups(in: category.id)
+        if !groups.isEmpty {
+            // Sections follow the online groups order; ungrouped works stay on top.
+            var built: [(String, [RemoteTagEntry])] = []
+            let ungrouped = entries.filter { entry in !groups.contains { group in group.ranges.contains { $0.contains(entry.id) } } }
+            if !ungrouped.isEmpty { built.append(("", ungrouped)) }
+            var assigned = Set<String>()
+            for group in groups {
+                let members = entries.filter { entry in !assigned.contains(entry.id) && group.ranges.contains { $0.contains(entry.id) } }
+                assigned.formUnion(members.map(\.id))
+                if !members.isEmpty { built.append((group.names.value(for: language), members)) }
+            }
+            return built
         }
+        let grouped = Dictionary(grouping: entries) { entry in
+            entry.parentID.flatMap { RemoteTagCatalogSnapshot.entry(id: $0)?.names.value(for: language) } ?? ""
+        }
+        let rank: (String) -> Int = { key in if key.isEmpty { return -1 }; let k = key.lowercased(); if k.contains("leo") { return 0 }; if k.contains("more more") || k.contains("mmj") { return 1 }; if k.contains("wonderlands") || k.contains("wxs") { return 2 }; if k.contains("vivid") || k.contains("vbs") { return 3 }; if k.contains("nightcord") || k.contains("25") { return 4 }; return 99 }
+        let keys = grouped.keys.sorted { rank($0) == rank($1) ? $0 < $1 : rank($0) < rank($1) }
+        return keys.map { ($0, grouped[$0] ?? []) }
+    }
+
+    var body: some View {
+        List { ForEach(Array(sections.enumerated()), id: \.offset) { _, section in
+            Section(section.0.isEmpty ? category.displayName(for: language) : "— \(section.0) —") {
+                ForEach(section.1) { entry in CardTagCatalogRow(tag: entry.names.value(for: language), text: $text, colorOverrides: colorOverrides) }
+            }
+        }}
         .navigationTitle(category.displayName(for: language))
         .navigationBarTitleDisplayMode(.inline)
     }

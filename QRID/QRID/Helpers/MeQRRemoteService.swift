@@ -12,6 +12,7 @@ enum MeQRRemoteService {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.httpBody = try JSONEncoder().encode(ProfileUploadRequest(profile: profile))
 
+        request.cachePolicy = .reloadIgnoringLocalCacheData
         let (data, response) = try await URLSession.shared.data(for: request)
         try validate(response: response, data: data)
 
@@ -48,6 +49,7 @@ enum MeQRRemoteService {
         }
 
         var request = URLRequest(url: url)
+        request.cachePolicy = .reloadIgnoringLocalCacheData
         request.timeoutInterval = 10
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
@@ -93,6 +95,7 @@ enum MeQRRemoteService {
             throw MeQRRemoteServiceError.unsupportedURL
         }
         var request = URLRequest(url: url, timeoutInterval: 10)
+        request.cachePolicy = .reloadIgnoringLocalCacheData
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         if let ownerToken {
             request.setValue(ownerToken, forHTTPHeaderField: "X-MeQR-Owner")
