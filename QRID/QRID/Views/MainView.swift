@@ -68,7 +68,13 @@ struct MainView: View {
                     }
                 }
             }
+            .background {
+                if !clusters.isEmpty {
+                    pageBackground.ignoresSafeArea()
+                }
+            }
             .navigationTitle(L.qrID)
+            .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 12) {
@@ -255,34 +261,28 @@ struct MainView: View {
     // MARK: - Content
 
     private var contentView: some View {
-        ZStack {
-            // Background: image or solid color
-            GeometryReader { geo in
-                if let data = currentCluster?.backgroundImageData,
-                   let uiImage = UIImage(data: data) {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: geo.size.width, height: geo.size.height)
-                        .position(x: geo.size.width / 2, y: geo.size.height / 2)
-                } else {
-                    (currentCluster?.backgroundColor ?? .white)
-                        .frame(width: geo.size.width, height: geo.size.height)
-                        .position(x: geo.size.width / 2, y: geo.size.height / 2)
-                }
-            }
-            // Extend the artwork behind the home indicator without reaching upward
-            // into the announcement row above this content group.
-            .ignoresSafeArea(edges: .bottom)
-
-            ClusterCardPager(clusters: clusters, currentPage: $currentPage) { profileIndex in
-                currentSelectedProfileIndex = profileIndex
-            }
-            .onChange(of: currentPage) { _, _ in
-                currentSelectedProfileIndex = 0
-            }
+        ClusterCardPager(clusters: clusters, currentPage: $currentPage) { profileIndex in
+            currentSelectedProfileIndex = profileIndex
+        }
+        .onChange(of: currentPage) { _, _ in
+            currentSelectedProfileIndex = 0
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var pageBackground: some View {
+        GeometryReader { geo in
+            if let data = currentCluster?.backgroundImageData,
+               let uiImage = UIImage(data: data) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: geo.size.width, height: geo.size.height)
+                    .clipped()
+            } else {
+                currentCluster?.backgroundColor ?? .white
+            }
+        }
     }
 
     // MARK: - Empty State
