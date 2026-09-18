@@ -175,7 +175,7 @@ struct ProfileSyncView: View {
         try ProfileSync.save(b, for: c.id); try ProfileSync.saveSecret("pendingJoin", data: nil)
         selected = c.id; pending = false; self.code = ""; message = L.syncJoined
     }
-    private func normalizeCode(_ value: String) -> String { value.replacingOccurrences(of: "-", with: "").filter { $0.isNumber || ($0 >= "A" && $0 <= "Z") || ($0 >= "a" && $0 <= "f") }.uppercased() }
+    private func normalizeCode(_ value: String) -> String { let clean = value.replacingOccurrences(of: "-", with: "").uppercased().filter { ($0 >= "0" && $0 <= "9") || ($0 >= "A" && $0 <= "Z") }; return clean.count == 32 ? clean.lowercased() : clean }
     private func formatCode(_ value: String) -> String { let c = normalizeCode(value); return stride(from: 0, to: c.count, by: 4).map { String(c[c.index(c.startIndex, offsetBy: $0)..<c.index(c.startIndex, offsetBy: min($0 + 4, c.count))]) }.joined(separator: "-") }
     private func syncCard(_ c: QRCluster, resolution: String? = nil) async throws {
         do { try await ProfileSync.sync(c, context: context, resolution: resolution); message = L.syncDone }

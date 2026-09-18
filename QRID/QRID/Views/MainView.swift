@@ -271,7 +271,9 @@ struct MainView: View {
                         .position(x: geo.size.width / 2, y: geo.size.height / 2)
                 }
             }
-            .ignoresSafeArea()
+            // Extend the artwork behind the home indicator without reaching upward
+            // into the announcement row above this content group.
+            .ignoresSafeArea(edges: .bottom)
 
             ClusterCardPager(clusters: clusters, currentPage: $currentPage) { profileIndex in
                 currentSelectedProfileIndex = profileIndex

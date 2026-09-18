@@ -425,7 +425,18 @@ struct L {
     static var syncErrUpdateCredential: String { tr("无法更新同步凭证", "無法更新同步憑證", "無法更新同步憑證", "Could not update the sync credential.", "同期資格情報を更新できませんでした。") }
     static func syncErrUnavailable(_ code: Int) -> String { tr("同步服务暂时不可用（\(code)）", "同步服務暫時不可用（\(code)）", "同步服務暫時不可用（\(code)）", "Sync service unavailable (\(code)).", "同期サービスは現在利用できません（\(code)）。") }
     static var syncErrResponseLarge: String { tr("同步响应过大", "同步回應過大", "同步回應過大", "Sync response too large.", "同期レスポンスが大きすぎます。") }
-    static func syncErrImageRead(_ kind: String) -> String { tr("无法读取\(kind)图片", "無法讀取\(kind)圖片", "無法讀取\(kind)圖片", "Could not read the \(kind) image.", "\(kind)画像を読み取れませんでした。") }
+    static func syncErrImageRead(_ kind: String) -> String {
+        let zhHans = kind == "avatar" ? "头像" : kind == "background" ? "背景" : "头图"
+        let zhHantHK = kind == "avatar" ? "頭像" : kind == "background" ? "背景" : "頭圖"
+        let zhHantTW = kind == "avatar" ? "頭像" : kind == "background" ? "背景" : "橫幅"
+        let en = kind == "avatar" ? "avatar" : kind == "background" ? "background" : "banner"
+        let ja = kind == "avatar" ? "プロフィール" : kind == "background" ? "背景" : "バナー"
+        return tr("无法读取\(zhHans)图片", "無法讀取\(zhHantHK)圖片", "無法讀取\(zhHantTW)圖片", "Could not read the \(en) image.", "\(ja)画像を読み取れませんでした。")
+    }
+    static var syncErrInvalidRequest: String { tr("同步请求无效，请检查资料后重试", "同步請求無效，請檢查資料後重試", "同步請求無效，請檢查資料後重試", "The sync request is invalid. Check the card data and try again.", "同期リクエストが無効です。カードの内容を確認して再試行してください。") }
+    static var syncErrAuthorization: String { tr("同步授权已失效，请重新绑定设备", "同步授權已失效，請重新綁定裝置", "同步授權已失效，請重新綁定裝置", "Sync authorization has expired. Bind this device again.", "同期の認証が無効です。この端末をもう一度バインドしてください。") }
+    static var syncErrNotFound: String { tr("同步资料不存在，请重新绑定", "同步資料不存在，請重新綁定", "同步資料不存在，請重新綁定", "The synced data was not found. Bind this device again.", "同期データが見つかりません。もう一度バインドしてください。") }
+    static var syncErrJoinExpired: String { tr("绑定申请已失效，请重新申请", "綁定申請已失效，請重新申請", "綁定申請已失效，請重新申請", "The binding request expired. Request access again.", "バインド申請の期限が切れています。もう一度申請してください。") }
     static var syncErrImageLarge: String { tr("图片过大，请先调整图片", "圖片過大，請先調整圖片", "圖片過大，請先調整圖片", "Image too large. Resize it first.", "画像が大きすぎます。先にサイズを調整してください。") }
     static var syncErrUploadVerify: String { tr("上传图片校验失败", "上傳圖片校驗失敗", "上傳圖片校驗失敗", "Image upload verification failed.", "画像アップロードの検証に失敗しました。") }
     static var syncErrFormatUnsupported: String { tr("同步资料格式不支持", "同步資料格式不支援", "同步資料格式不支援", "Unsupported sync data format.", "同期データの形式がサポートされていません。") }

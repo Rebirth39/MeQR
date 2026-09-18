@@ -104,8 +104,19 @@ enum ProfileSync {
         let (data, response) = try await URLSession.shared.data(for: req)
         guard let response = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
         guard response.statusCode == 200 else {
-            let value = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
-            throw SyncFailure(code: response.statusCode, message: value?["error"] as? String ?? L.syncErrUnavailable(response.statusCode))
+            // The sync service currently returns Chinese diagnostic strings. Do not surface
+            // those server messages directly: the app owns the user-facing localization.
+            let message: String
+            switch response.statusCode {
+            case 400: message = L.syncErrInvalidRequest
+            case 401, 403: message = L.syncErrAuthorization
+            case 404: message = L.syncErrNotFound
+            case 409: message = L.syncErrConflict
+            case 410: message = L.syncErrJoinExpired
+            case 413: message = L.syncErrImageLarge
+            default: message = L.syncErrUnavailable(response.statusCode)
+            }
+            throw SyncFailure(code: response.statusCode, message: message)
         }
         guard data.count <= 6 * 1024 * 1024 else { throw SyncFailure(code: 413, message: L.syncErrResponseLarge) }
         return data
