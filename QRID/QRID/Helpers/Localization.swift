@@ -116,6 +116,7 @@ struct L {
     static var templateConventionPass: String { tr("漫展通行证", "漫展通行證", "漫展通行證", "Convention Pass", "イベントパス") }
     static var templateRhodesPass: String { tr("明日方舟通行证", "明日方舟通行證", "明日方舟通行證", "Arknights Pass", "アークナイツパス") }
     static var passLabel: String { tr("通行证", "通行證", "通行證", "Pass", "パス") }
+    static var userInfoLabel: String { tr("用户信息", "使用者資訊", "使用者資訊", "User Info", "ユーザー情報") }
     static var passSubtitleLabel: String { tr("通行证短标签", "通行證短標籤", "通行證短標籤", "Pass Short Label", "パス短いラベル") }
     static var passSubtitleHint: String { tr("显示在名字下面，最多 10 个汉字。", "顯示在名字下面，最多 10 個漢字。", "顯示在名字下面，最多 10 個漢字。", "Shown under the name. Up to 10 CJK characters.", "名前の下に表示します。漢字10文字まで。") }
     static var templateHint: String { tr("模板会改变名片排版；颜色、头像、背景图仍然可以自己调。", "模板會改變名片排版；顏色、頭像、背景圖仍然可以自己調。", "模板會改變名片排版；顏色、頭像、背景圖仍然可以自己調。", "Templates change the card layout. Colors, avatar, and background remain editable.", "テンプレートはレイアウトを変更します。色、アイコン、背景は編集できます。") }
@@ -138,6 +139,8 @@ struct L {
     static var language: String { tr("语言", "語言", "語言", "Language", "言語") }
     static var languageSelection: String { tr("语言选择", "語言選擇", "語言選擇", "Language", "言語選択") }
     static var followSystem: String { tr("跟随系统", "跟隨系統", "跟隨系統", "Follow System", "システムに合わせる") }
+    static var themeLight: String { tr("浅色", "淺色", "淺色", "Light", "ライト") }
+    static var themeDark: String { tr("深色", "深色", "深色", "Dark", "ダーク") }
     static var languageRestartNotice: String { tr("部分新语言内容可能需要重启软件才能生效", "部分新語言內容可能需要重新啟動軟件才能生效", "部分新語言內容可能需要重新啟動軟體才能生效", "Some new language resources may require restarting the app to take effect.", "一部の新しい言語リソースは、アプリの再起動後に反映される場合があります。") }
     static var chinese: String { tr("中文", "中文", "中文", "Chinese", "中国語") }
     static var english: String { tr("English", "English", "English", "English", "英語") }
@@ -166,6 +169,7 @@ struct L {
     static var useCustomImage: String { tr("使用自定义图片", "使用自訂圖片", "使用自訂圖片", "Use Custom Image", "カスタム画像を使う") }
     static var removeBackgroundImage: String { tr("移除背景图片", "移除背景圖片", "移除背景圖片", "Remove Background Image", "背景画像を削除") }
     static var cardOpacity: String { tr("卡片不透明度", "卡片不透明度", "卡片不透明度", "Card Opacity", "カードの不透明度") }
+    static var cardGlassEffect: String { tr("毛玻璃效果", "毛玻璃效果", "毛玻璃效果", "Frosted Glass", "すりガラス効果") }
     static var customPlatformName: String { tr("平台名称", "平台名稱", "平台名稱", "Platform Name", "プラットフォーム名") }
     static var reorderClusters: String { tr("排序卡片", "排序卡片", "排序卡片", "Reorder Cards", "カードを並べ替え") }
     static var settings: String { tr("设置", "設定", "設定", "Settings", "設定") }
@@ -234,10 +238,12 @@ struct L {
     static func encounterWaitingForPeer(_ count: Int) -> String { tr("等待对方确认的认识记录：\(count)", "等待對方確認的認識記錄：\(count)", "等待對方確認的認識紀錄：\(count)", "Waiting for peer confirmation: \(count)", "相手の確認待ち：\(count)") }
     static func encounterConfirmationsPending(_ count: Int) -> String { tr("交换确认待发送：\(count)", "交換確認待傳送：\(count)", "交換確認待傳送：\(count)", "Exchange confirmations pending: \(count)", "交換確認の送信待ち：\(count)") }
     static var encounterLocalOnly: String { tr("仅保存到本机，无法向对方回传资料。", "僅儲存到本機，無法向對方回傳資料。", "僅儲存到本機，無法向對方回傳資料。", "Saved on this device only; your profile cannot be sent back.", "この端末にのみ保存され、相手にプロフィールは送信されません。") }
+    static var encounterSaveFailed: String { tr("认识记录无法保存，请检查储存空间后重试。", "認識記錄無法儲存，請檢查儲存空間後重試。", "認識紀錄無法儲存，請檢查儲存空間後重試。", "Could not save the encounter. Check available storage and try again.", "記録を保存できません。空き容量を確認して再試行してください。") }
     static var encounterInfo: String { tr("记录信息", "記錄資料", "紀錄資訊", "Encounter Info", "記録情報") }
     static var metAt: String { tr("认识时间", "認識時間", "認識時間", "Met At", "会った日時") }
     static var note: String { tr("备注", "備註", "備註", "Note", "メモ") }
     static var tags: String { tr("标签", "標籤", "標籤", "Tags", "タグ") }
+    static var tagLimitReached: String { tr("最多添加 10 个 Tag", "最多加入 10 個 Tag", "最多新增 10 個 Tag", "Up to 10 tags", "Tagは最大10個です") }
     static var tagInputHint: String { tr("搜索或自定义 tag，或从右侧列表选择 →", "搜尋或自訂 tag，或從右側清單選擇 →", "搜尋或自訂 tag，或從右側清單選擇 →", "Search or create a tag, or choose from the list →", "タグを検索・作成、または右の一覧から選択 →") }
     static var tagColors: String { tr("标签颜色", "標籤顏色", "標籤顏色", "Tag Colors", "タグの色") }
     static var tagColor: String { tr("颜色", "顏色", "顏色", "Color", "色") }
@@ -455,4 +461,22 @@ struct L {
 
     // 引导页快捷入口
     static var onboardingSyncEntry: String { tr("使用同步码，从另一台手机快速开始", "使用同步碼，從另一台手機快速開始", "使用同步碼，從另一台手機快速開始", "Start quickly from another phone with a sync code", "同期コードを使って別の端末からすばやく始める") }
+
+    // 数据恢复 / 启动错误
+    static var localDataUnavailable: String { tr("无法载入本地数据", "無法載入本機資料", "無法載入本機資料", "Unable to Load Local Data", "ローカルデータを読み込めません") }
+    static var unknownError: String { tr("未知错误", "未知錯誤", "未知錯誤", "Unknown Error", "不明なエラー") }
+    static var localDataTemporarilyUnavailable: String { tr("本地数据暂时无法载入", "本機資料暫時無法載入", "本機資料暫時無法載入", "Local Data Temporarily Unavailable", "ローカルデータを一時的に読み込めません") }
+    static func recoveryModeMessage(_ detail: String) -> String { tr("App 已进入临时恢复模式，本次修改不会保存。原有数据没有被删除。\n\n\(detail)", "App 已進入臨時復原模式，本次修改不會儲存。原有資料沒有被刪除。\n\n\(detail)", "App 已進入臨時復原模式，本次修改不會儲存。原有資料沒有被刪除。\n\n\(detail)", "The app entered temporary recovery mode. Changes will not be saved. Your existing data has not been deleted.\n\n\(detail)", "アプリは一時復旧モードに入りました。変更は保存されません。既存のデータは削除されていません。\n\n\(detail)") }
+
+    // 公告
+    static var announcementHistory: String { tr("历史通知", "歷史通知", "歷史通知", "Announcement History", "過去のお知らせ") }
+    static var announcementHistoryEmpty: String { tr("暂无历史通知", "暫無歷史通知", "暫無歷史通知", "No Past Announcements", "過去のお知らせはありません") }
+    static var announcementLoadFailed: String { tr("公告加载失败", "公告載入失敗", "公告載入失敗", "Couldn't Load Announcement", "お知らせを読み込めませんでした") }
+    static var announcementLoadFailedHint: String { tr("请检查网络连接后重试。", "請檢查網絡連線後重試。", "請檢查網路連線後重試。", "Check your connection and try again.", "接続を確認してもう一度お試しください。") }
+    static var retry: String { tr("重试", "重試", "重試", "Retry", "再試行") }
+
+    // 默认活动（显示层按当前语言本地化，存储保持稳定 ID）
+    static var defaultEventTitle: String { tr("自定义线下扩列", "自訂線下擴列", "自訂線下擴列", "Custom Offline Meetup", "カスタム対面オフ会") }
+    static var defaultEventVenue: String { tr("现场", "現場", "現場", "On-site", "現地") }
+    static var defaultEventDetails: String { tr("服务器展会列表还没配置时，可以先用这个活动归档认识记录。", "伺服器展會列表還沒設定時，可以先用這個活動歸檔認識記錄。", "伺服器展會列表還沒設定時，可以先用這個活動歸檔認識紀錄。", "Use this activity to file encounters before the server event list is configured.", "サーバーのイベント一覧がまだ設定されていない間、このイベントで出会いの記録を整理できます。") }
 }

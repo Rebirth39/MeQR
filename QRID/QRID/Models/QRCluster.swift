@@ -55,6 +55,7 @@ final class QRCluster {
     var tagReferencesRawValue: String?
     var cornerRadius: Double
     var cardOpacity: Double?
+    var cardGlassEnabled: Bool?
     var createdAt: Date
     var sortOrder: Int
     var widgetProfileIndex: Int?
@@ -88,6 +89,7 @@ final class QRCluster {
         tagColorOverridesRawValue: String? = nil,
         cornerRadius: Double = 16,
         cardOpacity: Double? = nil,
+        cardGlassEnabled: Bool? = nil,
         sortOrder: Int = 0,
         widgetProfileIndex: Int? = nil,
         widgetUseClusterBackground: Bool? = nil,
@@ -117,6 +119,7 @@ final class QRCluster {
         self.tagColorOverridesRawValue = tagColorOverridesRawValue
         self.cornerRadius = cornerRadius
         self.cardOpacity = cardOpacity
+        self.cardGlassEnabled = cardGlassEnabled
         self.createdAt = Date()
         self.sortOrder = sortOrder
         self.widgetProfileIndex = widgetProfileIndex

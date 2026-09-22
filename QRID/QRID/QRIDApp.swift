@@ -4,6 +4,7 @@ import SwiftData
 @main
 struct QRIDApp: App {
     @StateObject private var announcementManager = AnnouncementManager()
+    @State private var appSettings = AppSettings.shared
     private let modelBootstrap: ModelContainerBootstrap = {
         let schema = Schema([QRCluster.self, QRProfile.self])
         let fileManager = FileManager.default
@@ -52,25 +53,28 @@ struct QRIDApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if let container = modelBootstrap.container {
-                AppRootView(startupError: modelBootstrap.errorMessage)
-                    .environment(\.appSettings, AppSettings.shared)
-                    .onOpenURL { _ in
-                        // Widget tap opens app via meqr://open
-                    }
-                    .background {
-                        WidgetSyncView()
-                    }
-                    .modelContainer(container)
-                    .environmentObject(announcementManager)
-                    .onAppear { announcementManager.refresh() }
-            } else {
-                ContentUnavailableView(
-                    "无法载入本地数据",
-                    systemImage: "externaldrive.badge.exclamationmark",
-                    description: Text(modelBootstrap.errorMessage ?? "未知错误")
-                )
+            Group {
+                if let container = modelBootstrap.container {
+                    AppRootView(startupError: modelBootstrap.errorMessage)
+                        .environment(\.appSettings, appSettings)
+                        .onOpenURL { _ in
+                            // Widget tap opens app via meqr://open
+                        }
+                        .background {
+                            WidgetSyncView()
+                        }
+                        .modelContainer(container)
+                        .environmentObject(announcementManager)
+                        .onAppear { announcementManager.refresh() }
+                } else {
+                    ContentUnavailableView(
+                        L.localDataUnavailable,
+                        systemImage: "externaldrive.badge.exclamationmark",
+                        description: Text(modelBootstrap.errorMessage ?? L.unknownError)
+                    )
+                }
             }
+            .preferredColorScheme(appSettings.preferredColorScheme)
         }
     }
 }
@@ -117,16 +121,16 @@ struct AppRootView: View {
                 .interactiveDismissDisabled()
             }
             .alert(L.syncRevokedTitle, isPresented: $syncRevoked) {
-                Button("好", role: .cancel) { }
+                Button(L.ok, role: .cancel) { }
             } message: {
                 Text(L.syncRevokedMessage)
             }
-            .alert("本地数据暂时无法载入", isPresented: startupErrorPresentation) {
-                Button("好", role: .cancel) {
+            .alert(L.localDataTemporarilyUnavailable, isPresented: startupErrorPresentation) {
+                Button(L.ok, role: .cancel) {
                     startupError = nil
                 }
             } message: {
-                Text("App 已进入临时恢复模式，本次修改不会保存。原有数据没有被删除。\n\n\(startupError ?? "")")
+                Text(L.recoveryModeMessage(startupError ?? ""))
             }
     }
 
@@ -180,6 +184,7 @@ struct LegalUpdateView: View {
 
 struct WidgetSyncView: View {
     @Environment(\.scenePhase) private var scenePhase
+    @EnvironmentObject private var announcementManager: AnnouncementManager
     @Query(sort: \QRCluster.sortOrder) private var clusters: [QRCluster]
 
     var body: some View {
@@ -193,6 +198,7 @@ struct WidgetSyncView: View {
                     Task { await CardTagOutbox.shared.drain() }
                     Task { await EncounterStore.shared.syncPendingSessions() }
                     WidgetDataHelper.sync(clusters: clusters)
+                    announcementManager.refresh()
                 }
             }
     }

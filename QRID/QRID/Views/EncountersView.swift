@@ -57,6 +57,12 @@ struct EncounterPreviewView: View {
             }
         }
         .interactiveDismissDisabled()
+        .alert(L.encounterSaveFailed, isPresented: Binding(
+            get: { store.persistenceErrorMessage != nil },
+            set: { if !$0 { store.persistenceErrorMessage = nil } }
+        )) {
+            Button(L.ok, role: .cancel) {}
+        }
     }
 
     @ViewBuilder
@@ -255,6 +261,7 @@ struct EncounterPreviewView: View {
         Button {
             store.saveScannedProfile(profile, event: eventStore.activeEvent,
                                      sessionID: sessionID, peerProfile: localProfile)
+            guard store.persistenceErrorMessage == nil else { return }
             Task { await store.syncConfirmations() }
             saved = true
             dismiss()
@@ -285,8 +292,8 @@ struct EncountersView: View {
                 || record.subtitle.lowercased().contains(query)
                 || record.note.lowercased().contains(query)
                 || record.tags.contains { $0.lowercased().contains(query) }
-                || (record.eventTitle ?? "").lowercased().contains(query)
-                || (record.eventVenue ?? "").lowercased().contains(query)
+                || (record.displayEventTitle).lowercased().contains(query)
+                || (record.displayEventVenue).lowercased().contains(query)
                 || record.profiles.contains { $0.platformName.lowercased().contains(query) || $0.qrContent.lowercased().contains(query) }
         }
     }
@@ -327,7 +334,7 @@ struct EncountersView: View {
                                 .foregroundStyle(.tint)
                                 .frame(width: 28)
                             VStack(alignment: .leading, spacing: 3) {
-                                Text(eventStore.activeEvent?.title ?? L.noActiveEvent)
+                                Text(eventStore.activeEvent?.displayTitle ?? L.noActiveEvent)
                                     .font(.headline)
                                     .foregroundStyle(.primary)
                                 Text(eventStore.activeEvent?.dateSummary ?? L.chooseEventForEncounter)
@@ -368,6 +375,12 @@ struct EncountersView: View {
                 await store.syncPendingSessions()
             }
             .searchable(text: $searchText, prompt: L.searchEncounters)
+            .alert(L.encounterSaveFailed, isPresented: Binding(
+                get: { store.persistenceErrorMessage != nil },
+                set: { if !$0 { store.persistenceErrorMessage = nil } }
+            )) {
+                Button(L.ok, role: .cancel) {}
+            }
             .navigationTitle(L.encounters)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -413,8 +426,8 @@ struct EncountersView: View {
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
-                if let eventTitle = record.eventTitle, !eventTitle.isEmpty {
-                    Label(eventTitle, systemImage: "calendar")
+                if !record.displayEventTitle.isEmpty {
+                    Label(record.displayEventTitle, systemImage: "calendar")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
@@ -452,11 +465,11 @@ struct EncounterDetailView: View {
 
             Section(L.encounterInfo) {
                 LabeledContent(L.metAt, value: record.metAt.formatted(date: .abbreviated, time: .shortened))
-                if let eventTitle = record.eventTitle, !eventTitle.isEmpty {
-                    LabeledContent(L.eventName, value: eventTitle)
+                if !record.displayEventTitle.isEmpty {
+                    LabeledContent(L.eventName, value: record.displayEventTitle)
                 }
-                if let eventVenue = record.eventVenue, !eventVenue.isEmpty {
-                    LabeledContent(L.eventVenue, value: eventVenue)
+                if !record.displayEventVenue.isEmpty {
+                    LabeledContent(L.eventVenue, value: record.displayEventVenue)
                 }
                 TextField(L.note, text: $record.note, axis: .vertical)
                     .lineLimit(2...6)
@@ -484,6 +497,12 @@ struct EncounterDetailView: View {
         }
         .navigationTitle(record.name)
         .navigationBarTitleDisplayMode(.inline)
+        .alert(L.encounterSaveFailed, isPresented: Binding(
+            get: { store.persistenceErrorMessage != nil },
+            set: { if !$0 { store.persistenceErrorMessage = nil } }
+        )) {
+            Button(L.ok, role: .cancel) {}
+        }
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button(L.save) { save() }
@@ -497,6 +516,7 @@ struct EncounterDetailView: View {
             .map(String.init)
         record.followStatus = followStatus.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : followStatus
         store.update(record)
+        guard store.persistenceErrorMessage == nil else { return }
         dismiss()
     }
 }
@@ -593,14 +613,14 @@ struct EventCenterView: View {
                         .foregroundStyle(.tint)
                         .frame(width: 28)
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(event.title)
+                        Text(event.displayTitle)
                             .font(.headline)
                             .foregroundStyle(.primary)
-                        Text([event.dateSummary, event.venue].filter { !$0.isEmpty }.joined(separator: " · "))
+                        Text([event.dateSummary, event.displayVenue].filter { !$0.isEmpty }.joined(separator: " · "))
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                        if !event.details.isEmpty {
-                            Text(event.details)
+                        if !event.displayDetails.isEmpty {
+                            Text(event.displayDetails)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .lineLimit(3)

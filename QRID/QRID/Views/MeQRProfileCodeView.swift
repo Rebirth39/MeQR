@@ -314,6 +314,7 @@ struct MeQRProfileCodeView: View {
         for profile in selectedProfiles {
             values.append(contentsOf: [profile.id.uuidString, profile.platformType, profile.platformDisplayName, profile.qrContent])
         }
+        values.append(contentsOf: cluster.tags)
         return MeQRExchangeCodeRecord.digest(try JSONEncoder().encode(values))
     }
 

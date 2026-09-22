@@ -205,6 +205,7 @@ private struct CardTagCatalogRow: View {
     @Binding var text: String
     var colorOverrides: [String: CardTagColorOverride]
     @StateObject private var usage = CardTagUsageStore.shared
+    @State private var showingLimitAlert = false
 
     private var language: AppLanguage { AppSettings.shared.resolvedLanguage }
     private var displayName: String { tag }
@@ -243,6 +244,9 @@ private struct CardTagCatalogRow: View {
         .buttonStyle(.plain)
         .opacity(canAdd ? 1 : 0.45)
         .modifier(CardTagReportMenu(tag: tag))
+        .alert(L.tagLimitReached, isPresented: $showingLimitAlert) {
+            Button(L.ok, role: .cancel) {}
+        }
     }
 
     private func toggleSelection() {
@@ -253,6 +257,8 @@ private struct CardTagCatalogRow: View {
         } else if nextTags.count < CardTagLimiter.maxTags {
             nextTags.append(displayName)
             CardTagUsageStore.shared.record(displayName)
+        } else {
+            showingLimitAlert = true
         }
         text = nextTags.joined(separator: "\n")
     }

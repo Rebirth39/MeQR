@@ -21,6 +21,7 @@ struct EditClusterView: View {
     @State private var tagColorOverrides: [String: CardTagColorOverride] = [:]
     @State private var cornerRadius: Double = 16
     @State private var cardOpacity: Double = 0.7
+    @State private var cardGlassEnabled = false
     @State private var avatarImage: UIImage?
     @State private var avatarPhotosItem: PhotosPickerItem?
     @State private var rawAvatarImage: CroppableImage?
@@ -187,13 +188,7 @@ struct EditClusterView: View {
 
     private var templateSection: some View {
         Section {
-            Picker(L.cardTemplate, selection: $templateStyle) {
-                ForEach(ClusterTemplateStyle.selectableCases) { style in
-                    Label(style.displayName, systemImage: style.iconName)
-                        .tag(style)
-                }
-            }
-            .pickerStyle(.segmented)
+            TemplateStyleSelector(selection: $templateStyle)
 
             templatePreview
 
@@ -248,6 +243,8 @@ struct EditClusterView: View {
                         .font(.subheadline)
                     Slider(value: $cardOpacity, in: 0.2...1.0, step: 0.05)
                 }
+
+                Toggle(L.cardGlassEffect, isOn: $cardGlassEnabled)
             }
         }
     }
@@ -468,6 +465,7 @@ struct EditClusterView: View {
         tagColorOverrides = cluster.tagColorOverrides
         cornerRadius = cluster.cornerRadius
         cardOpacity = cluster.cardOpacity ?? 0.7
+        cardGlassEnabled = cluster.cardGlassEnabled ?? false
         if let data = cluster.avatarImageData {
             avatarImage = UIImage(data: data)
         }
@@ -500,6 +498,7 @@ struct EditClusterView: View {
         cluster.setTags(CardTagLimiter.tags(from: tagInput), overrides: tagColorOverrides)
         cluster.cornerRadius = cornerRadius
         cluster.cardOpacity = cardOpacity
+        cluster.cardGlassEnabled = cardGlassEnabled
 
         let newQRColorHex = cluster.qrColorHex ?? "#000000"
         for profile in sortedProfiles {

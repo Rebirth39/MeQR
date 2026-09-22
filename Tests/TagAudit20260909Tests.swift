@@ -13,7 +13,7 @@ import SwiftData
                 zhHans: "Fixture Hans", zhHantHK: "Fixture HK", zhHantTW: "Fixture TW",
                 en: "Fixture English", ja: "Fixture Japanese"), aliases: ["fixture-alias"],
                 colors: colors, solidColor: solid, kind: "work", parentID: nil)
-            RemoteTagCatalogSnapshot.replace(with: .init(schemaVersion: 1, revision: "audit", entries: empty ? [] : [entry], categories: nil, changelog: nil))
+            RemoteTagCatalogSnapshot.replace(with: .init(schemaVersion: 1, revision: "audit", entries: empty ? [] : [entry], categories: nil, groups: nil, changelog: nil))
         }
         install()
         let custom = CardTagColorOverride(mode: .custom, hexes: ["#ABCDEF"], textWeight: .bold)

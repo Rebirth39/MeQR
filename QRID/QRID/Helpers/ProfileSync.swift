@@ -223,12 +223,19 @@ enum ProfileSync {
             } catch let failure as SyncFailure {
                 guard failure.code == 401 || failure.code == 403 else { continue }
                 if !backedUp { BackupManager.writeAutoBackup(clusters: clusters); backedUp = true }
-                try? save(nil, for: cluster.id)
                 context.delete(cluster)
-                removed += 1
+                do {
+                    try context.save()
+                    try save(nil, for: cluster.id)
+                    removed += 1
+                } catch {
+                    // Card data was not persisted: roll back the delete and keep the
+                    // credential so the revocation can be retried on the next launch
+                    // instead of losing the credential while the card survives.
+                    context.rollback()
+                }
             } catch { continue }
         }
-        if removed > 0 { try? context.save() }
         return removed
     }
 }

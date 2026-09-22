@@ -15,6 +15,7 @@ struct MeQRExchangeProfile: Codable, Identifiable, Hashable {
     var qrColorHex: String?
     var templateStyleRawValue: String?
     var profiles: [MeQRExchangePlatform]
+    var tags: [String]
     var sharedAt: Date
 
     init(cluster: QRCluster, profiles includedProfiles: [QRProfile]? = nil, avatarMaxBytes: Int = 640) {
@@ -30,6 +31,7 @@ struct MeQRExchangeProfile: Codable, Identifiable, Hashable {
             qrColorHex: cluster.qrColorHex,
             templateStyleRawValue: cluster.templateStyleRawValue,
             profiles: includedProfiles ?? cluster.profiles,
+            tags: cluster.tags,
             maxProfiles: 3,
             avatarMaxBytes: avatarMaxBytes
         )
@@ -49,6 +51,7 @@ struct MeQRExchangeProfile: Codable, Identifiable, Hashable {
             qrColorHex: cluster.qrColorHex,
             templateStyleRawValue: cluster.templateStyleRawValue,
             profiles: includedProfile.map { [$0] } ?? Array(cluster.profiles.sorted { $0.createdAt < $1.createdAt }.prefix(1)),
+            tags: [],
             maxProfiles: 1,
             avatarMaxBytes: 0
         )
@@ -67,6 +70,7 @@ struct MeQRExchangeProfile: Codable, Identifiable, Hashable {
         qrColorHex: String?,
         templateStyleRawValue: String?,
         profiles sourceProfiles: [QRProfile],
+        tags sourceTags: [String],
         maxProfiles: Int,
         avatarMaxBytes: Int
     ) {
@@ -96,6 +100,7 @@ struct MeQRExchangeProfile: Codable, Identifiable, Hashable {
                     qrContent: profile.qrContent
                 )
             }
+        tags = Array(sourceTags.prefix(10))
         sharedAt = Date()
     }
 
@@ -169,6 +174,7 @@ struct MeQRExchangeProfile: Codable, Identifiable, Hashable {
         case qrColorHex = "qc"
         case templateStyleRawValue = "ts"
         case profiles = "p"
+        case tags = "g"
         case sharedAt = "t"
 
         case legacyID = "id"
@@ -184,6 +190,7 @@ struct MeQRExchangeProfile: Codable, Identifiable, Hashable {
         case legacyQRColorHex = "qrColorHex"
         case legacyTemplateStyleRawValue = "templateStyleRawValue"
         case legacyProfiles = "profiles"
+        case legacyTags = "tags"
         case legacySharedAt = "sharedAt"
     }
 
@@ -221,6 +228,9 @@ struct MeQRExchangeProfile: Codable, Identifiable, Hashable {
         profiles = try container.decodeIfPresent([MeQRExchangePlatform].self, forKey: .profiles)
             ?? container.decodeIfPresent([MeQRExchangePlatform].self, forKey: .legacyProfiles)
             ?? []
+        tags = Array((try container.decodeIfPresent([String].self, forKey: .tags)
+            ?? container.decodeIfPresent([String].self, forKey: .legacyTags)
+            ?? []).prefix(10))
         if let timestamp = try container.decodeIfPresent(Double.self, forKey: .sharedAt) {
             sharedAt = Date(timeIntervalSince1970: timestamp)
         } else {
@@ -260,6 +270,9 @@ struct MeQRExchangeProfile: Codable, Identifiable, Hashable {
             try container.encode(templateStyleRawValue, forKey: .templateStyleRawValue)
         }
         try container.encode(profiles, forKey: .profiles)
+        if !tags.isEmpty {
+            try container.encode(tags, forKey: .tags)
+        }
         try container.encode(Int(sharedAt.timeIntervalSince1970), forKey: .sharedAt)
     }
 }

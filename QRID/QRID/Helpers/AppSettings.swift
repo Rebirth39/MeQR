@@ -1,6 +1,22 @@
 import Foundation
 import SwiftUI
 
+enum AppTheme: String, CaseIterable, Identifiable {
+    case light
+    case dark
+    case system
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .light: return L.themeLight
+        case .dark: return L.themeDark
+        case .system: return L.followSystem
+        }
+    }
+}
+
 enum AppLanguage: String, CaseIterable, Identifiable {
     case system
     case zhHans
@@ -73,6 +89,29 @@ final class AppSettings {
         }
     }
 
+    var theme: String {
+        didSet {
+            UserDefaults.standard.set(theme, forKey: "app_theme")
+        }
+    }
+
+    var selectedTheme: AppTheme {
+        get {
+            AppTheme(rawValue: theme) ?? .light
+        }
+        set {
+            theme = newValue.rawValue
+        }
+    }
+
+    var preferredColorScheme: ColorScheme? {
+        switch selectedTheme {
+        case .light: return .light
+        case .dark: return .dark
+        case .system: return nil
+        }
+    }
+
     var selectedLanguage: AppLanguage {
         get {
             AppLanguage(rawValue: language) ?? .system
@@ -101,6 +140,7 @@ final class AppSettings {
 
     private init() {
         language = UserDefaults.standard.string(forKey: "app_language") ?? AppLanguage.system.rawValue
+        theme = UserDefaults.standard.string(forKey: "app_theme") ?? AppTheme.light.rawValue
     }
 }
 

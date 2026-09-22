@@ -6,6 +6,7 @@ struct MainView: View {
     @EnvironmentObject private var announcementManager: AnnouncementManager
     @Environment(\.modelContext) private var modelContext
     @Environment(\.appSettings) private var settings
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Query(sort: \QRCluster.sortOrder, order: .forward) private var clusters: [QRCluster]
     @State private var currentPage = 0
     @State private var showingAddToExisting = false
@@ -272,7 +273,11 @@ struct MainView: View {
 
     private var pageBackground: some View {
         GeometryReader { geo in
-            if let data = currentCluster?.backgroundImageData,
+            let isLandscapeTablet = UIDevice.current.userInterfaceIdiom == .pad && geo.size.width > geo.size.height
+            let imageData = isLandscapeTablet && currentCluster?.templateStyle == .rhodesPass
+                ? currentCluster?.rhodesBannerImageData
+                : currentCluster?.backgroundImageData
+            if let data = imageData,
                let uiImage = UIImage(data: data) {
                 Image(uiImage: uiImage)
                     .resizable()

@@ -32,6 +32,7 @@ enum BackupManager {
         let tagReferencesRawValue: String?
         let cornerRadius: Double
         let cardOpacity: Double?
+        let cardGlassEnabled: Bool?
         let sortOrder: Int
         let widgetProfileIndex: Int?
         let widgetUseClusterBackground: Bool?
@@ -74,6 +75,7 @@ enum BackupManager {
                 .flatMap { CardTagReference.encode($0.map(\.snapshot)) } ?? cluster.tagReferencesRawValue,
             cornerRadius: cluster.cornerRadius,
             cardOpacity: cluster.cardOpacity,
+            cardGlassEnabled: cluster.cardGlassEnabled,
             sortOrder: cluster.sortOrder,
             widgetProfileIndex: cluster.widgetProfileIndex,
             widgetUseClusterBackground: cluster.widgetUseClusterBackground,
@@ -168,6 +170,7 @@ enum BackupManager {
                     tagColorOverridesRawValue: clusterBackup.tagColorOverridesRawValue,
                     cornerRadius: clusterBackup.cornerRadius,
                     cardOpacity: clusterBackup.cardOpacity,
+                    cardGlassEnabled: clusterBackup.cardGlassEnabled,
                     sortOrder: clusterBackup.sortOrder,
                     widgetProfileIndex: clusterBackup.widgetProfileIndex,
                     widgetUseClusterBackground: clusterBackup.widgetUseClusterBackground,

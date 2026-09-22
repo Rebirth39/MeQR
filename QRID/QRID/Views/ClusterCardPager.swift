@@ -4,20 +4,28 @@ struct ClusterCardPager: View {
     let clusters: [QRCluster]
     @Binding var currentPage: Int
     var onProfileSelected: (Int) -> Void
+    var landscapeTabletPresentation: Bool = false
 
     var body: some View {
         GeometryReader { geometry in
+            let landscape = UIDevice.current.userInterfaceIdiom == .pad && geometry.size.width > geometry.size.height
+            let phone = UIDevice.current.userInterfaceIdiom == .phone
             TabView(selection: $currentPage) {
                 ForEach(Array(clusters.enumerated()), id: \.element.id) { index, cluster in
                     ScrollView(.vertical, showsIndicators: false) {
-                        ClusterCardView(cluster: cluster, size: 180, containerWidth: geometry.size.width) { profileIndex in
+                        let portraitTablet = UIDevice.current.userInterfaceIdiom == .pad && !landscape
+                        ClusterCardView(cluster: cluster, size: landscape ? 230 : portraitTablet ? 260 : 180,
+                                        containerWidth: landscape ? geometry.size.width :
+                                            portraitTablet ? min(620, geometry.size.width - 48) :
+                                            phone ? geometry.size.width : min(393, max(0, geometry.size.width - 32)),
+                                        onProfileSelected: { profileIndex in
                             if index == currentPage {
                                 onProfileSelected(profileIndex)
                             }
-                        }
-                        .padding(.horizontal, 16)
+                        }, landscapeTabletPresentation: landscape)
+                        .padding(.horizontal, phone ? 8 : 16)
                         .padding(.vertical, 16)
-                        .frame(maxWidth: .infinity, alignment: .top)
+                        .frame(maxWidth: .infinity, alignment: landscape || portraitTablet ? .center : .top)
                     }
                     .scrollBounceBehavior(.basedOnSize)
                     .tag(index)

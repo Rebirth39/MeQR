@@ -189,13 +189,7 @@ struct AddProfileView: View {
 
     private var templateSection: some View {
         Section {
-            Picker(L.cardTemplate, selection: $templateStyle) {
-                ForEach(ClusterTemplateStyle.selectableCases) { style in
-                    Label(style.displayName, systemImage: style.iconName)
-                        .tag(style)
-                }
-            }
-            .pickerStyle(.segmented)
+            TemplateStyleSelector(selection: $templateStyle)
 
             ClusterTemplatePreview(
                 templateStyle: templateStyle,

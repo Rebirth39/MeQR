@@ -1,10 +1,14 @@
 import SwiftUI
+import CoreImage
+import CoreImage.CIFilterBuiltins
+import ImageIO
 
 struct ClusterCardView: View {
     let cluster: QRCluster
     var size: CGFloat = 180
     var containerWidth: CGFloat = UIScreen.main.bounds.width
     var onProfileSelected: ((Int) -> Void)? = nil
+    var landscapeTabletPresentation: Bool = false
 
     @State private var selectedIndex: Int = 0
     @State private var isShowingPassBack = false
@@ -86,7 +90,7 @@ struct ClusterCardView: View {
             }
             .fixedSize(horizontal: false, vertical: true)
 
-            if !cluster.tags.isEmpty {
+            if !landscapeTabletPresentation && !cluster.tags.isEmpty {
                 cardTagChips
             }
 
@@ -200,12 +204,17 @@ struct ClusterCardView: View {
         )
     }
 
+    @ViewBuilder
     private var rhodesPassCard: some View {
-        passFlipCard(front: rhodesPassFront, back: rhodesPassBack)
+        if landscapeTabletPresentation {
+            rhodesPassFront
+        } else {
+            passFlipCard(front: rhodesPassFront, back: rhodesPassBack)
+        }
     }
 
     private var rhodesPassFront: some View {
-        VStack(spacing: 0) {
+        rhodesSurface(VStack(spacing: 0) {
             rhodesTopStrip
 
             HStack(spacing: 0) {
@@ -213,18 +222,134 @@ struct ClusterCardView: View {
                 rhodesContent
             }
         }
-        .frame(width: max(0, containerWidth - 32), alignment: .leading)
-        .background(.white.opacity(cluster.cardOpacity ?? 0.7), in: RoundedRectangle(cornerRadius: 14))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(.white.opacity(0.70), lineWidth: 2)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 18)
-                .stroke(cluster.textColor.opacity(0.18), lineWidth: 1)
+        .frame(width: rhodesCardWidth, alignment: .topLeading)
+        .frame(height: rhodesFixedCardHeight, alignment: .topLeading))
+    }
+
+    private var frostedBlurImage: UIImage? {
+        let sourceData: Data?
+        if landscapeTabletPresentation && cluster.templateStyle == .rhodesPass {
+            sourceData = cluster.rhodesBannerImageData
+        } else {
+            sourceData = cluster.backgroundImageData
+        }
+        guard let data = sourceData else { return nil }
+        let key = MeQRExchangeCodeRecord.digest(data) as NSString
+        if let cached = Self.blurCache.object(forKey: key) { return cached }
+        guard let image = Self.renderFrostedBlur(data: data) else { return nil }
+        Self.blurCache.setObject(image, forKey: key)
+        return image
+    }
+
+    private static let blurCache = NSCache<NSString, UIImage>()
+    private static let blurContext = CIContext(options: [.useSoftwareRenderer: false])
+
+    private static func renderFrostedBlur(data: Data) -> UIImage? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let cg = CGImageSourceCreateThumbnailAtIndex(source, 0, [
+                kCGImageSourceCreateThumbnailFromImageAlways: true,
+                kCGImageSourceCreateThumbnailWithTransform: true,
+                kCGImageSourceThumbnailMaxPixelSize: 256,
+              ] as CFDictionary) else { return nil }
+        let input = CIImage(cgImage: cg)
+        let filter = CIFilter.gaussianBlur()
+        filter.inputImage = input
+        filter.radius = 12
+        guard let output = filter.outputImage,
+              let outCG = blurContext.createCGImage(output, from: output.extent) else { return nil }
+        return UIImage(cgImage: outCG)
+    }
+
+    private func rhodesSurface<Content: View>(_ content: Content) -> some View {
+        content
+        .background {
+            if rhodesGlassEnabled {
+                ZStack {
+                    cluster.backgroundColor.opacity(rhodesGlassOpacity)
+                    if let blurred = frostedBlurImage {
+                        Image(uiImage: blurred)
+                            .resizable()
+                            .scaledToFill()
+                            .opacity(rhodesGlassOpacity)
+                    }
+                    Color.white.opacity(0.55 * rhodesGlassOpacity)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            } else {
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(.white.opacity(cluster.cardOpacity ?? 0.7))
+            }
+        }
+        .overlay {
+            if rhodesGlassEnabled {
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                .white.opacity(0.30 + 0.62 * rhodesGlassOpacity),
+                                .white.opacity(0.10 + 0.18 * rhodesGlassOpacity),
+                                .white.opacity(0.20 + 0.42 * rhodesGlassOpacity)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1.5
+                    )
+            } else {
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(.white.opacity(0.70), lineWidth: 2)
+            }
+        }
+        .overlay {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(
+                    rhodesGlassEnabled
+                        ? Color.white.opacity(0.10 + 0.20 * rhodesGlassOpacity)
+                        : cluster.textColor.opacity(0.18),
+                    lineWidth: 1
+                )
                 .padding(-8)
-        )
+        }
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .environment(\.colorScheme, .light)
+        .shadow(
+            color: .black.opacity(rhodesGlassEnabled ? 0.06 + 0.12 * rhodesGlassOpacity : 0),
+            radius: rhodesGlassEnabled ? 18 : 0,
+            y: rhodesGlassEnabled ? 8 : 0
+        )
+    }
+
+    private var rhodesCardWidth: CGFloat {
+        if landscapeTabletPresentation {
+            return min(920, max(760, containerWidth - 96))
+        }
+        if UIDevice.current.userInterfaceIdiom == .phone {
+            return max(0, containerWidth - 32)
+        }
+        return max(0, containerWidth - 32)
+    }
+
+    private var rhodesFixedCardHeight: CGFloat? {
+        if landscapeTabletPresentation { return 540 }
+        if portraitTabletPresentation { return 760 }
+        if UIDevice.current.userInterfaceIdiom == .phone { return 460 }
+        return nil
+    }
+
+    private var rhodesGlassOpacity: Double {
+        min(1, max(0.2, cluster.cardOpacity ?? 0.7))
+    }
+
+    private var rhodesGlassEnabled: Bool {
+        cluster.cardGlassEnabled == true && cluster.templateStyle == .rhodesPass
+    }
+
+    private var portraitTabletPresentation: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad && !landscapeTabletPresentation
+    }
+
+    private var largeRhodesText: Bool {
+        (portraitTabletPresentation || landscapeTabletPresentation) && cluster.templateStyle == .rhodesPass
     }
 
     private var rhodesTopStrip: some View {
@@ -236,7 +361,7 @@ struct ClusterCardView: View {
         .frame(height: 24)
         .overlay(alignment: .trailing) {
             Text("#\(String(format: "%02d", cluster.sortOrder + 1))")
-                .font(.system(size: 11, weight: .black, design: .monospaced))
+                .font(.system(size: largeRhodesText ? 14 : 11, weight: .black, design: .monospaced))
                 .foregroundStyle(.black.opacity(0.62))
                 .padding(.trailing, 14)
         }
@@ -249,37 +374,65 @@ struct ClusterCardView: View {
 
             VStack(spacing: 10) {
                 Text("MEQR")
-                    .font(.system(size: 18, weight: .black))
+                    .font(.system(size: largeRhodesText ? 23 : 18, weight: .black))
+                    .fixedSize()
                     .rotationEffect(.degrees(-90))
-                    .frame(width: 72, height: 72)
+                    .frame(width: largeRhodesText ? 90 : 72, height: largeRhodesText ? 90 : 72)
 
                 barcodeLines
                     .frame(width: 34, height: 92)
 
                 Text(rhodesDateText)
-                    .font(.system(size: 18, weight: .black, design: .monospaced))
+                    .font(.system(size: largeRhodesText ? 22 : 18, weight: .black, design: .monospaced))
                     .multilineTextAlignment(.center)
                     .lineSpacing(-2)
-                    .frame(width: 40, height: 46)
+                    .frame(width: largeRhodesText ? 58 : 40, height: largeRhodesText ? 64 : 46)
             }
             .foregroundStyle(.white.opacity(0.88))
         }
-        .frame(width: 50)
+        .frame(width: portraitTabletPresentation ? 70 : landscapeTabletPresentation ? 60 : 50)
         .frame(maxHeight: .infinity)
         .clipped()
     }
 
     private var rhodesContent: some View {
         VStack(alignment: .leading, spacing: 12) {
-            rhodesHeroPanel
-            rhodesDetailsRow
-            if !cluster.tags.isEmpty {
-                cardTagChips
-                    .accessibilityIdentifier("rhodes-front-tags")
+            if landscapeTabletPresentation {
+                HStack(alignment: .top, spacing: 14) {
+                    VStack(alignment: .leading, spacing: 16) {
+                        rhodesLandscapeIdentity
+
+                        HStack(alignment: .top, spacing: 14) {
+                            rhodesQRPanel
+                            rhodesLandscapePlatformPanel
+                                .frame(width: 170, alignment: .topLeading)
+                        }
+                    }
+                    .frame(width: 444, alignment: .topLeading)
+
+                    rhodesLandscapeUserInfo
+                        .frame(maxWidth: .infinity, alignment: .topLeading)
+                        .padding(.top, 34)
+                }
+
+                if !cluster.tags.isEmpty {
+                    cardTagChips
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .accessibilityIdentifier("rhodes-front-tags")
+                }
+            } else {
+                rhodesHeroPanel
+                rhodesDetailsRow
+                if !cluster.tags.isEmpty {
+                    cardTagChips
+                        .accessibilityIdentifier("rhodes-front-tags")
+                }
             }
         }
         .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(width: landscapeTabletPresentation ? rhodesCardWidth - 60 : nil,
+               alignment: .leading)
+        .frame(maxWidth: landscapeTabletPresentation ? nil : .infinity, alignment: .leading)
     }
 
     private var rhodesHeroPanel: some View {
@@ -289,21 +442,21 @@ struct ClusterCardView: View {
                     .frame(width: geometry.size.width, height: geometry.size.height)
                     .clipped()
             }
-            .frame(height: 136)
+            .frame(height: portraitTabletPresentation ? 260 : 136)
 
             HStack(spacing: 9) {
                 avatarImage
-                    .frame(width: 46, height: 46)
+                    .frame(width: largeRhodesText ? 65 : 46, height: largeRhodesText ? 65 : 46)
                     .overlay(Circle().stroke(.white.opacity(0.9), lineWidth: 2))
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(cluster.name)
-                        .font(.title3.weight(.black))
+                        .font(largeRhodesText ? .system(size: 25, weight: .black) : .title3.weight(.black))
                         .foregroundStyle(.white)
                         .lineLimit(1)
                         .minimumScaleFactor(0.72)
                     Text(cluster.passSubtitleText)
-                        .font(.system(size: 10, weight: .heavy, design: .monospaced))
+                        .font(.system(size: largeRhodesText ? 13 : 10, weight: .heavy, design: .monospaced))
                         .foregroundStyle(.white.opacity(0.82))
                 }
             }
@@ -317,7 +470,7 @@ struct ClusterCardView: View {
                 )
             )
         }
-        .frame(height: 136)
+        .frame(height: portraitTabletPresentation ? 260 : 136)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
@@ -348,8 +501,78 @@ struct ClusterCardView: View {
         }
     }
 
+    private var rhodesLandscapeUserInfo: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(L.userInfoLabel)
+                .font(.system(size: largeRhodesText ? 16 : 12, weight: .black, design: .monospaced))
+                .foregroundStyle(cluster.textColor.opacity(0.94))
+
+            if !cluster.subtitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                Group {
+                    if landscapeTabletPresentation {
+                        ScrollView(.vertical, showsIndicators: false) {
+                            Text(cluster.subtitle)
+                                .font(.system(size: 17, weight: .medium))
+                                .foregroundStyle(cluster.textColor.opacity(0.82))
+                                .multilineTextAlignment(.leading)
+                                .frame(maxWidth: .infinity, alignment: .topLeading)
+                        }
+                        .frame(maxHeight: 300)
+                    } else {
+                        Text(cluster.subtitle)
+                            .font(.system(size: 17, weight: .medium))
+                            .foregroundStyle(cluster.textColor.opacity(0.82))
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .padding(14)
+                .frame(maxWidth: .infinity,
+                       minHeight: landscapeTabletPresentation ? 220 : nil,
+                       alignment: .topLeading)
+                .background(.white.opacity(0.30), in: RoundedRectangle(cornerRadius: 12))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(cluster.textColor.opacity(0.18), lineWidth: 1)
+                }
+            }
+
+        }
+    }
+
+    private var rhodesLandscapePlatformPanel: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(L.passLabel)
+                .font(.system(size: largeRhodesText ? 16 : 12, weight: .black, design: .monospaced))
+                .foregroundStyle(cluster.textColor.opacity(0.94))
+
+            if sortedProfiles.count > 1 {
+                passPlatformPicker
+            }
+        }
+    }
+
+    private var rhodesLandscapeIdentity: some View {
+        HStack(alignment: .top, spacing: 12) {
+            avatarImage
+                .frame(width: largeRhodesText ? 86 : 72, height: largeRhodesText ? 86 : 72)
+                .overlay(Circle().stroke(cluster.textColor.opacity(0.22), lineWidth: 1))
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(cluster.name)
+                    .font(.system(size: largeRhodesText ? 30 : 28, weight: .black))
+                    .foregroundStyle(cluster.textColor)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.72)
+                Text(cluster.passSubtitleText)
+                    .font(.system(size: largeRhodesText ? 14 : 12, weight: .heavy, design: .monospaced))
+                    .foregroundStyle(cluster.textColor.opacity(0.62))
+            }
+        }
+    }
+
     private var rhodesQRPanel: some View {
-            qrSlot(side: max(120, min(size - 26, 154)) - 24)
+            qrSlot(side: (portraitTabletPresentation || landscapeTabletPresentation) ? 220 : max(120, min(size - 26, 154)) - 24)
                 .accessibilityIdentifier("rhodes-platform-qr")
                 .padding(20)
                 .background(.white, in: RoundedRectangle(cornerRadius: 10))
@@ -364,7 +587,7 @@ struct ClusterCardView: View {
     private var rhodesInfoBlock: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(L.passLabel)
-                .font(.system(size: 12, weight: .black, design: .monospaced))
+                .font(.system(size: largeRhodesText ? 16 : 12, weight: .black, design: .monospaced))
                 .foregroundStyle(cluster.textColor.opacity(0.66))
 
             if sortedProfiles.count > 1 {
@@ -375,7 +598,7 @@ struct ClusterCardView: View {
     }
 
     private var rhodesPassBack: some View {
-        VStack(spacing: 0) {
+        rhodesSurface(VStack(spacing: 0) {
             rhodesTopStrip
 
             HStack(spacing: 0) {
@@ -386,18 +609,8 @@ struct ClusterCardView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .frame(width: max(0, containerWidth - 32), alignment: .leading)
-        .background(.white.opacity(cluster.cardOpacity ?? 0.7), in: RoundedRectangle(cornerRadius: 14))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(.white.opacity(0.70), lineWidth: 2)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 18)
-                .stroke(cluster.textColor.opacity(0.18), lineWidth: 1)
-                .padding(-8)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .frame(width: max(0, containerWidth - 32), alignment: .topLeading)
+        .frame(height: rhodesFixedCardHeight, alignment: .topLeading))
     }
 
     private func passFlipCard<Front: View, Back: View>(front: Front, back: Back) -> some View {
@@ -423,21 +636,21 @@ struct ClusterCardView: View {
     }
 
     private var passBackContent: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .center, spacing: 12) {
+        VStack(alignment: .leading, spacing: largeRhodesText ? 18 : 14) {
+            HStack(alignment: .center, spacing: largeRhodesText ? 16 : 12) {
                 avatarImage
-                    .frame(width: 58, height: 58)
+                    .frame(width: largeRhodesText ? 76 : 58, height: largeRhodesText ? 76 : 58)
                     .overlay(Circle().stroke(cluster.textColor.opacity(0.18), lineWidth: 1))
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(cluster.name)
-                        .font(.title3.weight(.black))
+                    .font(largeRhodesText ? .system(size: 25, weight: .black) : .title3.weight(.black))
                         .foregroundStyle(cluster.textColor)
                         .lineLimit(1)
                         .minimumScaleFactor(0.72)
 
                     Text(cluster.passSubtitleText)
-                        .font(.caption.weight(.bold))
+                    .font(largeRhodesText ? .system(size: 15, weight: .bold) : .caption.weight(.bold))
                         .foregroundStyle(cluster.textColor.opacity(0.62))
                         .lineLimit(1)
                 }
@@ -445,7 +658,7 @@ struct ClusterCardView: View {
                 Spacer()
 
                 Image(systemName: "arrow.triangle.2.circlepath")
-                    .font(.headline.weight(.semibold))
+                    .font(largeRhodesText ? .title3.weight(.semibold) : .headline.weight(.semibold))
                     .foregroundStyle(cluster.textColor.opacity(0.55))
             }
 
@@ -455,17 +668,23 @@ struct ClusterCardView: View {
 
             if !cluster.subtitle.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
-                    ScrollView(.vertical, showsIndicators: false) {
-                        Text(cluster.subtitle)
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(cluster.textColor.opacity(0.82))
-                            .multilineTextAlignment(.leading)
-                            .frame(maxWidth: .infinity, alignment: .topLeading)
+                    Text(L.userInfoLabel)
+                        .font(largeRhodesText ? .system(size: 16, weight: .black, design: .monospaced) : .caption.weight(.black))
+                        .foregroundStyle(cluster.textColor.opacity(0.94))
+
+                    Group {
+                        if largeRhodesText {
+                            ScrollView(.vertical, showsIndicators: false) {
+                                subtitleText
+                            }
+                            .frame(maxHeight: 340)
+                        } else {
+                            subtitleText
+                        }
                     }
-                    .frame(maxHeight: 190)
                 }
-                .padding(14)
-                .frame(maxWidth: .infinity, minHeight: 150, alignment: .topLeading)
+                .padding(largeRhodesText ? 18 : 14)
+                .frame(maxWidth: .infinity, minHeight: largeRhodesText ? 320 : 150, alignment: .topLeading)
                 .background(.white.opacity(0.38), in: RoundedRectangle(cornerRadius: 14))
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
@@ -475,12 +694,21 @@ struct ClusterCardView: View {
         }
     }
 
+    private var subtitleText: some View {
+        Text(cluster.subtitle)
+            .font(largeRhodesText ? .system(size: 17, weight: .medium) : .subheadline.weight(.medium))
+            .foregroundStyle(cluster.textColor.opacity(0.82))
+            .multilineTextAlignment(.leading)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
+    }
+
     private var cardTagChips: some View {
         CardTagFlowLayout(spacing: 7, rowSpacing: 6) {
             ForEach(cluster.tags, id: \.self) { tag in
                 let tagStyle = cluster.tagColorStyle(for: tag)
                 Text(tag)
-                    .font(.caption2.weight(CardTagColorPalette.textWeight(for: tag, overrides: cluster.tagColorOverrides).fontWeight))
+                    .font(.system(size: largeRhodesText ? 14 : 11,
+                                  weight: CardTagColorPalette.textWeight(for: tag, overrides: cluster.tagColorOverrides).fontWeight))
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
                     .padding(.horizontal, 9)
@@ -682,9 +910,10 @@ struct ClusterCardView: View {
                     }
                 } label: {
                     Label(profile.platformDisplayName, systemImage: profile.platform.iconName)
-                        .font(.caption.weight(.bold))
+                        .font(largeRhodesText ? .system(size: 15, weight: .bold) : .caption.weight(.bold))
                         .lineLimit(1)
-                        .minimumScaleFactor(0.78)
+                        .minimumScaleFactor(0.55)
+                        .allowsTightening(true)
                         .padding(.horizontal, 9)
                         .padding(.vertical, 7)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -729,33 +958,23 @@ private struct PassFlipModifier<Back: View>: AnimatableModifier {
         set { angle = newValue }
     }
 
-    private var normalizedAngle: Double {
-        let value = angle.truncatingRemainder(dividingBy: 360)
-        return value >= 0 ? value : value + 360
-    }
-
-    private var isShowingFront: Bool {
-        normalizedAngle < 90 || normalizedAngle > 270
-    }
-
     private var flipProgress: CGFloat {
-        CGFloat(abs(sin(normalizedAngle * .pi / 180)))
+        CGFloat(abs(sin(angle * .pi / 180)))
     }
 
     func body(content: Content) -> some View {
         ZStack {
-            content
-                .opacity(isShowingFront ? 1 : 0)
-
-            back
-                .opacity(isShowingFront ? 0 : 1)
-                .rotation3DEffect(
-                    .degrees(180),
-                    axis: (x: 0, y: 1, z: 0)
-                )
+            if angle <= 90 {
+                content
+            } else {
+                back
+                    .rotation3DEffect(
+                        .degrees(180),
+                        axis: (x: 0, y: 1, z: 0)
+                    )
+            }
         }
         .padding(.vertical, verticalOverscan)
-        .compositingGroup()
         .scaleEffect(1 - 0.055 * flipProgress)
         .rotation3DEffect(
             .degrees(angle),

@@ -101,6 +101,19 @@ struct ProfileSyncView: View {
         .onAppear { if selected == nil { selected = clusters.first?.id }; reload(); restorePending(); if !syncPrivacyAck { showSyncPrivacy = true } }
         .sheet(isPresented: $showSyncPrivacy) { LegalUpdateView(kind: .privacy) { syncPrivacyAck = true; showSyncPrivacy = false } }
         .onChange(of: selected) { _, _ in invite = ""; devices = nil; reload() }
+        .task(id: selected) {
+            while !Task.isCancelled {
+                if let c = clusters.first(where: { $0.id == selected }),
+                   let b = try? ProfileSync.binding(c.id) {
+                    if let data = try? await ProfileSync.request("profiles/\(b.profileId)/devices", token: b.token),
+                       let list = try? JSONDecoder().decode(SyncDeviceList.self, from: data) {
+                        devices = list
+                    }
+                }
+                try? await Task.sleep(nanoseconds: 5_000_000_000)
+            }
+        }
+        .refreshable { try? await refreshDevices() }
         .confirmationDialog(L.syncConflictTitle, isPresented: $conflict, titleVisibility: .visible) {
             Button(L.syncConflictLocal) { resolve("local") }
             Button(L.syncConflictRemote, role: .destructive) { resolve("remote") }

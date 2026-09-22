@@ -19,6 +19,16 @@ struct MoreSettingsView: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
+                    NavigationLink {
+                        AppearanceSettingsView()
+                    } label: {
+                        HStack {
+                            Label(L.appearance, systemImage: "circle.lefthalf.filled")
+                            Spacer()
+                            Text(settings.selectedTheme.displayName)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 } footer: {
                     Text(L.languageRestartNotice)
                         .font(.footnote)
@@ -29,7 +39,7 @@ struct MoreSettingsView: View {
                         Label(L.syncTitle, systemImage: "arrow.triangle.2.circlepath")
                     }
                     NavigationLink { AnnouncementHistoryView() } label: {
-                        Label("历史通知", systemImage: "bell.and.waves.left.and.right")
+                        Label(L.announcementHistory, systemImage: "bell.and.waves.left.and.right")
                     }
                     Button {
                         hasCompletedOnboarding = false
@@ -61,9 +71,9 @@ struct AnnouncementHistoryView: View {
     var body: some View {
         List(manager.history) { item in
             Link(destination: item.url) {
-                VStack(alignment: .leading, spacing: 5) { Text(item.title).font(.headline); Text(item.summary).font(.subheadline).foregroundStyle(.secondary) }
+                VStack(alignment: .leading, spacing: 5) { Text(item.localizedTitle).font(.headline); Text(item.localizedSummary).font(.subheadline).foregroundStyle(.secondary) }
             }
-        }.navigationTitle("历史通知").navigationBarTitleDisplayMode(.inline)
+        }.navigationTitle(L.announcementHistory).navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -101,6 +111,41 @@ struct LanguageSettingsView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             selectedLanguage = settings.selectedLanguage
+        }
+    }
+}
+
+struct AppearanceSettingsView: View {
+    @Environment(\.appSettings) private var settings
+    @State private var selectedTheme = AppSettings.shared.selectedTheme
+
+    var body: some View {
+        List {
+            Section {
+                ForEach(AppTheme.allCases) { theme in
+                    Button {
+                        selectedTheme = theme
+                        settings.selectedTheme = theme
+                    } label: {
+                        HStack {
+                            Text(theme.displayName)
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            if selectedTheme == theme {
+                                Image(systemName: "checkmark")
+                                    .foregroundStyle(.tint)
+                            }
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .navigationTitle(L.appearance)
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            selectedTheme = settings.selectedTheme
         }
     }
 }

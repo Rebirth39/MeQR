@@ -7,6 +7,26 @@ struct Announcement: Codable, Identifiable {
     let summary: String
     let url: URL
     let publishedAt: String
+    let titleByLanguage: [String: String]?
+    let summaryByLanguage: [String: String]?
+
+    var localizedTitle: String {
+        let key = Announcement.languageKey
+        return titleByLanguage?[key] ?? title
+    }
+
+    var localizedSummary: String {
+        let key = Announcement.languageKey
+        return summaryByLanguage?[key] ?? summary
+    }
+
+    private static var languageKey: String {
+        switch AppSettings.shared.resolvedLanguage {
+        case .en: return "en"
+        case .ja: return "ja"
+        case .zhHans, .zhHantHK, .zhHantTW, .system: return "zh"
+        }
+    }
 }
 
 @MainActor
@@ -14,7 +34,13 @@ final class AnnouncementManager: ObservableObject {
     @Published private(set) var latest: Announcement?
     @Published private(set) var history: [Announcement] = []
     private let readKey = "meqr.readAnnouncementID"
+    private var lastRefresh: Date?
     func refresh() {
+        refresh(force: false)
+    }
+    func refresh(force: Bool) {
+        if !force, let lastRefresh, Date().timeIntervalSince(lastRefresh) < 60 { return }
+        lastRefresh = Date()
         guard let url = URL(string: "https://meqrcode.cn/announcements/feed.json") else { return }
         Task {
             do {

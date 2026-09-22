@@ -126,7 +126,7 @@ struct OnboardingView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background { ambientBackground.clipped() }
+        .background { ambientBackground.ignoresSafeArea() }
         .tint(accent)
         .animation(reduceMotion ? nil : .spring(response: 0.42, dampingFraction: 0.86), value: step)
         .sheet(isPresented: $showProfileSync) { ProfileSyncView() }
@@ -583,13 +583,7 @@ struct OnboardingView: View {
         VStack(alignment: .leading, spacing: 26) {
             stepTitle(OnboardingCopy.appearanceTitle, body: OnboardingCopy.appearanceBody, number: "03", color: .blue)
 
-            Picker(L.cardTemplate, selection: $templateStyle) {
-                ForEach(ClusterTemplateStyle.selectableCases) { style in
-                    Label(style.displayName, systemImage: style.iconName)
-                        .tag(style)
-                }
-            }
-            .pickerStyle(.segmented)
+            TemplateStyleSelector(selection: $templateStyle)
 
             draftCardPreview(compact: true)
 
@@ -964,7 +958,11 @@ struct OnboardingView: View {
     private func draftCardPreview(compact: Bool) -> some View {
         let cluster = makeDraftPreviewCluster()
         let stageHeight: CGFloat = if templateStyle == .rhodesPass {
-            compact ? 430 : 500
+            if UIDevice.current.userInterfaceIdiom == .pad {
+                compact ? 820 : 860
+            } else {
+                compact ? 520 : 540
+            }
         } else {
             compact ? 310 : 380
         }

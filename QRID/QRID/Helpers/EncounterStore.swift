@@ -4,6 +4,7 @@ import Combine
 struct EncounterRecord: Codable, Identifiable, Hashable {
     var id: UUID
     var sessionID: String?
+    var isOwnSession: Bool?
     var name: String
     var subtitle: String
     var avatarJPEGBase64: String?
@@ -33,7 +34,7 @@ struct EncounterRecord: Codable, Identifiable, Hashable {
         metAt = Date()
         sourceSharedAt = exchangeProfile.sharedAt
         note = ""
-        tags = []
+        tags = Array(exchangeProfile.tags.prefix(10))
         eventID = event?.id
         eventTitle = event?.title
         eventVenue = event?.venue
@@ -41,6 +42,11 @@ struct EncounterRecord: Codable, Identifiable, Hashable {
         exchangedFreebie = false
         followStatus = nil
     }
+
+    var isDefaultEvent: Bool { eventID == MeQREvent.defaultEventID }
+    var displayEventTitle: String { isDefaultEvent ? L.defaultEventTitle : (eventTitle ?? "") }
+    var displayEventVenue: String { isDefaultEvent ? L.defaultEventVenue : (eventVenue ?? "") }
+
 }
 
 private struct PendingEncounterSession: Codable, Identifiable {
@@ -48,6 +54,11 @@ private struct PendingEncounterSession: Codable, Identifiable {
     let createdAt: Date
     var ownerToken: String? = nil
     var receivedIDs: Set<String>? = nil
+}
+
+private struct EncounterPersistenceState: Codable {
+    var records: [EncounterRecord]
+    var pendingSessions: [PendingEncounterSession]
 }
 
 struct MeQREvent: Codable, Identifiable, Hashable {
@@ -63,6 +74,13 @@ struct MeQREvent: Codable, Identifiable, Hashable {
     var sourceURL: URL?
     var isCustom: Bool
 
+    static let defaultEventID = UUID(uuidString: "26F92A33-1F9E-45A4-83F8-59B9170D0726") ?? UUID()
+
+    var isDefaultEvent: Bool { id == Self.defaultEventID }
+    var displayTitle: String { isDefaultEvent ? L.defaultEventTitle : title }
+    var displayVenue: String { isDefaultEvent ? L.defaultEventVenue : venue }
+    var displayDetails: String { isDefaultEvent ? L.defaultEventDetails : details }
+
     var dateSummary: String {
         if let endDate, !Calendar.current.isDate(startDate, inSameDayAs: endDate) {
             return "\(startDate.formatted(date: .abbreviated, time: .omitted)) - \(endDate.formatted(date: .abbreviated, time: .omitted))"
@@ -77,11 +95,12 @@ struct MeQREvent: Codable, Identifiable, Hashable {
 
 @MainActor
 final class EncounterStore: ObservableObject {
-    static let shared = EncounterStore()
+    static let shared = EncounterStore(recordsURL: defaultRecordsURL)
 
     @Published private(set) var records: [EncounterRecord] = []
     @Published private(set) var pendingSessionCount = 0
     @Published private(set) var isConfirming = false
+    @Published var persistenceErrorMessage: String?
 
     var pendingConfirmationCount: Int { records.filter { $0.pendingConfirmationProfile != nil }.count }
 
@@ -90,15 +109,26 @@ final class EncounterStore: ObservableObject {
     private var pendingSessions: [PendingEncounterSession] = []
     private var isSyncing = false
     private let defaults: UserDefaults
+    private let recordsURL: URL?
 
-    init(defaults: UserDefaults = .standard) {
+    init(defaults: UserDefaults = .standard, recordsURL: URL? = nil) {
         self.defaults = defaults
+        self.recordsURL = recordsURL
         load()
+    }
+
+    private static var defaultRecordsURL: URL? {
+        guard let directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            return nil
+        }
+        return directory.appendingPathComponent("MeQR", isDirectory: true)
+            .appendingPathComponent("encounters-v2.json")
     }
 
     func saveScannedProfile(_ profile: MeQRExchangeProfile, event: MeQREvent? = nil,
                             sessionID: String?, peerProfile: MeQRExchangeProfile?) {
         if let sessionID, let index = records.firstIndex(where: { $0.sessionID == sessionID }) {
+            upgradeRecord(at: index, from: profile, event: event)
             if records[index].confirmationSentAt == nil && records[index].pendingConfirmationProfile == nil {
                 records[index].pendingConfirmationProfile = peerProfile
             }
@@ -133,7 +163,9 @@ final class EncounterStore: ObservableObject {
     }
 
     func add(_ exchangeProfile: MeQRExchangeProfile, event: MeQREvent? = nil, sessionID: String? = nil) {
-        if let sessionID, records.contains(where: { $0.sessionID == sessionID }) {
+        if let sessionID, let index = records.firstIndex(where: { $0.sessionID == sessionID }) {
+            upgradeRecord(at: index, from: exchangeProfile, event: event)
+            save()
             return
         }
         records.insert(EncounterRecord(exchangeProfile: exchangeProfile, event: event ?? EventStore.shared.activeEvent, sessionID: sessionID), at: 0)
@@ -160,6 +192,7 @@ final class EncounterStore: ObservableObject {
 
     func syncPendingSessions() async {
         await syncConfirmations()
+        await syncScannedRecordProfiles()
         guard !pendingSessions.isEmpty, !isSyncing else { return }
         isSyncing = true
         defer { isSyncing = false }
@@ -189,6 +222,7 @@ final class EncounterStore: ObservableObject {
                     if !records.contains(where: { $0.sessionID == pending.id }) {
                         var record = EncounterRecord(exchangeProfile: peerProfile, event: event, sessionID: pending.id)
                         record.eventID = eventID
+                        record.isOwnSession = true
                         records.insert(record, at: 0)
                         save()
                     }
@@ -198,6 +232,25 @@ final class EncounterStore: ObservableObject {
         }
         pendingSessionCount = pendingSessions.count
         savePendingSessions()
+    }
+
+    private func syncScannedRecordProfiles() async {
+        let sessionIDs = records.compactMap(\.sessionID).filter { !$0.isEmpty }
+        for sessionID in Set(sessionIDs) {
+            guard !Task.isCancelled else { return }
+            let urlString = "https://api.meqrcode.cn/encounter-sessions/\(sessionID)"
+            guard MeQRRemoteService.canFetchEncounterSession(from: urlString) else { continue }
+            guard let index = records.firstIndex(where: { $0.sessionID == sessionID }),
+                  records[index].isOwnSession != true else { continue }
+            do {
+                let session = try await MeQRRemoteService.fetchEncounterSession(from: urlString)
+                guard let profile = session.creatorProfile else { continue }
+                upgradeRecord(at: index, from: profile, event: nil)
+                save()
+            } catch {
+                continue
+            }
+        }
     }
 
     func update(_ record: EncounterRecord) {
@@ -216,6 +269,14 @@ final class EncounterStore: ObservableObject {
     }
 
     private func load() {
+        if let recordsURL,
+           let data = try? Data(contentsOf: recordsURL),
+           let state = try? JSONDecoder.meqrEncounter.decode(EncounterPersistenceState.self, from: data) {
+            records = state.records.sorted { $0.metAt > $1.metAt }
+            pendingSessions = state.pendingSessions
+            pendingSessionCount = pendingSessions.count
+            return
+        }
         if let data = defaults.data(forKey: storageKey),
            let decoded = try? JSONDecoder.meqrEncounter.decode([EncounterRecord].self, from: data) {
             records = decoded.sorted { $0.metAt > $1.metAt }
@@ -227,20 +288,88 @@ final class EncounterStore: ObservableObject {
             pendingSessions = decodedPending
             pendingSessionCount = decodedPending.count
         }
+        if recordsURL != nil, saveStateToFile() {
+            defaults.removeObject(forKey: storageKey)
+            defaults.removeObject(forKey: pendingStorageKey)
+        }
     }
 
     private func save() {
+        if recordsURL != nil {
+            _ = saveStateToFile()
+            return
+        }
         guard let data = try? JSONEncoder.meqrEncounter.encode(records) else { return }
         defaults.set(data, forKey: storageKey)
     }
-
     private func savePendingSessions() {
+        if recordsURL != nil {
+            _ = saveStateToFile()
+            return
+        }
         guard let data = try? JSONEncoder.meqrEncounter.encode(pendingSessions) else { return }
         defaults.set(data, forKey: pendingStorageKey)
     }
 
+    @discardableResult
+    private func saveStateToFile() -> Bool {
+        guard let recordsURL else { return false }
+        do {
+            let directory = recordsURL.deletingLastPathComponent()
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            let state = EncounterPersistenceState(records: records, pendingSessions: pendingSessions)
+            let data = try JSONEncoder.meqrEncounter.encode(state)
+            try data.write(to: recordsURL, options: [.atomic, .completeFileProtectionUnlessOpen])
+            persistenceErrorMessage = nil
+            return true
+        } catch {
+            persistenceErrorMessage = error.localizedDescription
+            return false
+        }
+    }
+
     private func sortRecords() {
         records.sort { $0.metAt > $1.metAt }
+    }
+
+    private func upgradeRecord(at index: Int, from profile: MeQRExchangeProfile, event: MeQREvent?) {
+        let currentScore = profileScore(
+            avatar: records[index].avatarJPEGBase64,
+            background: records[index].backgroundJPEGBase64,
+            profiles: records[index].profiles,
+            subtitle: records[index].subtitle
+        )
+        let incomingSubtitle = profile.intro.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            ? profile.subtitle : profile.intro
+        let incomingScore = profileScore(
+            avatar: profile.avatarJPEGBase64,
+            background: profile.backgroundJPEGBase64,
+            profiles: profile.profiles,
+            subtitle: incomingSubtitle
+        )
+        guard incomingScore > currentScore
+                || (incomingScore == currentScore && profile.sharedAt > records[index].sourceSharedAt) else { return }
+        records[index].name = profile.name
+        records[index].subtitle = incomingSubtitle
+        records[index].avatarJPEGBase64 = profile.avatarJPEGBase64
+        records[index].backgroundJPEGBase64 = profile.backgroundJPEGBase64
+        records[index].profiles = profile.profiles
+        records[index].sourceSharedAt = profile.sharedAt
+        for tag in profile.tags where records[index].tags.count < 10 && !records[index].tags.contains(tag) {
+            records[index].tags.append(tag)
+        }
+        if records[index].eventID == nil, let event {
+            records[index].eventID = event.id
+            records[index].eventTitle = event.title
+            records[index].eventVenue = event.venue
+        }
+    }
+
+    private func profileScore(avatar: String?, background: String?, profiles: [MeQRExchangePlatform], subtitle: String) -> Int {
+        (avatar?.isEmpty == false ? 4 : 0)
+            + (background?.isEmpty == false ? 4 : 0)
+            + min(profiles.count, 3) * 2
+            + min(subtitle.count, 100)
     }
 }
 
@@ -359,7 +488,7 @@ final class EventStore: ObservableObject {
     private static var defaultEvents: [MeQREvent] {
         [
             MeQREvent(
-                id: UUID(uuidString: "26F92A33-1F9E-45A4-83F8-59B9170D0726") ?? UUID(),
+                id: MeQREvent.defaultEventID,
                 title: "自定义线下扩列",
                 venue: "现场",
                 address: "",

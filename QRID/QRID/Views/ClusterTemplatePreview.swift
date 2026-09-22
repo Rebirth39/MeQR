@@ -1,5 +1,36 @@
 import SwiftUI
 
+struct TemplateStyleSelector: View {
+    @Binding var selection: ClusterTemplateStyle
+
+    var body: some View {
+        HStack(spacing: 10) {
+            ForEach(ClusterTemplateStyle.selectableCases) { style in
+                Button {
+                    withAnimation(.easeOut(duration: 0.16)) {
+                        selection = style
+                    }
+                } label: {
+                    Label(style.displayName, systemImage: style.iconName)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(selection == style ? .white : .primary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 11)
+                        .padding(.horizontal, 8)
+                        .background(
+                            selection == style ? Color(hex: "#39C5BB") : Color(uiColor: .secondarySystemGroupedBackground),
+                            in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        )
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(selection == style ? .isSelected : [])
+            }
+        }
+        .padding(4)
+        .background(Color(uiColor: .tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+}
+
 struct ClusterTemplatePreview<Avatar: View>: View {
     let templateStyle: ClusterTemplateStyle
     let backgroundColor: Color
