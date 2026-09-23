@@ -332,8 +332,43 @@ struct ClusterCardView: View {
     private var rhodesFixedCardHeight: CGFloat? {
         if landscapeTabletPresentation { return 540 }
         if portraitTabletPresentation { return 760 }
-        if UIDevice.current.userInterfaceIdiom == .phone { return 460 }
+        if UIDevice.current.userInterfaceIdiom == .phone {
+            return 460 + CGFloat(max(0, rhodesPhoneTagRowCount - 3)) * 30
+        }
         return nil
+    }
+
+    private var rhodesPhoneTagRowCount: Int {
+        guard !cluster.tags.isEmpty else { return 0 }
+        let availableWidth = max(1, rhodesCardWidth - 50 - 24)
+        var rows = 1
+        var currentWidth: CGFloat = 0
+
+        for tag in cluster.tags {
+            let textWeight = CardTagColorPalette.textWeight(for: tag, overrides: cluster.tagColorOverrides)
+            let uiWeight: UIFont.Weight
+            switch textWeight {
+            case .regular:
+                uiWeight = .regular
+            case .medium:
+                uiWeight = .semibold
+            case .bold:
+                uiWeight = .heavy
+            }
+            let textWidth = ceil((tag as NSString).size(withAttributes: [
+                .font: UIFont.systemFont(ofSize: 11, weight: uiWeight)
+            ]).width)
+            let chipWidth = min(availableWidth, textWidth + 18)
+            let nextWidth = currentWidth == 0 ? chipWidth : currentWidth + 7 + chipWidth
+
+            if currentWidth > 0, nextWidth > availableWidth {
+                rows += 1
+                currentWidth = chipWidth
+            } else {
+                currentWidth = nextWidth
+            }
+        }
+        return rows
     }
 
     private var rhodesGlassOpacity: Double {
