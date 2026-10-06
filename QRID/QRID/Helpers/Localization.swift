@@ -243,7 +243,7 @@ struct L {
     static var metAt: String { tr("认识时间", "認識時間", "認識時間", "Met At", "会った日時") }
     static var note: String { tr("备注", "備註", "備註", "Note", "メモ") }
     static var tags: String { tr("标签", "標籤", "標籤", "Tags", "タグ") }
-    static var tagLimitReached: String { tr("最多添加 10 个 Tag", "最多加入 10 個 Tag", "最多新增 10 個 Tag", "Up to 10 tags", "Tagは最大10個です") }
+    static var tagLimitReached: String { tr("最多添加 15 个 Tag", "最多加入 15 個 Tag", "最多新增 15 個 Tag", "Up to 15 tags", "Tagは最大15個です") }
     static var tagInputHint: String { tr("搜索或自定义 tag，或从右侧列表选择 →", "搜尋或自訂 tag，或從右側清單選擇 →", "搜尋或自訂 tag，或從右側清單選擇 →", "Search or create a tag, or choose from the list →", "タグを検索・作成、または右の一覧から選択 →") }
     static var tagColors: String { tr("标签颜色", "標籤顏色", "標籤顏色", "Tag Colors", "タグの色") }
     static var tagColor: String { tr("颜色", "顏色", "顏色", "Color", "色") }
@@ -257,7 +257,7 @@ struct L {
     static var tagColorPresetLocked: String { tr("已使用内置颜色", "已使用內建顏色", "已使用內建顏色", "Using preset color", "プリセット色を使用中") }
     static var addColor: String { tr("增加颜色", "增加顏色", "新增顏色", "Add Color", "色を追加") }
     static var removeColor: String { tr("移除颜色", "移除顏色", "移除顏色", "Remove Color", "色を削除") }
-    static var cardTagsHint: String { tr("输入后按回车添加，最多 10 个；会显示在通行证背面。", "輸入後按 Return 加入，最多 10 個；會顯示在通行證背面。", "輸入後按 Return 新增，最多 10 個；會顯示在通行證背面。", "Press Return to add. Up to 10 tags, shown on the pass back.", "入力後Returnで追加。最大10個、パス裏面に表示します。") }
+    static var cardTagsHint: String { tr("输入后按回车添加，最多 15 个；会显示在通行证背面。", "輸入後按 Return 加入，最多 15 個；會顯示在通行證背面。", "輸入後按 Return 新增，最多 15 個；會顯示在通行證背面。", "Press Return to add. Up to 15 tags, shown on the pass back.", "入力後Returnで追加。最大15個、パス裏面に表示します。") }
     static var tagCatalogLoading: String { tr("正在载入 Tag 库", "正在載入 Tag 庫", "正在載入 Tag 庫", "Loading Tag library", "Tagライブラリを読み込み中") }
     static var tagCatalogRetry: String { tr("Tag 库载入失败，点按重试", "Tag 庫載入失敗，點按重試", "Tag 庫載入失敗，點按重試", "Tag library unavailable. Tap to retry.", "Tagライブラリを読み込めません。タップして再試行") }
     static var tagCatalogSource: String { tr("App 内置库", "App 內建庫", "App 內建庫", "Bundled library", "アプリ内蔵ライブラリ") }

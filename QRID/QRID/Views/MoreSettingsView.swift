@@ -79,7 +79,11 @@ struct AnnouncementHistoryView: View {
 
 struct LanguageSettingsView: View {
     @Environment(\.appSettings) private var settings
-    @State private var selectedLanguage = AppSettings.shared.selectedLanguage
+    @State private var selectedLanguage: AppLanguage
+
+    init() {
+        _selectedLanguage = State(initialValue: AppSettings.shared.selectedLanguage)
+    }
 
     var body: some View {
         List {
@@ -117,7 +121,11 @@ struct LanguageSettingsView: View {
 
 struct AppearanceSettingsView: View {
     @Environment(\.appSettings) private var settings
-    @State private var selectedTheme = AppSettings.shared.selectedTheme
+    @State private var selectedTheme: AppTheme
+
+    init() {
+        _selectedTheme = State(initialValue: AppSettings.shared.selectedTheme)
+    }
 
     var body: some View {
         List {

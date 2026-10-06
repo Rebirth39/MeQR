@@ -32,8 +32,8 @@ import SwiftData
         check(migrated.tags == ["Fixture English"], "Migration deduplicates aliases by catalog identity")
         check(migrated.tagColorStyle(for: "Fixture English").segmentHexes == ["#ABCDEF"],
               "Migration retains an override keyed by a legacy alias")
-        let oversized = QRCluster(name: "limits", tagListRawValue: (0..<12).map { "custom-\($0)" }.joined(separator: "\n"))
-        check(oversized.tags.count == CardTagLimiter.maxTags, "Migration preserves the ten-tag limit")
+        let oversized = QRCluster(name: "limits", tagListRawValue: (0..<17).map { "custom-\($0)" }.joined(separator: "\n"))
+        check(oversized.tags.count == CardTagLimiter.maxTags, "Migration preserves the fifteen-tag limit")
 
         install(empty: true)
         let early = QRCluster(name: "before catalog")

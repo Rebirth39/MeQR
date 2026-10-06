@@ -34,7 +34,7 @@ struct EncounterRecord: Codable, Identifiable, Hashable {
         metAt = Date()
         sourceSharedAt = exchangeProfile.sharedAt
         note = ""
-        tags = Array(exchangeProfile.tags.prefix(10))
+        tags = Array(exchangeProfile.tags.prefix(CardTagLimiter.maxTags))
         eventID = event?.id
         eventTitle = event?.title
         eventVenue = event?.venue
@@ -355,7 +355,7 @@ final class EncounterStore: ObservableObject {
         records[index].backgroundJPEGBase64 = profile.backgroundJPEGBase64
         records[index].profiles = profile.profiles
         records[index].sourceSharedAt = profile.sharedAt
-        for tag in profile.tags where records[index].tags.count < 10 && !records[index].tags.contains(tag) {
+        for tag in profile.tags where records[index].tags.count < CardTagLimiter.maxTags && !records[index].tags.contains(tag) {
             records[index].tags.append(tag)
         }
         if records[index].eventID == nil, let event {

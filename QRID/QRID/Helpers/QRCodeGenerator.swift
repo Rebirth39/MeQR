@@ -22,10 +22,10 @@ struct QRCodeGenerator {
         UIColor(red: 0.29, green: 0.12, blue: 0.50, alpha: 1)
     ]
     private static let lightPalette: [UIColor] = [
-        UIColor(red: 0.66, green: 0.81, blue: 1.00, alpha: 1),
-        UIColor(red: 0.62, green: 0.90, blue: 0.84, alpha: 1),
-        UIColor(red: 1.00, green: 0.76, blue: 0.83, alpha: 1),
-        UIColor(red: 0.84, green: 0.72, blue: 1.00, alpha: 1)
+        UIColor(red: 153 / 255.0, green: 188 / 255.0, blue: 1, alpha: 1),
+        UIColor(red: 153 / 255.0, green: 240 / 255.0, blue: 224 / 255.0, alpha: 1),
+        UIColor(red: 1, green: 163 / 255.0, blue: 201 / 255.0, alpha: 1),
+        UIColor(red: 204 / 255.0, green: 163 / 255.0, blue: 245 / 255.0, alpha: 1)
     ]
 
     static func imageForDecoding(from data: Data, maxPixelSize: Int = 2048) -> UIImage? {
@@ -214,7 +214,9 @@ struct QRCodeGenerator {
                 let symbol = symbols == nil
                     ? ((row * 3 + column * 5) & 3)
                     : Int(symbols![symbolIndex])
-                let color = matrix[row][column] ? darkPalette[symbol] : lightPalette[symbol]
+                let color = symbols == nil
+                    ? (matrix[row][column] ? UIColor.black : UIColor.white)
+                    : (matrix[row][column] ? darkPalette[symbol] : lightPalette[symbol])
                 context.setFillColor(color.cgColor)
                 context.fill(CGRect(
                     x: (column + colorLayerQuietZone) * colorLayerScale,
@@ -354,6 +356,36 @@ struct QRCodeGenerator {
         return DecodedCode(payload: payload, colorAvatarJPEG: avatar)
     }
 
+    static func decodeEnhanced(
+        from image: UIImage,
+        payload: String,
+        corners: [CGPoint]
+    ) async throws -> DecodedCode {
+        guard let normalizedImage = image.normalizedForMeQR,
+              let cgImage = normalizedImage.cgImage,
+              corners.count >= 4 else {
+            throw QRDecodeError.invalidImage
+        }
+        let height = CGFloat(cgImage.height)
+        let candidates = [
+            corners,
+            corners.map { CGPoint(x: $0.x, y: height - $0.y) }
+        ]
+        for candidate in candidates {
+            if let avatar = decodeColorLayer(
+                from: cgImage,
+                payload: payload,
+                topLeft: candidate[0],
+                topRight: candidate[1],
+                bottomLeft: candidate[3],
+                bottomRight: candidate[2]
+            ) {
+                return DecodedCode(payload: payload, colorAvatarJPEG: avatar)
+            }
+        }
+        return DecodedCode(payload: payload, colorAvatarJPEG: nil)
+    }
+
     /// Decodes a QR code from a UIImage and returns the payload string
     static func decode(from image: UIImage) async throws -> String {
         try await decodeEnhanced(from: image).payload
@@ -459,48 +491,74 @@ struct QRCodeGenerator {
         let preferredSide = qrMatrix(from: payload, correctionLevel: "M")?.count
         var candidateSides = preferredSide.map { [$0] } ?? []
         candidateSides.append(contentsOf: (1...40).map { 17 + $0 * 4 }.filter { $0 != preferredSide })
+        let knownHeaderSymbols = colorLayerSymbols(
+            packet: Data([0x4D, 0x43, 0x51, 0x52, colorLayerVersion, colorLayerAvatarType]),
+            count: 40
+        )
 
         for side in candidateSides {
-            let sampled = (0..<side * side).map { index -> UInt8 in
-                let row = index / side
-                let column = index % side
-                let x = min(max(Int((CGFloat(column) + 0.5) * CGFloat(imageWidth) / CGFloat(side)), 0), imageWidth - 1)
-                let y = min(max(Int((CGFloat(row) + 0.5) * CGFloat(imageHeight) / CGFloat(side)), 0), imageHeight - 1)
-                let offset = (y * imageWidth + x) * 4
-                return nearestPaletteSymbol(
-                    red: pixels[offset],
-                    green: pixels[offset + 1],
-                    blue: pixels[offset + 2]
-                )
-            }
-
             for mirrored in [false, true] {
                 for rotation in 0..<4 {
-                    let symbols = transformedSymbols(sampled, side: side, rotation: rotation, mirrored: mirrored)
-                    if let avatar = parseColorLayer(symbols: symbols, expectedType: colorLayerAvatarType) {
-                        return avatar
+                    for quietZone in [0, colorLayerQuietZone] {
+                    for sampleOffsets in [[0.5], [0.42, 0.5, 0.58], [0.32, 0.5, 0.68]] {
+                    func sampleRGB(_ count: Int) -> [(UInt8, UInt8, UInt8)] {
+                        (0..<count).map { index in
+                            var row = index / side
+                            var column = index % side
+                            for _ in 0..<rotation { (row, column) = (side - column - 1, row) }
+                            if mirrored { column = side - column - 1 }
+                            var red = 0
+                            var green = 0
+                            var blue = 0
+                            let sampleCount = sampleOffsets.count * sampleOffsets.count
+                            for vertical in sampleOffsets {
+                                for horizontal in sampleOffsets {
+                                    let denominator = Double(side + quietZone * 2)
+                                    let pixelX = min(max(Int((Double(column + quietZone) + horizontal) * Double(imageWidth) / denominator), 0), imageWidth - 1)
+                                    let pixelY = min(max(Int((Double(row + quietZone) + vertical) * Double(imageHeight) / denominator), 0), imageHeight - 1)
+                                    let offset = (pixelY * imageWidth + pixelX) * 4
+                                    red += Int(pixels[offset])
+                                    green += Int(pixels[offset + 1])
+                                    blue += Int(pixels[offset + 2])
+                                }
+                            }
+                            return (UInt8(red / sampleCount), UInt8(green / sampleCount), UInt8(blue / sampleCount))
+                        }
+                    }
+                    let adaptiveHues = adaptivePaletteHues(
+                        samples: sampleRGB(knownHeaderSymbols.count),
+                        expected: knownHeaderSymbols
+                    )
+                    for targetHues in [adaptiveHues, [0.61, 0.47, 0.93, 0.75]] {
+                        func sample(_ count: Int) -> [UInt8] {
+                            sampleRGB(count).map { color in
+                                nearestPaletteSymbol(
+                                    red: color.0,
+                                    green: color.1,
+                                    blue: color.2,
+                                    targetHues: targetHues
+                                )
+                            }
+                        }
+                        guard let header = decodedColorBytes(symbols: sample(80)),
+                              let length = colorPayloadLength(header, expectedType: colorLayerAvatarType) else { continue }
+                        let symbolCount = ((colorLayerHeaderBytes + length) * 4 + 2) / 3 * 5
+                        guard symbolCount <= side * side else { continue }
+                        let symbols = sample(symbolCount)
+                        if let avatar = parseColorLayer(symbols: symbols, expectedType: colorLayerAvatarType) {
+                            return avatar
+                        }
                     }
                 }
+                }
+                }
+                }
             }
-        }
         return nil
     }
 
-    private static func transformedSymbols(_ symbols: [UInt8], side: Int, rotation: Int, mirrored: Bool) -> [UInt8] {
-        (0..<side * side).map { index in
-            let targetRow = index / side
-            let targetColumn = index % side
-            var row = targetRow
-            var column = targetColumn
-            for _ in 0..<rotation {
-                (row, column) = (side - column - 1, row)
-            }
-            if mirrored { column = side - column - 1 }
-            return symbols[row * side + column]
-        }
-    }
-
-    private static func parseColorLayer(symbols: [UInt8], expectedType: UInt8) -> Data? {
+    private static func decodedColorBytes(symbols: [UInt8]) -> [UInt8]? {
+        guard symbols.count >= 5 else { return nil }
         var decodedSymbols = [UInt8]()
         decodedSymbols.reserveCapacity((symbols.count / 5) * 3)
         for index in stride(from: 0, through: symbols.count - symbols.count % 5 - 5, by: 5) {
@@ -520,12 +578,22 @@ struct QRCodeGenerator {
             )
             index += 4
         }
+        return bytes
+    }
+
+    private static func colorPayloadLength(_ bytes: [UInt8], expectedType: UInt8) -> Int? {
         guard bytes.count >= colorLayerHeaderBytes,
               Data(bytes.prefix(4)) == colorLayerMagic,
               bytes[4] == colorLayerVersion,
               bytes[5] == expectedType else { return nil }
         let payloadLength = Int(bytes[6]) << 8 | Int(bytes[7])
-        guard payloadLength > 0, colorLayerHeaderBytes + payloadLength <= bytes.count else { return nil }
+        return payloadLength > 0 ? payloadLength : nil
+    }
+
+    private static func parseColorLayer(symbols: [UInt8], expectedType: UInt8) -> Data? {
+        guard let bytes = decodedColorBytes(symbols: symbols),
+              let payloadLength = colorPayloadLength(bytes, expectedType: expectedType),
+              colorLayerHeaderBytes + payloadLength <= bytes.count else { return nil }
         let expectedCRC = UInt32(bytes[8]) << 24 | UInt32(bytes[9]) << 16 | UInt32(bytes[10]) << 8 | UInt32(bytes[11])
         let payload = Data(bytes[colorLayerHeaderBytes..<(colorLayerHeaderBytes + payloadLength)])
         return crc32(payload) == expectedCRC ? payload : nil
@@ -540,37 +608,39 @@ struct QRCodeGenerator {
 
     private static func decodeColorFEC(_ values: [UInt8]) -> [UInt8]? {
         guard values.count == 5 else { return nil }
-        var corrected = values.map { $0 & 0x03 }
+        let corrected = values.map { $0 & 0x03 }
         let syndromeFirst = corrected[0] ^ corrected[2] ^ corrected[3] ^ corrected[4]
         let syndromeSecond = corrected[1]
             ^ corrected[2]
             ^ multiplyGF4(2, corrected[3])
             ^ multiplyGF4(3, corrected[4])
 
-        if syndromeFirst != 0 || syndromeSecond != 0 {
-            let errorIndex: Int
-            let magnitude: UInt8
-            if syndromeSecond == 0 {
-                errorIndex = 0
-                magnitude = syndromeFirst
-            } else if syndromeFirst == 0 {
-                errorIndex = 1
-                magnitude = syndromeSecond
-            } else if syndromeSecond == syndromeFirst {
-                errorIndex = 2
-                magnitude = syndromeFirst
-            } else if syndromeSecond == multiplyGF4(2, syndromeFirst) {
-                errorIndex = 3
-                magnitude = syndromeFirst
-            } else if syndromeSecond == multiplyGF4(3, syndromeFirst) {
-                errorIndex = 4
-                magnitude = syndromeFirst
-            } else {
-                return nil
-            }
-            corrected[errorIndex] ^= magnitude
+        if syndromeFirst == 0 && syndromeSecond == 0 {
+            return Array(corrected.prefix(3))
         }
-        return Array(corrected.prefix(3))
+
+        var bestData: [UInt8]?
+        var bestDistance = Int.max
+        var tied = false
+        for first in UInt8(0)..<UInt8(4) {
+            for second in UInt8(0)..<UInt8(4) {
+                for third in UInt8(0)..<UInt8(4) {
+                    let encoded = encodeColorFEC(first, second, third)
+                    let distance = zip(encoded, corrected).reduce(into: 0) { result, pair in
+                        if pair.0 != pair.1 { result += 1 }
+                    }
+                    if distance < bestDistance {
+                        bestDistance = distance
+                        bestData = [first, second, third]
+                        tied = false
+                    } else if distance == bestDistance {
+                        tied = true
+                    }
+                }
+            }
+        }
+        guard bestDistance <= 2, !tied else { return nil }
+        return bestData
     }
 
     private static func multiplyGF4(_ lhs: UInt8, _ rhs: UInt8) -> UInt8 {
@@ -590,12 +660,56 @@ struct QRCodeGenerator {
         var saturation: CGFloat = 0
         var brightness: CGFloat = 0
         color.getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: nil)
-        let targetHues: [CGFloat] = [0.61, 0.47, 0.93, 0.75]
+        return nearestPaletteSymbol(red: red, green: green, blue: blue, targetHues: [0.61, 0.47, 0.93, 0.75])
+    }
+
+    private static func nearestPaletteSymbol(
+        red: UInt8,
+        green: UInt8,
+        blue: UInt8,
+        targetHues: [CGFloat]
+    ) -> UInt8 {
+        let color = UIColor(red: CGFloat(red) / 255, green: CGFloat(green) / 255, blue: CGFloat(blue) / 255, alpha: 1)
+        var hue: CGFloat = 0
+        var saturation: CGFloat = 0
+        var brightness: CGFloat = 0
+        color.getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: nil)
         let distances = targetHues.map { target -> CGFloat in
             let direct = abs(hue - target)
             return min(direct, 1 - direct)
         }
         return UInt8(distances.enumerated().min(by: { $0.element < $1.element })?.offset ?? 0)
+    }
+
+    private static func adaptivePaletteHues(
+        samples: [(UInt8, UInt8, UInt8)],
+        expected: [UInt8]
+    ) -> [CGFloat] {
+        let defaults: [CGFloat] = [0.61, 0.47, 0.93, 0.75]
+        var vectors = Array(repeating: (x: CGFloat(0), y: CGFloat(0), count: 0), count: 4)
+        for (index, sample) in samples.enumerated() where index < expected.count {
+            let color = UIColor(
+                red: CGFloat(sample.0) / 255,
+                green: CGFloat(sample.1) / 255,
+                blue: CGFloat(sample.2) / 255,
+                alpha: 1
+            )
+            var hue: CGFloat = 0
+            var saturation: CGFloat = 0
+            var brightness: CGFloat = 0
+            color.getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: nil)
+            guard saturation > 0.12 else { continue }
+            let angle = hue * 2 * .pi
+            let symbol = Int(expected[index] & 0x03)
+            vectors[symbol].x += cos(angle)
+            vectors[symbol].y += sin(angle)
+            vectors[symbol].count += 1
+        }
+        return vectors.enumerated().map { index, vector in
+            guard vector.count > 0 else { return defaults[index] }
+            let angle = atan2(vector.y, vector.x) / (2 * .pi)
+            return angle >= 0 ? angle : angle + 1
+        }
     }
 
     private static func rgbaPixels(from image: CGImage) -> [UInt8]? {

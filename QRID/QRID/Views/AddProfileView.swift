@@ -508,11 +508,9 @@ struct AddProfileView: View {
                 platformType: resolvedPlatform.platformType,
                 qrContent: trimmedQR,
                 foregroundColorHex: existingCluster.qrColorHex ?? "#000000",
-                customPlatformName: resolvedPlatform.customPlatformName,
-                cluster: existingCluster
+                customPlatformName: resolvedPlatform.customPlatformName
             )
-            profile.attach(to: existingCluster)
-            modelContext.insert(profile)
+            profile.attach(to: existingCluster, in: modelContext)
         } else {
             let qrColorHex = qrColor.toHex() ?? "#000000"
             let cluster = QRCluster(
@@ -538,11 +536,9 @@ struct AddProfileView: View {
                 platformType: resolvedPlatform.platformType,
                 qrContent: trimmedQR,
                 foregroundColorHex: qrColorHex,
-                customPlatformName: resolvedPlatform.customPlatformName,
-                cluster: cluster
+                customPlatformName: resolvedPlatform.customPlatformName
             )
-            profile.attach(to: cluster)
-            modelContext.insert(profile)
+            profile.attach(to: cluster, in: modelContext)
         }
 
         do {

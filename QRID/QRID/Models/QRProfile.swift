@@ -25,8 +25,7 @@ final class QRProfile {
         platformType: String = "custom",
         qrContent: String,
         foregroundColorHex: String = "#000000",
-        customPlatformName: String? = nil,
-        cluster: QRCluster? = nil
+        customPlatformName: String? = nil
     ) {
         self.id = UUID()
         self.platformType = platformType
@@ -34,7 +33,7 @@ final class QRProfile {
         self.foregroundColorHex = foregroundColorHex
         self.customPlatformName = customPlatformName
         self.createdAt = Date()
-        self.cluster = cluster
+        self.cluster = nil
 
         // Default values for legacy fields (unused after migration)
         self.name = ""
@@ -54,8 +53,12 @@ final class QRProfile {
         cornerRadius = cluster.cornerRadius
     }
 
-    func attach(to cluster: QRCluster) {
-        self.cluster = cluster
+    func attach(to cluster: QRCluster, in context: ModelContext) {
+        // iOS 17 SwiftData can trap when updating inverse relationships on
+        // unregistered models. Register both ends before assigning the relation.
+        if cluster.modelContext == nil { context.insert(cluster) }
+        if modelContext == nil { context.insert(self) }
+        if self.cluster !== cluster { self.cluster = cluster }
         captureClusterFallback(from: cluster)
     }
 

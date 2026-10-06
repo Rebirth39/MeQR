@@ -22,6 +22,15 @@ fs.writeFileSync(path.join(output, 'Production.swift'), files.map(file => {
 }).join('\n'));
 // Exercise the exact App Store 1.1.0 decoder against today's confirmation JSON.
 const releaseSource = file => execFileSync('git', ['show', '2313ac7:QRID/QRID/' + file], {cwd: root, encoding: 'utf8'});
+const legacyColor = execFileSync('git', ['show', '899ebd1:QRID/QRID/Helpers/QRCodeGenerator.swift'], {cwd: root, encoding: 'utf8'})
+  .split('private extension UIImage')[0].replaceAll('QRCodeGenerator', 'LegacyQRCodeGenerator');
+const colorTests = fs.readFileSync(path.join(__dirname, 'ColorLayerChecks.swift'), 'utf8')
+  .replaceAll('COLOR_FIXTURE_DIRECTORY', path.resolve(output));
+fs.appendFileSync(path.join(output, 'Production.swift'), '\n' + legacyColor + '\n' + colorTests);
+if (output !== __dirname) {
+  const layoutTests = path.join(output, 'LayoutTests.swift');
+  fs.writeFileSync(layoutTests, fs.readFileSync(layoutTests, 'utf8').replaceAll('COLOR_FIXTURE_DIRECTORY', path.resolve(output)));
+}
 const releaseExchange = releaseSource('Helpers/MeQRExchange.swift').split('enum MeQRExchangeCodec')[0]
   .replaceAll('MeQRExchangeProfile', 'Release110ExchangeProfile').replaceAll('MeQRExchangePlatform', 'Release110ExchangePlatform');
 const releaseRemote = releaseSource('Helpers/MeQRRemoteService.swift');
@@ -48,6 +57,7 @@ fs.writeFileSync(production, fs.readFileSync(production, 'utf8').replaceAll('awa
 fs.copyFileSync('/Users/lucasli/Documents/debug/BG.jpg', path.join(output, 'BG.jpg'));
 let project = fs.readFileSync(path.join(root, 'Tests/TagLayoutHarness/TagLayout.xcodeproj/project.pbxproj'), 'utf8');
 project = project.replaceAll('TagLayoutHost', 'CardLayoutHost').replaceAll('taglayouthost', 'cardlayouthost').replaceAll('taglayouttests', 'cardlayouttests')
+  .replaceAll('TARGETED_DEVICE_FAMILY = 1;', 'TARGETED_DEVICE_FAMILY = "1,2";')
   .replace('path = ../../QRID/QRID/Views/CardTagReorderView.swift', 'path = Production.swift')
   .replace('lastKnownFileType = sourcecode.swift; path = ../../QRID/QRID/Helpers/ColorExtensions.swift', 'lastKnownFileType = text.json; path = tags-v1.json')
   .replace('files = (B001, B003, B004, B005, B006, B007);', 'files = (B001, B003);')

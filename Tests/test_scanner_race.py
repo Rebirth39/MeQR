@@ -120,6 +120,9 @@ enum QRCodeGenerator {
     static func decodeEnhanced(from image: UIImage) async throws -> DecodedCode {
         try await decode(image.key).get()
     }
+    static func decodeEnhanced(from image: UIImage, payload: String, corners: [CGPoint]) async throws -> DecodedCode {
+        try await decode(image.key).get()
+    }
 }
 
 enum MeQRExchangeCodec {
@@ -181,6 +184,45 @@ struct ScannerRaceTests {
         precondition(first.decodedScan?.profile.name == "local:first" && first.decodeTask == nil)
         precondition(first.decodedScan?.profile.avatarJPEGBase64 == Data([1, 2]).base64EncodedString())
         print("PASS synchronous camera gating and avatar decode")
+
+        let retry = scanner()
+        retry.handlePayload("local:retry", frame: UIImage(key: "retry-empty"), retryColorLayer: true)
+        let emptyTask = retry.decodeTask!
+        await waitFor { QRCodeGenerator.decode("retry-empty").continuation != nil }
+        QRCodeGenerator.decode("retry-empty").succeed(.init(payload: "local:retry", colorAvatarJPEG: nil))
+        await emptyTask.value
+        precondition(retry.decodedScan == nil && retry.decodeTask == nil && retry.colorRetryAttempts == 1)
+        retry.handlePayload("local:retry", frame: UIImage(key: "retry-success"), retryColorLayer: true)
+        let successTask = retry.decodeTask!
+        await waitFor { QRCodeGenerator.decode("retry-success").continuation != nil }
+        QRCodeGenerator.decode("retry-success").succeed(.init(payload: "local:retry", colorAvatarJPEG: Data([3, 4])))
+        await successTask.value
+        precondition(retry.decodedScan?.profile.avatarJPEGBase64 == Data([3, 4]).base64EncodedString())
+
+        let exhausted = scanner()
+        for attempt in 1...6 {
+            exhausted.handlePayload("local:no-avatar", frame: nil, retryColorLayer: true)
+            await exhausted.decodeTask!.value
+            precondition((exhausted.decodedScan != nil) == (attempt == 6))
+        }
+        let timedOut = scanner()
+        timedOut.colorRetryPayload = "local:timeout"
+        timedOut.colorRetryStarted = Date().addingTimeInterval(-3)
+        timedOut.handlePayload("local:timeout", frame: nil, retryColorLayer: true)
+        await timedOut.decodeTask!.value
+        precondition(timedOut.decodedScan != nil)
+        timedOut.cancelDecode()
+        precondition(timedOut.colorRetryPayload.isEmpty && timedOut.colorRetryAttempts == 0)
+
+        let mismatch = scanner()
+        mismatch.handlePayload("local:correct", frame: UIImage(key: "wrong-frame"))
+        let mismatchTask = mismatch.decodeTask!
+        await waitFor { QRCodeGenerator.decode("wrong-frame").continuation != nil }
+        QRCodeGenerator.decode("wrong-frame").succeed(.init(payload: "local:wrong", colorAvatarJPEG: Data([9])))
+        await mismatchTask.value
+        precondition(mismatch.decodedScan?.profile.name == "local:correct")
+        precondition(mismatch.decodedScan?.profile.avatarJPEGBase64 == nil)
+        print("PASS color retry, bounded fallback, timeout, cancellation reset and frame identity")
 
         // Explicit photo intent cancels camera work and blocks further frames.
         let photo = scanner()

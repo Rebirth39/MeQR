@@ -6,17 +6,37 @@ import ImageIO
 struct ClusterCardView: View {
     let cluster: QRCluster
     var size: CGFloat = 180
-    var containerWidth: CGFloat = UIScreen.main.bounds.width
+    var containerWidth: CGFloat
     var onProfileSelected: ((Int) -> Void)? = nil
     var landscapeTabletPresentation: Bool = false
+    var profileSelection: Binding<UUID?>? = nil
+    // Draft previews provide unpersisted profiles without creating inverse relationships.
+    var previewProfiles: [QRProfile]? = nil
 
-    @State private var selectedIndex: Int = 0
+    @State private var localSelectedProfileID: UUID?
     @State private var isShowingPassBack = false
     @State private var passFlipRotation: Double = 0
     @State private var isPassFlipAnimating = false
+    @State private var passInfoContentHeight: CGFloat = 0
+    @State private var passInfoViewportHeight: CGFloat = 0
 
     private var sortedProfiles: [QRProfile] {
-        cluster.profiles.sorted { $0.createdAt < $1.createdAt }
+        (previewProfiles ?? cluster.profiles).sorted { $0.createdAt < $1.createdAt }
+    }
+
+    private var selectedIndex: Int {
+        get {
+            let id = profileSelection?.wrappedValue ?? localSelectedProfileID
+            return sortedProfiles.firstIndex(where: { $0.id == id }) ?? 0
+        }
+        nonmutating set {
+            let id = sortedProfiles[safe: newValue]?.id
+            if let profileSelection {
+                profileSelection.wrappedValue = id
+            } else {
+                localSelectedProfileID = id
+            }
+        }
     }
 
     private var currentProfile: QRProfile? {
@@ -32,11 +52,6 @@ struct ClusterCardView: View {
                 conventionPassCard
             case .rhodesPass:
                 rhodesPassCard
-            }
-        }
-        .onChange(of: sortedProfiles.count) { _, newCount in
-            if selectedIndex >= newCount {
-                selectedIndex = max(0, newCount - 1)
             }
         }
         .onChange(of: selectedIndex) { _, newIndex in
@@ -217,13 +232,13 @@ struct ClusterCardView: View {
         rhodesSurface(VStack(spacing: 0) {
             rhodesTopStrip
 
-            HStack(spacing: 0) {
-                rhodesSideRail
-                rhodesContent
-            }
+            rhodesContent
+                .padding(.leading, rhodesRailWidth)
+                .overlay(alignment: .leading) {
+                    rhodesSideRail
+                }
         }
-        .frame(width: rhodesCardWidth, alignment: .topLeading)
-        .frame(height: rhodesFixedCardHeight, alignment: .topLeading))
+        .frame(width: rhodesCardWidth, alignment: .topLeading))
     }
 
     private var frostedBlurImage: UIImage? {
@@ -321,54 +336,13 @@ struct ClusterCardView: View {
 
     private var rhodesCardWidth: CGFloat {
         if landscapeTabletPresentation {
-            return min(920, max(760, containerWidth - 96))
-        }
-        if UIDevice.current.userInterfaceIdiom == .phone {
-            return max(0, containerWidth - 32)
+            return min(920, max(0, containerWidth - 32))
         }
         return max(0, containerWidth - 32)
     }
 
-    private var rhodesFixedCardHeight: CGFloat? {
-        if landscapeTabletPresentation { return 540 }
-        if portraitTabletPresentation { return 760 }
-        if UIDevice.current.userInterfaceIdiom == .phone {
-            return 460 + CGFloat(max(0, rhodesPhoneTagRowCount - 3)) * 30
-        }
-        return nil
-    }
-
-    private var rhodesPhoneTagRowCount: Int {
-        guard !cluster.tags.isEmpty else { return 0 }
-        let availableWidth = max(1, rhodesCardWidth - 50 - 24)
-        var rows = 1
-        var currentWidth: CGFloat = 0
-
-        for tag in cluster.tags {
-            let textWeight = CardTagColorPalette.textWeight(for: tag, overrides: cluster.tagColorOverrides)
-            let uiWeight: UIFont.Weight
-            switch textWeight {
-            case .regular:
-                uiWeight = .regular
-            case .medium:
-                uiWeight = .semibold
-            case .bold:
-                uiWeight = .heavy
-            }
-            let textWidth = ceil((tag as NSString).size(withAttributes: [
-                .font: UIFont.systemFont(ofSize: 11, weight: uiWeight)
-            ]).width)
-            let chipWidth = min(availableWidth, textWidth + 18)
-            let nextWidth = currentWidth == 0 ? chipWidth : currentWidth + 7 + chipWidth
-
-            if currentWidth > 0, nextWidth > availableWidth {
-                rows += 1
-                currentWidth = chipWidth
-            } else {
-                currentWidth = nextWidth
-            }
-        }
-        return rows
+    private var rhodesRailWidth: CGFloat {
+        portraitTabletPresentation ? 70 : landscapeTabletPresentation ? 60 : 50
     }
 
     private var rhodesGlassOpacity: Double {
@@ -380,7 +354,7 @@ struct ClusterCardView: View {
     }
 
     private var portraitTabletPresentation: Bool {
-        UIDevice.current.userInterfaceIdiom == .pad && !landscapeTabletPresentation
+        !landscapeTabletPresentation && containerWidth >= 520
     }
 
     private var largeRhodesText: Bool {
@@ -425,7 +399,7 @@ struct ClusterCardView: View {
             }
             .foregroundStyle(.white.opacity(0.88))
         }
-        .frame(width: portraitTabletPresentation ? 70 : landscapeTabletPresentation ? 60 : 50)
+        .frame(width: rhodesRailWidth)
         .frame(maxHeight: .infinity)
         .clipped()
     }
@@ -465,9 +439,8 @@ struct ClusterCardView: View {
             }
         }
         .padding(12)
-        .frame(width: landscapeTabletPresentation ? rhodesCardWidth - 60 : nil,
-               alignment: .leading)
-        .frame(maxWidth: landscapeTabletPresentation ? nil : .infinity, alignment: .leading)
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(width: max(0, rhodesCardWidth - rhodesRailWidth), alignment: .leading)
     }
 
     private var rhodesHeroPanel: some View {
@@ -636,21 +609,21 @@ struct ClusterCardView: View {
         rhodesSurface(VStack(spacing: 0) {
             rhodesTopStrip
 
-            HStack(spacing: 0) {
-                rhodesSideRail
-
-                passBackContent
-                    .padding(12)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
+            passBackContent
+                .padding(12)
+                .frame(maxHeight: .infinity, alignment: .topLeading)
+                .frame(width: max(0, rhodesCardWidth - rhodesRailWidth), alignment: .leading)
+                .padding(.leading, rhodesRailWidth)
+                .overlay(alignment: .leading) {
+                    rhodesSideRail
+                }
         }
-        .frame(width: max(0, containerWidth - 32), alignment: .topLeading)
-        .frame(height: rhodesFixedCardHeight, alignment: .topLeading))
+        .frame(width: rhodesCardWidth, alignment: .topLeading))
     }
 
     private func passFlipCard<Front: View, Back: View>(front: Front, back: Back) -> some View {
         front
-        .modifier(PassFlipModifier(angle: passFlipRotation, back: back, verticalOverscan: 44))
+        .modifier(PassFlipModifier(angle: passFlipRotation, back: back))
         .contentShape(RoundedRectangle(cornerRadius: max(18, cluster.cornerRadius)))
         .onTapGesture {
             guard !isPassFlipAnimating else { return }
@@ -663,6 +636,7 @@ struct ClusterCardView: View {
     private func passBackCard(cornerRadius: CGFloat) -> some View {
         passBackContent
         .padding(16)
+        .frame(maxHeight: .infinity, alignment: .topLeading)
         .frame(maxWidth: containerWidth - 32, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: cornerRadius)
@@ -670,16 +644,24 @@ struct ClusterCardView: View {
         )
     }
 
+    private var spaciousPassBack: Bool {
+        portraitTabletPresentation && cluster.templateStyle == .rhodesPass
+    }
+
     private var passBackContent: some View {
-        VStack(alignment: .leading, spacing: largeRhodesText ? 18 : 14) {
+        let layout = spaciousPassBack
+            ? AnyLayout(PassBackLayout())
+            : AnyLayout(VStackLayout(alignment: .leading, spacing: largeRhodesText ? 18 : 14))
+        return layout {
             HStack(alignment: .center, spacing: largeRhodesText ? 16 : 12) {
                 avatarImage
-                    .frame(width: largeRhodesText ? 76 : 58, height: largeRhodesText ? 76 : 58)
+                    .frame(width: spaciousPassBack ? 86 : largeRhodesText ? 76 : 58,
+                           height: spaciousPassBack ? 86 : largeRhodesText ? 76 : 58)
                     .overlay(Circle().stroke(cluster.textColor.opacity(0.18), lineWidth: 1))
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: spaciousPassBack ? 6 : 4) {
                     Text(cluster.name)
-                    .font(largeRhodesText ? .system(size: 25, weight: .black) : .title3.weight(.black))
+                    .font(largeRhodesText ? .system(size: spaciousPassBack ? 27 : 25, weight: .black) : .title3.weight(.black))
                         .foregroundStyle(cluster.textColor)
                         .lineLimit(1)
                         .minimumScaleFactor(0.72)
@@ -696,6 +678,8 @@ struct ClusterCardView: View {
                     .font(largeRhodesText ? .title3.weight(.semibold) : .headline.weight(.semibold))
                     .foregroundStyle(cluster.textColor.opacity(0.55))
             }
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("pass-back-identity")
 
             if !cluster.tags.isEmpty {
                 cardTagChips
@@ -707,19 +691,31 @@ struct ClusterCardView: View {
                         .font(largeRhodesText ? .system(size: 16, weight: .black, design: .monospaced) : .caption.weight(.black))
                         .foregroundStyle(cluster.textColor.opacity(0.94))
 
-                    Group {
-                        if largeRhodesText {
-                            ScrollView(.vertical, showsIndicators: false) {
-                                subtitleText
-                            }
-                            .frame(maxHeight: 340)
-                        } else {
+                    ViewThatFits(in: .vertical) {
+                        subtitleText
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        ScrollView(.vertical) {
                             subtitleText
+                                .fixedSize(horizontal: false, vertical: true)
+                                .onGeometryChange(for: CGFloat.self) { geometry in
+                                    geometry.size.height
+                                } action: { height in
+                                    passInfoContentHeight = height
+                                }
                         }
+                        .onGeometryChange(for: CGFloat.self) { geometry in
+                            geometry.size.height
+                        } action: { height in
+                            passInfoViewportHeight = height
+                        }
+                        .scrollDisabled(passInfoContentHeight <= passInfoViewportHeight + 1)
+                        .scrollBounceBehavior(.basedOnSize)
+                        .accessibilityIdentifier("pass-user-info-scroll")
                     }
                 }
                 .padding(largeRhodesText ? 18 : 14)
-                .frame(maxWidth: .infinity, minHeight: largeRhodesText ? 320 : 150, alignment: .topLeading)
+                .frame(maxWidth: .infinity, alignment: .topLeading)
                 .background(.white.opacity(0.38), in: RoundedRectangle(cornerRadius: 14))
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
@@ -735,6 +731,7 @@ struct ClusterCardView: View {
             .foregroundStyle(cluster.textColor.opacity(0.82))
             .multilineTextAlignment(.leading)
             .frame(maxWidth: .infinity, alignment: .topLeading)
+            .accessibilityIdentifier("pass-user-info-text")
     }
 
     private var cardTagChips: some View {
@@ -758,6 +755,7 @@ struct ClusterCardView: View {
                     )
             }
         }
+        .fixedSize(horizontal: false, vertical: true)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
@@ -983,10 +981,47 @@ private func tagGradientStops(for style: CardTagColorStyle, opacity: Double = 1)
     }
 }
 
+private struct PassBackLayout: Layout {
+    private let spacing: CGFloat = 24
+
+    private func sizes(proposal: ProposedViewSize, subviews: Subviews) -> [CGSize] {
+        let naturalProposal = ProposedViewSize(width: proposal.width, height: nil)
+        var result = subviews.map { $0.sizeThatFits(naturalProposal) }
+        if let height = proposal.height, height.isFinite, let last = subviews.indices.last {
+            let precedingHeight = result.dropLast().reduce(0) { $0 + $1.height }
+            let remainingHeight = max(0, height - precedingHeight - spacing * CGFloat(last))
+            result[last] = subviews[last].sizeThatFits(
+                ProposedViewSize(width: proposal.width, height: min(result[last].height, remainingHeight))
+            )
+        }
+        return result
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let sizes = sizes(proposal: proposal, subviews: subviews)
+        let naturalHeight = sizes.reduce(0) { $0 + $1.height } + spacing * CGFloat(max(0, sizes.count - 1))
+        return CGSize(width: proposal.width ?? sizes.map(\.width).max() ?? 0,
+                      height: proposal.height.flatMap { $0.isFinite ? $0 : nil } ?? naturalHeight)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let sizes = sizes(proposal: ProposedViewSize(bounds.size), subviews: subviews)
+        let contentHeight = sizes.reduce(0) { $0 + $1.height } + spacing * CGFloat(max(0, sizes.count - 1))
+        let spareHeight = max(0, bounds.height - contentHeight)
+        let extraSpacing = min(8, spareHeight / CGFloat(max(1, sizes.count)))
+        let outerSpace = spareHeight - extraSpacing * CGFloat(max(0, sizes.count - 1))
+        var nextY = bounds.minY + min(32, outerSpace * 0.3)
+        for index in subviews.indices {
+            subviews[index].place(at: CGPoint(x: bounds.minX, y: nextY), anchor: .topLeading,
+                                  proposal: ProposedViewSize(width: bounds.width, height: sizes[index].height))
+            nextY += sizes[index].height + spacing + extraSpacing
+        }
+    }
+}
+
 private struct PassFlipModifier<Back: View>: AnimatableModifier {
     var angle: Double
     let back: Back
-    let verticalOverscan: CGFloat
 
     var animatableData: Double {
         get { angle }
@@ -998,18 +1033,19 @@ private struct PassFlipModifier<Back: View>: AnimatableModifier {
     }
 
     func body(content: Content) -> some View {
-        ZStack {
-            if angle <= 90 {
-                content
-            } else {
-                back
-                    .rotation3DEffect(
-                        .degrees(180),
-                        axis: (x: 0, y: 1, z: 0)
-                    )
+        content
+            .hidden()
+            .overlay(alignment: .top) {
+                if angle <= 90 {
+                    content
+                } else {
+                    back
+                        .rotation3DEffect(
+                            .degrees(180),
+                            axis: (x: 0, y: 1, z: 0)
+                        )
+                }
             }
-        }
-        .padding(.vertical, verticalOverscan)
         .scaleEffect(1 - 0.055 * flipProgress)
         .rotation3DEffect(
             .degrees(angle),

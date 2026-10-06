@@ -11,6 +11,15 @@ struct MeQRExchangeCodeRecord: Codable {
     let eventID: UUID?
     var synced: Bool
 
+    func repairingColorAvatar(from imageData: Data?) -> Self {
+        let capacity = QRCodeGenerator.colorLayerPayloadCapacity(from: payload)
+        if let avatarJPEG, !avatarJPEG.isEmpty, avatarJPEG.count <= capacity { return self }
+        guard let avatar = MeQRExchangeProfile.colorLayerAvatarJPEG(from: imageData, maxBytes: capacity) else { return self }
+        return Self(fingerprint: fingerprint, payload: payload, avatarJPEG: avatar,
+            sessionID: sessionID, ownerToken: ownerToken, onlineProfile: onlineProfile,
+            eventID: eventID, synced: synced)
+    }
+
     static func credentials() -> (sessionID: String, ownerToken: String) {
         let token = UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()
             + UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()

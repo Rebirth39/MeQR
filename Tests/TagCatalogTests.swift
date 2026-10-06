@@ -62,7 +62,8 @@ struct TagCatalogTests {
         let local = catalog(false)
         await local.refresh()
         assert(local.source == .bundled && CatalogResponse.requests == 0)
-        assert(RemoteTagCatalogSnapshot.value().count == 450)
+        let originalDocument = try JSONDecoder().decode(RemoteTagCatalogDocument.self, from: original)
+        assert(RemoteTagCatalogSnapshot.value().count == originalDocument.entries.count)
         assert(RemoteTagCatalogSnapshot.colors(for: "pjsk") == ["#39C5BB", "#00A0E9", "#88DD44", "#FF9900", "#EE1166", "#884499"])
         assert(RemoteTagCatalogSnapshot.colorPreset(for: "Project Sekai")?.solidColor == "#00A0E9")
         for entry in RemoteTagCatalogSnapshot.value() {
@@ -99,12 +100,12 @@ struct TagCatalogTests {
         assert(maintaining.statusMessage == L.tagCatalogMaintenance)
         assert(!FileManager.default.fileExists(atPath: cache.path), "Maintenance response must not enter cache")
 
-        document["revision"] = "test-online"
+        document["revision"] = "2099.10.02.10"
         document.removeValue(forKey: "changelog")
         CatalogResponse.data = try JSONSerialization.data(withJSONObject: document)
         await maintaining.refresh()
         assert(maintaining.source == .online && maintaining.sourceName == "online")
-        assert(maintaining.revision == "test-online" && maintaining.changelog.isEmpty)
+        assert(maintaining.revision == "2099.10.02.10" && maintaining.changelog.isEmpty)
         let cachedData = try Data(contentsOf: cache)
         assert(cachedData == CatalogResponse.data)
 
@@ -112,18 +113,62 @@ struct TagCatalogTests {
         let offline = catalog(true)
         await offline.refresh()
         assert(offline.source == .cached && offline.sourceName == "cached")
-        assert(offline.revision == "test-online" && offline.statusMessage == L.tagCatalogFallback)
+        assert(offline.revision == "2099.10.02.10" && offline.statusMessage == L.tagCatalogFallback)
 
         CatalogResponse.error = nil
         CatalogResponse.data = Data("{}".utf8)
         await offline.refresh()
-        assert(offline.revision == "test-online" && offline.source == .cached)
+        assert(offline.revision == "2099.10.02.10" && offline.source == .cached)
+
+        // Downgrade and malformed responses must leave both the live directory and cache intact.
+        var older = document
+        older["revision"] = "2099.10.02.9"
+        var incomplete = document
+        incomplete["revision"] = "2099.10.02.11"
+        incomplete["categories"] = []
+        var brokenColor = document
+        var brokenEntries = document["entries"] as! [[String: Any]]
+        brokenEntries[0]["colors"] = ["not-a-color"]
+        brokenColor["entries"] = brokenEntries
+        var duplicate = document
+        let validEntries = document["entries"] as! [[String: Any]]
+        duplicate["entries"] = validEntries + [validEntries[0]]
+        var cycle = document
+        var cyclicEntries = document["entries"] as! [[String: Any]]
+        cyclicEntries[0]["parentID"] = cyclicEntries[0]["id"]
+        cycle["entries"] = cyclicEntries
+        for invalid in [older, incomplete, brokenColor, duplicate, cycle] {
+            CatalogResponse.data = try JSONSerialization.data(withJSONObject: invalid)
+            await offline.refresh()
+            assert(offline.revision == "2099.10.02.10")
+            assert(offline.statusMessage == L.tagCatalogFallback)
+            assert(RemoteTagCatalogSnapshot.value().count == originalDocument.entries.count)
+            let preserved = try Data(contentsOf: cache)
+            assert(preserved == cachedData)
+        }
+
+        let records = RemoteTagCatalogSnapshot.searchRecordValue()
+        let chihaya = records.first { $0.entry.id == "tag-0423" }!
+        let haruka = records.first { $0.entry.id == "tag-0422" }!
+        assert(!chihaya.contextKeys.contains { $0.contains("灰姑娘") })
+        assert(!haruka.contextKeys.contains { $0.contains("闪耀") })
+        let imbibitor = records.first { $0.entry.id == "tag-0376" }!
+        assert(imbibitor.contextKeys.contains(CardTagIndex.normalizedKey("Dan Heng")))
+        assert(imbibitor.contextKeys.contains(CardTagIndex.normalizedKey("Honkai: Star Rail")))
+
+        var staleCacheDocument = document
+        staleCacheDocument["revision"] = "2000.01.01.1"
+        try JSONSerialization.data(withJSONObject: staleCacheDocument).write(to: cache)
+        CatalogResponse.error = URLError(.notConnectedToInternet)
+        let oldCache = catalog(true)
+        await oldCache.refresh()
+        assert(oldCache.revision == local.revision && oldCache.source == .bundled)
 
         try maintenance.write(to: cache)
         CatalogResponse.error = URLError(.notConnectedToInternet)
         let staleMaintenance = catalog(true)
         await staleMaintenance.refresh()
         assert(staleMaintenance.source == .bundled && staleMaintenance.revision == local.revision)
-        print("Tag catalog: local mode, online restore, cache, maintenance and invalid response checks passed")
+        print("Tag catalog: identity, ancestors, local/online/cache, maintenance, downgrade and invalid response preservation passed")
     }
 }

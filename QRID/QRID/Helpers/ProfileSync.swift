@@ -159,7 +159,7 @@ enum ProfileSync {
     }
     static func apply(_ snapshot: SyncSnapshot, to c: QRCluster, context: ModelContext, token: String) async throws {
         let doc = snapshot.document
-        guard doc.schemaVersion == 1, !doc.qrItems.isEmpty, doc.tags.count <= 10 else { throw SyncFailure(code: 400, message: L.syncErrFormatUnsupported) }
+        guard doc.schemaVersion == 1, !doc.qrItems.isEmpty, doc.tags.count <= CardTagLimiter.maxTags else { throw SyncFailure(code: 400, message: L.syncErrFormatUnsupported) }
         var images: [String: Data] = [:]
         for (kind,digest) in doc.assets {
             let data = try await request("profiles/\(snapshot.profileId)/assets/\(digest)", token: token)
@@ -178,7 +178,7 @@ enum ProfileSync {
         for (i,item) in doc.qrItems.enumerated() {
             let p = i < existing.count ? existing[i] : QRProfile(qrContent: item.qrContent)
             p.platformType = item.platform; p.qrContent = item.qrContent; p.foregroundColorHex = doc.qrColor; p.customPlatformName = item.customPlatformName
-            p.createdAt = Date(timeIntervalSince1970: Double(i)); context.insert(p); p.attach(to: c)
+            p.createdAt = Date(timeIntervalSince1970: Double(i)); p.attach(to: c, in: context)
             updated.append(p)
         }
         c.profiles = updated

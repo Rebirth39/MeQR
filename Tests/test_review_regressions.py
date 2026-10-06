@@ -186,7 +186,7 @@ class ReviewRegressionTests(unittest.TestCase):
         cases = [
             ("QRID/QRID/Views/MainView.swift", "deleteCurrentQR"),
             ("QRID/QRID/Views/MainView.swift", "deleteCurrentCluster"),
-            ("QRID/QRID/Views/EditClusterView.swift", "deleteProfiles"),
+            ("QRID/QRID/Views/EditClusterView.swift", "save"),
         ]
         for path, function_name in cases:
             with self.subTest(function_name=function_name):
@@ -241,9 +241,11 @@ class ReviewRegressionTests(unittest.TestCase):
         self.assertNotIn("cluster.profiles.append", body)
 
     def test_edit_cluster_profile_delete_rolls_back_and_dismisses_after_save(self):
-        body = extract_function_body(read("QRID/QRID/Views/EditClusterView.swift"), "deleteProfiles")
+        body = extract_function_body(read("QRID/QRID/Views/EditClusterView.swift"), "save")
+        self.assertIn("pendingDeletedProfileIDs", body)
+        self.assertIn("remainingProfiles.isEmpty", body)
+        self.assertIn("modelContext.delete(cluster)", body)
         self.assertRegex(body, r"catch\s*\{\s*modelContext\.rollback\(\)")
-        self.assertIn("shouldDismissAfterSave", body)
         self.assertLess(body.index("try modelContext.save()"), body.index("dismiss()"))
 
     def test_backup_restore_refreshes_widget_and_auto_backup_after_save(self):
@@ -499,7 +501,7 @@ class ReviewRegressionTests(unittest.TestCase):
         tag_browser = read("QRID/QRID/Views/CardTagCatalogBrowser.swift")
 
         self.assertIn("var tagColorOverridesRawValue: String?", cluster)
-        self.assertIn("static let maxTags = 10", cluster)
+        self.assertIn("static let maxTags = 15", cluster)
         self.assertIn("static let maxHalfWidthUnits = 20", cluster)
         self.assertIn("if let indexedTag = CardTagIndex.canonicalTag(for: trimmed)", cluster)
         self.assertIn("return indexedTag", cluster)
@@ -535,7 +537,7 @@ class ReviewRegressionTests(unittest.TestCase):
             self.assertTrue(change["date"])
             for language in ("zhHans", "zhHantHK", "zhHantTW", "en", "ja"):
                 self.assertTrue(change["summary"][language])
-        self.assertEqual(len(tag_catalog["entries"]), 452)
+        self.assertEqual(len(tag_catalog["entries"]), 513)
         self.assertIn('let categories: [RemoteTagCategory]?', remote_catalog)
         self.assertIn('let solidColor: String?', remote_catalog)
         self.assertIn('searchRecords = records', remote_catalog)
@@ -679,7 +681,7 @@ class ReviewRegressionTests(unittest.TestCase):
         self.assertIn("static var tagColors", localization)
         self.assertIn("static var addColor", localization)
         self.assertIn("static var tagColorMixed", localization)
-        self.assertIn("最多 10 个", localization)
+        self.assertIn("最多 15 个", localization)
 
 if __name__ == "__main__":
     unittest.main()

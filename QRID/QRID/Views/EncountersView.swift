@@ -25,9 +25,10 @@ struct EncounterPreviewView: View {
 
     var body: some View {
         NavigationStack {
+            GeometryReader { geometry in
                 ScrollView {
                     VStack(spacing: 16) {
-                        card
+                        card(containerWidth: geometry.size.width - 32)
                         if sessionID == nil || localProfile == nil {
                             Text(L.encounterLocalOnly)
                                 .font(.footnote)
@@ -39,13 +40,12 @@ struct EncounterPreviewView: View {
                     .padding(.top, 12)
                     .padding(.bottom, 24)
                 }
-            .background {
-                GeometryReader { geometry in
+                .background {
                     background
                         .frame(width: geometry.size.width, height: geometry.size.height)
                         .clipped()
+                        .ignoresSafeArea()
                 }
-                .ignoresSafeArea()
             }
             .navigationTitle(L.meqrProfileFound)
             .navigationBarTitleDisplayMode(.inline)
@@ -77,7 +77,7 @@ struct EncounterPreviewView: View {
         }
     }
 
-    private var card: some View {
+    private func card(containerWidth: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 6) {
@@ -123,9 +123,10 @@ struct EncounterPreviewView: View {
             }
 
             if let currentPlatform {
+                let qrSide = min(260, max(0, containerWidth * 0.58))
                 platformQRCode(for: currentPlatform)
                     .padding(12)
-                    .frame(width: min(260, UIScreen.main.bounds.width * 0.58), height: min(260, UIScreen.main.bounds.width * 0.58))
+                    .frame(width: qrSide, height: qrSide)
                     .padding(12)
                     .background(.white, in: RoundedRectangle(cornerRadius: 18))
                     .overlay(

@@ -8,6 +8,7 @@ struct MeQRExchangeProfile: Codable, Identifiable, Hashable {
     var subtitle: String
     var intro: String
     var avatarJPEGBase64: String?
+    var avatarThumbnailBase64: String?
     var backgroundJPEGBase64: String?
     var bannerJPEGBase64: String?
     var textColorHex: String?
@@ -24,6 +25,7 @@ struct MeQRExchangeProfile: Codable, Identifiable, Hashable {
             subtitle: cluster.subtitle,
             intro: cluster.subtitle,
             avatarImageData: cluster.avatarImageData,
+            avatarThumbnailData: nil,
             backgroundImageData: avatarMaxBytes > 0 ? cluster.backgroundImageData : nil,
             bannerImageData: avatarMaxBytes > 0 ? cluster.rhodesBannerImageData : nil,
             textColorHex: cluster.textColorHex,
@@ -43,7 +45,8 @@ struct MeQRExchangeProfile: Codable, Identifiable, Hashable {
             name: cluster.name,
             subtitle: Self.offlineSubtitle(from: cluster.subtitle),
             intro: "",
-            avatarImageData: nil,
+            avatarImageData: cluster.avatarImageData,
+            avatarThumbnailData: cluster.avatarImageData,
             backgroundImageData: nil,
             bannerImageData: nil,
             textColorHex: cluster.textColorHex,
@@ -63,6 +66,7 @@ struct MeQRExchangeProfile: Codable, Identifiable, Hashable {
         subtitle: String,
         intro: String,
         avatarImageData: Data?,
+        avatarThumbnailData: Data?,
         backgroundImageData: Data?,
         bannerImageData: Data?,
         textColorHex: String?,
@@ -84,6 +88,7 @@ struct MeQRExchangeProfile: Codable, Identifiable, Hashable {
         self.qrColorHex = qrColorHex
         self.templateStyleRawValue = templateStyleRawValue
         avatarJPEGBase64 = Self.avatarBase64(from: avatarImageData, maxBytes: min(avatarMaxBytes, 180_000))
+        avatarThumbnailBase64 = Self.avatarThumbnailBase64(from: avatarThumbnailData)
         bannerJPEGBase64 = Self.avatarBase64(from: bannerImageData, maxBytes: avatarMaxBytes > 0 ? 80_000 : 0)
         backgroundJPEGBase64 = Self.backgroundBase64(
             from: backgroundImageData,
@@ -100,7 +105,7 @@ struct MeQRExchangeProfile: Codable, Identifiable, Hashable {
                     qrContent: profile.qrContent
                 )
             }
-        tags = Array(sourceTags.prefix(10))
+        tags = Array(sourceTags.prefix(CardTagLimiter.maxTags))
         sharedAt = Date()
     }
 
@@ -126,11 +131,81 @@ struct MeQRExchangeProfile: Codable, Identifiable, Hashable {
         return jpeg.base64EncodedString()
     }
 
+    private static func avatarThumbnailBase64(from data: Data?) -> String? {
+        guard let data,
+              let image = UIImage(data: data),
+              let thumbnail = avatarThumbnail(from: image) else { return nil }
+        return thumbnail.base64EncodedString()
+    }
+
+    private static func avatarThumbnail(from image: UIImage) -> Data? {
+        let side = 12
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        let resized = UIGraphicsImageRenderer(size: CGSize(width: side, height: side), format: format).image { _ in
+            image.draw(in: CGRect(x: 0, y: 0, width: side, height: side),
+                       blendMode: .copy,
+                       alpha: 1)
+        }
+        guard let cgImage = resized.cgImage,
+              let context = CGContext(
+                  data: nil,
+                  width: side,
+                  height: side,
+                  bitsPerComponent: 8,
+                  bytesPerRow: side * 4,
+                  space: CGColorSpaceCreateDeviceRGB(),
+                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+              ) else { return nil }
+        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: side, height: side))
+        guard let pointer = context.data?.assumingMemoryBound(to: UInt8.self) else { return nil }
+        var packet = Data([0x4D, 0x51, 0x54, 0x31, UInt8(side), UInt8(side)])
+        for index in 0..<(side * side) {
+            let offset = index * 4
+            packet.append((pointer[offset] & 0xE0) | ((pointer[offset + 1] >> 3) & 0x1C) | (pointer[offset + 2] >> 6))
+        }
+        return packet
+    }
+
+    private static func jpegFromAvatarThumbnail(_ encoded: String) -> Data? {
+        guard let packet = Data(base64Encoded: encoded),
+              packet.count == 6 + 12 * 12,
+              packet.prefix(4) == Data([0x4D, 0x51, 0x54, 0x31]),
+              packet[4] == 12, packet[5] == 12 else { return nil }
+        let side = 12
+        var pixels = [UInt8](repeating: 255, count: side * side * 4)
+        for index in 0..<(side * side) {
+            let value = packet[6 + index]
+            let red = (value & 0xE0) | ((value & 0xE0) >> 3) | ((value & 0xE0) >> 6)
+            let green = ((value & 0x1C) << 3) | ((value & 0x1C) >> 2) | ((value & 0x1C) >> 7)
+            let blue = (value & 0x03) * 0x55
+            let offset = index * 4
+            pixels[offset] = red
+            pixels[offset + 1] = green
+            pixels[offset + 2] = blue
+            pixels[offset + 3] = 255
+        }
+        guard let image = pixels.withUnsafeMutableBytes({ rawBuffer -> CGImage? in
+            guard let baseAddress = rawBuffer.baseAddress,
+                  let context = CGContext(
+                      data: baseAddress,
+                      width: side,
+                      height: side,
+                      bitsPerComponent: 8,
+                      bytesPerRow: side * 4,
+                      space: CGColorSpaceCreateDeviceRGB(),
+                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+                  ) else { return nil }
+            return context.makeImage()
+        }) else { return nil }
+        return UIImage(cgImage: image).jpegData(compressionQuality: 0.72)
+    }
+
     static func colorLayerAvatarJPEG(from data: Data?, maxBytes: Int) -> Data? {
         guard maxBytes > 0,
               let data,
               let image = UIImage(data: data),
-              let jpeg = image.jpegDataForMeQRAvatar(targetMaxBytes: maxBytes),
+              let jpeg = image.jpegDataForMeQRAvatar(targetMaxBytes: maxBytes, compact: true),
               jpeg.count <= maxBytes else { return nil }
         return jpeg
     }
@@ -167,6 +242,7 @@ struct MeQRExchangeProfile: Codable, Identifiable, Hashable {
         case subtitle = "s"
         case intro = "u"
         case avatarJPEGBase64 = "a"
+        case avatarThumbnailBase64 = "at"
         case backgroundJPEGBase64 = "b"
         case bannerJPEGBase64 = "bn"
         case textColorHex = "tc"
@@ -211,8 +287,13 @@ struct MeQRExchangeProfile: Codable, Identifiable, Hashable {
         intro = try container.decodeIfPresent(String.self, forKey: .intro)
             ?? container.decodeIfPresent(String.self, forKey: .legacyIntro)
             ?? subtitle
-        avatarJPEGBase64 = try container.decodeIfPresent(String.self, forKey: .avatarJPEGBase64)
+        let encodedAvatar = try container.decodeIfPresent(String.self, forKey: .avatarJPEGBase64)
             ?? container.decodeIfPresent(String.self, forKey: .legacyAvatarJPEGBase64)
+        avatarThumbnailBase64 = try container.decodeIfPresent(String.self, forKey: .avatarThumbnailBase64)
+        avatarJPEGBase64 = encodedAvatar
+            ?? avatarThumbnailBase64
+                .flatMap(Self.jpegFromAvatarThumbnail)
+                .map { $0.base64EncodedString() }
         backgroundJPEGBase64 = try container.decodeIfPresent(String.self, forKey: .backgroundJPEGBase64)
             ?? container.decodeIfPresent(String.self, forKey: .legacyBackgroundJPEGBase64)
         bannerJPEGBase64 = try container.decodeIfPresent(String.self, forKey: .bannerJPEGBase64)
@@ -230,7 +311,7 @@ struct MeQRExchangeProfile: Codable, Identifiable, Hashable {
             ?? []
         tags = Array((try container.decodeIfPresent([String].self, forKey: .tags)
             ?? container.decodeIfPresent([String].self, forKey: .legacyTags)
-            ?? []).prefix(10))
+            ?? []).prefix(CardTagLimiter.maxTags))
         if let timestamp = try container.decodeIfPresent(Double.self, forKey: .sharedAt) {
             sharedAt = Date(timeIntervalSince1970: timestamp)
         } else {
@@ -250,6 +331,9 @@ struct MeQRExchangeProfile: Codable, Identifiable, Hashable {
         try container.encode(intro, forKey: .intro)
         if let avatarJPEGBase64 {
             try container.encode(avatarJPEGBase64, forKey: .avatarJPEGBase64)
+        }
+        if let avatarThumbnailBase64 {
+            try container.encode(avatarThumbnailBase64, forKey: .avatarThumbnailBase64)
         }
         if let backgroundJPEGBase64 {
             try container.encode(backgroundJPEGBase64, forKey: .backgroundJPEGBase64)
@@ -435,7 +519,7 @@ private extension Data {
 }
 
 private extension UIImage {
-    func jpegDataForMeQRAvatar(targetMaxBytes: Int) -> Data? {
+    func jpegDataForMeQRAvatar(targetMaxBytes: Int, compact: Bool = false) -> Data? {
         let sideCandidates: [CGFloat]
         if targetMaxBytes >= 64 * 1024 {
             sideCandidates = [1024, 768, 512, 384, 256, 192, 160, 128, 112, 96, 80, 64, 56, 48, 40, 32, 28, 24, 20, 16]
@@ -448,7 +532,8 @@ private extension UIImage {
         for maxSide in sideCandidates {
             guard let resized = resizedForMeQRAvatar(maxSide: maxSide) else { continue }
             for quality in qualityCandidates {
-                guard let jpeg = resized.jpegData(compressionQuality: quality) else { continue }
+                guard let jpeg = compact ? resized.compactAvatarJPEG(quality: quality)
+                    : resized.jpegData(compressionQuality: quality) else { continue }
                 if smallestJPEG == nil || jpeg.count < smallestJPEG!.count {
                     smallestJPEG = jpeg
                 }
@@ -459,6 +544,38 @@ private extension UIImage {
         }
 
         return smallestJPEG
+    }
+
+    func compactAvatarJPEG(quality: CGFloat) -> Data? {
+        guard let source = cgImage,
+              let space = CGColorSpace(name: CGColorSpace.sRGB),
+              let context = CGContext(data: nil, width: source.width, height: source.height,
+                  bitsPerComponent: 8, bytesPerRow: source.width * 4, space: space,
+                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+        let bounds = CGRect(x: 0, y: 0, width: source.width, height: source.height)
+        context.setFillColor(UIColor.white.cgColor)
+        context.fill(bounds)
+        context.draw(source, in: bounds)
+        guard let converted = context.makeImage(),
+              let jpeg = UIImage(cgImage: converted).jpegData(compressionQuality: quality) else { return nil }
+        let bytes = [UInt8](jpeg)
+        guard bytes.count >= 4, bytes[0] == 0xFF, bytes[1] == 0xD8 else { return nil }
+        var output = Data(bytes.prefix(2))
+        var offset = 2
+        while offset + 3 < bytes.count {
+            guard bytes[offset] == 0xFF else { return nil }
+            let marker = bytes[offset + 1]
+            if marker == 0xDA {
+                output.append(contentsOf: bytes[offset...])
+                return output
+            }
+            let length = Int(bytes[offset + 2]) << 8 | Int(bytes[offset + 3])
+            guard length >= 2, offset + 2 + length <= bytes.count else { return nil }
+            let isMetadata = (0xE1...0xED).contains(marker) || marker == 0xEF || marker == 0xFE
+            if !isMetadata { output.append(contentsOf: bytes[offset..<(offset + 2 + length)]) }
+            offset += 2 + length
+        }
+        return nil
     }
 
     func resizedForMeQRAvatar(maxSide: CGFloat) -> UIImage? {

@@ -109,11 +109,20 @@ nonisolated enum RemoteTagCatalogSnapshot {
             let displayKeys = Array(Set(entry.names.allValues.map(CardTagIndex.normalizedKey)))
             let aliasKeys = Array(Set(entry.aliases.map(CardTagIndex.normalizedKey)))
             let categories = (document.categories ?? []).filter { category in category.ranges.contains { $0.contains(entry.id) } }
+            var ancestors: [RemoteTagEntry] = []
+            var visited: Set<String> = [entry.id]
+            var parentID = entry.parentID
+            while let id = parentID, visited.insert(id).inserted,
+                  let parent = document.entries.first(where: { $0.id == id }) {
+                ancestors.append(parent)
+                parentID = parent.parentID
+            }
+            // Older entries without parent IDs may inherit the category's sole work.
             let works = document.entries.filter { candidate in
                 candidate.kind == "work" && categories.contains { category in category.ranges.contains { $0.contains(candidate.id) } }
             }
-            let parent = document.entries.first { $0.id == entry.parentID }
-            let context = categories.flatMap { $0.names.allValues } + works.flatMap(\.searchableValues) + (parent?.searchableValues ?? [])
+            let fallbackWorks = ancestors.isEmpty && works.count == 1 ? works : []
+            let context = categories.flatMap { $0.names.allValues } + (ancestors + fallbackWorks).flatMap(\.searchableValues)
             return RemoteTagSearchRecord(
                 entry: entry,
                 displayKeys: displayKeys,
@@ -332,6 +341,9 @@ final class RemoteTagCatalog: ObservableObject {
                 statusMessage = L.tagCatalogMaintenance
                 return
             }
+            guard revision.isEmpty || document.revision.compare(revision, options: .numeric) != .orderedAscending else {
+                throw URLError(.badServerResponse)
+            }
             install(document, source: .online)
             try? data.write(to: storedURL, options: .atomic)
         } catch {
@@ -365,7 +377,48 @@ final class RemoteTagCatalog: ObservableObject {
             guard document.schemaVersion == 1, !document.entries.isEmpty else {
                 throw URLError(.cannotParseResponse)
             }
+            if !isMaintenance(document) { try validate(document) }
             return document
         }.value
+    }
+
+    private nonisolated static func validate(_ document: RemoteTagCatalogDocument) throws {
+        func require(_ condition: Bool) throws {
+            if !condition { throw URLError(.cannotParseResponse) }
+        }
+        try require(document.revision.range(of: "^[0-9]+(?:\\.[0-9]+)+$", options: .regularExpression) != nil)
+        let entries = document.entries
+        let ids = Set(entries.map(\.id))
+        try require(ids.count == entries.count && !ids.contains(""))
+        let categories = document.categories ?? []
+        try require(!categories.isEmpty && Set(categories.map(\.id)).count == categories.count)
+        for category in categories {
+            try require(category.names.allValues.allSatisfy { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty })
+            try require(!category.id.isEmpty && !category.ranges.isEmpty)
+            for range in category.ranges { try require(!range.start.isEmpty && range.start <= range.end) }
+        }
+        for entry in entries {
+            try require(entry.names.allValues.allSatisfy { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty })
+            try require((1...6).contains(entry.colors.count) && entry.colors.allSatisfy { $0.range(of: "^#[0-9A-Fa-f]{6}$", options: .regularExpression) != nil })
+            if let solid = entry.solidColor { try require(entry.colors.map { $0.uppercased() }.contains(solid.uppercased())) }
+            try require(categories.filter { $0.ranges.contains { $0.contains(entry.id) } }.count == 1)
+            var visited: Set<String> = [entry.id]
+            var parentID = entry.parentID
+            while let id = parentID {
+                try require(visited.insert(id).inserted && ids.contains(id))
+                parentID = entries.first { $0.id == id }?.parentID
+            }
+        }
+        let groups = document.groups ?? []
+        try require(Set(groups.map(\.id)).count == groups.count)
+        for group in groups {
+            try require(group.names.allValues.allSatisfy { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty })
+            try require(!group.id.isEmpty && !group.ranges.isEmpty)
+            guard let category = categories.first(where: { $0.id == group.categoryID }) else { throw URLError(.cannotParseResponse) }
+            for range in group.ranges { try require(!range.start.isEmpty && range.start <= range.end) }
+            for entry in entries where group.ranges.contains(where: { $0.contains(entry.id) }) {
+                try require(category.ranges.contains { $0.contains(entry.id) })
+            }
+        }
     }
 }

@@ -1,0 +1,248 @@
+{
+  "revision": "2026.10.04.1",
+  "scope": "Four nonurgent Tag tickets; five entries including parent work",
+  "entries": [
+    {
+      "id": "tag-0491",
+      "name": "Heated Rivalry",
+      "colors": [
+        "#F0DE2B",
+        "#2E2D2E",
+        "#2147B2",
+        "#D5222F"
+      ],
+      "solidColor": "#F0DE2B",
+      "type": "author-published-cover-representative-colors",
+      "sources": [
+        "https://www.rachelreidwrites.com/heated-rivalry",
+        "https://images.squarespace-cdn.com/content/v1/693153251cb6fe1b75c219b3/46c1a85b-3b37-4860-80f9-497e0be25816/Heated+Rivalry+Paperback.png"
+      ],
+      "evidence": "作者官网介绍确认两位角色；官网书封实图球衣黄黑与蓝红。采用书封RGB中位数代表色，不称官方应援HEX，不混用小说和剧版队名。作品Tag组合两位角色颜色。未核实中日译名，保留原文姓名。",
+      "samples": {
+        "ilya-yellow": {
+          "file": "heated-cover.png",
+          "roi": [
+            1592,
+            1420,
+            1655,
+            1465
+          ],
+          "method": "per-channel RGB median, no filter",
+          "hex": "#F0DE2B",
+          "sha256": "84ff3a12edf49ea3f16db05d8b9d7f068a81920f2f9639baeb17ead68f5edb1d"
+        },
+        "ilya-black": {
+          "file": "heated-cover.png",
+          "roi": [
+            1425,
+            1380,
+            1476,
+            1441
+          ],
+          "method": "per-channel RGB median, no filter",
+          "hex": "#2E2D2E",
+          "sha256": "84ff3a12edf49ea3f16db05d8b9d7f068a81920f2f9639baeb17ead68f5edb1d"
+        },
+        "shane-blue": {
+          "file": "heated-cover.png",
+          "roi": [
+            905,
+            1347,
+            936,
+            1398
+          ],
+          "method": "per-channel RGB median, no filter",
+          "hex": "#2147B2",
+          "sha256": "84ff3a12edf49ea3f16db05d8b9d7f068a81920f2f9639baeb17ead68f5edb1d"
+        },
+        "shane-red": {
+          "file": "heated-cover.png",
+          "roi": [
+            833,
+            1462,
+            908,
+            1521
+          ],
+          "method": "per-channel RGB median, no filter",
+          "hex": "#D5222F",
+          "sha256": "84ff3a12edf49ea3f16db05d8b9d7f068a81920f2f9639baeb17ead68f5edb1d"
+        }
+      }
+    },
+    {
+      "id": "tag-0492",
+      "name": "Ilya Rozanov",
+      "colors": [
+        "#F0DE2B",
+        "#2E2D2E"
+      ],
+      "solidColor": "#F0DE2B",
+      "type": "author-published-cover-representative-colors",
+      "sources": [
+        "https://www.rachelreidwrites.com/heated-rivalry",
+        "https://images.squarespace-cdn.com/content/v1/693153251cb6fe1b75c219b3/46c1a85b-3b37-4860-80f9-497e0be25816/Heated+Rivalry+Paperback.png"
+      ],
+      "evidence": "作者官网介绍确认两位角色；官网书封实图球衣黄黑与蓝红。采用书封RGB中位数代表色，不称官方应援HEX，不混用小说和剧版队名。作品Tag组合两位角色颜色。未核实中日译名，保留原文姓名。",
+      "samples": {
+        "ilya-yellow": {
+          "file": "heated-cover.png",
+          "roi": [
+            1592,
+            1420,
+            1655,
+            1465
+          ],
+          "method": "per-channel RGB median, no filter",
+          "hex": "#F0DE2B",
+          "sha256": "84ff3a12edf49ea3f16db05d8b9d7f068a81920f2f9639baeb17ead68f5edb1d"
+        },
+        "ilya-black": {
+          "file": "heated-cover.png",
+          "roi": [
+            1425,
+            1380,
+            1476,
+            1441
+          ],
+          "method": "per-channel RGB median, no filter",
+          "hex": "#2E2D2E",
+          "sha256": "84ff3a12edf49ea3f16db05d8b9d7f068a81920f2f9639baeb17ead68f5edb1d"
+        },
+        "shane-blue": {
+          "file": "heated-cover.png",
+          "roi": [
+            905,
+            1347,
+            936,
+            1398
+          ],
+          "method": "per-channel RGB median, no filter",
+          "hex": "#2147B2",
+          "sha256": "84ff3a12edf49ea3f16db05d8b9d7f068a81920f2f9639baeb17ead68f5edb1d"
+        },
+        "shane-red": {
+          "file": "heated-cover.png",
+          "roi": [
+            833,
+            1462,
+            908,
+            1521
+          ],
+          "method": "per-channel RGB median, no filter",
+          "hex": "#D5222F",
+          "sha256": "84ff3a12edf49ea3f16db05d8b9d7f068a81920f2f9639baeb17ead68f5edb1d"
+        }
+      }
+    },
+    {
+      "id": "tag-0493",
+      "name": "Shane Hollander",
+      "colors": [
+        "#2147B2",
+        "#D5222F"
+      ],
+      "solidColor": "#2147B2",
+      "type": "author-published-cover-representative-colors",
+      "sources": [
+        "https://www.rachelreidwrites.com/heated-rivalry",
+        "https://images.squarespace-cdn.com/content/v1/693153251cb6fe1b75c219b3/46c1a85b-3b37-4860-80f9-497e0be25816/Heated+Rivalry+Paperback.png"
+      ],
+      "evidence": "作者官网介绍确认两位角色；官网书封实图球衣黄黑与蓝红。采用书封RGB中位数代表色，不称官方应援HEX，不混用小说和剧版队名。作品Tag组合两位角色颜色。未核实中日译名，保留原文姓名。",
+      "samples": {
+        "ilya-yellow": {
+          "file": "heated-cover.png",
+          "roi": [
+            1592,
+            1420,
+            1655,
+            1465
+          ],
+          "method": "per-channel RGB median, no filter",
+          "hex": "#F0DE2B",
+          "sha256": "84ff3a12edf49ea3f16db05d8b9d7f068a81920f2f9639baeb17ead68f5edb1d"
+        },
+        "ilya-black": {
+          "file": "heated-cover.png",
+          "roi": [
+            1425,
+            1380,
+            1476,
+            1441
+          ],
+          "method": "per-channel RGB median, no filter",
+          "hex": "#2E2D2E",
+          "sha256": "84ff3a12edf49ea3f16db05d8b9d7f068a81920f2f9639baeb17ead68f5edb1d"
+        },
+        "shane-blue": {
+          "file": "heated-cover.png",
+          "roi": [
+            905,
+            1347,
+            936,
+            1398
+          ],
+          "method": "per-channel RGB median, no filter",
+          "hex": "#2147B2",
+          "sha256": "84ff3a12edf49ea3f16db05d8b9d7f068a81920f2f9639baeb17ead68f5edb1d"
+        },
+        "shane-red": {
+          "file": "heated-cover.png",
+          "roi": [
+            833,
+            1462,
+            908,
+            1521
+          ],
+          "method": "per-channel RGB median, no filter",
+          "hex": "#D5222F",
+          "sha256": "84ff3a12edf49ea3f16db05d8b9d7f068a81920f2f9639baeb17ead68f5edb1d"
+        }
+      }
+    },
+    {
+      "id": "tag-0494",
+      "name": "崩坏3",
+      "colors": [
+        "#FFA827"
+      ],
+      "solidColor": "#FFA827",
+      "type": "official-site-navigation-accent",
+      "sources": [
+        "https://bh3.mihoyo.com/",
+        "https://www.houkai3rd.com/",
+        "https://honkaiimpact3.hoyoverse.com/global/en-us/home",
+        "https://honkaiimpact3.hoyoverse.com/_nuxt/febc43e.js"
+      ],
+      "evidence": "官网脚本CSS中.header .item-name::before和active图标fill为#ffa827。选择该金橙色作为工单黄色方向的代表色；不是声称官方应援色或Logo原色。"
+    },
+    {
+      "id": "tag-0495",
+      "name": "戴菲恩",
+      "colors": [
+        "#595B2A"
+      ],
+      "solidColor": "#595B2A",
+      "type": "game-art-representative-color",
+      "sources": [
+        "https://zh.moegirl.org.cn/%E6%88%B4%E8%8F%B2%E6%81%A9",
+        "https://storage.moegirl.org.cn/moegirl/commons/9/9f/%E6%98%8E%E6%97%A5%E6%96%B9%E8%88%9F%E7%AB%8B%E7%BB%98_%E6%88%B4%E8%8F%B2%E6%81%A9_1.png!/fw/700/watermark/url/L21vZWdpcmwvd2F0ZXJtYXJrLnBuZw==/align/southeast/margin/10x10/opacity/50?v=20231025074249"
+      ],
+      "evidence": "萌娘百科角色正文确认戴菲恩/Delphine/デルフィーン；页面初始游戏立绘内衬取橄榄绿，非官方应援HEX。",
+      "samples": {
+        "delphine-green": {
+          "file": "delphine-art.png",
+          "roi": [
+            399,
+            246,
+            423,
+            275
+          ],
+          "method": "per-channel RGB median, no filter",
+          "hex": "#595B2A",
+          "sha256": "2f61249d4e201938fbda21ed6b3dcbc39c3749253e98e589310a351916ea6aad"
+        }
+      }
+    }
+  ],
+  "limitations": "Heated Rivalry merch pages unavailable; search snippets are supplementary only. Colors use the author website cover actually inspected. Earlier six-ticket verification debt is not addressed by this release."
+}

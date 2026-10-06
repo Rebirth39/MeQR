@@ -44,9 +44,12 @@ struct EditClusterView: View {
     @State private var isBackgroundExpanded = false
     @State private var saveError: String?
     @State private var showSaveError = false
+    @State private var pendingDeletedProfileIDs: Set<UUID> = []
 
     private var sortedProfiles: [QRProfile] {
-        cluster.profiles.sorted { $0.createdAt < $1.createdAt }
+        cluster.profiles
+            .filter { !pendingDeletedProfileIDs.contains($0.id) }
+            .sorted { $0.createdAt < $1.createdAt }
     }
 
     var body: some View {
@@ -485,6 +488,21 @@ struct EditClusterView: View {
     }
 
     private func save() {
+        let remainingProfiles = sortedProfiles
+        // Deleting every QR deletes the card, subject to the same sync guard as the home screen.
+        if remainingProfiles.isEmpty {
+            do {
+                if try ProfileSync.binding(cluster.id) != nil {
+                    saveError = L.deleteStopSyncFirst
+                    showSaveError = true
+                    return
+                }
+            } catch {
+                saveError = error.localizedDescription
+                showSaveError = true
+                return
+            }
+        }
         cluster.name = name.trimmingCharacters(in: .whitespaces)
         cluster.subtitle = subtitle.trimmingCharacters(in: .whitespaces)
         cluster.avatarImageData = avatarImage?.jpegData(compressionQuality: 0.9)
@@ -509,10 +527,21 @@ struct EditClusterView: View {
         cluster.widgetUseClusterBackground = widgetUseClusterBackground
         cluster.widgetOpacity = widgetOpacity
         cluster.widgetBackgroundImageData = widgetUseCustomBackground ? resizedWidgetImageData(from: widgetBackgroundImage) : nil
+        let profilesToDelete = cluster.profiles.filter { pendingDeletedProfileIDs.contains($0.id) }
+        cluster.profiles = remainingProfiles
+        for profile in profilesToDelete {
+            modelContext.delete(profile)
+        }
+        if remainingProfiles.isEmpty {
+            modelContext.delete(cluster)
+        }
         do {
             try modelContext.save()
-            WidgetDataHelper.sync(clusters: clusters)
-            BackupManager.writeAutoBackup(clusters: clusters)
+            let persistedClusters = try modelContext.fetch(FetchDescriptor<QRCluster>(
+                sortBy: [SortDescriptor(\.sortOrder, order: .forward)]
+            ))
+            WidgetDataHelper.sync(clusters: persistedClusters)
+            BackupManager.writeAutoBackup(clusters: persistedClusters)
             dismiss()
         } catch {
             modelContext.rollback()
@@ -552,29 +581,9 @@ struct EditClusterView: View {
     }
 
     private func deleteProfiles(at offsets: IndexSet) {
-        let profilesToDelete = offsets.map { sortedProfiles[$0] }
-        let remainingCount = sortedProfiles.count - profilesToDelete.count
-        let shouldDismissAfterSave = remainingCount == 0
-        for profile in profilesToDelete {
-            modelContext.delete(profile)
-        }
-        if shouldDismissAfterSave {
-            modelContext.delete(cluster)
-        }
-        do {
-            try modelContext.save()
-            let persistedClusters = try modelContext.fetch(FetchDescriptor<QRCluster>(
-                sortBy: [SortDescriptor(\.sortOrder, order: .forward)]
-            ))
-            WidgetDataHelper.sync(clusters: persistedClusters)
-            BackupManager.writeAutoBackup(clusters: persistedClusters)
-            if shouldDismissAfterSave {
-                dismiss()
-            }
-        } catch {
-            modelContext.rollback()
-            saveError = error.localizedDescription
-            showSaveError = true
-        }
+        let profiles = sortedProfiles
+        let widgetProfileID = profiles[safe: widgetProfileIndex]?.id
+        pendingDeletedProfileIDs.formUnion(offsets.compactMap { profiles[safe: $0]?.id })
+        widgetProfileIndex = sortedProfiles.firstIndex(where: { $0.id == widgetProfileID }) ?? 0
     }
 }

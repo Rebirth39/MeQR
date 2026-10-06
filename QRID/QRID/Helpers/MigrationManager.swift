@@ -31,7 +31,7 @@ struct MigrationManager {
             )
             nextSortOrder += 1
             context.insert(cluster)
-            profile.attach(to: cluster)
+            profile.attach(to: cluster, in: context)
         }
 
         do {

@@ -15,17 +15,15 @@ struct AvatarCropView: View {
     @State private var offset: CGSize = .zero
     @State private var lastOffset: CGSize = .zero
 
-    private var cropSize: CGFloat {
-        min(UIScreen.main.bounds.width - 48, 320)
-    }
     private let minScale: CGFloat = 1.0
     private let maxScale: CGFloat = 5.0
 
     var body: some View {
-        ZStack {
-            Color.black.ignoresSafeArea()
+        GeometryReader { geo in
+            let cropSize = min(max(0, geo.size.width - geo.safeAreaInsets.leading - geo.safeAreaInsets.trailing - 48), 320)
+            ZStack {
+                Color.black.ignoresSafeArea()
 
-            GeometryReader { geo in
                 let displaySize = fillDisplaySize(for: cropSize)
 
                 ZStack {
@@ -50,11 +48,11 @@ struct AvatarCropView: View {
                             let delta = value / lastScale
                             lastScale = value
                             scale = min(max(scale * delta, minScale), maxScale)
-                            offset = clampOffset(offset)
+                            offset = clampOffset(offset, cropSize: cropSize)
                         }
                         .onEnded { _ in
                             lastScale = 1.0
-                            snapBack()
+                            snapBack(cropSize: cropSize)
                         }
                 )
                 .simultaneousGesture(
@@ -64,35 +62,36 @@ struct AvatarCropView: View {
                                 width: lastOffset.width + value.translation.width,
                                 height: lastOffset.height + value.translation.height
                             )
-                            offset = clampOffset(proposed)
+                            offset = clampOffset(proposed, cropSize: cropSize)
                         }
                         .onEnded { _ in
-                            snapBack()
+                            snapBack(cropSize: cropSize)
                         }
                 )
-            }
-            .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                Spacer()
-
-                HStack {
-                    Button(L.cancel, action: onCancel)
-                        .font(.system(size: 17))
-                        .foregroundStyle(.white)
-
+                VStack(spacing: 0) {
                     Spacer()
 
-                    Button(L.choose) {
-                        cropImage()
+                    HStack {
+                        Button(L.cancel, action: onCancel)
+                            .font(.system(size: 17))
+                            .foregroundStyle(.white)
+
+                        Spacer()
+
+                        Button(L.choose) {
+                            cropImage(cropSize: cropSize)
+                        }
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.white)
                     }
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .padding(.leading, max(24, geo.safeAreaInsets.leading + 12))
+                    .padding(.trailing, max(24, geo.safeAreaInsets.trailing + 12))
+                    .padding(.bottom, max(16, geo.safeAreaInsets.bottom + 10))
                 }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 34)
             }
         }
+        .ignoresSafeArea()
     }
 
     private func fillDisplaySize(for cropSize: CGFloat) -> CGSize {
@@ -107,7 +106,7 @@ struct AvatarCropView: View {
         }
     }
 
-    private func clampOffset(_ proposed: CGSize) -> CGSize {
+    private func clampOffset(_ proposed: CGSize, cropSize: CGFloat) -> CGSize {
         let size = fillDisplaySize(for: cropSize)
         let scaledWidth = size.width * scale
         let scaledHeight = size.height * scale
@@ -123,15 +122,15 @@ struct AvatarCropView: View {
         )
     }
 
-    private func snapBack() {
-        let targetOffset = clampOffset(offset)
+    private func snapBack(cropSize: CGFloat) {
+        let targetOffset = clampOffset(offset, cropSize: cropSize)
         withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
             offset = targetOffset
         }
         lastOffset = targetOffset
     }
 
-    private func cropImage() {
+    private func cropImage(cropSize: CGFloat) {
         let renderer = UIGraphicsImageRenderer(size: CGSize(width: cropSize, height: cropSize))
         let cropped = renderer.image { context in
             let circlePath = UIBezierPath(
@@ -179,7 +178,6 @@ private struct OverlayMask: View {
             }
             .fill(Color.black.opacity(0.55), style: FillStyle(eoFill: true))
         }
-        .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
     }
 }
 

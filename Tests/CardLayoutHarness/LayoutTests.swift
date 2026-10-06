@@ -2,6 +2,117 @@ import XCTest
 import CoreImage
 
 final class LayoutTests: XCTestCase {
+    func testCachedColorCode() throws {
+        try XCTSkipUnless(FileManager.default.fileExists(atPath: "COLOR_FIXTURE_DIRECTORY/record.json"))
+        let app = XCUIApplication()
+        app.launchArguments = ["cached-color-test"]
+        app.launch()
+        let result = app.staticTexts["color-result"]
+        let completed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label BEGINSWITH 'PASS' OR label BEGINSWITH 'FAIL'"), object: result)
+        XCTAssertEqual(XCTWaiter.wait(for: [completed], timeout: 90), .completed)
+        print(result.label)
+        XCTAssertTrue(result.label.hasPrefix("PASS"), result.label)
+    }
+
+    func testAvatarRepair() throws {
+        try XCTSkipUnless(FileManager.default.fileExists(atPath: "COLOR_FIXTURE_DIRECTORY/record.json"))
+        let app = XCUIApplication()
+        app.launchArguments = ["avatar-repair-test"]
+        app.launch()
+        let result = app.staticTexts["color-result"]
+        let completed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label BEGINSWITH 'PASS' OR label BEGINSWITH 'FAIL'"), object: result)
+        XCTAssertEqual(XCTWaiter.wait(for: [completed], timeout: 90), .completed)
+        print(result.label)
+        XCTAssertTrue(result.label.hasPrefix("PASS"), result.label)
+    }
+
+    func testColorLayerRoundTrips() throws {
+        try XCTSkipUnless(FileManager.default.fileExists(atPath: "COLOR_FIXTURE_DIRECTORY/avatar.jpg"), "Export ColorLayerInstrumentation fixtures into CARD_LAYOUT_OUTPUT first")
+        let app = XCUIApplication()
+        app.launchArguments = ["color-layer-test"]
+        app.launch()
+        let result = app.staticTexts["color-result"]
+        let completed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label BEGINSWITH 'PASS' OR label BEGINSWITH 'FAIL'"), object: result)
+        XCTAssertEqual(XCTWaiter.wait(for: [completed], timeout: 90), .completed)
+        XCTAssertTrue(result.label.hasPrefix("PASS"), result.label)
+        print(result.label)
+    }
+
+    func testFlippingKeepsCardHeightAndOnlyLongInfoScrolls() {
+        continueAfterFailure = false
+        XCUIDevice.shared.orientation = .portrait
+        for viewport in ["ipad-portrait", "fixed-card", "duo-portrait"] {
+            for introduction in ["short", "long", "overflow-info", "empty-info"] {
+                let app = XCUIApplication()
+                app.launchArguments = ["rhodes-front", "tags", viewport, introduction]
+                if introduction == "overflow-info" { app.launchArguments.append("long") }
+                app.launch()
+                let qr = app.images["rhodes-qr-panel"]
+                XCTAssertTrue(qr.waitForExistence(timeout: 5))
+                let strip = app.staticTexts["#01"]
+                let rail = app.staticTexts["MEQR"]
+                let originalStrip = strip.frame
+                let originalRail = rail.frame
+                let originalQR = qr.frame
+                print("FRONT \(viewport) \(introduction) strip=\(originalStrip) rail=\(originalRail) qr=\(originalQR)")
+                qr.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8))
+                    .press(forDuration: 0.05, thenDragTo: qr.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2)))
+                XCTAssertEqual(qr.frame.minY, originalQR.minY, accuracy: 1)
+                XCTAssertTrue(app.staticTexts["自定义标签"].isHittable)
+                strip.tap()
+                let hiddenFront = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: qr)
+                let flipResult = XCTWaiter.wait(for: [hiddenFront], timeout: 5)
+                let hierarchy = XCTAttachment(string: app.debugDescription)
+                hierarchy.name = "\(viewport)-\(introduction)-back"
+                hierarchy.lifetime = .keepAlways
+                add(hierarchy)
+                if flipResult != .completed { print(app.debugDescription) }
+                XCTAssertEqual(flipResult, .completed)
+                XCTAssertFalse(qr.exists, "Hidden front must not remain in accessibility tree")
+                print("BACK \(viewport) \(introduction) strip=\(strip.frame) rail=\(rail.frame)")
+                if abs(strip.frame.minY - originalStrip.minY) > 1 { print(app.debugDescription) }
+                XCTAssertEqual(strip.frame.minY, originalStrip.minY, accuracy: 1)
+                XCTAssertEqual(rail.frame.midY, originalRail.midY, accuracy: 1,
+                               "Rail center must stay fixed when both surfaces have equal height")
+                let identity = app.otherElements["pass-back-identity"]
+                XCTAssertEqual(identity.frame.height, viewport == "fixed-card" ? 58 : 86, accuracy: 1)
+                if viewport != "fixed-card" {
+                    let identityToTags = app.staticTexts["世界计划"].frame.minY - identity.frame.maxY
+                    XCTAssertGreaterThanOrEqual(identityToTags, 24)
+                    XCTAssertLessThanOrEqual(identityToTags, 40)
+                }
+                XCTAssertTrue(app.staticTexts["自定义标签"].isHittable)
+                if viewport != "fixed-card" && introduction == "long" {
+                    capture("\(viewport)-balanced-back")
+                }
+                let scroll = app.scrollViews["pass-user-info-scroll"]
+                let info = app.staticTexts["pass-user-info-text"]
+                if introduction == "overflow-info" {
+                    XCTAssertTrue(scroll.exists)
+                    XCTAssertGreaterThan(scroll.frame.height, 80)
+                    let originalInfo = info.frame
+                    scroll.swipeUp()
+                    XCTAssertLessThan(info.frame.minY, originalInfo.minY)
+                    XCTAssertEqual(rail.frame.midY, originalRail.midY, accuracy: 1)
+                    XCTAssertEqual(strip.frame.minY, originalStrip.minY, accuracy: 1)
+                } else if introduction == "short" || introduction == "long" {
+                    XCTAssertTrue(info.exists)
+                    let originalInfo = info.frame
+                    let start = info.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+                    start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 0, dy: -100)))
+                    XCTAssertEqual(info.frame.minY, originalInfo.minY, accuracy: 1)
+                } else {
+                    XCTAssertFalse(info.exists)
+                }
+                strip.tap()
+                XCTAssertTrue(qr.waitForExistence(timeout: 5))
+                XCTAssertEqual(qr.frame.minY, originalQR.minY, accuracy: 1)
+                XCTAssertEqual(rail.frame.midY, originalRail.midY, accuracy: 1)
+                app.terminate()
+            }
+        }
+    }
+
     func testRhodesFrontTagsAndInsetQRCodeRemainUsable() {
         for narrow in [false, true] {
             let app = XCUIApplication()

@@ -208,7 +208,7 @@ final class QRCluster {
 }
 
 enum CardTagLimiter {
-    static let maxTags = 10
+    static let maxTags = 15
     static let maxHalfWidthUnits = 20
 
     static func normalizedRawValue(_ value: String) -> String {

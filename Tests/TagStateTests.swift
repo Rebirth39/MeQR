@@ -10,7 +10,7 @@ import Foundation
         assert(CardTagIndex.searchEntries(for: "Saki").prefix(2).allSatisfy { $0.aliases.contains { $0.lowercased() == "saki" } })
         let scoped = CardTagIndex.searchEntries(for: "世界计划 咲希")
         assert(scoped.count == 1)
-        assert(RemoteTagCatalogSnapshot.subtitle(for: scoped[0], language: .en).contains("Leo/need"))
+        assert(RemoteTagCatalogSnapshot.subtitle(for: scoped[0], language: .en).contains("Leo/Need"))
         assert(!CardTagIndex.searchEntries(for: "Saki", excluding: [scoped[0].names.en]).contains { $0.id == scoped[0].id })
         let old = CardTagColorPalette.overrides(from: "{\"世界计划\":\"#123456\"}")
         var references = CardTagReference.reconcile(names: ["世界计划", "Saki"], overrides: old, previous: [])

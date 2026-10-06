@@ -17,6 +17,11 @@ struct ProfileSyncView: View {
     @State private var confirmClear = false
     @AppStorage("meqr_sync_privacy_ack_v1") private var syncPrivacyAck = false
     @State private var showSyncPrivacy = false
+
+    init() {
+        _clusters = Query(sort: \QRCluster.sortOrder)
+    }
+
     private var cluster: QRCluster? { clusters.first { $0.id == selected } }
 
     var body: some View {

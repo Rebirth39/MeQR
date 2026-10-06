@@ -1,8 +1,206 @@
 {
   "schemaVersion": 1,
-  "revision": "2026.09.15.1",
-  "updatedAt": "2026-09-15",
+  "revision": "2026.10.05.3",
+  "updatedAt": "2026-10-05",
   "changelog": [
+    {
+      "revision": "2026.10.05.3",
+      "date": "2026-10-05",
+      "summary": {
+        "zhHans": "新增流浪者与结束祈标签。",
+        "zhHantHK": "新增流浪者與結束祈標籤。",
+        "zhHantTW": "新增流浪者與結束祈標籤。",
+        "en": "Added Wanderer and Inori Yuitsuka tags.",
+        "ja": "放浪者と結束いのりのタグを追加。"
+      }
+    },
+    {
+      "revision": "2026.10.05.2",
+      "date": "2026-10-05",
+      "summary": {
+        "zhHans": "新增 Linkin Park 与那刻夏标签。",
+        "zhHantHK": "新增 Linkin Park 與那刻夏標籤。",
+        "zhHantTW": "新增 Linkin Park 與那刻夏標籤。",
+        "en": "Added Linkin Park and Anaxa tags.",
+        "ja": "Linkin Parkとアナイクスのタグを追加。"
+      }
+    },
+    {
+      "revision": "2026.10.05.1",
+      "date": "2026-10-05",
+      "summary": {
+        "zhHans": "新增洗翠黏美龙、WIXOSS与皮璐璐可、四季映姬和鸣花双子标签。",
+        "zhHantHK": "新增洗翠黏美龍、WIXOSS與皮璐璐可、四季映姬和鳴花雙子標籤。",
+        "zhHantTW": "新增洗翠黏美龍、WIXOSS與皮璐璐可、四季映姬和鳴花雙子標籤。",
+        "en": "Added Hisuian Goodra, WIXOSS and Piruluk, Eiki Shiki, and Meika Hime & Mikoto tags.",
+        "ja": "ヒスイのすがたのヌメルゴン、WIXOSSとピルルク、四季映姫、鳴花ヒメ・ミコトのタグを追加。"
+      }
+    },
+    {
+      "revision": "2026.10.04.2",
+      "date": "2026-10-04",
+      "summary": {
+        "zhHans": "新增女神异闻录3、女神异闻录4及两代主角团标签。",
+        "zhHantHK": "新增女神异闻录3、女神异闻录4及两代主角团标签。",
+        "zhHantTW": "新增女神异闻录3、女神异闻录4及两代主角团标签。",
+        "en": "Added Persona 3, Persona 4, and both protagonist groups.",
+        "ja": "ペルソナ3、ペルソナ4と両作品の主人公グループのタグを追加。"
+      }
+    },
+    {
+      "revision": "2026.10.04.1",
+      "date": "2026-10-04",
+      "summary": {
+        "zhHans": "新增 Heated Rivalry、Ilya Rozanov、Shane Hollander、崩坏3与戴菲恩标签。",
+        "zhHantHK": "新增 Heated Rivalry、Ilya Rozanov、Shane Hollander、崩壞3與戴菲恩標籤。",
+        "zhHantTW": "新增 Heated Rivalry、Ilya Rozanov、Shane Hollander、崩壞3與戴菲恩標籤。",
+        "en": "Added Heated Rivalry, Ilya Rozanov, Shane Hollander, Honkai Impact 3rd, and Delphine tags.",
+        "ja": "Heated Rivalry、Ilya Rozanov、Shane Hollander、崩壊3rd、デルフィーンのタグを追加。"
+      }
+    },
+    {
+      "revision": "2026.10.03.1",
+      "date": "2026-10-03",
+      "summary": {
+        "zhHans": "新增花火、七种茨、红美铃、遗忘之海与艾丝、天满光标签，颜色依据官方/可靠资料或工单建议整理。",
+        "zhHantHK": "新增花火、七種茨、紅美鈴、遺忘之海與艾絲、天滿光標籤，顏色依據官方/可靠資料或工單建議整理。",
+        "zhHantTW": "新增花火、七種茨、紅美鈴、遺忘之海與艾絲、天滿光標籤，顏色依據官方/可靠資料或工單建議整理。",
+        "en": "Added Sparkle, Ibara Saegusa, Hong Meiling, Sea of Forgetting and Aisi, and Mitsuru Tenma tags using official/reliable references or ticket color suggestions.",
+        "ja": "花火、七種茨、紅美鈴、遺忘之海と艾絲、天満光のタグを追加。公式・信頼できる資料または工単の色提案を基に整理。"
+      }
+    },
+    {
+      "revision": "2026.10.02.6",
+      "date": "2026-10-02",
+      "summary": {
+        "zhHans": "处理 VY1、VY2 与雨宫莲工单；将已有 VOCALOID 声库角色移入 VOCALOID 分组，并保留泛术力口中的非 VOCALOID 声库角色。VY1/VY2 采用获奖或粉丝形象的代表色，雨宫莲采用《女神异闻录5》官方视觉的 MeQR 代表色。",
+        "zhHantHK": "處理 VY1、VY2 與雨宮蓮工單；將已有 VOCALOID 聲庫角色移入 VOCALOID 分組，並保留泛術力口中的非 VOCALOID 聲庫角色。VY1/VY2 採用獲獎或粉絲形象的代表色，雨宮蓮採用《女神異聞錄5》官方視覺的 MeQR 代表色。",
+        "zhHantTW": "處理 VY1、VY2 與雨宮蓮工單；將已有 VOCALOID 聲庫角色移入 VOCALOID 分組，並保留泛術力口中的非 VOCALOID 聲庫角色。VY1/VY2 採用獲獎或粉絲形象的代表色，雨宮蓮採用《女神異聞錄5》官方視覺的 MeQR 代表色。",
+        "en": "Handled VY1, VY2, and Ren Amamiya requests; moved existing VOCALOID voicebank characters into the VOCALOID group while retaining non-VOCALOID voicebank characters in the general virtual singer group. VY1/VY2 use representative colors from award-winning or fan character designs; Ren Amamiya uses MeQR representative colors based on official Persona 5 visuals.",
+        "ja": "VY1、VY2、雨宮蓮のリクエストに対応。既存のVOCALOID音源キャラクターをVOCALOIDグループへ移し、非VOCALOID音源キャラクターは汎用バーチャルシンガーグループに保持。VY1/VY2は受賞またはファンによるキャラクターデザインの代表色、雨宮蓮はペルソナ5公式ビジュアルに基づくMeQR代表色を使用。"
+      }
+    },
+    {
+      "revision": "2026.10.02.5",
+      "date": "2026-10-02",
+      "summary": {
+        "zhHans": "依据官网修正部分 BanG Dream! 配色；为45位角色补充个人配色，分别参考官方资料、粉丝色值数据库或游戏立绘。",
+        "zhHantHK": "依據官網修正部分 BanG Dream! 配色；為45位角色補充個人配色，分別參考官方資料、粉絲色值資料庫或遊戲立繪。",
+        "zhHantTW": "依據官網修正部分 BanG Dream! 配色；為45位角色補充個人配色，分別參考官方資料、粉絲色值資料庫或遊戲立繪。",
+        "en": "Corrected selected BanG Dream! palettes using the official website; added personal palettes for 45 characters using official data, a fan color database, or game artwork.",
+        "ja": "公式サイトに基づき一部のBanG Dream!の配色を修正。45名のキャラクターに、公式資料・ファンの色データベース・ゲームイラストを参考に個別の配色を追加。"
+      }
+    },
+    {
+      "revision": "2026.10.02.4",
+      "date": "2026-10-02",
+      "summary": {
+        "zhHans": "新增明日方舟角色黑键，参考默认立绘并采用工单建议的黑色作为代表色。",
+        "zhHantHK": "新增明日方舟角色黑鍵，參考預設立繪並採用工單建議的黑色作為代表色。",
+        "zhHantTW": "新增明日方舟角色黑鍵，參考預設立繪並採用工單建議的黑色作為代表色。",
+        "en": "Added Arknights character Ebenholz, using the requested black as a representative color with reference to the default artwork.",
+        "ja": "アークナイツのエーベンホルツを追加。初期イラストを参考に、依頼で提案された黒を代表色に設定。"
+      }
+    },
+    {
+      "revision": "2026.10.02.3",
+      "date": "2026-10-02",
+      "summary": {
+        "zhHans": "新增音乐创作者打打だいず / D-D-Dice 与星穹铁道角色林登·斯科特；代表色参考创作者官方头像及游戏模型图。",
+        "zhHantHK": "新增音樂創作者打打だいず / D-D-Dice 與星穹鐵道角色林登·斯科特；代表色參考創作者官方頭像及遊戲模型圖。",
+        "zhHantTW": "新增音樂創作者打打だいず / D-D-Dice 與星穹鐵道角色林登·斯科特；代表色參考創作者官方頭像及遊戲模型圖。",
+        "en": "Added music creator D-D-Dice and Honkai: Star Rail character Lyndon Skott, using representative colors sampled from the creator’s official avatar and an in-game model image.",
+        "ja": "音楽クリエイター打打だいず / D-D-Diceとスターレイルのスコートを追加。代表色は公式プロフィール画像とゲームモデル画像を参考に設定。"
+      }
+    },
+    {
+      "revision": "2026.10.02.2",
+      "date": "2026-10-02",
+      "summary": {
+        "zhHans": "将夜鹿 Tag 的中文显示名称改为「夜鹿Yorushika」，保留「夜鹿」搜索别名。",
+        "zhHantHK": "將夜鹿 Tag 的中文顯示名稱改為「夜鹿Yorushika」，保留「夜鹿」搜尋別名。",
+        "zhHantTW": "將夜鹿 Tag 的中文顯示名稱改為「夜鹿Yorushika」，保留「夜鹿」搜尋別名。",
+        "en": "Changed the Chinese display name of the Yorushika tag to 夜鹿Yorushika; kept 夜鹿 as a search alias.",
+        "ja": "ヨルシカTagの中国語表示名を「夜鹿Yorushika」に変更。「夜鹿」は検索用の別名として維持。"
+      }
+    },
+    {
+      "revision": "2026.10.02.1",
+      "date": "2026-10-02",
+      "summary": {
+        "zhHans": "新增 J-POP 乐队夜鹿 / Yorushika / ヨルシカ Tag，提供白黑白黑白五段拼色及纯白单色。",
+        "zhHantHK": "新增 J-POP 樂隊夜鹿 / Yorushika / ヨルシカ Tag，提供白黑白黑白五段拼色及純白單色。",
+        "zhHantTW": "新增 J-POP 樂團夜鹿 / Yorushika / ヨルシカ Tag，提供白黑白黑白五段拼色及純白單色。",
+        "en": "Added the J-POP band Yorushika tag with white/black/white/black/white segments and a solid white option.",
+        "ja": "J-POPバンド「ヨルシカ」のTagを追加。白・黒・白・黒・白の5分割配色と白単色に対応。"
+      }
+    },
+    {
+      "revision": "2026.10.01.1",
+      "date": "2026-10-01",
+      "summary": {
+        "zhHans": "新增 BanG Dream! 乐队 millsage 及角色汐见萤、伊泽枣；团色与角色色以《BanG Dream! Our Notes》官网为准。",
+        "zhHantHK": "新增 BanG Dream! 樂隊 millsage 及角色汐見螢、伊澤棗；團色與角色色以《BanG Dream! Our Notes》官網為準。",
+        "zhHantTW": "新增 BanG Dream! 樂團 millsage 及角色汐見螢、伊澤棗；團色與角色色以《BanG Dream! Our Notes》官網為準。",
+        "en": "Added BanG Dream! band millsage, Hotaru Shiomi and Natsume Izawa, with band and character colors from the official BanG Dream! Our Notes website.",
+        "ja": "BanG Dream!のバンドmillsageと汐見蛍・伊沢なつめを追加。バンドカラーとキャラクターカラーは「バンドリ！アワーノーツ」公式サイトに準拠。"
+      }
+    },
+    {
+      "revision": "2026.09.24.1",
+      "date": "2026-09-24",
+      "summary": {
+        "zhHans": "新增雀魂及官方角色 Tag：一姬、八木唯、三上千织、辉夜姬；颜色取官方站点与角色立绘主色。",
+        "zhHantHK": "新增雀魂及官方角色 Tag：一姬、八木唯、三上千織、輝夜姬；顏色取官方網站與角色立繪主色。",
+        "zhHantTW": "新增雀魂及官方角色 Tag：一姬、八木唯、三上千織、輝夜姬；顏色取官方網站與角色立繪主色。",
+        "en": "Added Mahjong Soul and official character tags: Ichihime, Yui Yagi, Chiori Mikami, and Kaguyahime; colors are based on the official site and character key art.",
+        "ja": "雀魂と公式キャラクター（一姫、八木唯、三上千織、かぐや姫）を追加。色は公式サイトとキャラクター立ち絵を基に設定。"
+      }
+    },
+    {
+      "revision": "2026.09.16.2",
+      "date": "2026-09-16",
+      "summary": {
+        "zhHans": "VOCALOID 分类启用分组副标题：V家六子归 VOCALOID，神椿并入泛术力口，中V独立分组。",
+        "zhHantHK": "VOCALOID 分類啟用分組副標題：V家六子歸 VOCALOID，神椿併入泛術力口，中V獨立分組。",
+        "zhHantTW": "VOCALOID 分類啟用分組副標題：V家六子歸 VOCALOID，神椿併入泛術力口，中V獨立分組。",
+        "en": "VOCALOID category now uses group subtitles: Piapro Characters under VOCALOID, KAMITSUBAKI merged into the general group, Chinese Vocaloid separated.",
+        "ja": "VOCALOIDカテゴリにグループ副題を追加：V家六子はVOCALOID、神椿は泛术力口に統合、中Vは独立。"
+      }
+    },
+    {
+      "revision": "2026.09.16.1",
+      "date": "2026-09-16",
+      "summary": {
+        "zhHans": "修复 VOCALOID 分类范围未覆盖泛术力口、神椿、中V新角色导致客户端不显示的问题。",
+        "zhHantHK": "修復 VOCALOID 分類範圍未覆蓋泛術力口、神椿、中V新角色導致客戶端不顯示的問題。",
+        "zhHantTW": "修復 VOCALOID 分類範圍未覆蓋泛術力口、神椿、中V新角色導致客戶端不顯示的問題。",
+        "en": "Fixed the VOCALOID category ranges not covering the newly added characters, which hid them from clients.",
+        "ja": "VOCALOIDカテゴリの範囲が新規キャラクターを含んでおらず非表示になっていた問題を修正。"
+      }
+    },
+    {
+      "revision": "2026.09.15.4",
+      "date": "2026-09-15",
+      "summary": {
+        "zhHans": "调整世界计划与 VOCALOID 分组顺序，补充泛术力口、神椿、中V角色及代表色。",
+        "zhHantHK": "调整世界计划与 VOCALOID 分组顺序，补充泛术力口、神椿、中V角色及代表色。",
+        "zhHantTW": "调整世界计划与 VOCALOID 分组顺序，补充泛术力口、神椿、中V角色及代表色。",
+        "en": "Reordered Project Sekai and VOCALOID groups and added characters with representative colors.",
+        "ja": "调整世界计划与 VOCALOID 分组顺序，补充泛术力口、神椿、中V角色及代表色。"
+      }
+    },
+    {
+      "revision": "2026.09.15.2",
+      "date": "2026-09-15",
+      "summary": {
+        "zhHans": "修正原神角色代表色并启用原神底色与角色色拼色，合并重复温迪条目。",
+        "zhHantHK": "修正原神角色代表色並啟用原神底色與角色色拼色，合併重複溫迪條目。",
+        "zhHantTW": "修正原神角色代表色並啟用原神底色與角色色拼色，合併重複溫迪條目。",
+        "en": "Corrected Genshin character colors and enabled base-plus-character palettes; merged duplicate Venti entry.",
+        "ja": "原神キャラクターの代表色を修正し、作品色とキャラクター色の配色に変更。重複したウェンティを統合。"
+      }
+    },
     {
       "revision": "2026.09.15.1",
       "date": "2026-09-15",
@@ -79,9 +277,9 @@
     {
       "id": "ip-vocaloid",
       "names": {
-        "zhHans": "VOCALOID",
-        "zhHantHK": "VOCALOID",
-        "zhHantTW": "VOCALOID",
+        "zhHans": "术力口（VOCALOID）",
+        "zhHantHK": "術力口（VOCALOID）",
+        "zhHantTW": "術力口（VOCALOID）",
         "en": "VOCALOID",
         "ja": "VOCALOID"
       },
@@ -96,7 +294,15 @@
         },
         {
           "start": "tag-0452",
-          "end": "tag-0452"
+          "end": "tag-0468"
+        },
+        {
+          "start": "tag-0481",
+          "end": "tag-0482"
+        },
+        {
+          "start": "tag-0520",
+          "end": "tag-0520"
         }
       ]
     },
@@ -117,6 +323,10 @@
         {
           "start": "tag-0451",
           "end": "tag-0451"
+        },
+        {
+          "start": "tag-0474",
+          "end": "tag-0476"
         }
       ]
     },
@@ -137,6 +347,14 @@
         {
           "start": "tag-0364",
           "end": "tag-0367"
+        },
+        {
+          "start": "tag-0480",
+          "end": "tag-0480"
+        },
+        {
+          "start": "tag-0495",
+          "end": "tag-0495"
         }
       ]
     },
@@ -177,6 +395,18 @@
         {
           "start": "tag-0368",
           "end": "tag-0378"
+        },
+        {
+          "start": "tag-0479",
+          "end": "tag-0479"
+        },
+        {
+          "start": "tag-0485",
+          "end": "tag-0485"
+        },
+        {
+          "start": "tag-0522",
+          "end": "tag-0522"
         }
       ]
     },
@@ -201,6 +431,10 @@
         {
           "start": "tag-0453",
           "end": "tag-0453"
+        },
+        {
+          "start": "tag-0525",
+          "end": "tag-0525"
         }
       ]
     },
@@ -241,6 +475,14 @@
         {
           "start": "tag-0406",
           "end": "tag-0417"
+        },
+        {
+          "start": "tag-0486",
+          "end": "tag-0486"
+        },
+        {
+          "start": "tag-0490",
+          "end": "tag-0490"
         }
       ]
     },
@@ -357,6 +599,14 @@
         {
           "start": "tag-0443",
           "end": "tag-0448"
+        },
+        {
+          "start": "tag-0487",
+          "end": "tag-0487"
+        },
+        {
+          "start": "tag-0519",
+          "end": "tag-0519"
         }
       ]
     },
@@ -533,6 +783,10 @@
         {
           "start": "tag-0196",
           "end": "tag-0201"
+        },
+        {
+          "start": "tag-0516",
+          "end": "tag-0516"
         }
       ]
     },
@@ -549,6 +803,202 @@
         {
           "start": "tag-0357",
           "end": "tag-0363"
+        }
+      ]
+    },
+    {
+      "id": "ip-mahjong-soul",
+      "names": {
+        "zhHans": "雀魂",
+        "zhHantHK": "雀魂",
+        "zhHantTW": "雀魂",
+        "en": "Mahjong Soul",
+        "ja": "雀魂"
+      },
+      "ranges": [
+        {
+          "start": "tag-0469",
+          "end": "tag-0473"
+        }
+      ]
+    },
+    {
+      "id": "music-jpop",
+      "names": {
+        "zhHans": "J-POP 乐队",
+        "zhHantHK": "J-POP 樂隊",
+        "zhHantTW": "J-POP 樂團",
+        "en": "J-POP Bands",
+        "ja": "J-POPバンド"
+      },
+      "ranges": [
+        {
+          "start": "tag-0477",
+          "end": "tag-0477"
+        }
+      ]
+    },
+    {
+      "id": "music-artists",
+      "names": {
+        "zhHans": "音乐人",
+        "zhHantHK": "音樂人",
+        "zhHantTW": "音樂人",
+        "en": "Music Artists",
+        "ja": "音楽家"
+      },
+      "ranges": [
+        {
+          "start": "tag-0478",
+          "end": "tag-0478"
+        }
+      ]
+    },
+    {
+      "id": "ip-persona5",
+      "names": {
+        "zhHans": "女神异闻录5",
+        "zhHantHK": "女神異聞錄5",
+        "zhHantTW": "女神異聞錄5",
+        "en": "Persona 5",
+        "ja": "ペルソナ5"
+      },
+      "ranges": [
+        {
+          "start": "tag-0483",
+          "end": "tag-0484"
+        }
+      ]
+    },
+    {
+      "id": "ip-sea-of-forgetting",
+      "names": {
+        "zhHans": "遗忘之海",
+        "zhHantHK": "遺忘之海",
+        "zhHantTW": "遺忘之海",
+        "en": "Sea of Forgetting",
+        "ja": "忘却の海"
+      },
+      "ranges": [
+        {
+          "start": "tag-0489",
+          "end": "tag-0489"
+        },
+        {
+          "start": "tag-0488",
+          "end": "tag-0488"
+        }
+      ]
+    },
+    {
+      "id": "ip-heated-rivalry",
+      "names": {
+        "zhHans": "Heated Rivalry",
+        "zhHantHK": "Heated Rivalry",
+        "zhHantTW": "Heated Rivalry",
+        "en": "Heated Rivalry",
+        "ja": "Heated Rivalry"
+      },
+      "ranges": [
+        {
+          "start": "tag-0491",
+          "end": "tag-0493"
+        }
+      ]
+    },
+    {
+      "id": "ip-honkai-impact-3",
+      "names": {
+        "zhHans": "崩坏3",
+        "zhHantHK": "崩壞3",
+        "zhHantTW": "崩壞3",
+        "en": "Honkai Impact 3rd",
+        "ja": "崩壊3rd"
+      },
+      "ranges": [
+        {
+          "start": "tag-0494",
+          "end": "tag-0494"
+        }
+      ]
+    },
+    {
+      "id": "ip-persona3",
+      "names": {
+        "zhHans": "女神异闻录3",
+        "zhHantHK": "女神异闻录3",
+        "zhHantTW": "女神异闻录3",
+        "en": "Persona 3",
+        "ja": "ペルソナ3"
+      },
+      "ranges": [
+        {
+          "start": "tag-0496",
+          "end": "tag-0506"
+        }
+      ]
+    },
+    {
+      "id": "ip-persona4",
+      "names": {
+        "zhHans": "女神异闻录4",
+        "zhHantHK": "女神异闻录4",
+        "zhHantTW": "女神异闻录4",
+        "en": "Persona 4",
+        "ja": "ペルソナ4"
+      },
+      "ranges": [
+        {
+          "start": "tag-0507",
+          "end": "tag-0515"
+        }
+      ]
+    },
+    {
+      "id": "ip-wixoss",
+      "names": {
+        "zhHans": "WIXOSS",
+        "zhHantHK": "WIXOSS",
+        "zhHantTW": "WIXOSS",
+        "en": "WIXOSS",
+        "ja": "ウィクロス"
+      },
+      "ranges": [
+        {
+          "start": "tag-0517",
+          "end": "tag-0518"
+        }
+      ]
+    },
+    {
+      "id": "music-western",
+      "names": {
+        "zhHans": "欧美乐队",
+        "zhHantHK": "歐美樂隊",
+        "zhHantTW": "歐美樂隊",
+        "en": "Western Bands",
+        "ja": "海外ロックバンド"
+      },
+      "ranges": [
+        {
+          "start": "tag-0521",
+          "end": "tag-0521"
+        }
+      ]
+    },
+    {
+      "id": "ip-medalist",
+      "names": {
+        "zhHans": "金牌得主",
+        "zhHantHK": "金牌得主",
+        "zhHantTW": "金牌得主",
+        "en": "Medalist",
+        "ja": "メダリスト"
+      },
+      "ranges": [
+        {
+          "start": "tag-0523",
+          "end": "tag-0524"
         }
       ]
     }
@@ -1443,14 +1893,14 @@
         "迷子"
       ],
       "colors": [
-        "#3381B0",
+        "#3388BB",
         "#77BBDD",
         "#FF8899",
         "#77DD77",
         "#FFDD88",
         "#7777AA"
       ],
-      "solidColor": "#3381B0",
+      "solidColor": "#3388BB",
       "kind": "group"
     },
     {
@@ -1468,11 +1918,11 @@
       ],
       "colors": [
         "#881144",
-        "#CC4466",
-        "#884499",
-        "#66AA66",
-        "#336699",
-        "#DDBB66"
+        "#BB9955",
+        "#7799CC",
+        "#779977",
+        "#335566",
+        "#AA4477"
       ],
       "solidColor": "#881144",
       "kind": "group"
@@ -1495,11 +1945,14 @@
         "夢限大みゅーたいぷ"
       ],
       "colors": [
-        "#7D4CFF",
-        "#FF66AA",
-        "#66CCFF"
+        "#EC7384",
+        "#FFEE55",
+        "#FFBBCC",
+        "#4477CC",
+        "#9977CC",
+        "#EE5577"
       ],
-      "solidColor": "#7D4CFF",
+      "solidColor": "#EC7384",
       "kind": "group"
     },
     {
@@ -2311,7 +2764,7 @@
         "takamatsutomori"
       ],
       "colors": [
-        "#3381B0",
+        "#3388BB",
         "#77BBDD"
       ],
       "solidColor": "#77BBDD",
@@ -2334,7 +2787,7 @@
         "chihayaanon"
       ],
       "colors": [
-        "#3381B0",
+        "#3388BB",
         "#FF8899"
       ],
       "solidColor": "#FF8899",
@@ -2358,7 +2811,7 @@
         "kanameraana"
       ],
       "colors": [
-        "#3381B0",
+        "#3388BB",
         "#77DD77"
       ],
       "solidColor": "#77DD77",
@@ -2381,7 +2834,7 @@
         "nagasakisoyo"
       ],
       "colors": [
-        "#3381B0",
+        "#3388BB",
         "#FFDD88"
       ],
       "solidColor": "#FFDD88",
@@ -2403,7 +2856,7 @@
         "shiinataki"
       ],
       "colors": [
-        "#3381B0",
+        "#3388BB",
         "#7777AA"
       ],
       "solidColor": "#7777AA",
@@ -2428,9 +2881,9 @@
       ],
       "colors": [
         "#881144",
-        "#CC4466"
+        "#BB9955"
       ],
-      "solidColor": "#CC4466",
+      "solidColor": "#BB9955",
       "kind": "character",
       "parentID": "tag-0039"
     },
@@ -2451,9 +2904,9 @@
       ],
       "colors": [
         "#881144",
-        "#884499"
+        "#7799CC"
       ],
-      "solidColor": "#884499",
+      "solidColor": "#7799CC",
       "kind": "character",
       "parentID": "tag-0039"
     },
@@ -2473,9 +2926,9 @@
       ],
       "colors": [
         "#881144",
-        "#66AA66"
+        "#779977"
       ],
-      "solidColor": "#66AA66",
+      "solidColor": "#779977",
       "kind": "character",
       "parentID": "tag-0039"
     },
@@ -2497,9 +2950,9 @@
       ],
       "colors": [
         "#881144",
-        "#336699"
+        "#335566"
       ],
-      "solidColor": "#336699",
+      "solidColor": "#335566",
       "kind": "character",
       "parentID": "tag-0039"
     },
@@ -2521,9 +2974,9 @@
       ],
       "colors": [
         "#881144",
-        "#DDBB66"
+        "#AA4477"
       ],
-      "solidColor": "#DDBB66",
+      "solidColor": "#AA4477",
       "kind": "character",
       "parentID": "tag-0039"
     },
@@ -2543,10 +2996,10 @@
         "nakamachiarale"
       ],
       "colors": [
-        "#7D4CFF",
-        "#FF66AA"
+        "#EC7384",
+        "#FFEE55"
       ],
-      "solidColor": "#FF66AA",
+      "solidColor": "#FFEE55",
       "kind": "character",
       "parentID": "tag-0040"
     },
@@ -2566,10 +3019,10 @@
         "miyanaganonoka"
       ],
       "colors": [
-        "#7D4CFF",
-        "#66CCFF"
+        "#EC7384",
+        "#FFBBCC"
       ],
-      "solidColor": "#66CCFF",
+      "solidColor": "#FFBBCC",
       "kind": "character",
       "parentID": "tag-0040"
     },
@@ -2587,10 +3040,10 @@
         "minetsukiritsu"
       ],
       "colors": [
-        "#7D4CFF",
-        "#FFCC66"
+        "#EC7384",
+        "#4477CC"
       ],
-      "solidColor": "#FFCC66",
+      "solidColor": "#4477CC",
       "kind": "character",
       "parentID": "tag-0040"
     },
@@ -2609,10 +3062,10 @@
         "fujimiyako"
       ],
       "colors": [
-        "#7D4CFF",
-        "#99DD66"
+        "#EC7384",
+        "#9977CC"
       ],
-      "solidColor": "#99DD66",
+      "solidColor": "#9977CC",
       "kind": "character",
       "parentID": "tag-0040"
     },
@@ -2632,10 +3085,10 @@
         "sengokuyuno"
       ],
       "colors": [
-        "#7D4CFF",
-        "#CC99FF"
+        "#EC7384",
+        "#EE5577"
       ],
-      "solidColor": "#CC99FF",
+      "solidColor": "#EE5577",
       "kind": "character",
       "parentID": "tag-0040"
     },
@@ -9059,9 +9512,9 @@
         "刀客塔"
       ],
       "colors": [
-        "#F2A900"
+        "#212233"
       ],
-      "solidColor": "#F2A900",
+      "solidColor": "#212233",
       "kind": "character",
       "parentID": "tag-0091"
     },
@@ -9076,9 +9529,10 @@
       },
       "aliases": [],
       "colors": [
-        "#F2A900"
+        "#B4AEA7",
+        "#202023"
       ],
-      "solidColor": "#F2A900",
+      "solidColor": "#B4AEA7",
       "kind": "character",
       "parentID": "tag-0091"
     },
@@ -9093,9 +9547,10 @@
       },
       "aliases": [],
       "colors": [
-        "#F2A900"
+        "#1A354B",
+        "#AAADB1"
       ],
-      "solidColor": "#F2A900",
+      "solidColor": "#1A354B",
       "kind": "character",
       "parentID": "tag-0091"
     },
@@ -9110,9 +9565,10 @@
       },
       "aliases": [],
       "colors": [
-        "#F2A900"
+        "#7F1319",
+        "#242426"
       ],
-      "solidColor": "#F2A900",
+      "solidColor": "#7F1319",
       "kind": "character",
       "parentID": "tag-0091"
     },
@@ -9127,9 +9583,10 @@
       },
       "aliases": [],
       "colors": [
-        "#5D7EDB"
+        "#CBA861",
+        "#353132"
       ],
-      "solidColor": "#5D7EDB",
+      "solidColor": "#CBA861",
       "kind": "character",
       "parentID": "tag-0103"
     },
@@ -9148,9 +9605,10 @@
         "三月なのか"
       ],
       "colors": [
-        "#5D7EDB"
+        "#E7A1E8",
+        "#5EB9F1"
       ],
-      "solidColor": "#5D7EDB",
+      "solidColor": "#E7A1E8",
       "kind": "character",
       "parentID": "tag-0103"
     },
@@ -9168,9 +9626,9 @@
         "丹恆"
       ],
       "colors": [
-        "#5D7EDB"
+        "#396B71"
       ],
-      "solidColor": "#5D7EDB",
+      "solidColor": "#396B71",
       "kind": "character",
       "parentID": "tag-0103"
     },
@@ -9188,9 +9646,10 @@
         "姫子"
       ],
       "colors": [
-        "#5D7EDB"
+        "#A03B36",
+        "#EDE6D4"
       ],
-      "solidColor": "#5D7EDB",
+      "solidColor": "#A03B36",
       "kind": "character",
       "parentID": "tag-0103"
     },
@@ -9210,9 +9669,9 @@
         "ヴェルト"
       ],
       "colors": [
-        "#5D7EDB"
+        "#5B4840"
       ],
-      "solidColor": "#5D7EDB",
+      "solidColor": "#5B4840",
       "kind": "character",
       "parentID": "tag-0103"
     },
@@ -9230,9 +9689,10 @@
         "銀狼"
       ],
       "colors": [
-        "#5D7EDB"
+        "#9482E5",
+        "#C2BDCA"
       ],
-      "solidColor": "#5D7EDB",
+      "solidColor": "#9482E5",
       "kind": "character",
       "parentID": "tag-0103"
     },
@@ -9249,9 +9709,10 @@
         "刃"
       ],
       "colors": [
-        "#5D7EDB"
+        "#6B181A",
+        "#2B3248"
       ],
-      "solidColor": "#5D7EDB",
+      "solidColor": "#6B181A",
       "kind": "character",
       "parentID": "tag-0103"
     },
@@ -9268,9 +9729,10 @@
         "景元"
       ],
       "colors": [
-        "#5D7EDB"
+        "#A9865B",
+        "#CFC6BF"
       ],
-      "solidColor": "#5D7EDB",
+      "solidColor": "#A9865B",
       "kind": "character",
       "parentID": "tag-0103"
     },
@@ -9293,9 +9755,9 @@
         "丹恒・飲月"
       ],
       "colors": [
-        "#5D7EDB"
+        "#3D7B7B"
       ],
-      "solidColor": "#5D7EDB",
+      "solidColor": "#3D7B7B",
       "kind": "character",
       "parentID": "tag-0370"
     },
@@ -9313,9 +9775,10 @@
         "黃泉"
       ],
       "colors": [
-        "#5D7EDB"
+        "#3A338A",
+        "#8D1A27"
       ],
-      "solidColor": "#5D7EDB",
+      "solidColor": "#3A338A",
       "kind": "character",
       "parentID": "tag-0103"
     },
@@ -9333,9 +9796,10 @@
         "サンデー"
       ],
       "colors": [
-        "#5D7EDB"
+        "#49548A",
+        "#CBAC72"
       ],
-      "solidColor": "#5D7EDB",
+      "solidColor": "#49548A",
       "kind": "character",
       "parentID": "tag-0103"
     },
@@ -9352,9 +9816,10 @@
         "Traveller"
       ],
       "colors": [
-        "#C9A063"
+        "#C9A063",
+        "#D8C4FF"
       ],
-      "solidColor": "#C9A063",
+      "solidColor": "#D8C4FF",
       "kind": "character",
       "parentID": "tag-0107"
     },
@@ -9403,9 +9868,10 @@
       },
       "aliases": [],
       "colors": [
-        "#C9A063"
+        "#C9A063",
+        "#A9D9E8"
       ],
-      "solidColor": "#C9A063",
+      "solidColor": "#A9D9E8",
       "kind": "character",
       "parentID": "tag-0107"
     },
@@ -9420,9 +9886,10 @@
       },
       "aliases": [],
       "colors": [
-        "#C9A063"
+        "#C9A063",
+        "#74C2A8"
       ],
-      "solidColor": "#C9A063",
+      "solidColor": "#74C2A8",
       "kind": "character",
       "parentID": "tag-0107"
     },
@@ -9437,6 +9904,7 @@
       },
       "aliases": [],
       "colors": [
+        "#C9A063",
         "#C9A063"
       ],
       "solidColor": "#C9A063",
@@ -9457,9 +9925,10 @@
         "Raiden Ei"
       ],
       "colors": [
-        "#C9A063"
+        "#C9A063",
+        "#A56CC1"
       ],
-      "solidColor": "#C9A063",
+      "solidColor": "#A56CC1",
       "kind": "character",
       "parentID": "tag-0107"
     },
@@ -9474,9 +9943,10 @@
       },
       "aliases": [],
       "colors": [
-        "#C9A063"
+        "#C9A063",
+        "#4B7BEC"
       ],
-      "solidColor": "#C9A063",
+      "solidColor": "#4B7BEC",
       "kind": "character",
       "parentID": "tag-0107"
     },
@@ -9494,9 +9964,10 @@
         "公子"
       ],
       "colors": [
-        "#C9A063"
+        "#C9A063",
+        "#3F76B5"
       ],
-      "solidColor": "#C9A063",
+      "solidColor": "#3F76B5",
       "kind": "character",
       "parentID": "tag-0107"
     },
@@ -9513,9 +9984,10 @@
         "Hutao"
       ],
       "colors": [
-        "#C9A063"
+        "#C9A063",
+        "#A93226"
       ],
-      "solidColor": "#C9A063",
+      "solidColor": "#A93226",
       "kind": "character",
       "parentID": "tag-0107"
     },
@@ -9534,9 +10006,10 @@
         "綾華"
       ],
       "colors": [
-        "#C9A063"
+        "#C9A063",
+        "#8CC7FF"
       ],
-      "solidColor": "#C9A063",
+      "solidColor": "#8CC7FF",
       "kind": "character",
       "parentID": "tag-0107"
     },
@@ -9551,9 +10024,10 @@
       },
       "aliases": [],
       "colors": [
-        "#C9A063"
+        "#C9A063",
+        "#E94B35"
       ],
-      "solidColor": "#C9A063",
+      "solidColor": "#E94B35",
       "kind": "character",
       "parentID": "tag-0107"
     },
@@ -9882,9 +10356,9 @@
         "Subaru"
       ],
       "colors": [
-        "#F6B51D"
+        "#F3981D"
       ],
-      "solidColor": "#F6B51D",
+      "solidColor": "#F3981D",
       "kind": "character",
       "parentID": "tag-0111"
     },
@@ -9901,9 +10375,9 @@
         "Hokuto"
       ],
       "colors": [
-        "#F6B51D"
+        "#0068B7"
       ],
-      "solidColor": "#F6B51D",
+      "solidColor": "#0068B7",
       "kind": "character",
       "parentID": "tag-0111"
     },
@@ -9918,9 +10392,9 @@
       },
       "aliases": [],
       "colors": [
-        "#F6B51D"
+        "#65AB31"
       ],
-      "solidColor": "#F6B51D",
+      "solidColor": "#65AB31",
       "kind": "character",
       "parentID": "tag-0111"
     },
@@ -9935,9 +10409,9 @@
       },
       "aliases": [],
       "colors": [
-        "#F6B51D"
+        "#941F57"
       ],
-      "solidColor": "#F6B51D",
+      "solidColor": "#941F57",
       "kind": "character",
       "parentID": "tag-0111"
     },
@@ -9952,9 +10426,9 @@
       },
       "aliases": [],
       "colors": [
-        "#F6B51D"
+        "#47266E"
       ],
-      "solidColor": "#F6B51D",
+      "solidColor": "#47266E",
       "kind": "character",
       "parentID": "tag-0111"
     },
@@ -9969,9 +10443,9 @@
       },
       "aliases": [],
       "colors": [
-        "#F6B51D"
+        "#FDD35C"
       ],
-      "solidColor": "#F6B51D",
+      "solidColor": "#FDD35C",
       "kind": "character",
       "parentID": "tag-0111"
     },
@@ -9986,9 +10460,9 @@
       },
       "aliases": [],
       "colors": [
-        "#F6B51D"
+        "#BBDBF3"
       ],
-      "solidColor": "#F6B51D",
+      "solidColor": "#BBDBF3",
       "kind": "character",
       "parentID": "tag-0111"
     },
@@ -10003,9 +10477,9 @@
       },
       "aliases": [],
       "colors": [
-        "#F6B51D"
+        "#EC6D51"
       ],
-      "solidColor": "#F6B51D",
+      "solidColor": "#EC6D51",
       "kind": "character",
       "parentID": "tag-0111"
     },
@@ -10020,9 +10494,9 @@
       },
       "aliases": [],
       "colors": [
-        "#F6B51D"
+        "#942343"
       ],
-      "solidColor": "#F6B51D",
+      "solidColor": "#942343",
       "kind": "character",
       "parentID": "tag-0111"
     },
@@ -10037,9 +10511,9 @@
       },
       "aliases": [],
       "colors": [
-        "#F6B51D"
+        "#BA2636"
       ],
-      "solidColor": "#F6B51D",
+      "solidColor": "#BA2636",
       "kind": "character",
       "parentID": "tag-0111"
     },
@@ -10054,9 +10528,9 @@
       },
       "aliases": [],
       "colors": [
-        "#F6B51D"
+        "#B7282E"
       ],
-      "solidColor": "#F6B51D",
+      "solidColor": "#B7282E",
       "kind": "character",
       "parentID": "tag-0111"
     },
@@ -10071,9 +10545,9 @@
       },
       "aliases": [],
       "colors": [
-        "#F6B51D"
+        "#FFF1CF"
       ],
-      "solidColor": "#F6B51D",
+      "solidColor": "#FFF1CF",
       "kind": "character",
       "parentID": "tag-0111"
     },
@@ -10173,9 +10647,9 @@
       },
       "aliases": [],
       "colors": [
-        "#F34E7B"
+        "#E22B30"
       ],
-      "solidColor": "#F34E7B",
+      "solidColor": "#E22B30",
       "kind": "character",
       "parentID": "tag-0418"
     },
@@ -10190,9 +10664,9 @@
       },
       "aliases": [],
       "colors": [
-        "#F34E7B"
+        "#2743D2"
       ],
-      "solidColor": "#F34E7B",
+      "solidColor": "#2743D2",
       "kind": "character",
       "parentID": "tag-0418"
     },
@@ -10207,9 +10681,9 @@
       },
       "aliases": [],
       "colors": [
-        "#F34E7B"
+        "#B4E04B"
       ],
-      "solidColor": "#F34E7B",
+      "solidColor": "#B4E04B",
       "kind": "character",
       "parentID": "tag-0418"
     },
@@ -10224,9 +10698,9 @@
       },
       "aliases": [],
       "colors": [
-        "#F34E7B"
+        "#EC7092"
       ],
-      "solidColor": "#F34E7B",
+      "solidColor": "#EC7092",
       "kind": "character",
       "parentID": "tag-0419"
     },
@@ -10241,9 +10715,9 @@
       },
       "aliases": [],
       "colors": [
-        "#F34E7B"
+        "#1C90CD"
       ],
-      "solidColor": "#F34E7B",
+      "solidColor": "#1C90CD",
       "kind": "character",
       "parentID": "tag-0419"
     },
@@ -10258,9 +10732,9 @@
       },
       "aliases": [],
       "colors": [
-        "#F34E7B"
+        "#F6B128"
       ],
-      "solidColor": "#F34E7B",
+      "solidColor": "#F6B128",
       "kind": "character",
       "parentID": "tag-0419"
     },
@@ -10275,9 +10749,9 @@
       },
       "aliases": [],
       "colors": [
-        "#F34E7B"
+        "#EA5B76"
       ],
-      "solidColor": "#F34E7B",
+      "solidColor": "#EA5B76",
       "kind": "character",
       "parentID": "tag-0420"
     },
@@ -10292,9 +10766,9 @@
       },
       "aliases": [],
       "colors": [
-        "#F34E7B"
+        "#6495CF"
       ],
-      "solidColor": "#F34E7B",
+      "solidColor": "#6495CF",
       "kind": "character",
       "parentID": "tag-0420"
     },
@@ -10309,9 +10783,9 @@
       },
       "aliases": [],
       "colors": [
-        "#F34E7B"
+        "#FED552"
       ],
-      "solidColor": "#F34E7B",
+      "solidColor": "#FED552",
       "kind": "character",
       "parentID": "tag-0420"
     },
@@ -10326,9 +10800,9 @@
       },
       "aliases": [],
       "colors": [
-        "#F34E7B"
+        "#FFBAD6"
       ],
-      "solidColor": "#F34E7B",
+      "solidColor": "#FFBAD6",
       "kind": "character",
       "parentID": "tag-0421"
     },
@@ -10343,9 +10817,9 @@
       },
       "aliases": [],
       "colors": [
-        "#F34E7B"
+        "#144384"
       ],
-      "solidColor": "#F34E7B",
+      "solidColor": "#144384",
       "kind": "character",
       "parentID": "tag-0421"
     },
@@ -10360,9 +10834,9 @@
       },
       "aliases": [],
       "colors": [
-        "#F34E7B"
+        "#FFE012"
       ],
-      "solidColor": "#F34E7B",
+      "solidColor": "#FFE012",
       "kind": "character",
       "parentID": "tag-0421"
     },
@@ -10532,9 +11006,10 @@
         "Sakuya"
       ],
       "colors": [
-        "#E60012"
+        "#443F73",
+        "#FFFFFF"
       ],
-      "solidColor": "#E60012",
+      "solidColor": "#443F73",
       "kind": "character",
       "parentID": "tag-0136"
     },
@@ -10551,9 +11026,10 @@
         "Youmu"
       ],
       "colors": [
-        "#E60012"
+        "#3A917C",
+        "#C8C6C6"
       ],
-      "solidColor": "#E60012",
+      "solidColor": "#3A917C",
       "kind": "character",
       "parentID": "tag-0136"
     },
@@ -10572,9 +11048,10 @@
         "Remilia"
       ],
       "colors": [
-        "#E60012"
+        "#FFB4B4",
+        "#D1092E"
       ],
-      "solidColor": "#E60012",
+      "solidColor": "#FFB4B4",
       "kind": "character",
       "parentID": "tag-0136"
     },
@@ -10593,9 +11070,10 @@
         "Flandre"
       ],
       "colors": [
-        "#E60012"
+        "#FA0000",
+        "#F6EC88"
       ],
-      "solidColor": "#E60012",
+      "solidColor": "#FA0000",
       "kind": "character",
       "parentID": "tag-0136"
     },
@@ -10610,9 +11088,10 @@
       },
       "aliases": [],
       "colors": [
-        "#E60012"
+        "#6ECAE1",
+        "#21006A"
       ],
-      "solidColor": "#E60012",
+      "solidColor": "#6ECAE1",
       "kind": "character",
       "parentID": "tag-0136"
     },
@@ -10629,9 +11108,10 @@
         "Koishi"
       ],
       "colors": [
-        "#E60012"
+        "#3E7A38",
+        "#F3C465"
       ],
-      "solidColor": "#E60012",
+      "solidColor": "#3E7A38",
       "kind": "character",
       "parentID": "tag-0136"
     },
@@ -10730,24 +11210,1709 @@
       "parentID": "tag-0028"
     },
     {
-      "id": "tag-0453",
+      "id": "tag-0454",
       "names": {
-        "zhHans": "温迪",
-        "zhHantHK": "温迪",
-        "zhHantTW": "温迪",
-        "en": "Venti",
-        "ja": "ウェンティ"
+        "zhHans": "言和",
+        "zhHantHK": "言和",
+        "zhHantTW": "言和",
+        "en": "Yanhe",
+        "ja": "言和"
       },
       "aliases": [
-        "Wendy",
-        "Venti"
+        "Yan He"
       ],
       "colors": [
-        "#74C2A8"
+        "#00A1E9"
       ],
-      "solidColor": "#74C2A8",
+      "solidColor": "#00A1E9",
+      "kind": "character",
+      "parentID": "tag-0028"
+    },
+    {
+      "id": "tag-0455",
+      "names": {
+        "zhHans": "乐正绫",
+        "zhHantHK": "乐正绫",
+        "zhHantTW": "乐正绫",
+        "en": "Yuezheng Ling",
+        "ja": "楽正綾"
+      },
+      "aliases": [
+        "乐正綾"
+      ],
+      "colors": [
+        "#E8383D"
+      ],
+      "solidColor": "#E8383D",
+      "kind": "character",
+      "parentID": "tag-0028"
+    },
+    {
+      "id": "tag-0456",
+      "names": {
+        "zhHans": "IA",
+        "zhHantHK": "IA",
+        "zhHantTW": "IA",
+        "en": "IA",
+        "ja": "IA"
+      },
+      "aliases": [],
+      "colors": [
+        "#A7D8DE"
+      ],
+      "solidColor": "#A7D8DE",
+      "kind": "character",
+      "parentID": "tag-0028"
+    },
+    {
+      "id": "tag-0457",
+      "names": {
+        "zhHans": "GUMI",
+        "zhHantHK": "GUMI",
+        "zhHantTW": "GUMI",
+        "en": "GUMI",
+        "ja": "GUMI"
+      },
+      "aliases": [],
+      "colors": [
+        "#A4D233"
+      ],
+      "solidColor": "#A4D233",
+      "kind": "character",
+      "parentID": "tag-0028"
+    },
+    {
+      "id": "tag-0458",
+      "names": {
+        "zhHans": "重音テト",
+        "zhHantHK": "重音テト",
+        "zhHantTW": "重音テト",
+        "en": "Kasane Teto",
+        "ja": "重音テト"
+      },
+      "aliases": [
+        "Kasane Teto"
+      ],
+      "colors": [
+        "#E8527A"
+      ],
+      "solidColor": "#E8527A",
+      "kind": "character",
+      "parentID": "tag-0028"
+    },
+    {
+      "id": "tag-0459",
+      "names": {
+        "zhHans": "可不",
+        "zhHantHK": "可不",
+        "zhHantTW": "可不",
+        "en": "Kafu",
+        "ja": "可不"
+      },
+      "aliases": [],
+      "colors": [
+        "#D7D3E8"
+      ],
+      "solidColor": "#D7D3E8",
+      "kind": "character",
+      "parentID": "tag-0028"
+    },
+    {
+      "id": "tag-0460",
+      "names": {
+        "zhHans": "星界",
+        "zhHantHK": "星界",
+        "zhHantTW": "星界",
+        "en": "Sekai",
+        "ja": "星界"
+      },
+      "aliases": [],
+      "colors": [
+        "#9BA7D8"
+      ],
+      "solidColor": "#9BA7D8",
+      "kind": "character",
+      "parentID": "tag-0028"
+    },
+    {
+      "id": "tag-0461",
+      "names": {
+        "zhHans": "孤子",
+        "zhHantHK": "孤子",
+        "zhHantTW": "孤子",
+        "en": "Koko",
+        "ja": "孤子"
+      },
+      "aliases": [],
+      "colors": [
+        "#E7A7C8"
+      ],
+      "solidColor": "#E7A7C8",
+      "kind": "character",
+      "parentID": "tag-0028"
+    },
+    {
+      "id": "tag-0462",
+      "names": {
+        "zhHans": "ずんだもん",
+        "zhHantHK": "ずんだもん",
+        "zhHantTW": "ずんだもん",
+        "en": "Zundamon",
+        "ja": "ずんだもん"
+      },
+      "aliases": [],
+      "colors": [
+        "#65C466"
+      ],
+      "solidColor": "#65C466",
+      "kind": "character",
+      "parentID": "tag-0028"
+    },
+    {
+      "id": "tag-0463",
+      "names": {
+        "zhHans": "音街ウナ",
+        "zhHantHK": "音街ウナ",
+        "zhHantTW": "音街ウナ",
+        "en": "Otomachi Una",
+        "ja": "音街ウナ"
+      },
+      "aliases": [],
+      "colors": [
+        "#F3A62A"
+      ],
+      "solidColor": "#F3A62A",
+      "kind": "character",
+      "parentID": "tag-0028"
+    },
+    {
+      "id": "tag-0464",
+      "names": {
+        "zhHans": "flower",
+        "zhHantHK": "flower",
+        "zhHantTW": "flower",
+        "en": "v flower",
+        "ja": "flower"
+      },
+      "aliases": [],
+      "colors": [
+        "#B58BD4"
+      ],
+      "solidColor": "#B58BD4",
+      "kind": "character",
+      "parentID": "tag-0028"
+    },
+    {
+      "id": "tag-0465",
+      "names": {
+        "zhHans": "琴葉茜",
+        "zhHantHK": "琴葉茜",
+        "zhHantTW": "琴葉茜",
+        "en": "Kotonoha Akane",
+        "ja": "琴葉茜"
+      },
+      "aliases": [],
+      "colors": [
+        "#E85D75"
+      ],
+      "solidColor": "#E85D75",
+      "kind": "character",
+      "parentID": "tag-0028"
+    },
+    {
+      "id": "tag-0466",
+      "names": {
+        "zhHans": "琴葉葵",
+        "zhHantHK": "琴葉葵",
+        "zhHantTW": "琴葉葵",
+        "en": "Kotonoha Aoi",
+        "ja": "琴葉葵"
+      },
+      "aliases": [],
+      "colors": [
+        "#5B9BD5"
+      ],
+      "solidColor": "#5B9BD5",
+      "kind": "character",
+      "parentID": "tag-0028"
+    },
+    {
+      "id": "tag-0467",
+      "names": {
+        "zhHans": "結月ゆかり",
+        "zhHantHK": "結月ゆかり",
+        "zhHantTW": "結月ゆかり",
+        "en": "Yuzuki Yukari",
+        "ja": "結月ゆかり"
+      },
+      "aliases": [],
+      "colors": [
+        "#9B7BB8"
+      ],
+      "solidColor": "#9B7BB8",
+      "kind": "character",
+      "parentID": "tag-0028"
+    },
+    {
+      "id": "tag-0468",
+      "names": {
+        "zhHans": "紲星あかり",
+        "zhHantHK": "紲星あかり",
+        "zhHantTW": "紲星あかり",
+        "en": "Kizuna Akari",
+        "ja": "紲星あかり"
+      },
+      "aliases": [],
+      "colors": [
+        "#F2B134"
+      ],
+      "solidColor": "#F2B134",
+      "kind": "character",
+      "parentID": "tag-0028"
+    },
+    {
+      "id": "tag-0469",
+      "names": {
+        "zhHans": "雀魂",
+        "zhHantHK": "雀魂",
+        "zhHantTW": "雀魂",
+        "en": "Mahjong Soul",
+        "ja": "雀魂"
+      },
+      "aliases": [
+        "majsoul",
+        "mahjongsoul",
+        "雀魂麻将",
+        "雀魂麻雀"
+      ],
+      "colors": [
+        "#D0B774"
+      ],
+      "solidColor": "#D0B774",
+      "kind": "work"
+    },
+    {
+      "id": "tag-0470",
+      "names": {
+        "zhHans": "一姬",
+        "zhHantHK": "一姬",
+        "zhHantTW": "一姬",
+        "en": "Ichihime",
+        "ja": "一姫"
+      },
+      "aliases": [
+        "ichihime",
+        "一姫"
+      ],
+      "colors": [
+        "#C46F69"
+      ],
+      "solidColor": "#C46F69",
+      "kind": "character",
+      "parentID": "tag-0469"
+    },
+    {
+      "id": "tag-0471",
+      "names": {
+        "zhHans": "八木唯",
+        "zhHantHK": "八木唯",
+        "zhHantTW": "八木唯",
+        "en": "Yui Yagi",
+        "ja": "八木唯"
+      },
+      "aliases": [
+        "yui yagi",
+        "yuiyagi",
+        "八木ユイ"
+      ],
+      "colors": [
+        "#737386"
+      ],
+      "solidColor": "#737386",
+      "kind": "character",
+      "parentID": "tag-0469"
+    },
+    {
+      "id": "tag-0472",
+      "names": {
+        "zhHans": "三上千织",
+        "zhHantHK": "三上千織",
+        "zhHantTW": "三上千織",
+        "en": "Chiori Mikami",
+        "ja": "三上千織"
+      },
+      "aliases": [
+        "chiori mikami",
+        "chiorimikami",
+        "三上千織"
+      ],
+      "colors": [
+        "#BC938A"
+      ],
+      "solidColor": "#BC938A",
+      "kind": "character",
+      "parentID": "tag-0469"
+    },
+    {
+      "id": "tag-0473",
+      "names": {
+        "zhHans": "辉夜姬",
+        "zhHantHK": "輝夜姬",
+        "zhHantTW": "輝夜姬",
+        "en": "Kaguyahime",
+        "ja": "かぐや姫"
+      },
+      "aliases": [
+        "kaguyahime",
+        "kaguya-hime",
+        "かぐや姫"
+      ],
+      "colors": [
+        "#DBB4BD"
+      ],
+      "solidColor": "#DBB4BD",
+      "kind": "character",
+      "parentID": "tag-0469"
+    },
+    {
+      "id": "tag-0474",
+      "names": {
+        "zhHans": "millsage",
+        "zhHantHK": "millsage",
+        "zhHantTW": "millsage",
+        "en": "millsage",
+        "ja": "millsage"
+      },
+      "aliases": [
+        "Millsage",
+        "ミルサージュ"
+      ],
+      "colors": [
+        "#AA22EE",
+        "#99FF99",
+        "#FF4444",
+        "#5555FF",
+        "#77FFFF",
+        "#EE99EE"
+      ],
+      "solidColor": "#AA22EE",
+      "kind": "group",
+      "parentID": "tag-0030"
+    },
+    {
+      "id": "tag-0475",
+      "names": {
+        "zhHans": "汐见萤",
+        "zhHantHK": "汐見螢",
+        "zhHantTW": "汐見螢",
+        "en": "Hotaru Shiomi",
+        "ja": "汐見蛍"
+      },
+      "aliases": [
+        "Shiomi Hotaru",
+        "shiomihotaru",
+        "hotarushiomi",
+        "汐見 蛍",
+        "しおみほたる"
+      ],
+      "colors": [
+        "#AA22EE",
+        "#99FF99"
+      ],
+      "solidColor": "#99FF99",
+      "kind": "character",
+      "parentID": "tag-0474"
+    },
+    {
+      "id": "tag-0476",
+      "names": {
+        "zhHans": "伊泽枣",
+        "zhHantHK": "伊澤棗",
+        "zhHantTW": "伊澤棗",
+        "en": "Natsume Izawa",
+        "ja": "伊沢なつめ"
+      },
+      "aliases": [
+        "Izawa Natsume",
+        "izawanatsume",
+        "natsumeizawa",
+        "伊沢 なつめ",
+        "いざわなつめ"
+      ],
+      "colors": [
+        "#AA22EE",
+        "#FF4444"
+      ],
+      "solidColor": "#FF4444",
+      "kind": "character",
+      "parentID": "tag-0474"
+    },
+    {
+      "id": "tag-0477",
+      "names": {
+        "zhHans": "夜鹿Yorushika",
+        "zhHantHK": "夜鹿Yorushika",
+        "zhHantTW": "夜鹿Yorushika",
+        "en": "Yorushika",
+        "ja": "ヨルシカ"
+      },
+      "aliases": [
+        "yorushika",
+        "夜鹿"
+      ],
+      "colors": [
+        "#FFFFFF",
+        "#000000",
+        "#FFFFFF",
+        "#000000",
+        "#FFFFFF"
+      ],
+      "solidColor": "#FFFFFF",
+      "kind": "group"
+    },
+    {
+      "id": "tag-0478",
+      "names": {
+        "zhHans": "打打だいず",
+        "zhHantHK": "打打だいず",
+        "zhHantTW": "打打だいず",
+        "en": "D-D-Dice",
+        "ja": "打打だいず"
+      },
+      "aliases": [
+        "D-D-Dice",
+        "D D Dice",
+        "dddice"
+      ],
+      "colors": [
+        "#47B785"
+      ],
+      "solidColor": "#47B785",
+      "kind": "creator"
+    },
+    {
+      "id": "tag-0479",
+      "names": {
+        "zhHans": "林登·斯科特",
+        "zhHantHK": "林登·斯科特",
+        "zhHantTW": "林登·斯科特",
+        "en": "Lyndon Skott",
+        "ja": "スコート"
+      },
+      "aliases": [
+        "斯科特",
+        "Skott",
+        "LyndonSkott"
+      ],
+      "colors": [
+        "#703D55",
+        "#312F32",
+        "#BFBFC1"
+      ],
+      "solidColor": "#703D55",
+      "kind": "character",
+      "parentID": "tag-0103"
+    },
+    {
+      "id": "tag-0480",
+      "names": {
+        "zhHans": "黑键",
+        "zhHantHK": "黑鍵",
+        "zhHantTW": "黑鍵",
+        "en": "Ebenholz",
+        "ja": "エーベンホルツ"
+      },
+      "aliases": [
+        "ebenholz",
+        "黑键",
+        "黑鍵",
+        "エーベンホルツ"
+      ],
+      "colors": [
+        "#000000"
+      ],
+      "solidColor": "#000000",
+      "kind": "character",
+      "parentID": "tag-0091"
+    },
+    {
+      "id": "tag-0481",
+      "names": {
+        "zhHans": "VY1",
+        "zhHantHK": "VY1",
+        "zhHantTW": "VY1",
+        "en": "VY1",
+        "ja": "VY1"
+      },
+      "aliases": [
+        "vy1",
+        "vy1 mizki",
+        "mizki",
+        "コブシキク",
+        "Kobushi Kiku"
+      ],
+      "colors": [
+        "#74D9CF",
+        "#E87AB6"
+      ],
+      "solidColor": "#E87AB6",
+      "kind": "character",
+      "parentID": "tag-0028"
+    },
+    {
+      "id": "tag-0482",
+      "names": {
+        "zhHans": "VY2",
+        "zhHantHK": "VY2",
+        "zhHantTW": "VY2",
+        "en": "VY2",
+        "ja": "VY2"
+      },
+      "aliases": [
+        "vy2",
+        "66",
+        "ロロ",
+        "Roro"
+      ],
+      "colors": [
+        "#20252A",
+        "#E8B8C5"
+      ],
+      "solidColor": "#E8B8C5",
+      "kind": "character",
+      "parentID": "tag-0028"
+    },
+    {
+      "id": "tag-0483",
+      "names": {
+        "zhHans": "女神异闻录5",
+        "zhHantHK": "女神異聞錄5",
+        "zhHantTW": "女神異聞錄5",
+        "en": "Persona 5",
+        "ja": "ペルソナ5"
+      },
+      "aliases": [
+        "p5",
+        "persona5",
+        "persona 5"
+      ],
+      "colors": [
+        "#D61F2C"
+      ],
+      "solidColor": "#D61F2C",
+      "kind": "work"
+    },
+    {
+      "id": "tag-0484",
+      "names": {
+        "zhHans": "雨宫莲",
+        "zhHantHK": "雨宮蓮",
+        "zhHantTW": "雨宮蓮",
+        "en": "Ren Amamiya",
+        "ja": "雨宮蓮"
+      },
+      "aliases": [
+        "ren amamiya",
+        "joker",
+        "ジョーカー",
+        "akira kurusu"
+      ],
+      "colors": [
+        "#20252A",
+        "#D61F2C"
+      ],
+      "solidColor": "#D61F2C",
+      "kind": "character",
+      "parentID": "tag-0483"
+    },
+    {
+      "id": "tag-0485",
+      "names": {
+        "zhHans": "花火",
+        "zhHantHK": "花火",
+        "zhHantTW": "花火",
+        "en": "Sparkle",
+        "ja": "花火"
+      },
+      "aliases": [
+        "sparkle",
+        "hanabi"
+      ],
+      "colors": [
+        "#D75AA8",
+        "#2B203F"
+      ],
+      "solidColor": "#D75AA8",
+      "kind": "character",
+      "parentID": "tag-0103"
+    },
+    {
+      "id": "tag-0486",
+      "names": {
+        "zhHans": "七种茨",
+        "zhHantHK": "七種茨",
+        "zhHantTW": "七種茨",
+        "en": "Ibara Saegusa",
+        "ja": "七種茨"
+      },
+      "aliases": [
+        "ibara",
+        "saegusa ibara",
+        "eden"
+      ],
+      "colors": [
+        "#A52A5A",
+        "#293A41"
+      ],
+      "solidColor": "#A52A5A",
+      "kind": "character",
+      "parentID": "tag-0111"
+    },
+    {
+      "id": "tag-0487",
+      "names": {
+        "zhHans": "红美铃",
+        "zhHantHK": "紅美鈴",
+        "zhHantTW": "紅美鈴",
+        "en": "Hong Meiling",
+        "ja": "紅美鈴"
+      },
+      "aliases": [
+        "meiling",
+        "hong meiling"
+      ],
+      "colors": [
+        "#D32F2F",
+        "#4CAF50"
+      ],
+      "solidColor": "#D32F2F",
+      "kind": "character",
+      "parentID": "tag-0136"
+    },
+    {
+      "id": "tag-0488",
+      "names": {
+        "zhHans": "艾丝",
+        "zhHantHK": "艾丝",
+        "zhHantTW": "艾丝",
+        "en": "Aisi",
+        "ja": "アイス"
+      },
+      "aliases": [
+        "aisi",
+        "ais"
+      ],
+      "colors": [
+        "#3B82F6",
+        "#F2C94C"
+      ],
+      "solidColor": "#3B82F6",
+      "kind": "character",
+      "parentID": "tag-0489"
+    },
+    {
+      "id": "tag-0489",
+      "names": {
+        "zhHans": "遗忘之海",
+        "zhHantHK": "遺忘之海",
+        "zhHantTW": "遺忘之海",
+        "en": "Sea of Forgetting",
+        "ja": "忘却の海"
+      },
+      "aliases": [
+        "sea of forgetting",
+        "忘却之海"
+      ],
+      "colors": [
+        "#3B82F6",
+        "#F2C94C"
+      ],
+      "solidColor": "#3B82F6",
+      "kind": "work"
+    },
+    {
+      "id": "tag-0490",
+      "names": {
+        "zhHans": "天满光",
+        "zhHantHK": "天滿光",
+        "zhHantTW": "天滿光",
+        "en": "Mitsuru Tenma",
+        "ja": "天満光"
+      },
+      "aliases": [
+        "mitsuru",
+        "tenma mitsuru"
+      ],
+      "colors": [
+        "#FFB300"
+      ],
+      "solidColor": "#FFB300",
+      "kind": "character",
+      "parentID": "tag-0111"
+    },
+    {
+      "id": "tag-0491",
+      "names": {
+        "zhHans": "Heated Rivalry",
+        "zhHantHK": "Heated Rivalry",
+        "zhHantTW": "Heated Rivalry",
+        "en": "Heated Rivalry",
+        "ja": "Heated Rivalry"
+      },
+      "aliases": [
+        "heated rivalry"
+      ],
+      "colors": [
+        "#F0DE2B",
+        "#2E2D2E",
+        "#2147B2",
+        "#D5222F"
+      ],
+      "solidColor": "#F0DE2B",
+      "kind": "work"
+    },
+    {
+      "id": "tag-0492",
+      "names": {
+        "zhHans": "Ilya Rozanov",
+        "zhHantHK": "Ilya Rozanov",
+        "zhHantTW": "Ilya Rozanov",
+        "en": "Ilya Rozanov",
+        "ja": "Ilya Rozanov"
+      },
+      "aliases": [
+        "ilya",
+        "rozanov"
+      ],
+      "colors": [
+        "#F0DE2B",
+        "#2E2D2E"
+      ],
+      "solidColor": "#F0DE2B",
+      "kind": "character",
+      "parentID": "tag-0491"
+    },
+    {
+      "id": "tag-0493",
+      "names": {
+        "zhHans": "Shane Hollander",
+        "zhHantHK": "Shane Hollander",
+        "zhHantTW": "Shane Hollander",
+        "en": "Shane Hollander",
+        "ja": "Shane Hollander"
+      },
+      "aliases": [
+        "shane",
+        "hollander"
+      ],
+      "colors": [
+        "#2147B2",
+        "#D5222F"
+      ],
+      "solidColor": "#2147B2",
+      "kind": "character",
+      "parentID": "tag-0491"
+    },
+    {
+      "id": "tag-0494",
+      "names": {
+        "zhHans": "崩坏3",
+        "zhHantHK": "崩壞3",
+        "zhHantTW": "崩壞3",
+        "en": "Honkai Impact 3rd",
+        "ja": "崩壊3rd"
+      },
+      "aliases": [
+        "崩坏三",
+        "崩壞三",
+        "bh3",
+        "崩崩崩",
+        "Honkai Impact 3",
+        "Houkai 3rd"
+      ],
+      "colors": [
+        "#FFA827"
+      ],
+      "solidColor": "#FFA827",
+      "kind": "work"
+    },
+    {
+      "id": "tag-0495",
+      "names": {
+        "zhHans": "戴菲恩",
+        "zhHantHK": "戴菲恩",
+        "zhHantTW": "戴菲恩",
+        "en": "Delphine",
+        "ja": "デルフィーン"
+      },
+      "aliases": [
+        "delphine",
+        "Delphine Windermere"
+      ],
+      "colors": [
+        "#595B2A"
+      ],
+      "solidColor": "#595B2A",
+      "kind": "character",
+      "parentID": "tag-0091"
+    },
+    {
+      "id": "tag-0497",
+      "names": {
+        "zhHans": "结城理",
+        "zhHantHK": "结城理",
+        "zhHantTW": "结城理",
+        "en": "Makoto Yuki",
+        "ja": "結城理"
+      },
+      "aliases": [
+        "makoto yuki",
+        "结城理"
+      ],
+      "colors": [
+        "#83E9F8",
+        "#323F67"
+      ],
+      "solidColor": "#83E9F8",
+      "kind": "character",
+      "parentID": "tag-0496"
+    },
+    {
+      "id": "tag-0498",
+      "names": {
+        "zhHans": "岳羽由加莉",
+        "zhHantHK": "岳羽由加莉",
+        "zhHantTW": "岳羽由加莉",
+        "en": "Yukari Takeba",
+        "ja": "岳羽ゆかり"
+      },
+      "aliases": [
+        "yukari takeba",
+        "岳羽由加莉"
+      ],
+      "colors": [
+        "#F88FFF",
+        "#D0464C"
+      ],
+      "solidColor": "#F88FFF",
+      "kind": "character",
+      "parentID": "tag-0496"
+    },
+    {
+      "id": "tag-0499",
+      "names": {
+        "zhHans": "伊织顺平",
+        "zhHantHK": "伊织顺平",
+        "zhHantTW": "伊织顺平",
+        "en": "Junpei Iori",
+        "ja": "伊織順平"
+      },
+      "aliases": [
+        "junpei iori",
+        "伊织顺平"
+      ],
+      "colors": [
+        "#949BF7",
+        "#3D4977"
+      ],
+      "solidColor": "#949BF7",
+      "kind": "character",
+      "parentID": "tag-0496"
+    },
+    {
+      "id": "tag-0500",
+      "names": {
+        "zhHans": "真田明彦",
+        "zhHantHK": "真田明彦",
+        "zhHantTW": "真田明彦",
+        "en": "Akihiko Sanada",
+        "ja": "真田明彦"
+      },
+      "aliases": [
+        "akihiko sanada",
+        "真田明彦"
+      ],
+      "colors": [
+        "#CFD6D6",
+        "#E9321A"
+      ],
+      "solidColor": "#CFD6D6",
+      "kind": "character",
+      "parentID": "tag-0496"
+    },
+    {
+      "id": "tag-0501",
+      "names": {
+        "zhHans": "桐条美鹤",
+        "zhHantHK": "桐条美鹤",
+        "zhHantTW": "桐条美鹤",
+        "en": "Mitsuru Kirijo",
+        "ja": "桐条美鶴"
+      },
+      "aliases": [
+        "mitsuru kirijo",
+        "桐条美鹤"
+      ],
+      "colors": [
+        "#F288A4",
+        "#D0464C"
+      ],
+      "solidColor": "#F288A4",
+      "kind": "character",
+      "parentID": "tag-0496"
+    },
+    {
+      "id": "tag-0502",
+      "names": {
+        "zhHans": "山岸风花",
+        "zhHantHK": "山岸风花",
+        "zhHantTW": "山岸风花",
+        "en": "Fuuka Yamagishi",
+        "ja": "山岸風花"
+      },
+      "aliases": [
+        "fuuka yamagishi",
+        "山岸风花"
+      ],
+      "colors": [
+        "#91F1D8",
+        "#6B9A9C"
+      ],
+      "solidColor": "#91F1D8",
+      "kind": "character",
+      "parentID": "tag-0496"
+    },
+    {
+      "id": "tag-0503",
+      "names": {
+        "zhHans": "虎狼丸",
+        "zhHantHK": "虎狼丸",
+        "zhHantTW": "虎狼丸",
+        "en": "Koromaru",
+        "ja": "コロマル"
+      },
+      "aliases": [
+        "koromaru",
+        "虎狼丸"
+      ],
+      "colors": [
+        "#F2F4F2",
+        "#B6B6B6"
+      ],
+      "solidColor": "#F2F4F2",
+      "kind": "character",
+      "parentID": "tag-0496"
+    },
+    {
+      "id": "tag-0504",
+      "names": {
+        "zhHans": "埃癸斯",
+        "zhHantHK": "埃癸斯",
+        "zhHantTW": "埃癸斯",
+        "en": "Aigis",
+        "ja": "アイギス"
+      },
+      "aliases": [
+        "aigis",
+        "埃癸斯"
+      ],
+      "colors": [
+        "#FAF6A6",
+        "#E3CA9D"
+      ],
+      "solidColor": "#FAF6A6",
+      "kind": "character",
+      "parentID": "tag-0496"
+    },
+    {
+      "id": "tag-0505",
+      "names": {
+        "zhHans": "天田乾",
+        "zhHantHK": "天田乾",
+        "zhHantTW": "天田乾",
+        "en": "Ken Amada",
+        "ja": "天田乾"
+      },
+      "aliases": [
+        "ken amada",
+        "天田乾"
+      ],
+      "colors": [
+        "#FABA80",
+        "#C45A17"
+      ],
+      "solidColor": "#FABA80",
+      "kind": "character",
+      "parentID": "tag-0496"
+    },
+    {
+      "id": "tag-0506",
+      "names": {
+        "zhHans": "荒垣真次郎",
+        "zhHantHK": "荒垣真次郎",
+        "zhHantTW": "荒垣真次郎",
+        "en": "Shinjiro Aragaki",
+        "ja": "荒垣真次郎"
+      },
+      "aliases": [
+        "shinjiro aragaki",
+        "荒垣真次郎"
+      ],
+      "colors": [
+        "#CE8998",
+        "#521722"
+      ],
+      "solidColor": "#CE8998",
+      "kind": "character",
+      "parentID": "tag-0496"
+    },
+    {
+      "id": "tag-0508",
+      "names": {
+        "zhHans": "鸣上悠",
+        "zhHantHK": "鸣上悠",
+        "zhHantTW": "鸣上悠",
+        "en": "Yu Narukami",
+        "ja": "鳴上悠"
+      },
+      "aliases": [
+        "yu narukami",
+        "鸣上悠"
+      ],
+      "colors": [
+        "#FFFF00",
+        "#979696"
+      ],
+      "solidColor": "#FFFF00",
+      "kind": "character",
+      "parentID": "tag-0507"
+    },
+    {
+      "id": "tag-0509",
+      "names": {
+        "zhHans": "花村阳介",
+        "zhHantHK": "花村阳介",
+        "zhHantTW": "花村阳介",
+        "en": "Yosuke Hanamura",
+        "ja": "花村陽介"
+      },
+      "aliases": [
+        "yosuke hanamura",
+        "花村阳介"
+      ],
+      "colors": [
+        "#A96734",
+        "#2F2F30"
+      ],
+      "solidColor": "#A96734",
+      "kind": "character",
+      "parentID": "tag-0507"
+    },
+    {
+      "id": "tag-0510",
+      "names": {
+        "zhHans": "里中千枝",
+        "zhHantHK": "里中千枝",
+        "zhHantTW": "里中千枝",
+        "en": "Chie Satonaka",
+        "ja": "里中千枝"
+      },
+      "aliases": [
+        "chie satonaka",
+        "里中千枝"
+      ],
+      "colors": [
+        "#2C7330",
+        "#FAD766"
+      ],
+      "solidColor": "#2C7330",
+      "kind": "character",
+      "parentID": "tag-0507"
+    },
+    {
+      "id": "tag-0511",
+      "names": {
+        "zhHans": "天城雪子",
+        "zhHantHK": "天城雪子",
+        "zhHantTW": "天城雪子",
+        "en": "Yukiko Amagi",
+        "ja": "天城雪子"
+      },
+      "aliases": [
+        "yukiko amagi",
+        "天城雪子"
+      ],
+      "colors": [
+        "#BE2F31",
+        "#433C3B"
+      ],
+      "solidColor": "#BE2F31",
+      "kind": "character",
+      "parentID": "tag-0507"
+    },
+    {
+      "id": "tag-0512",
+      "names": {
+        "zhHans": "小熊",
+        "zhHantHK": "小熊",
+        "zhHantTW": "小熊",
+        "en": "Teddie",
+        "ja": "クマ"
+      },
+      "aliases": [
+        "teddie",
+        "小熊"
+      ],
+      "colors": [
+        "#EC322A",
+        "#0444D4"
+      ],
+      "solidColor": "#EC322A",
+      "kind": "character",
+      "parentID": "tag-0507"
+    },
+    {
+      "id": "tag-0513",
+      "names": {
+        "zhHans": "巽完二",
+        "zhHantHK": "巽完二",
+        "zhHantTW": "巽完二",
+        "en": "Kanji Tatsumi",
+        "ja": "巽完二"
+      },
+      "aliases": [
+        "kanji tatsumi",
+        "巽完二"
+      ],
+      "colors": [
+        "#404255",
+        "#BEC3A7"
+      ],
+      "solidColor": "#404255",
+      "kind": "character",
+      "parentID": "tag-0507"
+    },
+    {
+      "id": "tag-0514",
+      "names": {
+        "zhHans": "久慈川理世",
+        "zhHantHK": "久慈川理世",
+        "zhHantTW": "久慈川理世",
+        "en": "Rise Kujikawa",
+        "ja": "久慈川りせ"
+      },
+      "aliases": [
+        "rise kujikawa",
+        "久慈川理世"
+      ],
+      "colors": [
+        "#75494A",
+        "#FFEB73"
+      ],
+      "solidColor": "#75494A",
+      "kind": "character",
+      "parentID": "tag-0507"
+    },
+    {
+      "id": "tag-0515",
+      "names": {
+        "zhHans": "白钟直斗",
+        "zhHantHK": "白钟直斗",
+        "zhHantTW": "白钟直斗",
+        "en": "Naoto Shirogane",
+        "ja": "白鐘直斗"
+      },
+      "aliases": [
+        "naoto shirogane",
+        "白钟直斗"
+      ],
+      "colors": [
+        "#4E599A",
+        "#333232"
+      ],
+      "solidColor": "#4E599A",
+      "kind": "character",
+      "parentID": "tag-0507"
+    },
+    {
+      "id": "tag-0496",
+      "names": {
+        "zhHans": "女神异闻录3",
+        "zhHantHK": "女神异闻录3",
+        "zhHantTW": "女神异闻录3",
+        "en": "Persona 3",
+        "ja": "ペルソナ3"
+      },
+      "aliases": [
+        "p3",
+        "persona 3",
+        "persona3"
+      ],
+      "colors": [
+        "#1D384A"
+      ],
+      "solidColor": "#1D384A",
+      "kind": "work"
+    },
+    {
+      "id": "tag-0507",
+      "names": {
+        "zhHans": "女神异闻录4",
+        "zhHantHK": "女神异闻录4",
+        "zhHantTW": "女神异闻录4",
+        "en": "Persona 4",
+        "ja": "ペルソナ4"
+      },
+      "aliases": [
+        "p4",
+        "persona 4",
+        "persona4"
+      ],
+      "colors": [
+        "#FFFF00"
+      ],
+      "solidColor": "#FFFF00",
+      "kind": "work"
+    },
+    {
+      "id": "tag-0516",
+      "names": {
+        "zhHans": "黏美龙（洗翠的样子）",
+        "zhHantHK": "黏美龍（洗翠的樣子）",
+        "zhHantTW": "黏美龍（洗翠的樣子）",
+        "en": "Goodra (Hisuian Form)",
+        "ja": "ヌメルゴン（ヒスイのすがた）"
+      },
+      "aliases": [
+        "洗翠黏美龙",
+        "洗翠黏美龍",
+        "黏美龙（洗翠形态有贝壳的）",
+        "黏美龙（洗翠形态）",
+        "黏美龍（洗翠形態）",
+        "Hisuian Goodra",
+        "Goodra Hisui",
+        "ヌメルゴン ヒスイのすがた"
+      ],
+      "colors": [
+        "#6F4E9B"
+      ],
+      "solidColor": "#6F4E9B",
+      "kind": "character",
+      "parentID": "tag-0196"
+    },
+    {
+      "id": "tag-0517",
+      "names": {
+        "zhHans": "WIXOSS",
+        "zhHantHK": "WIXOSS",
+        "zhHantTW": "WIXOSS",
+        "en": "WIXOSS",
+        "ja": "ウィクロス"
+      },
+      "aliases": [
+        "wixoss",
+        "ウィクロス",
+        "选择感染者WIXOSS",
+        "選擇感染者WIXOSS",
+        "selector infected WIXOSS"
+      ],
+      "colors": [
+        "#1B298B"
+      ],
+      "solidColor": "#1B298B",
+      "kind": "work"
+    },
+    {
+      "id": "tag-0518",
+      "names": {
+        "zhHans": "皮璐璐可",
+        "zhHantHK": "皮璐璐可",
+        "zhHantTW": "皮璐璐可",
+        "en": "Piruluk",
+        "ja": "ピルルク"
+      },
+      "aliases": [
+        "Piruluk",
+        "ピルルク",
+        "コード・ピルルク",
+        "Code Piruluk"
+      ],
+      "colors": [
+        "#4A90D9"
+      ],
+      "solidColor": "#4A90D9",
+      "kind": "character",
+      "parentID": "tag-0517"
+    },
+    {
+      "id": "tag-0519",
+      "names": {
+        "zhHans": "四季映姬",
+        "zhHantHK": "四季映姬",
+        "zhHantTW": "四季映姬",
+        "en": "Eiki Shiki, Yamaxanadu",
+        "ja": "四季映姫・ヤマザナドゥ"
+      },
+      "aliases": [
+        "四季映姬·夜摩仙那度",
+        "四季映姬·亚玛萨那度",
+        "四季映姬·亞瑪薩那度",
+        "四季映姫",
+        "Eiki Shiki",
+        "Shikieiki Yamaxanadu",
+        "Yamaxanadu"
+      ],
+      "colors": [
+        "#249063"
+      ],
+      "solidColor": "#249063",
+      "kind": "character",
+      "parentID": "tag-0136"
+    },
+    {
+      "id": "tag-0520",
+      "names": {
+        "zhHans": "鸣花双子",
+        "zhHantHK": "鳴花雙子",
+        "zhHantTW": "鳴花雙子",
+        "en": "Meika Hime & Mikoto",
+        "ja": "鳴花ヒメ・ミコト"
+      },
+      "aliases": [
+        "鳴花ヒメ",
+        "鳴花ミコト",
+        "鸣花姬",
+        "鸣花命",
+        "鳴花姬",
+        "鳴花命",
+        "Meika Hime",
+        "Meika Mikoto",
+        "Meika twins",
+        "Hime and Mikoto"
+      ],
+      "colors": [
+        "#F0B8BF",
+        "#C6C6FA"
+      ],
+      "solidColor": "#F0B8BF",
+      "kind": "character",
+      "parentID": "tag-0028"
+    },
+    {
+      "id": "tag-0521",
+      "names": {
+        "zhHans": "林肯公园",
+        "zhHantHK": "聯合公園",
+        "zhHantTW": "聯合公園",
+        "en": "Linkin Park",
+        "ja": "リンキン・パーク"
+      },
+      "aliases": [
+        "linkin park",
+        "linkinpark",
+        "LP",
+        "林肯公园",
+        "林肯公園",
+        "聯合公園",
+        "リンキンパーク"
+      ],
+      "colors": [
+        "#000000",
+        "#FFFFFF",
+        "#FF0000"
+      ],
+      "solidColor": "#000000",
+      "kind": "group"
+    },
+    {
+      "id": "tag-0522",
+      "names": {
+        "zhHans": "那刻夏",
+        "zhHantHK": "那刻夏",
+        "zhHantTW": "那刻夏",
+        "en": "Anaxa",
+        "ja": "アナイクス"
+      },
+      "aliases": [
+        "Anaxa",
+        "Anaxagoras",
+        "阿那克萨戈拉斯",
+        "阿那克薩戈拉斯",
+        "阿那克萨格拉斯",
+        "アナクサゴラス"
+      ],
+      "colors": [
+        "#6DBE9B",
+        "#7A2633"
+      ],
+      "solidColor": "#6DBE9B",
+      "kind": "character",
+      "parentID": "tag-0103"
+    },
+    {
+      "id": "tag-0523",
+      "names": {
+        "zhHans": "金牌得主",
+        "zhHantHK": "金牌得主",
+        "zhHantTW": "金牌得主",
+        "en": "Medalist",
+        "ja": "メダリスト"
+      },
+      "aliases": [
+        "medalist",
+        "金牌得主",
+        "メダリスト"
+      ],
+      "colors": [
+        "#8EB8D8"
+      ],
+      "solidColor": "#8EB8D8",
+      "kind": "work"
+    },
+    {
+      "id": "tag-0524",
+      "names": {
+        "zhHans": "结束祈",
+        "zhHantHK": "結束祈",
+        "zhHantTW": "結束祈",
+        "en": "Inori Yuitsuka",
+        "ja": "結束いのり"
+      },
+      "aliases": [
+        "Inori",
+        "Inori Yuitsuka",
+        "结東祈",
+        "結束 いのり",
+        "結束いのり",
+        "いのり"
+      ],
+      "colors": [
+        "#F2A6C3"
+      ],
+      "solidColor": "#F2A6C3",
+      "kind": "character",
+      "parentID": "tag-0523"
+    },
+    {
+      "id": "tag-0525",
+      "names": {
+        "zhHans": "流浪者",
+        "zhHantHK": "流浪者",
+        "zhHantTW": "流浪者",
+        "en": "Wanderer",
+        "ja": "放浪者"
+      },
+      "aliases": [
+        "wanderer",
+        "Wanderer",
+        "散兵",
+        "国崩",
+        "國崩",
+        "傾奇者",
+        "Kunikuzushi",
+        "Scaramouche"
+      ],
+      "colors": [
+        "#66B7E8"
+      ],
+      "solidColor": "#66B7E8",
       "kind": "character",
       "parentID": "tag-0107"
+    }
+  ],
+  "groups": [
+    {
+      "id": "group-vocaloid-six",
+      "categoryID": "ip-vocaloid",
+      "names": {
+        "zhHans": "VOCALOID",
+        "zhHantHK": "VOCALOID",
+        "zhHantTW": "VOCALOID",
+        "en": "VOCALOID",
+        "ja": "VOCALOID"
+      },
+      "ranges": [
+        {
+          "start": "tag-0029",
+          "end": "tag-0029"
+        },
+        {
+          "start": "tag-0352",
+          "end": "tag-0356"
+        },
+        {
+          "start": "tag-0456",
+          "end": "tag-0457"
+        },
+        {
+          "start": "tag-0463",
+          "end": "tag-0468"
+        },
+        {
+          "start": "tag-0481",
+          "end": "tag-0482"
+        },
+        {
+          "start": "tag-0520",
+          "end": "tag-0520"
+        }
+      ]
+    },
+    {
+      "id": "group-vocaloid-general",
+      "categoryID": "ip-vocaloid",
+      "names": {
+        "zhHans": "泛术力口",
+        "zhHantHK": "泛术力口",
+        "zhHantTW": "泛术力口",
+        "en": "Vocaloid / Synthesizer V",
+        "ja": "泛术力口"
+      },
+      "ranges": [
+        {
+          "start": "tag-0458",
+          "end": "tag-0462"
+        }
+      ]
+    },
+    {
+      "id": "group-vocaloid-cn",
+      "categoryID": "ip-vocaloid",
+      "names": {
+        "zhHans": "中V",
+        "zhHantHK": "中V",
+        "zhHantTW": "中V",
+        "en": "Chinese Vocaloid",
+        "ja": "中V"
+      },
+      "ranges": [
+        {
+          "start": "tag-0452",
+          "end": "tag-0455"
+        }
+      ]
+    },
+    {
+      "id": "group-pjsk-ln",
+      "categoryID": "ip-project-sekai",
+      "names": {
+        "zhHans": "Leo/Need",
+        "zhHantHK": "Leo/Need",
+        "zhHantTW": "Leo/Need",
+        "en": "Leo/Need",
+        "ja": "Leo/Need"
+      },
+      "ranges": [
+        {
+          "start": "tag-0002",
+          "end": "tag-0002"
+        },
+        {
+          "start": "tag-0008",
+          "end": "tag-0011"
+        }
+      ]
+    },
+    {
+      "id": "group-pjsk-mmj",
+      "categoryID": "ip-project-sekai",
+      "names": {
+        "zhHans": "MORE MORE JUMP!",
+        "zhHantHK": "MORE MORE JUMP!",
+        "zhHantTW": "MORE MORE JUMP!",
+        "en": "MORE MORE JUMP!",
+        "ja": "MORE MORE JUMP!"
+      },
+      "ranges": [
+        {
+          "start": "tag-0003",
+          "end": "tag-0003"
+        },
+        {
+          "start": "tag-0012",
+          "end": "tag-0015"
+        }
+      ]
+    },
+    {
+      "id": "group-pjsk-wxs",
+      "categoryID": "ip-project-sekai",
+      "names": {
+        "zhHans": "Wonderlands x Showtime",
+        "zhHantHK": "Wonderlands x Showtime",
+        "zhHantTW": "Wonderlands x Showtime",
+        "en": "Wonderlands x Showtime",
+        "ja": "Wonderlands x Showtime"
+      },
+      "ranges": [
+        {
+          "start": "tag-0005",
+          "end": "tag-0005"
+        },
+        {
+          "start": "tag-0020",
+          "end": "tag-0023"
+        }
+      ]
+    },
+    {
+      "id": "group-pjsk-vbs",
+      "categoryID": "ip-project-sekai",
+      "names": {
+        "zhHans": "Vivid BAD SQUAD",
+        "zhHantHK": "Vivid BAD SQUAD",
+        "zhHantTW": "Vivid BAD SQUAD",
+        "en": "Vivid BAD SQUAD",
+        "ja": "Vivid BAD SQUAD"
+      },
+      "ranges": [
+        {
+          "start": "tag-0004",
+          "end": "tag-0004"
+        },
+        {
+          "start": "tag-0016",
+          "end": "tag-0019"
+        }
+      ]
+    },
+    {
+      "id": "group-pjsk-25",
+      "categoryID": "ip-project-sekai",
+      "names": {
+        "zhHans": "25时、Nightcord见。",
+        "zhHantHK": "25时、Nightcord见。",
+        "zhHantTW": "25时、Nightcord见。",
+        "en": "Nightcord at 25:00",
+        "ja": "25时、Nightcord见。"
+      },
+      "ranges": [
+        {
+          "start": "tag-0007",
+          "end": "tag-0007"
+        },
+        {
+          "start": "tag-0024",
+          "end": "tag-0027"
+        }
+      ]
+    },
+    {
+      "id": "group-music-composers",
+      "categoryID": "music-artists",
+      "names": {
+        "zhHans": "作曲家",
+        "zhHantHK": "作曲家",
+        "zhHantTW": "作曲家",
+        "en": "Composers",
+        "ja": "作曲家"
+      },
+      "ranges": [
+        {
+          "start": "tag-0478",
+          "end": "tag-0478"
+        }
+      ]
     }
   ]
 }

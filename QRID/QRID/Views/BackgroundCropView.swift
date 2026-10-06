@@ -15,23 +15,11 @@ struct BackgroundCropView: View {
     private let maxScale: CGFloat = 5.0
     private let outputWidth: CGFloat = 1080
 
-    private var screenRatio: CGFloat {
-        let bounds = UIScreen.main.bounds
-        return bounds.height / bounds.width
-    }
-
-    private var cropSize: CGSize {
-        let width = UIScreen.main.bounds.width - 32
-        let height = cropAspectRatio.map { width / $0 } ?? (width * screenRatio)
-        return CGSize(width: width, height: min(height, UIScreen.main.bounds.height - 180))
-    }
-
     var body: some View {
-        ZStack {
-            Color.black.ignoresSafeArea()
-
-            GeometryReader { geo in
-                let size = cropSize
+        GeometryReader { geo in
+            let size = cropSize(for: geo.size, safeAreaInsets: geo.safeAreaInsets)
+            ZStack {
+                Color.black.ignoresSafeArea()
                 let displaySize = fillDisplaySize(for: size)
 
                 ZStack {
@@ -56,11 +44,11 @@ struct BackgroundCropView: View {
                             let delta = value / lastScale
                             lastScale = value
                             scale = min(max(scale * delta, minScale), maxScale)
-                            offset = clampOffset(offset)
+                            offset = clampOffset(offset, cropSize: size)
                         }
                         .onEnded { _ in
                             lastScale = 1.0
-                            snapBack()
+                            snapBack(cropSize: size)
                         }
                 )
                 .simultaneousGesture(
@@ -70,35 +58,44 @@ struct BackgroundCropView: View {
                                 width: lastOffset.width + value.translation.width,
                                 height: lastOffset.height + value.translation.height
                             )
-                            offset = clampOffset(proposed)
+                            offset = clampOffset(proposed, cropSize: size)
                         }
                         .onEnded { _ in
-                            snapBack()
+                            snapBack(cropSize: size)
                         }
                 )
-            }
-            .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                Spacer()
-
-                HStack {
-                    Button(L.cancel, action: onCancel)
-                        .font(.system(size: 17))
-                        .foregroundStyle(.white)
-
+                VStack(spacing: 0) {
                     Spacer()
 
-                    Button(L.choose) {
-                        cropImage()
+                    HStack {
+                        Button(L.cancel, action: onCancel)
+                            .font(.system(size: 17))
+                            .foregroundStyle(.white)
+
+                        Spacer()
+
+                        Button(L.choose) {
+                            cropImage(cropSize: size)
+                        }
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.white)
                     }
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .padding(.leading, max(24, geo.safeAreaInsets.leading + 12))
+                    .padding(.trailing, max(24, geo.safeAreaInsets.trailing + 12))
+                    .padding(.bottom, max(16, geo.safeAreaInsets.bottom + 10))
                 }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 34)
             }
         }
+        .ignoresSafeArea()
+    }
+
+    private func cropSize(for viewport: CGSize, safeAreaInsets: EdgeInsets) -> CGSize {
+        let width = max(0, viewport.width - safeAreaInsets.leading - safeAreaInsets.trailing - 32)
+        let availableHeight = max(0, viewport.height - safeAreaInsets.top - safeAreaInsets.bottom - 96)
+        let viewportRatio = viewport.width > 0 ? viewport.height / viewport.width : 1
+        let height = cropAspectRatio.map { width / $0 } ?? (width * viewportRatio)
+        return CGSize(width: width, height: min(height, availableHeight))
     }
 
     private func fillDisplaySize(for frame: CGSize) -> CGSize {
@@ -112,7 +109,7 @@ struct BackgroundCropView: View {
         }
     }
 
-    private func clampOffset(_ proposed: CGSize) -> CGSize {
+    private func clampOffset(_ proposed: CGSize, cropSize: CGSize) -> CGSize {
         let displaySize = fillDisplaySize(for: cropSize)
         let size = cropSize
         let diffX = displaySize.width * scale - size.width
@@ -127,15 +124,15 @@ struct BackgroundCropView: View {
         )
     }
 
-    private func snapBack() {
-        let targetOffset = clampOffset(offset)
+    private func snapBack(cropSize: CGSize) {
+        let targetOffset = clampOffset(offset, cropSize: cropSize)
         withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
             offset = targetOffset
         }
         lastOffset = targetOffset
     }
 
-    private func cropImage() {
+    private func cropImage(cropSize: CGSize) {
         let size = cropSize
         let outputHeight = outputWidth * (size.height / size.width)
         let displaySize = fillDisplaySize(for: size)
@@ -182,7 +179,6 @@ private struct OverlayMask: View {
             }
             .fill(Color.black.opacity(0.55), style: FillStyle(eoFill: true))
         }
-        .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
     }
 }
 

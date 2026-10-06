@@ -8,7 +8,8 @@ class TagCatalogDataTests(unittest.TestCase):
         path = Path(__file__).resolve().parents[1] / "QRID/QRID/tags-v1.json"
         document = json.loads(path.read_text())
         entries = {entry["id"]: entry for entry in document["entries"]}
-        self.assertEqual(len(entries), 452)
+        self.assertEqual(len(entries), len(document["entries"]), "Duplicate catalog IDs")
+        self.assertTrue(entries)
         self.assertNotIn("tag-0006", entries)
         for entry in entries.values():
             self.assertGreater(len(entry["colors"]), 0)

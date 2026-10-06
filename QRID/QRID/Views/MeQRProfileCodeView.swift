@@ -260,7 +260,10 @@ struct MeQRProfileCodeView: View {
             var record: MeQRExchangeCodeRecord
             if let cached = store.load(clusterID: cluster.id, fingerprint: fingerprint),
                cached.onlineProfile.subtitle == cluster.subtitle {
-                record = cached
+                record = cached.repairingColorAvatar(from: cluster.avatarImageData)
+                if record.avatarJPEG != cached.avatarJPEG {
+                    try store.save(record, clusterID: cluster.id)
+                }
             } else {
                 let credentials = MeQRExchangeCodeRecord.credentials()
                 var offline = MeQRExchangeProfile(offlineCluster: cluster, profile: offlineProfile)
@@ -303,7 +306,7 @@ struct MeQRProfileCodeView: View {
 
     private func exchangeFingerprint(selectedProfiles: [QRProfile], subtitle: String) throws -> String {
         var values = [
-            "exchange-v2", cluster.id.uuidString, cluster.name, cluster.subtitle, subtitle,
+            "exchange-v2", "offline-avatar-thumbnail-v1", cluster.id.uuidString, cluster.name, cluster.subtitle, subtitle,
             MeQRExchangeCodeRecord.digest(cluster.avatarImageData ?? Data()),
             MeQRExchangeCodeRecord.digest(cluster.backgroundImageData ?? Data()),
             MeQRExchangeCodeRecord.digest(cluster.rhodesBannerImageData ?? Data()),

@@ -5,34 +5,44 @@ struct ClusterCardPager: View {
     @Binding var currentPage: Int
     var onProfileSelected: (Int) -> Void
     var landscapeTabletPresentation: Bool = false
+    var profileSelections: Binding<[UUID: UUID]>? = nil
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     var body: some View {
         GeometryReader { geometry in
-            let landscape = UIDevice.current.userInterfaceIdiom == .pad && geometry.size.width > geometry.size.height
-            let phone = UIDevice.current.userInterfaceIdiom == .phone
+            let width = geometry.size.width
+            let height = geometry.size.height
+            let regularWidth = horizontalSizeClass == .regular
+            // Size classes can remain regular in a narrow iPad window.
+            let expanded = regularWidth && width >= 800 && width > height
+            let spacious = width >= 520
+            let cardSize = expanded ? 230 : min(260, max(180, width * 0.46))
+            let cardContainerWidth = expanded
+                ? width
+                : spacious
+                    ? min(620, max(0, width - 48))
+                    : width
+            let horizontalPadding: CGFloat = spacious ? 16 : 8
             TabView(selection: $currentPage) {
                 ForEach(Array(clusters.enumerated()), id: \.element.id) { index, cluster in
-                    ScrollView(.vertical, showsIndicators: false) {
-                        let portraitTablet = UIDevice.current.userInterfaceIdiom == .pad && !landscape
-                        ClusterCardView(cluster: cluster, size: landscape ? 230 : portraitTablet ? 260 : 180,
-                                        containerWidth: landscape ? geometry.size.width :
-                                            portraitTablet ? min(620, geometry.size.width - 48) :
-                                            phone ? geometry.size.width : min(393, max(0, geometry.size.width - 32)),
+                    ScrollView(.vertical) {
+                        ClusterCardView(cluster: cluster, size: cardSize,
+                                        containerWidth: cardContainerWidth,
                                         onProfileSelected: { profileIndex in
                             if index == currentPage {
                                 onProfileSelected(profileIndex)
                             }
-                        }, landscapeTabletPresentation: landscape)
-                        .padding(.horizontal, phone ? 8 : 16)
+                        }, landscapeTabletPresentation: expanded,
+                                        profileSelection: selection(for: cluster.id))
+                        .padding(.horizontal, horizontalPadding)
                         .padding(.vertical, 16)
-                        .frame(maxWidth: .infinity, alignment: landscape || portraitTablet ? .center : .top)
+                        .frame(maxWidth: .infinity, alignment: .top)
                     }
-                    .scrollBounceBehavior(.basedOnSize)
                     .tag(index)
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
-            .padding(.bottom, 44)
+            .padding(.bottom, clusters.count > 1 ? 44 : 0)
             .overlay(alignment: .bottom) {
                 if clusters.count > 1 {
                     HStack(spacing: 8) {
@@ -52,5 +62,13 @@ struct ClusterCardPager: View {
                 }
             }
         }
+    }
+
+    private func selection(for clusterID: UUID) -> Binding<UUID?>? {
+        guard let profileSelections else { return nil }
+        return Binding(
+            get: { profileSelections.wrappedValue[clusterID] },
+            set: { profileSelections.wrappedValue[clusterID] = $0 }
+        )
     }
 }

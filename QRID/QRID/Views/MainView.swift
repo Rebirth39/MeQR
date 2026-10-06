@@ -19,7 +19,7 @@ struct MainView: View {
     @State private var showingMeQRScanner = false
     @State private var showingEncounters = false
     @State private var showingEvents = false
-    @State private var currentSelectedProfileIndex: Int = 0
+    @State private var selectedProfileIDs: [UUID: UUID] = [:]
     @State private var clusterIdBeforeReorder: PersistentIdentifier?
     @State private var showSavedAlert = false
     @State private var saveError: String?
@@ -33,12 +33,10 @@ struct MainView: View {
         currentCluster?.profiles.sorted { $0.createdAt < $1.createdAt } ?? []
     }
 
-    private var currentSelectedIndex: Int {
-        min(currentSelectedProfileIndex, max(0, currentProfiles.count - 1))
-    }
-
-    private var navigationForegroundColor: Color {
-        navigationBackgroundIsDark ? .white : .black
+    private var currentSelectedProfile: QRProfile? {
+        guard let cluster = currentCluster else { return nil }
+        return currentProfiles.first(where: { $0.id == selectedProfileIDs[cluster.id] })
+            ?? currentProfiles.first
     }
 
     private var navigationColorScheme: ColorScheme {
@@ -69,6 +67,7 @@ struct MainView: View {
                     }
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .background {
                 if !clusters.isEmpty {
                     pageBackground.ignoresSafeArea()
@@ -77,63 +76,10 @@ struct MainView: View {
             .navigationTitle(L.qrID)
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    HStack(spacing: 12) {
-                        Button {
-                            showingMeQRScanner = true
-                        } label: {
-                            Image(systemName: "qrcode.viewfinder")
-                                .font(.system(size: 18, weight: .medium))
-                                .frame(width: 44, height: 44)
-                                .contentShape(Rectangle())
-                        }
-                        .accessibilityLabel(L.scanMeQRCode)
-                        if !clusters.isEmpty {
-                            Menu {
-                                Button {
-                                    showingMeQRProfileCode = true
-                                } label: {
-                                    Label(L.meqrProfileCode, systemImage: "qrcode")
-                                }
-                                Button {
-                                    showingEncounters = true
-                                } label: {
-                                    Label(L.encounters, systemImage: "person.2.crop.square.stack")
-                                }
-                                Button {
-                                    showingEvents = true
-                                } label: {
-                                    Label(L.events, systemImage: "calendar")
-                                }
-                            } label: {
-                                Image(systemName: "square.and.arrow.up")
-                                    .font(.system(size: 18, weight: .medium))
-                                    .frame(width: 44, height: 44)
-                                    .contentShape(Rectangle())
-                            }
-                            .accessibilityLabel(L.meqrProfileCode)
-                        }
-                        Menu {
-                            Button {
-                                showAddNewCluster = true
-                            } label: {
-                                Label(L.newCluster, systemImage: "plus.circle.fill")
-                            }
-                            if !clusters.isEmpty {
-                                Button {
-                                    showingAddToExisting = true
-                                } label: {
-                                    Label(L.addToExistingCluster, systemImage: "rectangle.stack.badge.plus")
-                                }
-                            }
-                        } label: {
-                            Image(systemName: "plus")
-                                .font(.system(size: 18, weight: .medium))
-                                .frame(width: 44, height: 44)
-                                .contentShape(Rectangle())
-                        }
-                    }
-                    .foregroundStyle(navigationForegroundColor)
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    scanAction
+                    shareAction
+                    addAction
                 }
                 ToolbarItem(placement: .topBarLeading) {
                     Menu {
@@ -168,10 +114,6 @@ struct MainView: View {
                         }
                     } label: {
                         Image(systemName: "line.3.horizontal.circle")
-                            .font(.system(size: 18, weight: .medium))
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
-                            .foregroundStyle(navigationForegroundColor)
                     }
                 }
             }
@@ -189,7 +131,7 @@ struct MainView: View {
                 }
             }
             .sheet(isPresented: $showingEditQR) {
-                if let profile = currentProfiles[safe: currentSelectedIndex] {
+                if let profile = currentSelectedProfile {
                     EditProfileView(profile: profile)
                 }
             }
@@ -246,6 +188,10 @@ struct MainView: View {
             .onAppear {
                 migrateClustersIfNeeded()
             }
+            .onChange(of: clusters.map(\.id)) { _, ids in
+                currentPage = min(currentPage, max(0, ids.count - 1))
+                selectedProfileIDs = selectedProfileIDs.filter { ids.contains($0.key) }
+            }
             .alert(L.savedToPhotos, isPresented: $showSavedAlert) {
                 Button(L.ok, role: .cancel) {}
             }
@@ -259,22 +205,72 @@ struct MainView: View {
 
     @State private var showAddNewCluster = false
 
+    private var scanAction: some View {
+        Button {
+            showingMeQRScanner = true
+        } label: {
+            Label(L.scanMeQRCode, systemImage: "qrcode.viewfinder")
+        }
+        .accessibilityLabel(L.scanMeQRCode)
+    }
+
+    @ViewBuilder
+    private var shareAction: some View {
+        if !clusters.isEmpty {
+            Menu {
+                Button {
+                    showingMeQRProfileCode = true
+                } label: {
+                    Label(L.meqrProfileCode, systemImage: "qrcode")
+                }
+                Button {
+                    showingEncounters = true
+                } label: {
+                    Label(L.encounters, systemImage: "person.2.crop.square.stack")
+                }
+                Button {
+                    showingEvents = true
+                } label: {
+                    Label(L.events, systemImage: "calendar")
+                }
+            } label: {
+                Label(L.meqrProfileCode, systemImage: "square.and.arrow.up")
+            }
+            .accessibilityLabel(L.meqrProfileCode)
+        }
+    }
+
+    private var addAction: some View {
+        Menu {
+            Button {
+                showAddNewCluster = true
+            } label: {
+                Label(L.newCluster, systemImage: "plus.circle.fill")
+            }
+            if !clusters.isEmpty {
+                Button {
+                    showingAddToExisting = true
+                } label: {
+                    Label(L.addToExistingCluster, systemImage: "rectangle.stack.badge.plus")
+                }
+            }
+        } label: {
+            Label(L.newCluster, systemImage: "plus")
+        }
+    }
+
     // MARK: - Content
 
     private var contentView: some View {
-        ClusterCardPager(clusters: clusters, currentPage: $currentPage) { profileIndex in
-            currentSelectedProfileIndex = profileIndex
-        }
-        .onChange(of: currentPage) { _, _ in
-            currentSelectedProfileIndex = 0
-        }
+        ClusterCardPager(clusters: clusters, currentPage: $currentPage,
+                         onProfileSelected: { _ in }, profileSelections: $selectedProfileIDs)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var pageBackground: some View {
         GeometryReader { geo in
-            let isLandscapeTablet = UIDevice.current.userInterfaceIdiom == .pad && geo.size.width > geo.size.height
-            let imageData = isLandscapeTablet && currentCluster?.templateStyle == .rhodesPass
+            let isExpanded = horizontalSizeClass == .regular && geo.size.width > geo.size.height
+            let imageData = isExpanded && currentCluster?.templateStyle == .rhodesPass
                 ? currentCluster?.rhodesBannerImageData
                 : currentCluster?.backgroundImageData
             if let data = imageData,
@@ -351,9 +347,9 @@ struct MainView: View {
         let profiles = cluster.profiles.sorted { $0.createdAt < $1.createdAt }
         guard !profiles.isEmpty else { return }
         let previousPage = currentPage
-        let previousSelectedProfileIndex = currentSelectedProfileIndex
-        let index = min(currentSelectedIndex, profiles.count - 1)
-        let profileToDelete = profiles[index]
+        let previousSelectedProfileID = selectedProfileIDs[cluster.id]
+        guard let profileToDelete = currentSelectedProfile,
+              let index = profiles.firstIndex(where: { $0.id == profileToDelete.id }) else { return }
         modelContext.delete(profileToDelete)
         // Use local count — SwiftData relationship arrays may not update until save()
         let remainingCount = profiles.count - 1
@@ -362,7 +358,8 @@ struct MainView: View {
             let remainingClusterCount = clusters.count - 1
             currentPage = min(currentPage, max(0, remainingClusterCount - 1))
         } else {
-            currentSelectedProfileIndex = min(index, remainingCount - 1)
+            let remainingProfiles = profiles.filter { $0.id != profileToDelete.id }
+            selectedProfileIDs[cluster.id] = remainingProfiles[min(index, remainingCount - 1)].id
         }
         do {
             try modelContext.save()
@@ -374,7 +371,7 @@ struct MainView: View {
         } catch {
             modelContext.rollback()
             currentPage = previousPage
-            currentSelectedProfileIndex = previousSelectedProfileIndex
+            selectedProfileIDs[cluster.id] = previousSelectedProfileID
             saveError = error.localizedDescription
             showSaveError = true
         }
@@ -392,11 +389,11 @@ struct MainView: View {
             }
         } catch { saveError = error.localizedDescription; showSaveError = true; return }
         let previousPage = currentPage
-        let previousSelectedProfileIndex = currentSelectedProfileIndex
+        let previousSelectedProfileID = selectedProfileIDs[cluster.id]
         modelContext.delete(cluster)
         let remainingClusterCount = clusters.count - 1
         currentPage = min(currentPage, max(0, remainingClusterCount - 1))
-        currentSelectedProfileIndex = 0
+        selectedProfileIDs[cluster.id] = nil
         do {
             try modelContext.save()
             let persistedClusters = try modelContext.fetch(FetchDescriptor<QRCluster>(
@@ -407,7 +404,7 @@ struct MainView: View {
         } catch {
             modelContext.rollback()
             currentPage = previousPage
-            currentSelectedProfileIndex = previousSelectedProfileIndex
+            selectedProfileIDs[cluster.id] = previousSelectedProfileID
             saveError = error.localizedDescription
             showSaveError = true
         }

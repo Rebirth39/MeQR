@@ -30,6 +30,9 @@ struct MeQRScannerView: View {
     @State private var showingPhotoPicker = false
     @State private var trustedLinkTask: Task<Void, Never>?
     @State private var isOpeningTrustedLink = false
+    @State private var colorRetryPayload = ""
+    @State private var colorRetryStarted = Date.distantPast
+    @State private var colorRetryAttempts = 0
 
     init(localCluster: QRCluster? = nil) {
         self.localCluster = localCluster
@@ -39,8 +42,8 @@ struct MeQRScannerView: View {
         NavigationStack {
             ZStack(alignment: .bottom) {
                 if cameraAuthorized {
-                    QRScannerRepresentable { payload, frame in
-                        handlePayload(payload, frame: frame)
+                    QRScannerRepresentable { payload, frame, corners in
+                        handlePayload(payload, frame: frame, corners: corners, retryColorLayer: true)
                     }
                     .ignoresSafeArea()
                 } else {
@@ -186,9 +189,16 @@ private struct ScannerGlassButtonStyle: ButtonStyle {
         trustedLinkTask?.cancel()
         trustedLinkTask = nil
         isOpeningTrustedLink = false
+        colorRetryPayload = ""
+        colorRetryAttempts = 0
     }
 
-    private func handlePayload(_ payload: String, frame: UIImage?) {
+    private func handlePayload(
+        _ payload: String,
+        frame: UIImage?,
+        corners: [CGPoint]? = nil,
+        retryColorLayer: Bool = false
+    ) {
         guard canPresentScanResult, !showingPhotoPicker, pickedItem == nil, decodeTask == nil else { return }
         // Reserve the slot synchronously so the next camera callback cannot start another decode.
         decodeTask = Task { @MainActor in
@@ -212,15 +222,59 @@ private struct ScannerGlassButtonStyle: ButtonStyle {
                 return
             }
 
+            if retryColorLayer && colorRetryPayload != payload {
+                colorRetryPayload = payload
+                colorRetryStarted = Date()
+                colorRetryAttempts = 0
+            }
             var colorAvatarJPEG: Data?
-            if let frame,
-               let decoded = try? await QRCodeGenerator.decodeEnhanced(from: frame) {
-                colorAvatarJPEG = decoded.colorAvatarJPEG
+            if let frame {
+                let decoded: QRCodeGenerator.DecodedCode?
+                if let corners, corners.count >= 4 {
+                    decoded = try? await QRCodeGenerator.decodeEnhanced(
+                        from: frame,
+                        payload: payload,
+                        corners: corners
+                    )
+                } else {
+                    decoded = try? await QRCodeGenerator.decodeEnhanced(from: frame)
+                }
+                if decoded?.payload == payload {
+                    colorAvatarJPEG = decoded?.colorAvatarJPEG
+                }
             }
             guard !Task.isCancelled, canPresentScanResult else { return }
-            await decodePayload(payload, colorAvatarJPEG: colorAvatarJPEG)
+            if retryColorLayer && colorAvatarJPEG == nil {
+                #if DEBUG
+                saveColorDebugFrame(frame)
+                #endif
+                colorRetryAttempts += 1
+                if colorRetryAttempts < 6 && Date().timeIntervalSince(colorRetryStarted) < 2 {
+                    return
+                }
+            }
+            colorRetryPayload = ""
+        await decodePayload(payload, colorAvatarJPEG: colorAvatarJPEG)
         }
     }
+
+    #if DEBUG
+    private func saveColorDebugFrame(_ image: UIImage?) {
+        guard let image,
+              let jpeg = image.jpegData(compressionQuality: 0.95),
+              let applicationSupport = FileManager.default.urls(
+                  for: .applicationSupportDirectory,
+                  in: .userDomainMask
+              ).first else { return }
+        let directory = applicationSupport.appendingPathComponent("ColorDebug", isDirectory: true)
+        do {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            try jpeg.write(to: directory.appendingPathComponent("latest.jpg"), options: .atomic)
+        } catch {
+            // Diagnostic capture must never affect scanning.
+        }
+    }
+    #endif
 
     private func handlePhoto(_ item: PhotosPickerItem) {
         guard canPresentScanResult else { return }
@@ -517,7 +571,7 @@ private final class RedirectStopDelegate: NSObject, URLSessionTaskDelegate {
 }
 
 private struct QRScannerRepresentable: UIViewControllerRepresentable {
-    let onPayload: (String, UIImage?) -> Void
+    let onPayload: (String, UIImage?, [CGPoint]) -> Void
 
     func makeUIViewController(context: Context) -> QRScannerViewController {
         let controller = QRScannerViewController()
@@ -529,7 +583,7 @@ private struct QRScannerRepresentable: UIViewControllerRepresentable {
 }
 
 private final class QRScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDelegate, AVCaptureVideoDataOutputSampleBufferDelegate {
-    var onPayload: ((String, UIImage?) -> Void)?
+    var onPayload: ((String, UIImage?, [CGPoint]) -> Void)?
 
     private let session = AVCaptureSession()
     private var previewLayer: AVCaptureVideoPreviewLayer?
@@ -568,18 +622,31 @@ private final class QRScannerViewController: UIViewController, AVCaptureMetadata
     }
 
     private func configureSession() {
-        guard let device = AVCaptureDevice.default(for: .video),
+        let device = AVCaptureDevice.default(
+            .builtInUltraWideCamera,
+            for: .video,
+            position: .back
+        ) ?? AVCaptureDevice.default(
+            .builtInWideAngleCamera,
+            for: .video,
+            position: .back
+        ) ?? AVCaptureDevice.default(for: .video)
+        guard let device,
               let input = try? AVCaptureDeviceInput(device: device),
               session.canAddInput(input) else {
             return
         }
         session.addInput(input)
+        if session.canSetSessionPreset(.hd1920x1080) {
+            session.sessionPreset = .hd1920x1080
+        }
 
         let output = AVCaptureMetadataOutput()
         guard session.canAddOutput(output) else { return }
         session.addOutput(output)
         output.setMetadataObjectsDelegate(self, queue: .main)
         output.metadataObjectTypes = [.qr]
+        output.connection(with: .video)?.videoRotationAngle = 90
 
         let videoOutput = AVCaptureVideoDataOutput()
         videoOutput.alwaysDiscardsLateVideoFrames = true
@@ -610,12 +677,21 @@ private final class QRScannerViewController: UIViewController, AVCaptureMetadata
         }
 
         let now = Date()
-        guard payload != lastPayload || now.timeIntervalSince(lastPayloadDate) > 2 else { return }
+        guard payload != lastPayload || now.timeIntervalSince(lastPayloadDate) > 0.25 else { return }
+        if payload != lastPayload || now.timeIntervalSince(lastPayloadDate) > 2 {
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        }
         lastPayload = payload
         lastPayloadDate = now
 
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        onPayload?(payload, latestFrameImage())
+        let imageSize = latestPixelBufferSize()
+        let corners = readableObject.corners.map { point in
+            CGPoint(
+                x: point.x * imageSize.width,
+                y: point.y * imageSize.height
+            )
+        }
+        onPayload?(payload, latestFrameImage(), corners)
     }
 
     func captureOutput(
@@ -637,5 +713,16 @@ private final class QRScannerViewController: UIViewController, AVCaptureMetadata
         let image = CIImage(cvPixelBuffer: pixelBuffer)
         guard let cgImage = imageContext.createCGImage(image, from: image.extent) else { return nil }
         return UIImage(cgImage: cgImage)
+    }
+
+    private func latestPixelBufferSize() -> CGSize {
+        frameLock.lock()
+        let pixelBuffer = latestPixelBuffer
+        frameLock.unlock()
+        guard let pixelBuffer else { return .zero }
+        return CGSize(
+            width: CVPixelBufferGetWidth(pixelBuffer),
+            height: CVPixelBufferGetHeight(pixelBuffer)
+        )
     }
 }

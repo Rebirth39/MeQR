@@ -32,6 +32,14 @@ struct Host: View {
     @State private var subtitleResult = ""
     @State private var showingExchange = false
 
+    private var fixtureSize: CGSize? {
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("fixed-card") { return CGSize(width: 384, height: 560) }
+        if arguments.contains("duo-portrait") { return CGSize(width: 540, height: 780) }
+        if arguments.contains("ipad-portrait") { return CGSize(width: 620, height: 900) }
+        return nil
+    }
+
     init() {
         let arguments = ProcessInfo.processInfo.arguments
         let subtitle = arguments.contains("long")
@@ -39,6 +47,12 @@ struct Host: View {
             : "test info"
         let cluster = QRCluster(name: "重生 Rebirth", subtitle: arguments.contains("custom-subtitle") ? "Full card introduction\nSecond line belongs online\nThird line also belongs online" : subtitle, backgroundColorHex: "#DDEEF5", tagListRawValue: arguments.contains("tags") ? "世界计划\n初音未来\n少女乐队\n原神\nLoveLive!\n自定义标签" : nil)
         cluster.profiles = [QRProfile(platformType: "qq", qrContent: "https://example.com/qq"), QRProfile(platformType: "wechat", qrContent: "https://example.com/wechat")]
+        if arguments.contains("overflow-info") {
+            cluster.subtitle = String(repeating: subtitle + "\n", count: 12)
+        }
+        if arguments.contains("empty-info") {
+            cluster.subtitle = ""
+        }
         if arguments.contains("rhodes-front") {
             cluster.templateStyle = .rhodesPass
             cluster.qrColorHex = "#39C5BB"
@@ -59,7 +73,19 @@ struct Host: View {
     }
 
     var body: some View {
-        if ProcessInfo.processInfo.arguments.contains("redirect-test") {
+        if ProcessInfo.processInfo.arguments.contains("cached-color-test") {
+            Text(exchangeResult).accessibilityIdentifier("color-result").task {
+                exchangeResult = await ColorLayerChecks.cachedCode()
+            }
+        } else if ProcessInfo.processInfo.arguments.contains("avatar-repair-test") {
+            Text(exchangeResult).accessibilityIdentifier("color-result").task {
+                exchangeResult = await ColorLayerChecks.avatarRepair()
+            }
+        } else if ProcessInfo.processInfo.arguments.contains("color-layer-test") {
+            Text(exchangeResult).accessibilityIdentifier("color-result").task {
+                exchangeResult = await ColorLayerChecks.run()
+            }
+        } else if ProcessInfo.processInfo.arguments.contains("redirect-test") {
             Text(exchangeResult).accessibilityIdentifier("redirect-result").task {
                 ExchangeTransport.redirects = [
                     "https://xhslink.com/m/AbCd": "https://xhslink.com/m/Second",
@@ -79,6 +105,12 @@ struct Host: View {
         } else {
         NavigationStack {
             ClusterCardPager(clusters: clusters, currentPage: $page) { _ in }
+                .frame(width: fixtureSize?.width, height: fixtureSize?.height)
+                .transformEnvironment(\.horizontalSizeClass) { sizeClass in
+                    if let fixtureSize {
+                        sizeClass = fixtureSize.width >= 520 ? .regular : .compact
+                    }
+                }
                 .overlay(alignment: .bottom) {
                     if ProcessInfo.processInfo.arguments.contains("exchange") || ProcessInfo.processInfo.arguments.contains("exchange-ui") || ProcessInfo.processInfo.arguments.contains("encounter-sync") || ProcessInfo.processInfo.arguments.contains("encounter-delivery") {
                         VStack {

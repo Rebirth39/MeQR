@@ -196,11 +196,9 @@ enum BackupManager {
                         platformType: profileBackup.platformType,
                         qrContent: profileBackup.qrContent,
                         foregroundColorHex: profileBackup.foregroundColorHex,
-                        customPlatformName: profileBackup.customPlatformName,
-                        cluster: cluster
+                        customPlatformName: profileBackup.customPlatformName
                     )
-                    profile.attach(to: cluster)
-                    modelContext.insert(profile)
+                    profile.attach(to: cluster, in: modelContext)
                 }
             }
 

@@ -30,7 +30,7 @@ enum OnboardingCopy {
     static var appearanceBody: String { L.tr("选择模板、背景与颜色。保持高对比度会让二维码更容易扫描。", "選擇模板、背景與顏色。保持高對比度會讓 QR Code 更容易掃描。", "選擇模板、背景與顏色。保持高對比度會讓 QR Code 更容易掃描。", "Choose a template, background, and colors. Strong contrast keeps your QR code easy to scan.", "テンプレート、背景、色を選びましょう。コントラストが高いほど読み取りやすくなります。") }
     static var backgroundPhoto: String { L.tr("背景图片", "背景圖片", "背景圖片", "Background Photo", "背景画像") }
     static var tagsTitle: String { L.tr("用标签，说清楚你喜欢什么。", "用標籤，說清楚你喜歡什麼。", "用標籤，說清楚你喜歡什麼。", "Use tags to show what you love.", "タグで「好き」を伝えましょう。") }
-    static var tagsBody: String { L.tr("作品、角色、社团或者兴趣都可以。输入后按回车添加，最多 10 个。", "作品、角色、社團或者興趣都可以。輸入後按 Return 加入，最多 10 個。", "作品、角色、社團或者興趣都可以。輸入後按 Return 新增，最多 10 個。", "Add series, characters, circles, or hobbies. Press Return to add up to 10.", "作品、キャラクター、サークル、趣味などを最大10個追加できます。") }
+    static var tagsBody: String { L.tr("作品、角色、社团或者兴趣都可以。输入后按回车添加，最多 15 个。", "作品、角色、社團或者興趣都可以。輸入後按 Return 加入，最多 15 個。", "作品、角色、社團或者興趣都可以。輸入後按 Return 新增，最多 15 個。", "Add series, characters, circles, or hobbies. Press Return to add up to 15.", "作品、キャラクター、サークル、趣味などを最大15個追加できます。") }
     static var optional: String { L.tr("这一步可以跳过", "這一步可以跳過", "這一步可以跳過", "This step is optional", "このステップはスキップできます") }
     static var suggestions: String { L.tr("可以先试试", "可以先試試", "可以先試試", "Try one of these", "おすすめ") }
     static var previewTitle: String { L.tr("确认一下，你的第一张卡片。", "確認一下，你的第一張卡片。", "確認一下，你的第一張卡片。", "Meet your first card.", "最初のカードを確認しましょう。") }
@@ -65,6 +65,7 @@ struct OnboardingView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.appSettings) private var settings
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Query(sort: \QRCluster.sortOrder, order: .forward) private var clusters: [QRCluster]
 
     let hasExistingCards: Bool
@@ -234,99 +235,142 @@ struct OnboardingView: View {
     }
 
     private var welcomeView: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(spacing: 10) {
-                    onboardingMark
-                    Spacer()
-                    Text("MEQR · FIRST CARD")
-                        .font(.caption2.weight(.black))
-                        .tracking(1.2)
-                        .foregroundStyle(.secondary)
-                    onboardingLanguageMenu
-                }
+        GeometryReader { geometry in
+            let expanded = horizontalSizeClass == .regular && geometry.size.width >= 800 && geometry.size.width > geometry.size.height
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    welcomeHeader
 
-                Spacer(minLength: 64)
+                    if expanded {
+                        HStack(alignment: .center, spacing: 44) {
+                            VStack(alignment: .leading, spacing: 0) {
+                                welcomeArtwork(height: 220)
+                                welcomeIntro(expanded: true)
+                                    .padding(.top, 36)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
 
-                ZStack {
-                    RoundedRectangle(cornerRadius: 30, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [accent.opacity(0.9), accent.opacity(0.45)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(height: 260)
-                        .rotationEffect(.degrees(-5))
-                        .offset(x: -8, y: 8)
-                        .opacity(0.5)
-                    RoundedRectangle(cornerRadius: 30, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [pink.opacity(0.85), Color(hex: "#FFB84D").opacity(0.5)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(height: 260)
-                        .rotationEffect(.degrees(4))
-                        .offset(x: 9, y: 4)
-                        .opacity(0.35)
-                    welcomeCard
-                        .padding(22)
-                }
-                .padding(.horizontal, 6)
-
-                Text(OnboardingCopy.welcomeTitle)
-                    .font(.system(size: 40, weight: .black, design: .rounded))
-                    .tracking(0)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 52)
-
-                Text(hasExistingCards ? OnboardingCopy.existingBody : OnboardingCopy.welcomeBody)
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .lineSpacing(5)
-                    .padding(.top, 16)
-
-                Button {
-                    move(to: .identity)
-                } label: {
-                    HStack(spacing: 9) {
-                        Text(hasExistingCards ? OnboardingCopy.tryGuide : OnboardingCopy.start)
-                        Image(systemName: "arrow.right")
+                            welcomeActions(expanded: true)
+                                .frame(width: min(320, geometry.size.width * 0.32))
+                        }
+                        .frame(minHeight: max(0, geometry.size.height - 120))
+                    } else {
+                        welcomeArtwork(height: 260)
+                            .padding(.top, 64)
+                        welcomeIntro(expanded: false)
+                            .padding(.top, 52)
+                        welcomeActions(expanded: false)
+                            .padding(.top, 36)
                     }
-                    .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(OnboardingPrimaryButtonStyle(color: .black))
-                .padding(.top, 36)
-
-                Button {
-                    showProfileSync = true
-                } label: {
-                    Label(L.onboardingSyncEntry, systemImage: "arrow.triangle.2.circlepath")
-                        .frame(maxWidth: .infinity)
-                }
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.primary)
-                .padding(.top, 10)
-
-                Button(hasExistingCards ? OnboardingCopy.keepCards : OnboardingCopy.later) {
-                    onSkip()
-                }
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.secondary)
+                .padding(.leading, max(28, geometry.safeAreaInsets.leading + 20))
+                .padding(.trailing, max(28, geometry.safeAreaInsets.trailing + 20))
+                .padding(.top, 22)
+                .padding(.bottom, 32)
+                .frame(maxWidth: expanded ? 1100 : 620)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
             }
-            .padding(.horizontal, 28)
-            .padding(.top, 22)
-            .padding(.bottom, 28)
-            .frame(maxWidth: 620)
-            .frame(maxWidth: .infinity)
+            .scrollIndicators(.hidden)
         }
-        .scrollIndicators(.hidden)
+    }
+
+    private var welcomeHeader: some View {
+        HStack(spacing: 10) {
+            onboardingMark
+            Spacer()
+            Text("MEQR · FIRST CARD")
+                .font(.caption2.weight(.black))
+                .tracking(1.2)
+                .foregroundStyle(.secondary)
+            onboardingLanguageMenu
+        }
+    }
+
+    private func welcomeArtwork(height: CGFloat) -> some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                .fill(LinearGradient(
+                    colors: [accent.opacity(0.9), accent.opacity(0.45)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ))
+                .frame(height: height)
+                .rotationEffect(.degrees(-5))
+                .offset(x: -8, y: 8)
+                .opacity(0.5)
+            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                .fill(LinearGradient(
+                    colors: [pink.opacity(0.85), Color(hex: "#FFB84D").opacity(0.5)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ))
+                .frame(height: height)
+                .rotationEffect(.degrees(4))
+                .offset(x: 9, y: 4)
+                .opacity(0.35)
+            welcomeCard
+                .padding(22)
+        }
+        .padding(.horizontal, 6)
+    }
+
+    private func welcomeIntro(expanded: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(OnboardingCopy.welcomeTitle)
+                .font(.system(size: expanded ? 36 : 40, weight: .black, design: .rounded))
+                .tracking(0)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text(hasExistingCards ? OnboardingCopy.existingBody : OnboardingCopy.welcomeBody)
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .lineSpacing(5)
+        }
+    }
+
+    private func welcomeActions(expanded: Bool) -> some View {
+        VStack(spacing: expanded ? 14 : 10) {
+            Button {
+                move(to: .identity)
+            } label: {
+                HStack(spacing: 9) {
+                    Text(hasExistingCards ? OnboardingCopy.tryGuide : OnboardingCopy.start)
+                    Image(systemName: "arrow.right")
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(OnboardingPrimaryButtonStyle(color: .black))
+
+            Button {
+                showProfileSync = true
+            } label: {
+                Label(L.onboardingSyncEntry, systemImage: "arrow.triangle.2.circlepath")
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, expanded ? 18 : 0)
+                    .background {
+                        if expanded {
+                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                .fill(.white.opacity(0.75))
+                        }
+                    }
+            }
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(.primary)
+
+            Button(hasExistingCards ? OnboardingCopy.keepCards : OnboardingCopy.later) {
+                onSkip()
+            }
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, expanded ? 18 : 16)
+            .background {
+                if expanded {
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .fill(.white.opacity(0.55))
+                }
+            }
+        }
     }
 
     private var setupView: some View {
@@ -956,9 +1000,9 @@ struct OnboardingView: View {
     }
 
     private func draftCardPreview(compact: Bool) -> some View {
-        let cluster = makeDraftPreviewCluster()
+        let draft = makeDraftPreview()
         let stageHeight: CGFloat = if templateStyle == .rhodesPass {
-            if UIDevice.current.userInterfaceIdiom == .pad {
+            if horizontalSizeClass == .regular {
                 compact ? 820 : 860
             } else {
                 compact ? 520 : 540
@@ -978,9 +1022,10 @@ struct OnboardingView: View {
                 }
 
                 ClusterCardView(
-                    cluster: cluster,
+                    cluster: draft.cluster,
                     size: templateStyle == .rhodesPass ? 180 : 150,
-                    containerWidth: geometry.size.width
+                    containerWidth: geometry.size.width,
+                    previewProfiles: [draft.profile]
                 )
                 .frame(height: stageHeight - 34)
                 .padding(.vertical, 17)
@@ -997,7 +1042,7 @@ struct OnboardingView: View {
         .shadow(color: .black.opacity(0.14), radius: 20, y: 10)
     }
 
-    private func makeDraftPreviewCluster() -> QRCluster {
+    private func makeDraftPreview() -> (cluster: QRCluster, profile: QRProfile) {
         let qrColorHex = qrColor.toHex() ?? "#000000"
         let tags = CardTagLimiter.tags(from: tagInput)
         let cluster = QRCluster(
@@ -1026,12 +1071,11 @@ struct OnboardingView: View {
             platformType: resolvedPlatform.platformType,
             qrContent: qrContent.isEmpty ? "https://meqrcode.cn" : qrContent,
             foregroundColorHex: qrColorHex,
-            customPlatformName: resolvedPlatform.customPlatformName,
-            cluster: cluster
+            customPlatformName: resolvedPlatform.customPlatformName
         )
-        profile.attach(to: cluster)
-        cluster.profiles = [profile]
-        return cluster
+        // The renderer needs the appearance fallback, not a SwiftData relationship.
+        profile.captureClusterFallback(from: cluster)
+        return (cluster, profile)
     }
 
     private func standardDraftCardPreview(compact: Bool) -> some View {
@@ -1424,12 +1468,9 @@ struct OnboardingView: View {
             platformType: resolvedPlatform.platformType,
             qrContent: trimmedQR,
             foregroundColorHex: qrColorHex,
-            customPlatformName: resolvedPlatform.customPlatformName,
-            cluster: cluster
+            customPlatformName: resolvedPlatform.customPlatformName
         )
-        profile.attach(to: cluster)
-        modelContext.insert(cluster)
-        modelContext.insert(profile)
+        profile.attach(to: cluster, in: modelContext)
 
         do {
             try modelContext.save()

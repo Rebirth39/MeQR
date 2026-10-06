@@ -1,0 +1,26 @@
+{
+  "revision": "2026.10.04.2",
+  "scope": "鸣上悠工单 plus complete P3/P4 protagonist groups",
+  "sources": [
+    "https://asia.sega.com/p3r/cht/",
+    "https://asia.sega.com/p3r/en/",
+    "https://asia.sega.com/p3r/cht/resources/css/top.da6fd4a353e2f3590926.css",
+    "https://p-ch.jp/remaster/p4g/",
+    "https://asia.sega.com/persona-remaster/p4g/cn/",
+    "https://en.wikipedia.org/wiki/Characters_of_Persona_4",
+    "https://zh.moegirl.org.cn/%E9%B8%A3%E4%B8%8A%E6%82%A0"
+  ],
+  "p3_official_role_colors": [
+    "#83E9F8",
+    "#F88FFF",
+    "#949BF7",
+    "#CFD6D6",
+    "#F288A4",
+    "#91F1D8",
+    "#F2F4F2",
+    "#FAF6A6",
+    "#FABA80",
+    "#CE8998"
+  ],
+  "limitations": "Artwork colors are MeQR representative colors, not official cheering standards; P3/P4 group completion was explicitly requested."
+}
