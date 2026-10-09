@@ -19,6 +19,7 @@ struct MainView: View {
     @State private var showingMeQRScanner = false
     @State private var showingEncounters = false
     @State private var showingEvents = false
+    @State private var showingTickets = false
     @State private var selectedProfileIDs: [UUID: UUID] = [:]
     @State private var clusterIdBeforeReorder: PersistentIdentifier?
     @State private var showSavedAlert = false
@@ -59,6 +60,7 @@ struct MainView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 AnnouncementBanner(manager: announcementManager)
+                TicketUpdateBanner { showingTickets = true }
                 Group {
                     if clusters.isEmpty {
                         emptyState
@@ -140,6 +142,9 @@ struct MainView: View {
             }
             .sheet(isPresented: $showingMoreSettings) {
                 MoreSettingsView()
+            }
+            .sheet(isPresented: $showingTickets) {
+                MyTicketsView()
             }
             .sheet(isPresented: $showingMeQRProfileCode) {
                 if let cluster = currentCluster {

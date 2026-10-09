@@ -1,0 +1,81 @@
+{
+  "revision": "2026.10.06.1",
+  "date": "2026-10-06",
+  "scope": "Two latest open new-tag tickets; catalog data only.",
+  "limitations": "Exact HEX values are MeQR representative colors chosen to implement the ticket directions, not sampled from images or claimed as official support colors. The Japanese work name uses the licensed Netflix adaptation title as the franchise display name.",
+  "entries": [
+    {
+      "id": "tag-0526",
+      "names": {
+        "zhHans": "全职高手",
+        "zhHantHK": "全職高手",
+        "zhHantTW": "全職高手",
+        "en": "The King's Avatar",
+        "ja": "マスターオブスキル 全職高手"
+      },
+      "aliases": [
+        "全职",
+        "全職",
+        "全职高手",
+        "全職高手",
+        "The King's Avatar",
+        "The King’s Avatar",
+        "The Kings Avatar",
+        "Quan Zhi Gao Shou",
+        "Quanzhi Gaoshou",
+        "qzgs",
+        "TKA",
+        "マスターオブスキル",
+        "マスター・オブ・スキル"
+      ],
+      "colors": [
+        "#D4AF37",
+        "#000000"
+      ],
+      "solidColor": "#D4AF37",
+      "kind": "work",
+      "ticket": "MEQR-20261006-4BA0DB",
+      "suggested_colors": "金色和黑色",
+      "color_basis": "Ticket-requested gold and black; MeQR representative palette.",
+      "name_basis": "Chinese title confirmed by WeTV; English title confirmed by Webnovel; Japanese title confirmed by Netflix Japan.",
+      "sources": [
+        "https://wetv.vip/zh-tw/album/pnumjfjcvuau4sr",
+        "https://www.webnovel.com/book/the-king's-avatar_7176992105000305",
+        "https://www.netflix.com/jp/title/81175361"
+      ]
+    },
+    {
+      "id": "tag-0527",
+      "names": {
+        "zhHans": "砂金",
+        "zhHantHK": "砂金",
+        "zhHantTW": "砂金",
+        "en": "Aventurine",
+        "ja": "アベンチュリン"
+      },
+      "aliases": [
+        "砂金",
+        "Aventurine",
+        "アベンチュリン",
+        "Shajin",
+        "Sha Jin"
+      ],
+      "colors": [
+        "#D4AF37",
+        "#008C8C"
+      ],
+      "solidColor": "#D4AF37",
+      "kind": "character",
+      "parentID": "tag-0103",
+      "ticket": "MEQR-20261006-92B61C",
+      "suggested_colors": "金色/孔雀绿",
+      "color_basis": "Ticket-requested gold and peacock green; MeQR representative palette.",
+      "name_basis": "Licensed Good Smile Company product 60418 confirms Chinese, English, Japanese names and Honkai: Star Rail affiliation.",
+      "sources": [
+        "https://www.goodsmile.com/zh/product/60418",
+        "https://www.goodsmile.com/en/product/60418",
+        "https://www.goodsmile.com/ja/product/60418"
+      ]
+    }
+  ]
+}

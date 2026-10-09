@@ -537,7 +537,7 @@ class ReviewRegressionTests(unittest.TestCase):
             self.assertTrue(change["date"])
             for language in ("zhHans", "zhHantHK", "zhHantTW", "en", "ja"):
                 self.assertTrue(change["summary"][language])
-        self.assertEqual(len(tag_catalog["entries"]), 513)
+        self.assertEqual(len(tag_catalog["entries"]), 527)
         self.assertIn('let categories: [RemoteTagCategory]?', remote_catalog)
         self.assertIn('let solidColor: String?', remote_catalog)
         self.assertIn('searchRecords = records', remote_catalog)

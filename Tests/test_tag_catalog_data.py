@@ -40,6 +40,36 @@ class TagCatalogDataTests(unittest.TestCase):
         self.assertNotIn("妮可", entries["tag-0300"]["aliases"])
         self.assertNotIn("胡桃", entries["tag-0301"]["aliases"])
 
+    def test_october_6_requested_tags(self):
+        path = Path(__file__).resolve().parents[1] / "QRID/QRID/tags-v1.json"
+        document = json.loads(path.read_text())
+        entries = {entry["id"]: entry for entry in document["entries"]}
+        avatar = entries["tag-0526"]
+        aventurine = entries["tag-0527"]
+        self.assertEqual(avatar["kind"], "work")
+        self.assertNotIn("parentID", avatar)
+        self.assertEqual(avatar["names"]["zhHans"], "全职高手")
+        self.assertEqual(avatar["names"]["en"], "The King's Avatar")
+        self.assertEqual(avatar["colors"], ["#D4AF37", "#000000"])
+        self.assertEqual(aventurine["kind"], "character")
+        self.assertEqual(aventurine["parentID"], "tag-0103")
+        self.assertEqual(aventurine["names"]["en"], "Aventurine")
+        self.assertEqual(aventurine["names"]["ja"], "アベンチュリン")
+        self.assertEqual(aventurine["colors"], ["#D4AF37", "#008C8C"])
+        for entry, category_id in [(avatar, "ip-the-kings-avatar"),
+                                   (aventurine, "ip-honkai-star-rail")]:
+            self.assertEqual(set(entry["names"]), {"zhHans", "zhHantHK", "zhHantTW", "en", "ja"})
+            self.assertTrue(all(entry["names"].values()))
+            self.assertEqual(entry["solidColor"], "#D4AF37")
+            self.assertEqual([category["id"] for category in document["categories"]
+                              if any(span["start"] <= entry["id"] <= span["end"]
+                                     for span in category["ranges"])], [category_id])
+            for name in list(entry["names"].values()) + entry["aliases"]:
+                matches = [candidate["id"] for candidate in document["entries"]
+                           if name.casefold() in [value.casefold() for value in
+                              list(candidate["names"].values()) + candidate["aliases"]]]
+                self.assertEqual(matches, [entry["id"]], name)
+
     def test_expansion_identity_and_palettes(self):
         path = Path(__file__).resolve().parents[1] / "QRID/QRID/tags-v1.json"
         document = json.loads(path.read_text())

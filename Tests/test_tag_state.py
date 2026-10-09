@@ -24,6 +24,12 @@ enum AppLanguage: Sendable { case system, zhHans, zhHantHK, zhHantTW, en, ja
 enum AppSettings { static let shared = Settings()
     final class Settings { var resolvedLanguage: AppLanguage = .en }
 }
+enum DeviceIdentity { static var id: String { "fixture-device-id" } }
+@MainActor final class SupportTicketStore {
+    static let shared = SupportTicketStore()
+    func obtainBlankCode() async throws -> String { "ABC234" }
+    func noteSubmitted(requestID: String?, ticketID: String, supportCode: String?, title: String, nextCode: String? = nil) {}
+}
 '''
         fixtures += "enum L {\n" + "\n".join(f'static let {key} = "{key}"' for key in keys) + "\n}\n"
         with tempfile.TemporaryDirectory() as folder:

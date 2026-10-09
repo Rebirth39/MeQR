@@ -40,6 +40,12 @@ extension Color { init(hex: String) { self = .black } }
 extension BackupManager {
     static func auditSnapshot(_ cluster: QRCluster) -> ClusterBackup { makeClusterBackup(cluster) }
 }
+enum DeviceIdentity { static var id: String { "fixture-device-id" } }
+@MainActor final class SupportTicketStore {
+    static let shared = SupportTicketStore()
+    func obtainBlankCode() async throws -> String { "ABC234" }
+    func noteSubmitted(requestID: String?, ticketID: String, supportCode: String?, title: String, nextCode: String? = nil) {}
+}
 '''
         fixtures += "enum L {\n" + "\n".join(f'static let {key} = "{key}"' for key in keys) + "\n}\n"
         generated = ARTIFACTS / "TagAuditProduction.swift"

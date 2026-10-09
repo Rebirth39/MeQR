@@ -47,6 +47,41 @@ struct L {
     static var tagReportFailed: String { tr("未能确认提交结果，请重试。当前内容已保留。", "未能確認提交結果，請重試。目前內容已保留。", "未能確認送出結果，請重試。目前內容已保留。", "Could not confirm submission. Your text is retained; please retry.", "送信結果を確認できませんでした。入力内容は保持されています。再試行してください。") }
     static var tagReportLimited: String { tr("提交过于频繁，请稍后重试。", "提交過於頻繁，請稍後重試。", "送出過於頻繁，請稍後重試。", "Too many submissions. Please try again later.", "送信回数が多すぎます。しばらくしてから再試行してください。") }
     static var tagReportDiscard: String { tr("放弃本次上报？", "放棄本次回報？", "放棄本次回報？", "Discard This Report?", "報告を破棄しますか？") }
+
+    // 支持码 / 我的工单
+    static var myTickets: String { tr("我的工单", "我的工單", "我的工單", "My Tickets", "マイチケット") }
+    static var supportCode: String { tr("支持码", "支持碼", "支援碼", "Support Code", "サポートコード") }
+    static var supportCodeRotated: String { tr("支持码已更新，旧码仍可查询原工单。", "支持碼已更新，舊碼仍可查詢原工單。", "支援碼已更新，舊碼仍可查詢原工單。", "Your support code was updated. The old code still opens its ticket.", "サポートコードを更新しました。旧コードでも元のチケットを確認できます。") }
+    static var supportCodeSavedNote: String { tr("已保存在「我的工单」，可随时查看处理进度。", "已儲存在「我的工單」，可隨時查看處理進度。", "已儲存在「我的工單」，可隨時查看處理進度。", "Saved in “My Tickets” — check progress anytime.", "「マイチケット」に保存しました。進捗はいつでも確認できます。") }
+    static var ticketUpdateBanner: String { tr("你的工单有新进展", "你的工單有新進展", "你的工單有新進展", "There's an update on your ticket", "チケットに新しい進展があります") }
+    static var ticketNeedsInfo: String { tr("需要补充信息", "需要補充資料", "需要補充資訊", "Info Needed", "追加情報が必要") }
+    static var ticketNeedsInfoDetail: String { tr("开发团队需要你补充信息，请直接在下方提交。", "開發團隊需要你補充資料，請直接在下方提交。", "開發團隊需要你補充資訊，請直接在下方提交。", "The team needs more information. Submit it directly below.", "追加情報が必要です。下のフォームから直接送信してください。") }
+    static var ticketStatus: String { tr("状态", "狀態", "狀態", "Status", "ステータス") }
+    static var ticketStatusOpen: String { tr("待处理", "待處理", "待處理", "Open", "未対応") }
+    static var ticketStatusProcessing: String { tr("处理中", "處理中", "處理中", "In Progress", "対応中") }
+    static var ticketStatusResolved: String { tr("已解决", "已解決", "已解決", "Resolved", "解決済み") }
+    static var ticketStatusClosed: String { tr("已关闭", "已關閉", "已關閉", "Closed", "クローズ") }
+    static var adminReply: String { tr("开发团队回复", "開發團隊回覆", "開發團隊回覆", "Team Reply", "開発チームからの返信") }
+    static var ticketNoReply: String { tr("暂无回复", "暫無回覆", "暫無回覆", "No reply yet", "返信はまだありません") }
+    static var ticketListEmpty: String { tr("暂无工单", "暫無工單", "暫無工單", "No Tickets", "チケットはありません") }
+    static var ticketListEmptyHint: String { tr("提交 Tag 上报后，工单和支持码会出现在这里。", "提交 Tag 回報後，工單和支持碼會出現在這裡。", "提交 Tag 回報後，工單和支援碼會出現在這裡。", "Tag reports you submit will appear here with their support codes.", "タグ報告を送信すると、チケットとサポートコードがここに表示されます。") }
+    static var ticketSubmittedAt: String { tr("提交时间", "提交時間", "提交時間", "Submitted", "送信日時") }
+    static var ticketUpdatedAt: String { tr("更新时间", "更新時間", "更新時間", "Updated", "更新日時") }
+    static var ticketLoadFailed: String { tr("工单加载失败，请检查网络后重试。", "工單載入失敗，請檢查網絡後重試。", "工單載入失敗，請檢查網路後重試。", "Couldn't load tickets. Check your connection and try again.", "チケットを読み込めません。接続を確認して再試行してください。") }
+    static var ticketMyMessages: String { tr("我提交的补充", "我提交的補充", "我提交的補充", "My additional information", "送信した補足情報") }
+    static var ticketAddInfo: String { tr("提交补充资料", "提交補充資料", "提交補充資料", "Add information", "補足情報を追加") }
+    static var ticketAddInfoPlaceholder: String { tr("补充说明（2000字以内）", "補充說明（2000字以內）", "補充說明（2000字以內）", "Additional details (max 2,000 characters)", "補足説明（2000文字以内）") }
+    static var ticketSend: String { tr("提交补充", "提交補充", "提交補充", "Send", "送信") }
+    static var ticketMessageFailed: String { tr("补充资料提交失败，请稍后重试。", "補充資料提交失敗，請稍後重試。", "補充資料提交失敗，請稍後重試。", "Couldn't send additional information. Please try again later.", "補足情報を送信できません。後でもう一度お試しください。") }
+    static var ticketAddFile: String { tr("添加照片或视频", "加入照片或影片", "加入照片或影片", "Add photo or video", "写真または動画を追加") }
+    static var ticketRemoveAttachment: String { tr("移除", "移除", "移除", "Remove", "削除") }
+    static var ticketAttachmentLoading: String { tr("读取附件中…", "讀取附件中…", "讀取附件中…", "Loading attachment…", "添付ファイルを読み込み中…") }
+    static var ticketAttachmentTooLarge: String { tr("文件不能超过 50 MB。", "檔案不能超過 50 MB。", "檔案不能超過 50 MB。", "The file must be 50 MB or smaller.", "ファイルは50 MB以下にしてください。") }
+    static var ticketAttachmentFailed: String { tr("无法读取这个照片或视频。", "無法讀取這張照片或影片。", "無法讀取這張照片或影片。", "Couldn't read that photo or video.", "写真または動画を読み込めませんでした。") }
+    static var tagReportIncludeSupportCode: String { tr("同时发送支持码", "同時傳送支持碼", "同時傳送支援碼", "Include support code", "サポートコードも送信") }
+    static var tagReportIncludeSupportCodeHint: String { tr("选择“是”后会自动获取支持码并绑定本次工单；关闭后不会发送设备标识或支持码。", "選擇「是」後會自動取得支持碼並綁定本次工單；關閉後不會傳送裝置識別碼或支持碼。", "選擇「是」後會自動取得支援碼並綁定本次工單；關閉後不會傳送裝置識別碼或支援碼。", "When enabled, the app fetches a support code and binds this ticket. When disabled, no device ID or support code is sent.", "オンにするとサポートコードを取得してこのチケットに紐付けます。オフの場合、デバイスIDとコードは送信しません。") }
+    static var blankCodeFooter: String { tr("在官网查询工单进度时，可以手动输入这个支持码。", "在官網查詢工單進度時，可以手動輸入這個支持碼。", "在官網查詢工單進度時，可以手動輸入這個支援碼。", "Enter this code on the website to look up your ticket progress.", "サイトで進捗を確認する際にこのコードを入力できます。") }
+    static var ticketAnonymousNote: String { tr("该工单未绑定支持码，无法在 App 内查询进展或补充资料，可凭工单编号到网页 report.meqrcode.cn/track 查询。", "該工單未綁定支持碼，無法在 App 內查詢進展或補充資料，可憑工單編號到網頁 report.meqrcode.cn/track 查詢。", "該工單未綁定支援碼，無法在 App 內查詢進展或補充資訊，可憑工單編號到網頁 report.meqrcode.cn/track 查詢。", "This ticket isn't linked to a support code, so you can't track progress or add information in the app. Look it up with the ticket ID at report.meqrcode.cn/track.", "このチケットはサポートコードに紐付いていないため、App内での進捗確認や情報の追加はできません。チケット番号を report.meqrcode.cn/track で入力してください。") }
     static func tr(_ zhHans: String, _ zhHantHK: String, _ zhHantTW: String, _ en: String, _ ja: String) -> String {
         switch AppSettings.shared.resolvedLanguage {
         case .system, .en:

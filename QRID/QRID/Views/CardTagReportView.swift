@@ -37,6 +37,8 @@ struct CardTagReportView: View {
     @State private var reference = ""
     @State private var queued = false
     @State private var showingOutbox = false
+    @State private var supportCode: String?
+    @State private var includeSupportCode = true
 
     var body: some View {
         NavigationStack {
@@ -52,6 +54,15 @@ struct CardTagReportView: View {
                             .accessibilityElement(children: .combine)
                             .accessibilityLabel("\(L.tagReportTicket): \(ticket)")
                             .accessibilityIdentifier("tag-report-receipt")
+                        if let supportCode {
+                            LabeledContent(L.supportCode, value: supportCode).textSelection(.enabled)
+                                .accessibilityElement(children: .combine)
+                                .accessibilityLabel("\(L.supportCode): \(supportCode)")
+                                .accessibilityIdentifier("tag-report-support-code")
+                            Text(L.supportCodeSavedNote)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 } else {
                     Section {
@@ -76,6 +87,10 @@ struct CardTagReportView: View {
                         TextField(L.tagReportContact, text: $contact)
                             .textInputAutocapitalization(.never).autocorrectionDisabled()
                         if contact.count > 120 { Text("\(contact.count)/120").foregroundStyle(.red) }
+                        Toggle(L.tagReportIncludeSupportCode, isOn: $includeSupportCode)
+                        Text(L.tagReportIncludeSupportCodeHint)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                     .disabled(isSubmitting)
                     if let error { Section { Text(error).foregroundStyle(.red) } }
@@ -123,7 +138,8 @@ struct CardTagReportView: View {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
         var payload = ["tag_id": entry?.id ?? "", "tag_name": tag, "reason": reason,
                        "description": details, "contact": contact, "platform": "ios", "app_version": version,
-                       "revision": RemoteTagCatalog.shared.revision, "source": RemoteTagCatalog.shared.sourceName]
+                       "revision": RemoteTagCatalog.shared.revision, "source": RemoteTagCatalog.shared.sourceName,
+                       "_include_support_code": includeSupportCode ? "true" : "false"]
         if isNewTag {
             payload["tag_id"] = ""; payload["tag_name"] = requestedName; payload["reason"] = "request"
             payload["work"] = work; payload["suggested_colors"] = colors; payload["reference_url"] = reference
@@ -140,7 +156,12 @@ struct CardTagReportView: View {
             let id = try CardTagOutbox.shared.enqueue(payload)
             queued = true
             await CardTagOutbox.shared.drain()
-            if let receipt = CardTagOutbox.shared.jobs.first(where: { $0.id == id })?.ticket { ticket = receipt; queued = false }
+            if let receipt = CardTagOutbox.shared.jobs.first(where: { $0.id == id })?.ticket {
+                ticket = receipt
+                queued = false
+                supportCode = SupportTicketStore.shared.ticket(forRequestID: id)?.supportCode
+                if supportCode?.isEmpty == true { supportCode = nil }
+            }
         } catch { self.error = L.tagQueueSaveFailed }
     }
 }
@@ -148,6 +169,18 @@ struct CardTagReportView: View {
 enum CardTagReportClient {
     enum Failure: Error { case invalidResponse, limited, rejected }
     static func submit(_ payload: [String: String]) async throws -> String {
+        var payload = payload
+        let supportCodeChoice = payload.removeValue(forKey: "_include_support_code")
+        let includeSupportCode = supportCodeChoice == "true"
+        if supportCodeChoice == "false" {
+            payload.removeValue(forKey: "device_id")
+            payload.removeValue(forKey: "support_code")
+        }
+        if includeSupportCode {
+            let code = try await SupportTicketStore.shared.obtainBlankCode()
+            payload["device_id"] = DeviceIdentity.id
+            payload["support_code"] = code
+        }
         let base = URL(string: "https://report.meqrcode.cn/api/tag-reports")!
         let configuration = URLSessionConfiguration.ephemeral
         configuration.timeoutIntervalForRequest = 20
@@ -165,9 +198,14 @@ enum CardTagReportClient {
         request.httpBody = try JSONEncoder().encode(payload)
         let (data, response) = try await session.data(for: request)
         try validate(response)
-        struct Receipt: Decodable { let ticket_id: String }
-        let ticket = try JSONDecoder().decode(Receipt.self, from: data).ticket_id
+        struct Receipt: Decodable { let ticket_id: String; let support_code: String?; let next_support_code: String? }
+        let receipt = try JSONDecoder().decode(Receipt.self, from: data)
+        let ticket = receipt.ticket_id
         guard ticket.range(of: "^MEQR-[0-9]{8}-[A-F0-9]{6}$", options: .regularExpression) != nil else { throw Failure.invalidResponse }
+        await SupportTicketStore.shared.noteSubmitted(
+            requestID: payload["request_id"], ticketID: ticket,
+            supportCode: receipt.support_code, title: payload["tag_name"] ?? "", nextCode: receipt.next_support_code
+        )
         return ticket
     }
     private static func validate(_ response: URLResponse) throws {

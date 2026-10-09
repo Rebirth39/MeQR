@@ -1,8 +1,41 @@
 {
   "schemaVersion": 1,
-  "revision": "2026.10.05.3",
-  "updatedAt": "2026-10-05",
+  "revision": "2026.10.08.1",
+  "updatedAt": "2026-10-08",
   "changelog": [
+    {
+      "revision": "2026.10.08.1",
+      "date": "2026-10-08",
+      "summary": {
+        "zhHans": "新增唱见组合成人男性三人组标签。",
+        "zhHantHK": "新增唱見組合成人男性三人組標籤。",
+        "zhHantTW": "新增唱見組合成人男性三人組標籤。",
+        "en": "Added the utaite group Adult Male Trio tag.",
+        "ja": "歌い手グループ、成人男性三人組のタグを追加。"
+      }
+    },
+    {
+      "revision": "2026.10.07.1",
+      "date": "2026-10-07",
+      "summary": {
+        "zhHans": "新增东方 Project 角色东风谷早苗标签。",
+        "zhHantHK": "新增東方 Project 角色東風谷早苗標籤。",
+        "zhHantTW": "新增東方 Project 角色東風谷早苗標籤。",
+        "en": "Added the Touhou Project character Sanae Kochiya tag.",
+        "ja": "東方Projectのキャラクター、東風谷早苗のタグを追加。"
+      }
+    },
+    {
+      "revision": "2026.10.06.1",
+      "date": "2026-10-06",
+      "summary": {
+        "zhHans": "新增全职高手与砂金标签。",
+        "zhHantHK": "新增全職高手與砂金標籤。",
+        "zhHantTW": "新增全職高手與砂金標籤。",
+        "en": "Added The King's Avatar and Aventurine tags.",
+        "ja": "全職高手とアベンチュリンのタグを追加。"
+      }
+    },
     {
       "revision": "2026.10.05.3",
       "date": "2026-10-05",
@@ -407,6 +440,10 @@
         {
           "start": "tag-0522",
           "end": "tag-0522"
+        },
+        {
+          "start": "tag-0527",
+          "end": "tag-0527"
         }
       ]
     },
@@ -607,6 +644,10 @@
         {
           "start": "tag-0519",
           "end": "tag-0519"
+        },
+        {
+          "start": "tag-0528",
+          "end": "tag-0528"
         }
       ]
     },
@@ -851,6 +892,10 @@
         {
           "start": "tag-0478",
           "end": "tag-0478"
+        },
+        {
+          "start": "tag-0529",
+          "end": "tag-0529"
         }
       ]
     },
@@ -999,6 +1044,22 @@
         {
           "start": "tag-0523",
           "end": "tag-0524"
+        }
+      ]
+    },
+    {
+      "id": "ip-the-kings-avatar",
+      "names": {
+        "zhHans": "全职高手",
+        "zhHantHK": "全職高手",
+        "zhHantTW": "全職高手",
+        "en": "The King's Avatar",
+        "ja": "マスターオブスキル 全職高手"
+      },
+      "ranges": [
+        {
+          "start": "tag-0526",
+          "end": "tag-0526"
         }
       ]
     }
@@ -12718,6 +12779,109 @@
       "solidColor": "#66B7E8",
       "kind": "character",
       "parentID": "tag-0107"
+    },
+    {
+      "id": "tag-0526",
+      "names": {
+        "zhHans": "全职高手",
+        "zhHantHK": "全職高手",
+        "zhHantTW": "全職高手",
+        "en": "The King's Avatar",
+        "ja": "マスターオブスキル 全職高手"
+      },
+      "aliases": [
+        "全职",
+        "全職",
+        "全职高手",
+        "全職高手",
+        "The King's Avatar",
+        "The King’s Avatar",
+        "The Kings Avatar",
+        "Quan Zhi Gao Shou",
+        "Quanzhi Gaoshou",
+        "qzgs",
+        "TKA",
+        "マスターオブスキル",
+        "マスター・オブ・スキル"
+      ],
+      "colors": [
+        "#D4AF37",
+        "#000000"
+      ],
+      "solidColor": "#D4AF37",
+      "kind": "work"
+    },
+    {
+      "id": "tag-0527",
+      "names": {
+        "zhHans": "砂金",
+        "zhHantHK": "砂金",
+        "zhHantTW": "砂金",
+        "en": "Aventurine",
+        "ja": "アベンチュリン"
+      },
+      "aliases": [
+        "砂金",
+        "Aventurine",
+        "アベンチュリン",
+        "Shajin",
+        "Sha Jin"
+      ],
+      "colors": [
+        "#D4AF37",
+        "#008C8C"
+      ],
+      "solidColor": "#D4AF37",
+      "kind": "character",
+      "parentID": "tag-0103"
+    },
+    {
+      "id": "tag-0528",
+      "names": {
+        "zhHans": "东风谷早苗",
+        "zhHantHK": "東風谷早苗",
+        "zhHantTW": "東風谷早苗",
+        "en": "Sanae Kochiya",
+        "ja": "東風谷早苗"
+      },
+      "aliases": [
+        "东风谷早苗",
+        "東風谷早苗",
+        "Sanae Kochiya",
+        "Kochiya Sanae",
+        "Sanae",
+        "早苗"
+      ],
+      "colors": [
+        "#4CAF50",
+        "#FFFFFF"
+      ],
+      "solidColor": "#4CAF50",
+      "kind": "character",
+      "parentID": "tag-0136"
+    },
+    {
+      "id": "tag-0529",
+      "names": {
+        "zhHans": "成人男性三人组",
+        "zhHantHK": "成人男性三人組",
+        "zhHantTW": "成人男性三人組",
+        "en": "Adult Male Trio",
+        "ja": "成人男性三人組"
+      },
+      "aliases": [
+        "成人男性3人组",
+        "成人男性3人組",
+        "成人男性三人組",
+        "Seijin Dansei San Ningumi",
+        "seijin dansei san ningumi",
+        "Adult Male Trio"
+      ],
+      "colors": [
+        "#D32F2F"
+      ],
+      "solidColor": "#D32F2F",
+      "kind": "group"
     }
   ],
   "groups": [

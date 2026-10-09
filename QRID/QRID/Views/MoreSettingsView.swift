@@ -35,6 +35,9 @@ struct MoreSettingsView: View {
                 }
 
                 Section {
+                    NavigationLink { MyTicketsView() } label: {
+                        Label(L.myTickets, systemImage: "ticket")
+                    }
                     NavigationLink { ProfileSyncView() } label: {
                         Label(L.syncTitle, systemImage: "arrow.triangle.2.circlepath")
                     }
