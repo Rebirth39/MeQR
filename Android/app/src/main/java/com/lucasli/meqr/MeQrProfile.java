@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.UUID;
 
 final class MeQrProfile {
+    static final int MAX_TAGS = 15;
+
     String id = UUID.randomUUID().toString();
     String name = "";
     String subtitle = "";
@@ -23,6 +25,61 @@ final class MeQrProfile {
     final Map<String, String> tagColorOverrides = new HashMap<>();
     final Map<String, Integer> tagTextWeights = new HashMap<>();
     final List<TagReference> tagReferences = new ArrayList<>();
+
+    TagPair tagPair(String name) {
+        TagReference reference = referenceFor(name);
+        return reference == null ? null : reference.pairing;
+    }
+
+    boolean combineTags(String source, String target, String kind, String language) {
+        int first = tags.indexOf(source), second = tags.indexOf(target);
+        TagPair pair = TagPair.make(source, target, kind);
+        if (first < 0 || second < 0 || pair == null || tagPair(source) != null || tagPair(target) != null) return false;
+        String name = pair.display(language);
+        if (pairConflicts(name, pair, null)) return false;
+        tags.remove(Math.max(first, second));
+        tags.set(Math.min(first, second), name);
+        tagColorOverrides.remove(source); tagColorOverrides.remove(target);
+        tagTextWeights.remove(source); tagTextWeights.remove(target);
+        tagReferences.removeIf(reference -> reference.lastName.equals(source) || reference.lastName.equals(target));
+        TagReference reference = new TagReference(name);
+        reference.pairing = pair;
+        reference.colors = pair.colors(); reference.solid = reference.colors[0];
+        reference.override = "@preset";
+        tagReferences.add(reference);
+        tagColorOverrides.put(name, "@preset");
+        return true;
+    }
+
+    boolean canSwapTag(String tag, String language) {
+        TagPair pair = tagPair(tag);
+        return tags.contains(tag) && pair != null && !pairConflicts(pair.swapped().display(language), pair.swapped(), tag);
+    }
+
+    boolean swapTag(String tag, String language) {
+        if (!canSwapTag(tag, language)) return false;
+        TagReference reference = referenceFor(tag);
+        String name = reference.pairing.swapped().display(language);
+        reference.pairing = reference.pairing.swapped();
+        reference.lastName = reference.fallbackName = name;
+        reference.colors = reference.pairing.colors(); reference.solid = reference.colors[0];
+        String override = tagColorOverrides.remove(tag);
+        int weight = tagTextWeight(tag); tagTextWeights.remove(tag);
+        tags.set(tags.indexOf(tag), name);
+        if (override != null) tagColorOverrides.put(name, override);
+        setTagTextWeight(name, weight);
+        return true;
+    }
+
+    private boolean pairConflicts(String name, TagPair pair, String excluding) {
+        for (String tag : tags) {
+            if (tag.equals(excluding)) continue;
+            TagPair existing = tagPair(tag);
+            if (CardTagIndex.normalizedKey(tag).equals(CardTagIndex.normalizedKey(name))
+                    || existing != null && existing.identity().equals(pair.identity())) return true;
+        }
+        return false;
+    }
 
     TagReference referenceFor(String name) {
         for (TagReference reference : tagReferences) {
@@ -42,6 +99,7 @@ final class MeQrProfile {
         for (TagReference reference : tagReferences) referencesByName.putIfAbsent(reference.lastName, reference);
         for (TagReference reference : tagReferences) referencesByName.putIfAbsent(reference.fallbackName, reference);
         for (String tag : tags) {
+            if (names.size() >= MAX_TAGS) break;
             TagReference reference = referencesByName.get(tag);
             if (reference == null) reference = new TagReference(tag);
             reference.override = tagColorOverrides.get(tag);
@@ -51,8 +109,12 @@ final class MeQrProfile {
                 reference.colors = entry.colors.clone();
                 reference.solid = entry.solidColor == null ? reference.colors[0] : entry.solidColor;
             }
+            if (reference.pairing != null) {
+                reference.colors = reference.pairing.colors();
+                reference.solid = reference.colors[0];
+            }
             String display = language == null ? tag : reference.display(language);
-            if (entry != null) reference.fallbackName = display;
+            if (entry != null || reference.pairing != null) reference.fallbackName = display;
             reference.lastName = display;
             names.add(display); updated.add(reference);
             if (reference.override != null) overrides.put(display, reference.override);
@@ -76,6 +138,14 @@ final class MeQrProfile {
 
     int[] tagColors(String tag) { return tagColors(tag, tagColorOverrides.get(tag)); }
 
+    int[] tagLibraryColors(String displayName) {
+        String key = CardTagIndex.canonicalKey(displayName);
+        for (String selected : tags) {
+            if (CardTagIndex.canonicalKey(selected).equals(key)) return tagColors(selected);
+        }
+        return tagColors(displayName);
+    }
+
     int[] tagColors(String tag, String override) {
         TagReference reference = referenceFor(tag);
         return reference == null ? CardTagColorPalette.colorsFor(tag, override) : reference.colors(override);
@@ -91,6 +161,7 @@ final class MeQrProfile {
     String qrColor = "#111111";
     int cornerRadius = 28;
     float cardOpacity = 1.0f;
+    boolean cardGlassEnabled = false;
     long createdAt = System.currentTimeMillis();
     int sortOrder = 0;
 
@@ -160,6 +231,7 @@ final class MeQrProfile {
         object.put("qrColor", qrColor);
         object.put("cornerRadius", cornerRadius);
         object.put("cardOpacity", cardOpacity);
+        object.put("cardGlassEnabled", cardGlassEnabled);
         object.put("createdAt", createdAt);
         object.put("sortOrder", sortOrder);
         return object;
@@ -194,7 +266,7 @@ final class MeQrProfile {
         profile.tagColorOverrides.clear();
         JSONArray tagArray = object.optJSONArray("tags");
         if (tagArray != null) {
-            for (int i = 0; i < tagArray.length() && profile.tags.size() < 10; i++) {
+            for (int i = 0; i < tagArray.length() && profile.tags.size() < MAX_TAGS; i++) {
                 String tag = tagArray.optString(i, "").trim();
                 boolean duplicate = false;
                 for (String existing : profile.tags) {
@@ -223,11 +295,12 @@ final class MeQrProfile {
         if (tagWeightObject != null) {
             for (String tag : profile.tags) profile.setTagTextWeight(tag, tagWeightObject.optInt(tag, TagTextWeight.REGULAR));
         }
-        profile.template = "rhodes".equals(object.optString("template", "standard")) ? "rhodes" : "standard";
+        String template = object.optString("template", "standard");
+        profile.template = ("rhodes".equals(template) || "rhodesPass".equals(template)) ? "rhodes" : "standard";
         JSONArray references = object.optJSONArray("tagReferences");
         if (references != null) {
             profile.tags.clear(); profile.tagColorOverrides.clear(); profile.tagTextWeights.clear();
-            for (int i = 0; i < references.length() && i < 10; i++) {
+            for (int i = 0; i < references.length() && i < MAX_TAGS; i++) {
                 JSONObject raw = references.optJSONObject(i);
                 if (raw == null) continue;
                 TagReference reference = TagReference.fromJson(raw);
@@ -246,6 +319,7 @@ final class MeQrProfile {
         profile.qrColor = object.optString("qrColor", "#111111");
         profile.cornerRadius = object.optInt("cornerRadius", 28);
         profile.cardOpacity = (float) object.optDouble("cardOpacity", 1.0);
+        profile.cardGlassEnabled = object.optBoolean("cardGlassEnabled", false);
         profile.createdAt = object.optLong("createdAt", System.currentTimeMillis());
         profile.sortOrder = object.optInt("sortOrder", 0);
         profile.syncLegacyFields();

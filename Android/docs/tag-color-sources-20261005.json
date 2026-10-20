@@ -1,0 +1,154 @@
+{
+  "revision": "2026.10.05.1",
+  "date": "2026-10-05",
+  "scope": "Four explicitly requested tickets; five entries including the missing WIXOSS parent work",
+  "limitations": "No official cheering/support HEX standard was established. Requested HEX values are preserved where specified; artwork/logo samples are MeQR representative colors, not official color specifications.",
+  "entries": [
+    {
+      "id": "tag-0516",
+      "ticket": "MEQR-20261005-EB4DDD",
+      "colors": [
+        "#6F4E9B"
+      ],
+      "solidColor": "#6F4E9B",
+      "basis": "Official Japanese/Taiwan Pokédex verifies Hisuian form, shell and localized name. HEX is the ticket's requested representative purple, not an extracted official body color.",
+      "sources": [
+        "https://zukan.pokemon.co.jp/detail/0706-1",
+        "https://tw.portal-pokemon.com/play/pokedex/0706_1"
+      ]
+    },
+    {
+      "id": "tag-0517",
+      "colors": [
+        "#1B298B"
+      ],
+      "solidColor": "#1B298B",
+      "basis": "Missing WIXOSS parent work; representative blue sampled as the most frequent fully opaque chromatic pixel (channel spread >100) in the official logo.",
+      "sources": [
+        "https://www.takaratomy.co.jp/products/wixoss/",
+        "https://www.takaratomy.co.jp/products/wixoss/wp-content/themes/wixoss2020/common/img/logo.png"
+      ]
+    },
+    {
+      "id": "tag-0518",
+      "ticket": "MEQR-20261005-35B371",
+      "colors": [
+        "#4A90D9"
+      ],
+      "solidColor": "#4A90D9",
+      "basis": "Takara Tomy official card SP05-003 verifies ピルルク and color 青. HEX preserves the ticket's requested representative cool blue, not an official HEX specification.",
+      "sources": [
+        "https://www.takaratomy.co.jp/products/wixoss/library/card/card_list/?card=card_detail&card_no=SP05-003"
+      ]
+    },
+    {
+      "id": "tag-0519",
+      "ticket": "MEQR-20261004-9FA5FC",
+      "colors": [
+        "#249063"
+      ],
+      "solidColor": "#249063",
+      "basis": "THBWiki/Moegirl verify names and green hair; sample from the original PoFV artwork mirrored by specialist THBWiki, matching the requested green. This is an artwork representative color, not an official support HEX.",
+      "sources": [
+        "https://thbwiki.cc/%E5%9B%9B%E5%AD%A3%E6%98%A0%E5%A7%AC",
+        "https://zh.moegirl.org.cn/%E5%9B%9B%E5%AD%A3%E6%98%A0%E5%A7%AC"
+      ],
+      "sample": "eiki-hair"
+    },
+    {
+      "id": "tag-0520",
+      "ticket": "MEQR-20261004-11B135",
+      "colors": [
+        "#F0B8BF",
+        "#C6C6FA"
+      ],
+      "solidColor": "#F0B8BF",
+      "basis": "Official gynoid singing product verifies duo names and VOCALOID5 voicebanks. Pink/light-blue colors are hair-region medians from the official product cover; classified in VOCALOID, not the non-VOCALOID general subgroup.",
+      "sources": [
+        "https://www.gynoid.jp/items/view/18/",
+        "https://www.gynoid.jp/images/item/18/slide1877052086649c16ee0ef5d0b52d67d1d.png"
+      ],
+      "samples": [
+        "hime-hair",
+        "mikoto-hair"
+      ]
+    }
+  ],
+  "art_samples": [
+    {
+      "label": "eiki-hair",
+      "file": "eiki-art.png",
+      "roi": [
+        75,
+        80,
+        82,
+        97
+      ],
+      "pixels": 119,
+      "method": "Per-channel median of opaque pixels in visually selected hair region",
+      "hex": "#249063",
+      "image_sha256": "a080747cffcce5671020452e0d3b71fb9baa82f9a0eb937748109bb353233beb",
+      "limitation": "MeQR representative artwork color; not an official cheering/support HEX standard"
+    },
+    {
+      "label": "hime-hair",
+      "file": "meika-cover.png",
+      "roi": [
+        99,
+        149,
+        111,
+        158
+      ],
+      "pixels": 108,
+      "method": "Per-channel median of opaque pixels in visually selected hair region",
+      "hex": "#F0B8BF",
+      "image_sha256": "976a0685107e4792f64b6ba861c4a79a717548c44d4ea2f3c1e9ff21ced152fe",
+      "limitation": "MeQR representative artwork color; not an official cheering/support HEX standard"
+    },
+    {
+      "label": "mikoto-hair",
+      "file": "meika-cover.png",
+      "roi": [
+        278,
+        148,
+        289,
+        158
+      ],
+      "pixels": 110,
+      "method": "Per-channel median of opaque pixels in visually selected hair region",
+      "hex": "#C6C6FA",
+      "image_sha256": "976a0685107e4792f64b6ba861c4a79a717548c44d4ea2f3c1e9ff21ced152fe",
+      "limitation": "MeQR representative artwork color; not an official cheering/support HEX standard"
+    }
+  ],
+  "art_sources": [
+    {
+      "file": "goodra-art.png",
+      "url": "https://zukan.pokemon.co.jp/zukan-api/up/images/index/dc3692f776b493625be24e69223a90d4.png",
+      "exit_code": 0,
+      "bytes": 187405,
+      "sha256": "a4603bb44a545838f6eb16052cedebc9f27341a90125bffce4a34a4a4515d467"
+    },
+    {
+      "file": "meika-art.png",
+      "url": "https://www.gynoid.jp/images/item/18/slide2877052086649c16ee0ef5d0b52d67d1d.png",
+      "exit_code": 0,
+      "bytes": 47122,
+      "sha256": "9735976afd735891d3a3e26cf4a41903c399b7c245cbe6b120f289e2d16d9889"
+    },
+    {
+      "file": "meika-cover.png",
+      "url": "https://www.gynoid.jp/images/item/18/slide1877052086649c16ee0ef5d0b52d67d1d.png",
+      "exit_code": 0,
+      "bytes": 63227,
+      "sha256": "976a0685107e4792f64b6ba861c4a79a717548c44d4ea2f3c1e9ff21ced152fe"
+    },
+    {
+      "file": "eiki-art.png",
+      "url": "https://upload.thbwiki.cc/e/e5/%E5%9B%9B%E5%AD%A3%E6%98%A0%E5%A7%AC%EF%BC%88%E8%8A%B1%E6%98%A0%E5%A1%9A%E7%AB%8B%E7%BB%98%EF%BC%89.png",
+      "exit_code": 0,
+      "bytes": 187621,
+      "sha256": "a080747cffcce5671020452e0d3b71fb9baa82f9a0eb937748109bb353233beb"
+    }
+  ]
+}

@@ -11,8 +11,12 @@ import android.graphics.drawable.Drawable;
 final class TagSegmentDrawable extends Drawable {
     private final int[] colors;
     private final float radius;
+    private final float outlineWidth;
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    TagSegmentDrawable(int[] colors, float radius) { this.colors = colors.clone(); this.radius = radius; }
+    TagSegmentDrawable(int[] colors, float radius) { this(colors, radius, 0); }
+    TagSegmentDrawable(int[] colors, float radius, float outlineWidth) {
+        this.colors = colors.clone(); this.radius = radius; this.outlineWidth = outlineWidth;
+    }
     @Override public void draw(Canvas canvas) {
         RectF bounds = new RectF(getBounds());
         Path clip = new Path();
@@ -25,6 +29,11 @@ final class TagSegmentDrawable extends Drawable {
                     bounds.left + bounds.width() * (i + 1) / colors.length, bounds.bottom, paint);
         }
         canvas.restoreToCount(save);
+        if (outlineWidth > 0) {
+            bounds.inset(outlineWidth, outlineWidth);
+            paint.setColor(android.graphics.Color.WHITE);
+            canvas.drawRoundRect(bounds, Math.max(0, radius - outlineWidth), Math.max(0, radius - outlineWidth), paint);
+        }
     }
     @Override public void setAlpha(int alpha) { paint.setAlpha(alpha); invalidateSelf(); }
     @Override public void setColorFilter(ColorFilter filter) { paint.setColorFilter(filter); invalidateSelf(); }

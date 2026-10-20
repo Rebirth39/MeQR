@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 final class EventStore {
     private static final String REMOTE_EVENTS_URL = "https://api.meqrcode.cn/events";
@@ -26,8 +27,9 @@ final class EventStore {
     private final Context context;
     private final SharedPreferences preferences;
     private final File dataFile;
-    private final List<MeQrEvent> events = new ArrayList<>();
+    private final List<MeQrEvent> events = new CopyOnWriteArrayList<>();
     private String activeEventId;
+    private boolean loadError;
 
     EventStore(Context context) {
         this.context = context.getApplicationContext();
@@ -90,19 +92,26 @@ final class EventStore {
                 connection.setReadTimeout(15000);
                 connection.setRequestProperty("Accept", "application/json");
                 int status = connection.getResponseCode();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(
-                    status >= 200 && status < 300 ? connection.getInputStream() : connection.getErrorStream(),
-                    StandardCharsets.UTF_8
-                ));
+                java.io.InputStream stream = status >= 200 && status < 300
+                        ? connection.getInputStream() : connection.getErrorStream();
+                if (stream == null) {
+                    connection.disconnect();
+                    return;
+                }
                 StringBuilder response = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    response.append(line);
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
                 }
                 connection.disconnect();
                 if (status >= 200 && status < 300) {
-                    mergeRemoteEvents(new JSONArray(response.toString()));
-                    save();
+                    JSONArray remote = new JSONArray(response.toString());
+                    if (remote.length() > 0) {
+                        mergeRemoteEvents(remote);
+                        save();
+                    }
                 }
             } catch (Exception ignored) {
                 if (events.isEmpty()) {
@@ -137,6 +146,7 @@ final class EventStore {
 
     private void load() {
         events.clear();
+        loadError = false;
         if (!dataFile.exists()) {
             events.add(MeQrEvent.defaultEvent());
             return;
@@ -148,7 +158,7 @@ final class EventStore {
                 events.add(MeQrEvent.fromJson(array.getJSONObject(i)));
             }
         } catch (Exception ignored) {
-            events.clear();
+            loadError = true;
         }
         if (events.isEmpty()) {
             events.add(MeQrEvent.defaultEvent());
@@ -159,14 +169,25 @@ final class EventStore {
     }
 
     private void save() {
+        if (loadError && dataFile.exists() && dataFile.length() > 2) {
+            return;
+        }
         JSONArray array = new JSONArray();
         try {
             for (MeQrEvent event : events) {
                 array.put(event.toJson());
             }
-            try (FileOutputStream output = new FileOutputStream(dataFile, false)) {
+            android.util.AtomicFile atomic = new android.util.AtomicFile(dataFile);
+            FileOutputStream output = null;
+            try {
+                output = atomic.startWrite();
                 output.write(array.toString(2).getBytes(StandardCharsets.UTF_8));
+                atomic.finishWrite(output);
+            } catch (Exception failure) {
+                if (output != null) atomic.failWrite(output);
+                throw failure;
             }
+            loadError = false;
         } catch (Exception ignored) {
         }
     }

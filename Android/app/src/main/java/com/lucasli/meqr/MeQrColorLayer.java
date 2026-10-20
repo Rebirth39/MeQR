@@ -29,10 +29,10 @@ final class MeQrColorLayer {
             Color.rgb(74, 31, 128)
     };
     private static final int[] LIGHT_PALETTE = new int[]{
-            Color.rgb(168, 207, 255),
-            Color.rgb(158, 230, 214),
-            Color.rgb(255, 194, 212),
-            Color.rgb(214, 184, 255)
+            Color.rgb(153, 188, 255),
+            Color.rgb(153, 240, 224),
+            Color.rgb(255, 163, 201),
+            Color.rgb(204, 163, 245)
     };
     private static final float[] TARGET_HUES = new float[]{219.6f, 169.2f, 334.8f, 270.0f};
 
@@ -98,7 +98,9 @@ final class MeQrColorLayer {
                 int symbol = symbols == null
                         ? ((row * 3 + column * 5) & 3)
                         : symbols[row * dimension + column];
-                int color = matrix.get(column, row) == 1 ? DARK_PALETTE[symbol] : LIGHT_PALETTE[symbol];
+                int color = symbols == null
+                        ? (matrix.get(column, row) == 1 ? Color.BLACK : Color.WHITE)
+                        : (matrix.get(column, row) == 1 ? DARK_PALETTE[symbol] : LIGHT_PALETTE[symbol]);
                 int left = offset + (column + QUIET_ZONE) * scale;
                 int top = offset + (row + QUIET_ZONE) * scale;
                 for (int y = top; y < top + scale; y++) {
@@ -149,23 +151,12 @@ final class MeQrColorLayer {
             if (transform == null) {
                 continue;
             }
-            float[] points = new float[dimension * dimension * 2];
-            int pointIndex = 0;
-            for (int row = 0; row < dimension; row++) {
-                for (int column = 0; column < dimension; column++) {
-                    points[pointIndex++] = column + 0.5f;
-                    points[pointIndex++] = row + 0.5f;
-                }
-            }
-            transform.transformPoints(points);
-            int[] symbols = new int[dimension * dimension];
-            for (int index = 0; index < symbols.length; index++) {
-                int color = source.colorAt(points[index * 2], points[index * 2 + 1]);
-                symbols[index] = nearestSymbol(color);
-            }
             for (boolean mirrored : new boolean[]{false, true}) {
                 for (int rotation = 0; rotation < 4; rotation++) {
-                    byte[] avatar = parse(transformed(symbols, dimension, rotation, mirrored));
+                    int length = payloadLength(decodeBytes(sampleSymbols(source, transform, dimension, 80, rotation, mirrored)));
+                    int symbolCount = ((HEADER_BYTES + length) * 4 + 2) / 3 * 5;
+                    if (length <= 0 || symbolCount > dimension * dimension) continue;
+                    byte[] avatar = parse(sampleSymbols(source, transform, dimension, symbolCount, rotation, mirrored));
                     if (avatar != null) {
                         return avatar;
                     }
@@ -173,6 +164,76 @@ final class MeQrColorLayer {
             }
         }
         return null;
+    }
+
+    private static int[] sampleSymbols(PixelSource source, PerspectiveTransform transform, int dimension,
+                                       int count, int rotation, boolean mirrored) {
+        int[] symbols = new int[count];
+        for (int index = 0; index < count; index++) {
+            int row = index / dimension;
+            int column = index % dimension;
+            for (int turn = 0; turn < rotation; turn++) {
+                int oldRow = row;
+                row = dimension - column - 1;
+                column = oldRow;
+            }
+            if (mirrored) column = dimension - column - 1;
+            symbols[index] = sampleModuleSymbol(source, transform, column, row);
+        }
+        return symbols;
+    }
+
+    private static int sampleModule(PixelSource source, PerspectiveTransform transform, int column, int row) {
+        float[] samples = new float[18];
+        int sampleIndex = 0;
+        for (float vertical : new float[]{0.32f, 0.5f, 0.68f}) {
+            for (float horizontal : new float[]{0.32f, 0.5f, 0.68f}) {
+                samples[sampleIndex++] = column + horizontal;
+                samples[sampleIndex++] = row + vertical;
+            }
+        }
+        transform.transformPoints(samples);
+        int red = 0;
+        int green = 0;
+        int blue = 0;
+        for (int index = 0; index < samples.length; index += 2) {
+            int color = source.colorAt(samples[index], samples[index + 1]);
+            red += Color.red(color);
+            green += Color.green(color);
+            blue += Color.blue(color);
+        }
+        return Color.rgb(red / 9, green / 9, blue / 9);
+    }
+
+    private static int sampleModuleSymbol(PixelSource source, PerspectiveTransform transform, int column, int row) {
+        float[] samples = new float[18];
+        int sampleIndex = 0;
+        for (float vertical : new float[]{0.32f, 0.5f, 0.68f}) {
+            for (float horizontal : new float[]{0.32f, 0.5f, 0.68f}) {
+                samples[sampleIndex++] = column + horizontal;
+                samples[sampleIndex++] = row + vertical;
+            }
+        }
+        transform.transformPoints(samples);
+        int[] votes = new int[4];
+        int red = 0;
+        int green = 0;
+        int blue = 0;
+        for (int index = 0; index < samples.length; index += 2) {
+            int color = source.colorAt(samples[index], samples[index + 1]);
+            red += Color.red(color);
+            green += Color.green(color);
+            blue += Color.blue(color);
+            votes[nearestSymbol(color)]++;
+        }
+        int best = 0;
+        for (int symbol = 1; symbol < votes.length; symbol++) {
+            if (votes[symbol] > votes[best]) best = symbol;
+        }
+        int bestCount = votes[best];
+        int winners = 0;
+        for (int vote : votes) if (vote == bestCount) winners++;
+        return winners == 1 ? best : nearestSymbol(Color.rgb(red / 9, green / 9, blue / 9));
     }
 
     private static PerspectiveTransform transform(int dimension, ResultPoint[] points) {
@@ -258,7 +319,7 @@ final class MeQrColorLayer {
         return symbols;
     }
 
-    private static byte[] parse(int[] symbols) {
+    private static byte[] decodeBytes(int[] symbols) {
         int groupCount = symbols.length / 5;
         int[] decoded = new int[groupCount * 3];
         int decodedIndex = 0;
@@ -280,16 +341,24 @@ final class MeQrColorLayer {
                     | (decoded[offset + 2] << 2)
                     | decoded[offset + 3]);
         }
-        if (bytes.length < HEADER_BYTES
+        return bytes;
+    }
+
+    private static int payloadLength(byte[] bytes) {
+        if (bytes == null || bytes.length < HEADER_BYTES
                 || !Arrays.equals(Arrays.copyOfRange(bytes, 0, 4), MAGIC)
                 || (bytes[4] & 0xFF) != VERSION
                 || (bytes[5] & 0xFF) != AVATAR_JPEG_TYPE) {
-            return null;
+            return -1;
         }
         int length = ((bytes[6] & 0xFF) << 8) | (bytes[7] & 0xFF);
-        if (length <= 0 || HEADER_BYTES + length > bytes.length) {
-            return null;
-        }
+        return length > 0 ? length : -1;
+    }
+
+    private static byte[] parse(int[] symbols) {
+        byte[] bytes = decodeBytes(symbols);
+        int length = payloadLength(bytes);
+        if (length <= 0 || HEADER_BYTES + length > bytes.length) return null;
         long expected = ((long) (bytes[8] & 0xFF) << 24)
                 | ((long) (bytes[9] & 0xFF) << 16)
                 | ((long) (bytes[10] & 0xFF) << 8)
@@ -360,24 +429,6 @@ final class MeQrColorLayer {
             return 2;
         }
         return 1;
-    }
-
-    private static int[] transformed(int[] symbols, int side, int rotation, boolean mirrored) {
-        int[] transformed = new int[symbols.length];
-        for (int index = 0; index < symbols.length; index++) {
-            int row = index / side;
-            int column = index % side;
-            for (int turn = 0; turn < rotation; turn++) {
-                int oldRow = row;
-                row = side - column - 1;
-                column = oldRow;
-            }
-            if (mirrored) {
-                column = side - column - 1;
-            }
-            transformed[index] = symbols[row * side + column];
-        }
-        return transformed;
     }
 
     private static int nearestSymbol(int color) {

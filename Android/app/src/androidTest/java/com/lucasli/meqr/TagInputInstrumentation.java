@@ -55,13 +55,13 @@ public final class TagInputInstrumentation extends Instrumentation {
             });
             enter("初音未来");
             check(tags().size() == 6, "Duplicate created another chip");
-            enter("A,B,C,D,E");
+            enter("A,B,C,D,E,F,G,H,I,J");
             runOnMainSync(() -> {
-                check(tags().size() == 10, "Limit not enforced");
-                check(input().getText().toString().equals("E"), "Overflow input lost");
+                check(tags().size() == 15, "Limit not enforced");
+                check(input().getText().toString().equals("J"), "Overflow input lost");
                 ((LinearLayout) chips().getChildAt(0)).getChildAt(1).performClick();
                 input().onEditorAction(android.view.inputmethod.EditorInfo.IME_ACTION_DONE);
-                check(tags().size() == 10 && input().length() == 0, "Retry after removal failed");
+                check(tags().size() == 15 && input().length() == 0, "Retry after removal failed");
                 input().setText("");
                 invoke("writeTags", new Class<?>[]{List.class}, new Object[]{java.util.Arrays.asList("初音未来", "世界计划", "Wonderlands x Showtime", "MyGO!!!!!", "高松灯", "maimai", "maimai 14500+")});
                 input().setText("Save pending draft");
@@ -78,7 +78,7 @@ public final class TagInputInstrumentation extends Instrumentation {
                     assertLayout(chips());
                 }
             });
-            result.putString("stream", "PASS: Return commits, seven-chip flow, six colors, library draft retention, drag, delete, dedup, limit/retry, save draft, narrow/long labels\n");
+            result.putString("stream", "PASS: Return commits, seven-chip flow, six colors, library draft retention, drag, delete, dedup, fifteen-tag limit/retry, save draft, narrow/long labels\n");
             finish(Activity.RESULT_OK, result);
         } catch (Throwable error) {
             screenshot("android-tag-input-failure");

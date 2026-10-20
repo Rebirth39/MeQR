@@ -43,13 +43,13 @@ final class MeQrRemoteService {
 
         int status = connection.getResponseCode();
         StringBuilder response = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-            status >= 200 && status < 300 ? connection.getInputStream() : connection.getErrorStream(),
-            StandardCharsets.UTF_8
-        ))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                response.append(line);
+        java.io.InputStream stream = status >= 200 && status < 300 ? connection.getInputStream() : connection.getErrorStream();
+        if (stream != null) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
             }
         }
         connection.disconnect();
@@ -75,13 +75,13 @@ final class MeQrRemoteService {
 
         int status = connection.getResponseCode();
         StringBuilder response = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-            status >= 200 && status < 300 ? connection.getInputStream() : connection.getErrorStream(),
-            StandardCharsets.UTF_8
-        ))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                response.append(line);
+        java.io.InputStream stream = status >= 200 && status < 300 ? connection.getInputStream() : connection.getErrorStream();
+        if (stream != null) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
             }
         }
         connection.disconnect();
@@ -113,6 +113,18 @@ final class MeQrRemoteService {
                     && url.getPath().startsWith("/encounter-sessions/");
         } catch (Exception exception) {
             return false;
+        }
+    }
+
+    static String encounterSessionID(String raw) {
+        if (!isEncounterSessionUrl(raw)) return null;
+        try {
+            URL url = new URL(raw);
+            if (url.getUserInfo() != null || (url.getPort() != -1 && url.getPort() != url.getDefaultPort())) return null;
+            String id = url.getPath().substring("/encounter-sessions/".length());
+            return id.matches("(?:v2-[a-f0-9]{64}|[A-Za-z0-9_-]{1,128})") ? id : null;
+        } catch (Exception error) {
+            return null;
         }
     }
 

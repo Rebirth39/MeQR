@@ -10,6 +10,7 @@ import com.google.zxing.MultiFormatReader;
 import com.google.zxing.NotFoundException;
 import com.google.zxing.RGBLuminanceSource;
 import com.google.zxing.Result;
+import com.google.zxing.ResultPoint;
 import com.google.zxing.common.GlobalHistogramBinarizer;
 import com.google.zxing.common.HybridBinarizer;
 
@@ -83,7 +84,7 @@ final class QrImageDecoder {
             int top = Math.max(0, (source.getHeight() - size) / 2);
             result = decodeSource(source.crop(left, top, size, size));
             if (result != null) {
-                return result;
+                return mappedResult(result, 1, 1, left, top);
             }
         }
         throw NotFoundException.getNotFoundInstance();
@@ -100,7 +101,8 @@ final class QrImageDecoder {
             int candidateHeight = candidate.getHeight();
             int[] pixels = new int[candidateWidth * candidateHeight];
             candidate.getPixels(pixels, 0, candidateWidth, 0, 0, candidateWidth, candidateHeight);
-            return decodeSource(new RGBLuminanceSource(candidateWidth, candidateHeight, pixels));
+            return mappedResult(decodeSource(new RGBLuminanceSource(candidateWidth, candidateHeight, pixels)),
+                    width / (float) candidateWidth, height / (float) candidateHeight, left, top);
         } finally {
             if (candidate != region && candidate != bitmap) {
                 candidate.recycle();
@@ -144,9 +146,28 @@ final class QrImageDecoder {
         LuminanceSource padded = new PaddedLuminanceSource(source);
         result = decodeBinary(new BinaryBitmap(new HybridBinarizer(padded)), HINTS);
         if (result != null) {
-            return result;
+            return mappedResult(result, 1, 1, -PaddedLuminanceSource.border(source), -PaddedLuminanceSource.border(source));
         }
-        return decodeBinary(new BinaryBitmap(new HybridBinarizer(padded)), PURE_HINTS);
+        return mappedResult(decodeBinary(new BinaryBitmap(new HybridBinarizer(padded)), PURE_HINTS),
+                1, 1, -PaddedLuminanceSource.border(source), -PaddedLuminanceSource.border(source));
+    }
+
+    private static Result mappedResult(Result result, float scaleX, float scaleY, float offsetX, float offsetY) {
+        if (result == null) return null;
+        ResultPoint[] points = result.getResultPoints();
+        ResultPoint[] mapped = points == null ? null : new ResultPoint[points.length];
+        if (points != null) {
+            for (int index = 0; index < points.length; index++) {
+                if (points[index] != null) {
+                    mapped[index] = new ResultPoint(points[index].getX() * scaleX + offsetX,
+                            points[index].getY() * scaleY + offsetY);
+                }
+            }
+        }
+        Result transformed = new Result(result.getText(), result.getRawBytes(), result.getNumBits(),
+                mapped, result.getBarcodeFormat(), result.getTimestamp());
+        transformed.putAllMetadata(result.getResultMetadata());
+        return transformed;
     }
 
     private static Result decodeBinary(BinaryBitmap bitmap, Map<DecodeHintType, Object> hints) {

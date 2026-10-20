@@ -72,15 +72,15 @@ public final class UiAuditInstrumentation extends Instrumentation {
             click("done");
             onMain(() -> {
                 check(input().getText().toString().equals("sekai"), "Browsing retains draft");
-                input().setText("tag1,tag2,tag3,tag4,tag5,tag6,tag7,tag8,overflow");
-                check(profile().tags.size() == 10, "Tag limit enforced");
+                input().setText("tag1,tag2,tag3,tag4,tag5,tag6,tag7,tag8,tag9,tag10,tag11,tag12,tag13,overflow");
+                check(profile().tags.size() == 15, "Tag limit enforced");
                 check(input().getText().toString().equals("overflow"), "Overflow retained");
                 LinearLayout chips = (LinearLayout) field(session(), "tagChips");
                 ((LinearLayout) chips.getChildAt(0)).getChildAt(1).performClick();
                 input().onEditorAction(android.view.inputmethod.EditorInfo.IME_ACTION_DONE);
-                check(profile().tags.size() == 10 && input().length() == 0, "Removal allows overflow retry");
+                check(profile().tags.size() == 15 && input().length() == 0, "Removal allows overflow retry");
             });
-            pass("Library query retention, ten-tag limit and overflow retry");
+            pass("Library query retention, fifteen-tag limit and overflow retry");
             click("continue");
             click("finishSetup");
             sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);

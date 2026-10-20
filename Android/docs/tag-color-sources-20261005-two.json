@@ -1,0 +1,131 @@
+{
+  "revision": "2026.10.05.2",
+  "date": "2026-10-05",
+  "scope": "Two explicitly requested new-tag tickets",
+  "limitations": "No official standardized cheering HEX was found. Linkin Park colors preserve the ticket suggestion. Anaxa colors are MeQR representative colors sampled/normalized from the referenced character artwork, not official color specifications.",
+  "entries": [
+    {
+      "id": "tag-0521",
+      "ticket": "MEQR-20261005-8CEDC2",
+      "kind": "group",
+      "names": {
+        "zhHans": "林肯公园",
+        "zhHantHK": "聯合公園",
+        "zhHantTW": "聯合公園",
+        "en": "Linkin Park",
+        "ja": "リンキン・パーク"
+      },
+      "colors": [
+        "#000000",
+        "#FFFFFF",
+        "#FF0000"
+      ],
+      "solidColor": "#000000",
+      "basis": "The official Linkin Park site confirms the band identity and official name. The ticket explicitly requested black, white, and red; those values are retained without claiming an official band color standard.",
+      "sources": [
+        "https://www.linkinpark.com/",
+        "https://zh.wikipedia.org/wiki/%E8%81%94%E5%90%88%E5%85%AC%E5%9B%AD"
+      ]
+    },
+    {
+      "id": "tag-0522",
+      "ticket": "MEQR-20261005-E58C64",
+      "kind": "character",
+      "parentID": "tag-0103",
+      "names": {
+        "zhHans": "那刻夏",
+        "zhHantHK": "那刻夏",
+        "zhHantTW": "那刻夏",
+        "en": "Anaxa",
+        "ja": "アナイクス"
+      },
+      "colors": [
+        "#6DBE9B",
+        "#7A2633"
+      ],
+      "solidColor": "#6DBE9B",
+      "basis": "The character reference confirms 那刻夏 as Anaxa, with English Anaxa and Japanese アナイクス; it also records the full Anaxagoras name. Mint green and dark red are representative colors from the referenced character splash artwork, not official HEX specifications.",
+      "sources": [
+        "https://zh.moegirl.org.cn/%E9%82%A3%E5%88%BB%E5%A4%8F"
+      ],
+      "artwork": {
+        "file": "sources/anaxa-art.webp",
+        "sha256": "14f8927217eb02a10ded96eed4f730b0fdff628723fac8786624671a75c74f66",
+        "method": "Visual representative-color normalization from character splash artwork; no claim of official palette"
+      }
+    }
+  ],
+  "source_fetch_results": [
+    {
+      "key": "linkin-park",
+      "url": "https://www.linkinpark.com/",
+      "exit_code": 0,
+      "bytes": 89044,
+      "sha256": "51e10c8bcc54acb28b19d4f65f1d5f49a28ae622307a7740803ab5f9c110b469"
+    },
+    {
+      "key": "anaxa-moegirl",
+      "url": "https://zh.moegirl.org.cn/%E9%82%A3%E5%88%BB%E5%A4%8F",
+      "exit_code": 0,
+      "bytes": 265353,
+      "sha256": "7b9e2ba2375a38eefb4c950fec9a5d4fff6af281491878dced9166b5c16721ea"
+    },
+    {
+      "key": "anaxa-en",
+      "url": "https://api.hakush.in/hsr/data/en/1405.json",
+      "exit_code": 35,
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "key": "anaxa-zh",
+      "url": "https://api.hakush.in/hsr/data/zh/1405.json",
+      "exit_code": 35,
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "key": "anaxa-ja",
+      "url": "https://api.hakush.in/hsr/data/ja/1405.json",
+      "exit_code": 35,
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "key": "anaxa-ambr",
+      "url": "https://api.yatta.top/hsr/v2/en/avatar/1405",
+      "exit_code": 56,
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "key": "hsr-official",
+      "url": "https://hsr.hoyoverse.com/en-us/character",
+      "exit_code": 0,
+      "bytes": 8927,
+      "sha256": "7ca065d83fa6c49db55b5a63c92c5faa09236dfd2773b70a0fbf40a3827eb702"
+    },
+    {
+      "key": "linkin-park-ja",
+      "url": "https://wmg.jp/linkinpark/profile/",
+      "exit_code": 56,
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "key": "linkin-park-zh",
+      "url": "https://zh.wikipedia.org/wiki/%E8%81%94%E5%90%88%E5%85%AC%E5%9B%AD",
+      "exit_code": 0,
+      "bytes": 295372,
+      "sha256": "a874c6cef02d3fcb263720701a06e9dad9d5161d5bd540261f62f9e792866d8a"
+    }
+  ],
+  "art_fetch_result": {
+    "url": "https://storage.moegirl.org.cn/moegirl/commons/5/56/%E5%B4%A9%E5%9D%8F%E6%98%9F%E7%A9%B9%E9%93%81%E9%81%93_%E9%82%A3%E5%88%BB%E5%A4%8F%E7%AB%8B%E7%BB%98.webp",
+    "file": "anaxa-art.webp",
+    "exit_code": 0,
+    "bytes": 3685666,
+    "sha256": "14f8927217eb02a10ded96eed4f730b0fdff628723fac8786624671a75c74f66",
+    "provenance": "Moegirl mirror of Honkai: Star Rail Anaxa character splash artwork; not a directly verified HoYoverse-hosted asset"
+  }
+}

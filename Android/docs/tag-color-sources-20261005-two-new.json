@@ -1,0 +1,93 @@
+{
+  "revision": "2026.10.05.3",
+  "date": "2026-10-05",
+  "scope": "Two requested tickets; added missing Medalist parent work tag",
+  "limitations": "No official standardized HEX palette was established. The ticket directions 浅蓝/浅粉 are represented with MeQR colors; these are not official cheering/support HEX specifications.",
+  "entries": [
+    {
+      "id": "tag-0525",
+      "ticket": "MEQR-20261005-A31824",
+      "names": {
+        "zhHans": "流浪者",
+        "zhHantHK": "流浪者",
+        "zhHantTW": "流浪者",
+        "en": "Wanderer",
+        "ja": "放浪者"
+      },
+      "colors": [
+        "#66B7E8"
+      ],
+      "solidColor": "#66B7E8",
+      "parentID": "tag-0107",
+      "basis": "HoYoLAB/Hoyoverse references identify Wanderer; the light-blue value follows the ticket direction and character visual, not an official HEX specification.",
+      "sources": [
+        "https://wiki.hoyolab.com/pc/genshin/entry/2968?crawler=Googlebot&lang=",
+        "https://www.youtube.com/watch?v=NHEE_-87mNE"
+      ]
+    },
+    {
+      "id": "tag-0523",
+      "ticket": null,
+      "names": {
+        "zhHans": "金牌得主",
+        "zhHantHK": "金牌得主",
+        "zhHantTW": "金牌得主",
+        "en": "Medalist",
+        "ja": "メダリスト"
+      },
+      "colors": [
+        "#8EB8D8"
+      ],
+      "solidColor": "#8EB8D8",
+      "basis": "Added as the missing parent work for the requested character; official Medalist site confirms the work context.",
+      "sources": [
+        "https://medalist-pr.com/"
+      ]
+    },
+    {
+      "id": "tag-0524",
+      "ticket": "MEQR-20261005-F8D33E",
+      "names": {
+        "zhHans": "结束祈",
+        "zhHantHK": "結束祈",
+        "zhHantTW": "結束祈",
+        "en": "Inori Yuitsuka",
+        "ja": "結束いのり"
+      },
+      "colors": [
+        "#F2A6C3"
+      ],
+      "solidColor": "#F2A6C3",
+      "parentID": "tag-0523",
+      "basis": "Official Medalist site identifies 結束いのり; Chinese reference confirms 结束祈. Light pink follows the ticket direction and character visual, not an official HEX specification.",
+      "sources": [
+        "https://medalist-pr.com/",
+        "https://bkso.baidu.com/item/%E7%BB%93%E6%9D%9F%E7%A5%88/63005985?fromModule=lemma_inlink"
+      ]
+    }
+  ],
+  "ticket_snapshot": [
+    {
+      "id": "MEQR-20261005-A31824",
+      "title": "[New Tag] 流浪者",
+      "description": "。。\n\n[Tag report metadata]\n{\n  \"tag_id\": \"\",\n  \"tag_name\": \"流浪者\",\n  \"revision\": \"2026.10.05.2\",\n  \"source\": \"线上 Tag 库\",\n  \"platform\": \"android\",\n  \"app_version\": \"1.4.1\",\n  \"reason\": \"request\",\n  \"work\": \"原神\",\n  \"suggested_colors\": \"浅蓝\"\n}",
+      "platform": "android",
+      "app_version": "1.4.1",
+      "status": "open",
+      "created_at": "2026-10-05T07:01:21+00:00",
+      "updated_at": "2026-10-05T07:01:44+00:00",
+      "admin_note": ""
+    },
+    {
+      "id": "MEQR-20261005-F8D33E",
+      "title": "[New Tag] 结束祈",
+      "description": "。。。\n\n[Tag report metadata]\n{\n  \"tag_id\": \"\",\n  \"tag_name\": \"结束祈\",\n  \"revision\": \"2026.10.05.2\",\n  \"source\": \"线上 Tag 库\",\n  \"platform\": \"android\",\n  \"app_version\": \"1.4.1\",\n  \"reason\": \"request\",\n  \"work\": \"金牌得主\",\n  \"suggested_colors\": \"浅粉\"\n}",
+      "platform": "android",
+      "app_version": "1.4.1",
+      "status": "open",
+      "created_at": "2026-10-05T07:02:46+00:00",
+      "updated_at": "2026-10-05T07:03:11+00:00",
+      "admin_note": ""
+    }
+  ]
+}

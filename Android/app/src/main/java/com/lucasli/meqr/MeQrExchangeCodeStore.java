@@ -38,10 +38,27 @@ final class MeQrExchangeCodeStore {
         }
     }
 
+    static String fingerprint(MeQrProfile profile, I18n i18n, String eventId, MeQrExchangeSettings settings) throws Exception {
+        String backgroundDigest = fileDigest(profile.backgroundPath);
+        String bannerDigest = fileDigest(profile.bannerPath);
+        JSONArray values = new JSONArray().put("exchange-v2").put("offline-avatar-thumbnail-v1").put(profile.id).put(profile.name).put(profile.subtitle)
+                .put(profile.template).put(profile.textColor).put(profile.backgroundColor).put(profile.qrColor)
+                .put(fileDigest(profile.avatarPath)).put(backgroundDigest).put(bannerDigest)
+                .put(eventId == null ? "" : eventId).put(settings.shortIntroduction)
+                .put(settings.offlineItemId == null ? "" : settings.offlineItemId);
+        for (String tag : profile.tags) values.put(tag);
+        for (MeQrItem item : settings.onlineItems(profile)) {
+            values.put(new JSONArray().put(item.platform).put(item.platformDisplayName(i18n)).put(item.qrContent));
+        }
+        // Published sessions are immutable; rebuild only old codes affected by the missing images.
+        if (!backgroundDigest.isEmpty() || !bannerDigest.isEmpty()) values.put("online-images-v1");
+        return digest(values.toString().getBytes(StandardCharsets.UTF_8));
+    }
+
     static String fingerprint(MeQrProfile profile, I18n i18n, String eventId) throws Exception {
         String backgroundDigest = fileDigest(profile.backgroundPath);
         String bannerDigest = fileDigest(profile.bannerPath);
-        JSONArray values = new JSONArray().put("exchange-v2").put(profile.id).put(profile.name).put(profile.subtitle)
+        JSONArray values = new JSONArray().put("exchange-v2").put("offline-avatar-thumbnail-v1").put(profile.id).put(profile.name).put(profile.subtitle)
                 .put(profile.template).put(profile.textColor).put(profile.backgroundColor).put(profile.qrColor)
                 .put(fileDigest(profile.avatarPath)).put(backgroundDigest).put(bannerDigest)
                 .put(eventId == null ? "" : eventId);
@@ -49,9 +66,25 @@ final class MeQrExchangeCodeStore {
         for (MeQrItem item : profile.qrItems.subList(0, Math.min(3, profile.qrItems.size()))) {
             values.put(new JSONArray().put(item.platform).put(item.platformDisplayName(i18n)).put(item.qrContent));
         }
-        // Published sessions are immutable; rebuild only old codes affected by the missing images.
         if (!backgroundDigest.isEmpty() || !bannerDigest.isEmpty()) values.put("online-images-v1");
         return digest(values.toString().getBytes(StandardCharsets.UTF_8));
+    }
+
+    static Record create(MeQrProfile profile, I18n i18n, String fingerprint, String eventId,
+                         MeQrExchangeSettings settings) throws Exception {
+        Record record = new Record();
+        record.fingerprint = fingerprint;
+        byte[] secret = new byte[32];
+        new SecureRandom().nextBytes(secret);
+        record.ownerToken = hex(secret);
+        record.sessionId = "v2-" + digest(record.ownerToken.getBytes(StandardCharsets.UTF_8));
+        record.eventId = eventId;
+        record.onlineProfile = MeQrExchangeCodec.onlineProfile(profile, i18n, settings);
+        record.payload = QrCodeGenerator.paddedForColorLayer(MeQrExchangeCodec.hybridCode(
+                "https://profile.meqrcode.cn/encounter-sessions/" + record.sessionId,
+                MeQrExchangeCodec.offlinePayload(profile, i18n, settings)), 800);
+        record.avatar = MeQrExchangeCodec.colorLayerAvatarJpeg(profile, QrCodeGenerator.colorLayerPayloadCapacity(record.payload));
+        return record;
     }
 
     static Record create(MeQrProfile profile, I18n i18n, String fingerprint, String eventId) throws Exception {

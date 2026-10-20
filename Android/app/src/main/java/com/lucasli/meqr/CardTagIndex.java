@@ -37,7 +37,7 @@ final class CardTagIndex {
 
     static String normalizedKey(String value) {
         return value == null ? "" : value.toLowerCase(Locale.US)
-                .replaceAll("[\\s_　・·'’!！:：,，.。/\\-×x]", "")
+                .replaceAll("[\\s_　・·'’!！:：,，.。/\\-×]", "")
                 .trim();
     }
 

@@ -1,0 +1,10 @@
+<resources>
+    <style name="AppDialogLight" parent="android:style/Theme.Material.Light.Dialog.Alert">
+        <item name="android:colorAccent">#183752</item>
+        <item name="android:forceDarkAllowed">false</item>
+    </style>
+    <style name="AppDialogDark" parent="android:style/Theme.Material.Dialog.Alert">
+        <item name="android:colorAccent">#39C5BB</item>
+        <item name="android:forceDarkAllowed">false</item>
+    </style>
+</resources>

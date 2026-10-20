@@ -39,7 +39,7 @@ final class CardRenderer {
 
     static Bitmap renderBack(MeQrProfile profile, I18n i18n, int width) {
         profile.syncLegacyFields();
-        int height = Math.round(width * ("rhodes".equals(profile.template) ? 1.28f : 1.32f));
+        int height = renderedHeight(profile, width);
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         float density = width / 360f;
@@ -86,16 +86,33 @@ final class CardRenderer {
         canvas.drawRoundRect(introPanel, 15f * density, 15f * density, paint);
         paint.setStyle(Paint.Style.FILL);
         String intro = profile.subtitle == null || profile.subtitle.trim().isEmpty() ? i18n.t("bioEmpty") : profile.subtitle.trim();
-        drawText(canvas, intro, textPaint(adjustAlpha(textColor, 0.88f), 15f * density, false), introPanel.left + 14f * density, introPanel.top + 14f * density, introPanel.width() - 28f * density, 10);
+        RectF introText = new RectF(introPanel.left + 14f * density, introPanel.top + 14f * density,
+                introPanel.right - 14f * density, introPanel.bottom - 36f * density);
+        StaticLayout introLayout = BioTextLayout.create(intro, (int) introText.width(),
+                (int) introText.height(), density, adjustAlpha(textColor, 0.88f));
+        canvas.save();
+        canvas.clipRect(introText);
+        canvas.translate(introText.left, introText.top);
+        introLayout.draw(canvas);
+        canvas.restore();
+        if (profile.subtitle != null && !profile.subtitle.trim().isEmpty()) {
+            drawText(canvas, i18n.t("viewFullBio"), sectionPaint, introText.left,
+                    introPanel.bottom - 25f * density, introText.width(), 1);
+        }
 
-        drawTagChips(canvas, profile, padding, 360f * density, width - padding * 2f, textColor, paint, density, 1.25f);
+        drawTagChips(canvas, profile, padding, 360f * density, width - padding * 2f, textColor, paint, density, 1.25f, i18n.resolvedLanguage());
         canvas.restore();
         drawBorder(canvas, bounds, radius, profile.borderColor, density, paint);
         return bitmap;
     }
 
+    static RectF bioHitRect(int width) {
+        float density = width / 360f;
+        return new RectF(22f * density, 134f * density, width - 22f * density, 342f * density);
+    }
+
     private static Bitmap renderStandard(MeQrProfile profile, I18n i18n, int width, int index) {
-        int height = Math.round(width * 1.32f);
+        int height = renderedHeight(profile, width);
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         float density = width / 360f;
@@ -127,14 +144,14 @@ final class CardRenderer {
 
         float chipTop = 378f * density;
         drawPlatformChips(canvas, profile, i18n, index, padding, chipTop, width - padding * 2f, textColor, paint, density);
-        drawTagChips(canvas, profile, padding, 422f * density, width - padding * 2f, textColor, paint, density);
+        drawTagChips(canvas, profile, padding, 422f * density, width - padding * 2f, textColor, paint, density, 1f, i18n.resolvedLanguage());
         canvas.restore();
         drawBorder(canvas, bounds, radius, profile.borderColor, density, paint);
         return bitmap;
     }
 
     private static Bitmap renderRhodes(MeQrProfile profile, I18n i18n, int width, int index) {
-        int height = Math.round(width * 1.28f);
+        int height = renderedHeight(profile, width);
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         float density = width / 360f;
@@ -143,8 +160,12 @@ final class CardRenderer {
         float radius = 14f * density;
         canvas.save();
         canvas.clipPath(roundedClip(bounds, radius));
-        paint.setColor(applyAlpha(Color.WHITE, Math.max(0.72f, profile.cardOpacity)));
-        canvas.drawRect(bounds, paint);
+        if (profile.cardGlassEnabled) {
+            drawFrostedGlass(canvas, profile, bounds, paint);
+        } else {
+            paint.setColor(applyAlpha(Color.WHITE, Math.max(0.72f, profile.cardOpacity)));
+            canvas.drawRect(bounds, paint);
+        }
 
         int textColor = parseColor(profile.textColor, Color.rgb(17, 17, 17));
         int qrColor = parseColor(profile.qrColor, Color.BLACK);
@@ -206,7 +227,7 @@ final class CardRenderer {
         TextPaint label = textPaint(adjustAlpha(textColor, 0.65f), 11f * density, true);
         drawText(canvas, "PLATFORM", label, infoLeft, qrTop + 4f * density, contentRight - infoLeft, 1);
         drawPlatformList(canvas, profile, i18n, index, infoLeft, qrTop + 28f * density, contentRight - infoLeft, textColor, paint, density);
-        drawTagChips(canvas, profile, contentLeft, qrTop + qrSize + 16f * density, contentRight - contentLeft, textColor, paint, density);
+        drawTagChips(canvas, profile, contentLeft, qrTop + qrSize + 16f * density, contentRight - contentLeft, textColor, paint, density, 1f, i18n.resolvedLanguage());
         canvas.restore();
         drawBorder(canvas, bounds, radius, profile.borderColor, density, paint);
         return bitmap;
@@ -221,6 +242,116 @@ final class CardRenderer {
             drawCenterCrop(canvas, background, bounds, paint);
             paint.setAlpha(255);
         }
+    }
+
+    private static void drawFrostedGlass(Canvas canvas, MeQrProfile profile, RectF bounds, Paint paint) {
+        float opacity = Math.max(0.2f, Math.min(1f, profile.cardOpacity));
+        paint.setColor(applyAlpha(parseColor(profile.backgroundColor, Color.WHITE), opacity));
+        canvas.drawRect(bounds, paint);
+        String sourcePath = profile.bannerPath == null || profile.bannerPath.trim().isEmpty()
+                ? profile.backgroundPath
+                : profile.bannerPath;
+        Bitmap source = decode(sourcePath);
+        if (source != null) {
+            Bitmap blurred = boxBlur(downsample(source, 96), 3);
+            if (blurred != null) {
+                paint.setAlpha(Math.round(255 * opacity));
+                drawCenterCrop(canvas, blurred, bounds, paint);
+                paint.setAlpha(255);
+            }
+        }
+        paint.setColor(applyAlpha(Color.WHITE, 0.55f * opacity));
+        canvas.drawRect(bounds, paint);
+    }
+
+    private static Bitmap downsample(Bitmap source, int maxDimension) {
+        int width = source.getWidth();
+        int height = source.getHeight();
+        float scale = Math.min(1f, (float) maxDimension / Math.max(width, height));
+        if (scale >= 1f) {
+            return source;
+        }
+        int targetWidth = Math.max(1, Math.round(width * scale));
+        int targetHeight = Math.max(1, Math.round(height * scale));
+        return Bitmap.createScaledBitmap(source, targetWidth, targetHeight, true);
+    }
+
+    private static Bitmap boxBlur(Bitmap source, int radius) {
+        int width = source.getWidth();
+        int height = source.getHeight();
+        int[] pixels = new int[width * height];
+        source.getPixels(pixels, 0, width, 0, 0, width, height);
+        int[] blurred = separableBoxBlur(pixels, width, height, radius);
+        if (blurred == null) {
+            return null;
+        }
+        return Bitmap.createBitmap(blurred, width, height, Bitmap.Config.ARGB_8888);
+    }
+
+    // Separable box blur (running-sum per channel, horizontal then vertical).
+    private static int[] separableBoxBlur(int[] src, int width, int height, int radius) {
+        if (radius < 1) {
+            return src;
+        }
+        int[] horizontal = new int[src.length];
+        int window = radius * 2 + 1;
+        for (int y = 0; y < height; y++) {
+            int rowStart = y * width;
+            long r = 0, g = 0, b = 0, a = 0;
+            for (int i = -radius; i <= radius; i++) {
+                int p = src[rowStart + clamp(i, 0, width - 1)];
+                r += (p >> 16) & 0xff;
+                g += (p >> 8) & 0xff;
+                b += p & 0xff;
+                a += (p >>> 24) & 0xff;
+            }
+            for (int x = 0; x < width; x++) {
+                horizontal[rowStart + x] = pack(
+                        (int) (r / window), (int) (g / window),
+                        (int) (b / window), (int) (a / window));
+                int add = clamp(x + radius + 1, 0, width - 1);
+                int remove = clamp(x - radius, 0, width - 1);
+                int pa = src[rowStart + add];
+                int pr = src[rowStart + remove];
+                r += ((pa >> 16) & 0xff) - ((pr >> 16) & 0xff);
+                g += ((pa >> 8) & 0xff) - ((pr >> 8) & 0xff);
+                b += (pa & 0xff) - (pr & 0xff);
+                a += ((pa >>> 24) & 0xff) - ((pr >>> 24) & 0xff);
+            }
+        }
+        int[] vertical = new int[src.length];
+        for (int x = 0; x < width; x++) {
+            long r = 0, g = 0, b = 0, a = 0;
+            for (int i = -radius; i <= radius; i++) {
+                int p = horizontal[clamp(i, 0, height - 1) * width + x];
+                r += (p >> 16) & 0xff;
+                g += (p >> 8) & 0xff;
+                b += p & 0xff;
+                a += (p >>> 24) & 0xff;
+            }
+            for (int y = 0; y < height; y++) {
+                vertical[y * width + x] = pack(
+                        (int) (r / window), (int) (g / window),
+                        (int) (b / window), (int) (a / window));
+                int add = clamp(y + radius + 1, 0, height - 1);
+                int remove = clamp(y - radius, 0, height - 1);
+                int pa = horizontal[add * width + x];
+                int pr = horizontal[remove * width + x];
+                r += ((pa >> 16) & 0xff) - ((pr >> 16) & 0xff);
+                g += ((pa >> 8) & 0xff) - ((pr >> 8) & 0xff);
+                b += (pa & 0xff) - (pr & 0xff);
+                a += ((pa >>> 24) & 0xff) - ((pr >>> 24) & 0xff);
+            }
+        }
+        return vertical;
+    }
+
+    private static int clamp(int value, int min, int max) {
+        return value < min ? min : (value > max ? max : value);
+    }
+
+    private static int pack(int r, int g, int b, int a) {
+        return (a << 24) | (r << 16) | (g << 8) | b;
     }
 
     private static void drawQr(Canvas canvas, String content, String color, float left, float top, float size, Paint paint, float density) {
@@ -312,11 +443,7 @@ final class CardRenderer {
         paint.setTextAlign(Paint.Align.LEFT);
     }
 
-    private static void drawTagChips(Canvas canvas, MeQrProfile profile, float left, float top, float maxWidth, int textColor, Paint paint, float density) {
-        drawTagChips(canvas, profile, left, top, maxWidth, textColor, paint, density, 1f);
-    }
-
-    private static void drawTagChips(Canvas canvas, MeQrProfile profile, float left, float top, float maxWidth, int textColor, Paint paint, float density, float sizeScale) {
+    private static void drawTagChips(Canvas canvas, MeQrProfile profile, float left, float top, float maxWidth, int textColor, Paint paint, float density, float sizeScale, String language) {
         float x = left;
         float y = top;
         for (int i = 0; i < profile.tags.size(); i++) {
@@ -332,6 +459,12 @@ final class CardRenderer {
             String override = profile.tagColorOverrides.get(tag);
             int[] colors = profile.tagColors(tag, override);
             RectF chipBounds = new RectF(x, y, x + width, y + chipHeight);
+            TagPair pair = profile.tagPair(tag);
+            if (pair != null) {
+                TagPairStyle.draw(canvas, pair, language, chipBounds, paint, density);
+                x += width + 6f * density;
+                continue;
+            }
             Path chipPath = new Path();
             chipPath.addRoundRect(chipBounds, 11f * density, 11f * density, Path.Direction.CW);
             canvas.save();
@@ -349,6 +482,38 @@ final class CardRenderer {
             x += width + 6f * density;
         }
         paint.setTextAlign(Paint.Align.LEFT);
+    }
+
+    private static int renderedHeight(MeQrProfile profile, int width) {
+        float density = width / 360f;
+        boolean rhodes = "rhodes".equals(profile.template);
+        float baseHeight = width * (rhodes ? 1.28f : 1.32f);
+        float frontTop = (rhodes ? 366f : 422f) * density;
+        float frontWidth = (rhodes ? 286f : 316f) * density;
+        float frontBottom = frontTop + tagChipsHeight(profile, frontWidth, density, 1f) + 12f * density;
+        float backBottom = 360f * density
+                + tagChipsHeight(profile, width - 44f * density, density, 1.25f)
+                + 18f * density;
+        return Math.round(Math.max(baseHeight, Math.max(frontBottom, backBottom)));
+    }
+
+    private static float tagChipsHeight(MeQrProfile profile, float maxWidth, float density, float sizeScale) {
+        if (profile.tags.isEmpty()) return 0f;
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        float chipHeight = 21f * density * sizeScale;
+        float x = 0f;
+        int rows = 1;
+        for (String tag : profile.tags) {
+            paint.setTextSize(10f * density * sizeScale);
+            paint.setTypeface(TagTextWeight.typeface(profile.tagTextWeight(tag)));
+            float chipWidth = Math.min(maxWidth, paint.measureText(tag) + 20f * density * sizeScale);
+            if (x > 0f && x + chipWidth > maxWidth) {
+                rows++;
+                x = 0f;
+            }
+            x += chipWidth + 6f * density;
+        }
+        return rows * chipHeight + Math.max(0, rows - 1) * 6f * density;
     }
 
     private static void drawAvatar(Canvas canvas, MeQrProfile profile, RectF bounds, int textColor, Paint paint, float density) {

@@ -21,6 +21,7 @@ final class ProfileStore {
     private final Context context;
     private final File dataFile;
     private final File imageDir;
+    private boolean loadError;
 
     ProfileStore(Context context) {
         this.context = context.getApplicationContext();
@@ -30,28 +31,60 @@ final class ProfileStore {
         imageDir.mkdirs();
     }
 
-    List<MeQrProfile> load() {
+    boolean hadLoadError() {
+        return loadError;
+    }
+
+    synchronized List<MeQrProfile> load() {
+        loadError = false;
         List<MeQrProfile> profiles = new ArrayList<>();
-        if (!dataFile.exists()) {
+        if (!dataFile.exists() && !new File(dataFile + ".bak").exists()) {
             return profiles;
         }
         try {
-            String json = new String(Files.readAllBytes(dataFile.toPath()), StandardCharsets.UTF_8);
-            JSONArray array = new JSONArray(json);
-            for (int i = 0; i < array.length(); i++) {
-                MeQrProfile profile = MeQrProfile.fromJson(array.getJSONObject(i));
-                profile.reconcileTags(new I18n(context).resolvedLanguage());
+            String json = new String(new android.util.AtomicFile(dataFile).readFully(), StandardCharsets.UTF_8);
+            I18n i18n = new I18n(context);
+            String language = i18n.resolvedLanguage();
+            for (MeQrProfile profile : decode(json)) {
+                profile.reconcileTags(language);
                 profiles.add(profile);
             }
         } catch (Exception ignored) {
-            return profiles;
+            loadError = true;
+            return new ArrayList<>();
         }
         Collections.sort(profiles, Comparator.comparingInt((MeQrProfile p) -> p.sortOrder).thenComparingLong(p -> p.createdAt));
         return profiles;
     }
 
-    void save(List<MeQrProfile> profiles) throws IOException {
+    static List<MeQrProfile> decode(String json) throws IOException {
+        List<MeQrProfile> profiles = new ArrayList<>();
+        try {
+            JSONArray array = new JSONArray(json);
+            java.util.Set<String> ids = new java.util.HashSet<>();
+            for (int index = 0; index < array.length(); index++) {
+                MeQrProfile profile = MeQrProfile.fromJson(array.getJSONObject(index));
+                if (profile.id.isEmpty() || !ids.add(profile.id)) throw new IOException("Invalid or duplicate card ID.");
+                profiles.add(profile);
+            }
+        } catch (Exception error) {
+            throw new IOException("Invalid profile data.", error);
+        }
+        return profiles;
+    }
+
+    synchronized void save(List<MeQrProfile> profiles) throws IOException {
+        if (loadError) {
+            throw new IOException("Refusing to overwrite profile data after a load failure.");
+        }
         normalizeSortOrder(profiles);
+        if (profiles.isEmpty() && dataFile.exists() && dataFile.length() > 2) {
+            File backup = new File(context.getFilesDir(), "profiles.json.pre-empty-" + System.currentTimeMillis() + ".json");
+            try {
+                Files.copy(dataFile.toPath(), backup.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException ignored) {
+            }
+        }
         JSONArray array = new JSONArray();
         try {
             for (MeQrProfile profile : profiles) {

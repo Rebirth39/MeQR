@@ -67,18 +67,25 @@ final class AppUpdateManager {
                 int versionCode = latest.getInt("versionCode");
                 if (versionCode <= currentVersionCode()) {
                     if (userInitiated) {
-                        activity.runOnUiThread(() -> toast(i18n.t("alreadyLatest")));
+                        postToUi(() -> toast(i18n.t("alreadyLatest")));
                     }
                     return;
                 }
                 Update update = Update.from(latest, i18n.resolvedLanguage());
-                activity.runOnUiThread(() -> showUpdate(update));
+                postToUi(() -> showUpdate(update));
             } catch (Exception exception) {
                 if (userInitiated) {
-                    activity.runOnUiThread(() -> toast(i18n.t("updateCheckFailed")));
+                    postToUi(() -> toast(i18n.t("updateCheckFailed")));
                 }
             }
         }, "MeQR-UpdateCheck").start();
+    }
+
+    private void postToUi(Runnable action) {
+        if (activity.isFinishing() || activity.isDestroyed()) {
+            return;
+        }
+        activity.runOnUiThread(action);
     }
 
     private long currentVersionCode() throws Exception {
@@ -110,7 +117,10 @@ final class AppUpdateManager {
     }
 
     private void showUpdate(Update update) {
-        new AlertDialog.Builder(activity)
+        if (activity.isFinishing() || activity.isDestroyed()) {
+            return;
+        }
+        new AlertDialog.Builder(Ui.dialogContext(activity))
                 .setTitle(i18n.t("updateAvailable") + " " + update.versionName)
                 .setMessage(update.notes)
                 .setNegativeButton(i18n.t("later"), null)
@@ -148,7 +158,7 @@ final class AppUpdateManager {
                         }
                         if (status == DownloadManager.STATUS_SUCCESSFUL) {
                             Uri existingUri = manager.getUriForDownloadedFile(existingId);
-                            if (existingUri != null && verifySha256(existingUri, update.sha256)) {
+                            if (existingUri != null && (update.sha256 == null || !update.sha256.matches("[0-9a-fA-F]{64}") || verifySha256(existingUri, update.sha256))) {
                                 requestInstall(existingUri);
                                 return;
                             }
@@ -170,25 +180,31 @@ final class AppUpdateManager {
         new Thread(() -> {
             DownloadManager.Query query = new DownloadManager.Query().setFilterById(downloadId);
             while (true) {
+                if (activity.isFinishing() || activity.isDestroyed()) {
+                    return;
+                }
                 try (Cursor cursor = manager.query(query)) {
                     if (cursor != null && cursor.moveToFirst()) {
                         int status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
                         if (status == DownloadManager.STATUS_SUCCESSFUL) {
                             Uri uri = manager.getUriForDownloadedFile(downloadId);
-                            if (uri != null && verifySha256(uri, expectedSha256)) {
-                                activity.runOnUiThread(() -> requestInstall(uri));
+                            String sha = expectedSha256;
+                            if (sha == null || !sha.matches("[0-9a-fA-F]{64}")) {
+                                postToUi(() -> requestInstall(uri));
+                            } else if (uri != null && verifySha256(uri, sha)) {
+                                postToUi(() -> requestInstall(uri));
                             } else {
-                                activity.runOnUiThread(() -> toast(i18n.t("updateVerificationFailed")));
+                                postToUi(() -> toast(i18n.t("updateVerificationFailed")));
                             }
                             return;
                         }
                         if (status == DownloadManager.STATUS_FAILED) {
-                            activity.runOnUiThread(() -> toast(i18n.t("updateDownloadFailed")));
+                            postToUi(() -> toast(i18n.t("updateDownloadFailed")));
                             return;
                         }
                     }
                 } catch (Exception exception) {
-                    activity.runOnUiThread(() -> toast(i18n.t("updateDownloadFailed")));
+                    postToUi(() -> toast(i18n.t("updateDownloadFailed")));
                     return;
                 }
 

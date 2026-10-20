@@ -66,6 +66,10 @@ final class MeQrScannerDialog extends android.app.Dialog {
     private Size captureSize = new Size(1280, 720);
     private String lastPayload = "";
     private long lastPayloadAt;
+    private String colorRetryPayload = "";
+    private long colorRetryStarted;
+    private int colorRetryAttempts;
+    private long nextColorAttemptAt;
     private volatile boolean payloadDelivered;
 
     MeQrScannerDialog(Context context, I18n i18n, Listener listener) {
@@ -302,7 +306,7 @@ final class MeQrScannerDialog extends android.app.Dialog {
             }
             double aspect = size.getWidth() / (double) size.getHeight();
             double aspectPenalty = Math.abs(aspect - (16.0 / 9.0)) * 1000.0;
-            double areaPenalty = Math.abs(area - 1280.0 * 720.0) / 1000.0;
+            double areaPenalty = Math.abs(area - 1920.0 * 1080.0) / 1000.0;
             double score = aspectPenalty + areaPenalty;
             if (score < bestScore) {
                 best = size;
@@ -346,6 +350,7 @@ final class MeQrScannerDialog extends android.app.Dialog {
             return;
         }
         try {
+            if (android.os.SystemClock.elapsedRealtime() < nextColorAttemptAt) return;
             Image.Plane yPlane = image.getPlanes()[0];
             int width = image.getWidth();
             int height = image.getHeight();
@@ -357,7 +362,24 @@ final class MeQrScannerDialog extends android.app.Dialog {
             Result result = QrImageDecoder.decode(source);
             if (result != null && result.getText() != null && !result.getText().isEmpty()) {
                 String payload = result.getText();
-                byte[] colorAvatarJpeg = MeQrColorLayer.decode(image, result);
+                boolean isMeQr = payload.startsWith("meqr://profile")
+                        || MeQrExchangeCodec.isRemoteUrl(payload)
+                        || MeQrRemoteService.isEncounterSessionUrl(payload)
+                        || MeQrExchangeCodec.offlineFallback(payload) != null;
+                long attemptTime = android.os.SystemClock.elapsedRealtime();
+                if (!payload.equals(colorRetryPayload)) {
+                    colorRetryPayload = payload;
+                    colorRetryStarted = attemptTime;
+                    colorRetryAttempts = 0;
+                }
+                byte[] colorAvatarJpeg = isMeQr ? MeQrColorLayer.decode(image, result) : null;
+                if (isMeQr && colorAvatarJpeg == null) {
+                    colorRetryAttempts++;
+                    if (colorRetryAttempts < 6 && android.os.SystemClock.elapsedRealtime() - colorRetryStarted < 2000) {
+                        nextColorAttemptAt = android.os.SystemClock.elapsedRealtime() + 150;
+                        return;
+                    }
+                }
                 long now = System.currentTimeMillis();
                 if (!payload.equals(lastPayload) || now - lastPayloadAt > 2000) {
                     lastPayload = payload;
@@ -478,7 +500,10 @@ final class MeQrScannerDialog extends android.app.Dialog {
 
         @Override
         protected void onDraw(Canvas canvas) {
-            canvas.drawRect(0, 0, getWidth(), getHeight(), dimPaint);
+            canvas.drawRect(0, 0, getWidth(), frame.top, dimPaint);
+            canvas.drawRect(0, frame.bottom, getWidth(), getHeight(), dimPaint);
+            canvas.drawRect(0, frame.top, frame.left, frame.bottom, dimPaint);
+            canvas.drawRect(frame.right, frame.top, getWidth(), frame.bottom, dimPaint);
             canvas.drawRect(frame, framePaint);
             int corner = dp(28);
             float stroke = dp(4);

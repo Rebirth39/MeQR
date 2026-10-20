@@ -11,6 +11,9 @@ import java.util.UUID;
 final class EncounterRecord {
     String id = UUID.randomUUID().toString();
     String sessionID;
+    boolean isOwnSession;
+    JSONObject pendingConfirmationProfile;
+    long confirmationSentAt;
     String name = "";
     String subtitle = "";
     String avatarBase64 = "";
@@ -44,7 +47,10 @@ final class EncounterRecord {
         for (MeQrExchangeProfile.Platform platform : profile.platforms) {
             record.profiles.add(platform);
         }
-        record.tags.addAll(profile.tags);
+        for (String tag : profile.tags) {
+            if (record.tags.size() >= MeQrProfile.MAX_TAGS) break;
+            if (tag != null && !tag.isEmpty() && !record.tags.contains(tag)) record.tags.add(tag);
+        }
         record.metAt = System.currentTimeMillis();
         record.sourceSharedAt = profile.sharedAt * 1000L;
         if (event != null) {
@@ -55,10 +61,44 @@ final class EncounterRecord {
         return record;
     }
 
+    void upgradeFrom(MeQrExchangeProfile profile, MeQrEvent event) {
+        String incomingSubtitle = profile.intro == null || profile.intro.trim().isEmpty() ? profile.subtitle : profile.intro;
+        int currentScore = profileScore(avatarBase64, backgroundBase64, profiles.size(), subtitle);
+        int incomingScore = profileScore(profile.avatarBase64, profile.backgroundBase64, profile.platforms.size(), incomingSubtitle);
+        long incomingSharedAt = profile.sharedAt * 1000L;
+        if (incomingScore < currentScore || (incomingScore == currentScore && incomingSharedAt <= sourceSharedAt)) return;
+        name = profile.name;
+        subtitle = incomingSubtitle;
+        avatarBase64 = profile.avatarBase64;
+        backgroundBase64 = profile.backgroundBase64;
+        profiles.clear();
+        profiles.addAll(profile.platforms);
+        sourceSharedAt = incomingSharedAt;
+        for (String tag : profile.tags) {
+            if (tags.size() >= MeQrProfile.MAX_TAGS) break;
+            if (!tags.contains(tag)) tags.add(tag);
+        }
+        if (eventId == null && event != null) {
+            eventId = event.id;
+            eventTitle = event.title;
+            eventVenue = event.venue;
+        }
+    }
+
+    private static int profileScore(String avatar, String background, int platformCount, String subtitle) {
+        return (avatar == null || avatar.isEmpty() ? 0 : 4)
+                + (background == null || background.isEmpty() ? 0 : 4)
+                + Math.min(platformCount, 3) * 2
+                + Math.min(subtitle == null ? 0 : subtitle.length(), 100);
+    }
+
     JSONObject toJson() throws JSONException {
         JSONObject object = new JSONObject();
         object.put("id", id);
         object.put("sessionID", sessionID == null ? JSONObject.NULL : sessionID);
+        object.put("isOwnSession", isOwnSession);
+        object.put("pendingConfirmationProfile", pendingConfirmationProfile == null ? JSONObject.NULL : pendingConfirmationProfile);
+        object.put("confirmationSentAt", confirmationSentAt);
         object.put("name", name);
         object.put("subtitle", subtitle);
         object.put("avatarBase64", avatarBase64);
@@ -93,6 +133,9 @@ final class EncounterRecord {
         EncounterRecord record = new EncounterRecord();
         record.id = object.optString("id", record.id);
         record.sessionID = object.isNull("sessionID") ? null : object.optString("sessionID", null);
+        record.isOwnSession = object.optBoolean("isOwnSession", false);
+        record.pendingConfirmationProfile = object.optJSONObject("pendingConfirmationProfile");
+        record.confirmationSentAt = object.optLong("confirmationSentAt", 0);
         record.name = object.optString("name", "");
         record.subtitle = object.optString("subtitle", "");
         record.avatarBase64 = object.optString("avatarBase64", "");
@@ -116,7 +159,7 @@ final class EncounterRecord {
         record.note = object.optString("note", "");
         JSONArray tagArray = object.optJSONArray("tags");
         if (tagArray != null) {
-            for (int i = 0; i < tagArray.length() && record.tags.size() < 10; i++) {
+            for (int i = 0; i < tagArray.length() && record.tags.size() < MeQrProfile.MAX_TAGS; i++) {
                 String tag = tagArray.optString(i, "");
                 if (!tag.isEmpty() && !record.tags.contains(tag)) {
                     record.tags.add(tag);

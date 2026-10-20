@@ -13,11 +13,11 @@ android {
     compileSdk 35
 
     defaultConfig {
-        applicationId "com.lucasli.meqr.phonematch20260910"
+        applicationId "com.lucasli.meqr"
         minSdk 26
         targetSdk 35
-        versionCode 12
-        versionName "1.1.0"
+        versionCode 18
+        versionName "1.6.0"
         testInstrumentationRunner "com.lucasli.meqr.TagUxInstrumentation"
     }
 

@@ -30,15 +30,20 @@ final class TagReportOutbox {
     private final Handler main = new Handler(Looper.getMainLooper());
     private final List<Runnable> listeners = new ArrayList<>();
     private final TagReport.Submitter sender;
+    private final Context appContext;
     private boolean draining;
 
     static synchronized TagReportOutbox get(Context context) {
-        if (instance == null) instance = new TagReportOutbox(new File(context.getFilesDir(), "tag-report-outbox.json"), TagReport::submit);
+        if (instance == null) instance = new TagReportOutbox(new File(context.getFilesDir(), "tag-report-outbox.json"), TagReport::submit, context.getApplicationContext());
         return instance;
     }
 
     TagReportOutbox(File path, TagReport.Submitter sender) {
-        file = new AtomicFile(path); this.sender = sender;
+        this(path, sender, null);
+    }
+
+    TagReportOutbox(File path, TagReport.Submitter sender, Context context) {
+        file = new AtomicFile(path); this.sender = sender; appContext = context;
         try {
             jobs = new JSONArray(new String(file.readFully(), StandardCharsets.UTF_8));
             for (int i = 0; i < jobs.length(); i++) {
@@ -47,7 +52,9 @@ final class TagReportOutbox {
             }
         } catch (java.io.FileNotFoundException absent) {
             // The queue is created on the first submission.
-        } catch (Exception invalid) { throw new IllegalStateException("Cannot read report outbox", invalid); }
+        } catch (Exception invalid) {
+            jobs = new JSONArray();
+        }
     }
 
     private synchronized void save(JSONArray updated) throws Exception {
@@ -68,11 +75,11 @@ final class TagReportOutbox {
         java.util.UUID.fromString(id);
         for (int i = 0; i < jobs.length(); i++) {
             JSONObject old = jobs.getJSONObject(i);
-            if (old.getString("id").equals(id)) {
-                JSONObject previous = old.getJSONObject("payload");
-                if (previous.length() != payload.length()) throw new IllegalArgumentException("Request ID conflict");
+            if (old.optString("id").equals(id)) {
+                JSONObject previous = old.optJSONObject("payload");
+                if (previous == null || previous.length() != payload.length()) throw new IllegalArgumentException("Request ID conflict");
                 java.util.Iterator<String> keys = previous.keys();
-                while (keys.hasNext()) { String key = keys.next(); if (!previous.getString(key).equals(payload.optString(key, null))) throw new IllegalArgumentException("Request ID conflict"); }
+                while (keys.hasNext()) { String key = keys.next(); if (!java.util.Objects.equals(previous.opt(key), payload.opt(key))) throw new IllegalArgumentException("Request ID conflict"); }
                 return id;
             }
         }
@@ -130,6 +137,14 @@ final class TagReportOutbox {
                     ticket = sender.submit(active.getJSONObject("payload"));
                     if (ticket == null || !ticket.matches("MEQR-[0-9]{8}-[A-F0-9]{6}")) throw new IllegalStateException("Invalid receipt");
                 } catch (Exception error) { failure = error; ticket = null; }
+                if (ticket != null && appContext != null) {
+                    // Rotation happens only after the server actually bound the code.
+                    try {
+                        JSONObject sent = active.getJSONObject("payload");
+                        SupportTickets.blankCodeConsumed(appContext,
+                                sent.optString("_bound_support_code"), sent.optString("_next_support_code"));
+                    } catch (Exception ignored) { }
+                }
                 synchronized (this) {
                     JSONArray updated = snapshot();
                     for (int i = 0; i < updated.length(); i++) {
@@ -173,7 +188,7 @@ final class TagReportOutbox {
         int padding = Math.round(16 * activity.getResources().getDisplayMetrics().density);
         rows.setPadding(padding, padding, padding, padding);
         ScrollView scroll = new ScrollView(activity); scroll.addView(rows);
-        AlertDialog dialog = new AlertDialog.Builder(activity).setTitle(i18n.t("tagOutbox"))
+        AlertDialog dialog = new AlertDialog.Builder(Ui.dialogContext(activity)).setTitle(i18n.t("tagOutbox"))
                 .setView(scroll).setPositiveButton(i18n.t("done"), null).create();
         Runnable refresh = () -> {
             if (activity.isDestroyed()) return;
@@ -184,9 +199,12 @@ final class TagReportOutbox {
                 for (int i = jobs.length() - 1; i >= 0; i--) {
                     JSONObject job = jobs.getJSONObject(i);
                     String id = job.getString("id"), state = job.optString("status");
+                    JSONObject jobPayload = job.getJSONObject("payload");
+                    String supportCode = jobPayload.optString("_bound_support_code", jobPayload.optString("support_code"));
                     TextView label = new TextView(activity);
-                    label.setText(job.getJSONObject("payload").optString("tag_name") + "\n" +
-                            (job.has("ticket") ? job.getString("ticket") : i18n.t(state.equals("sending") ? "tagSending" : state.equals("failed") ? "tagReportFailed" : "tagQueued")));
+                    label.setText(jobPayload.optString("tag_name") + "\n" +
+                            (job.has("ticket") ? job.getString("ticket") + (supportCode.isEmpty() ? "" : "\n" + i18n.tf("supportCodeIs", supportCode))
+                                    : i18n.t(state.equals("sending") ? "tagSending" : state.equals("failed") ? "tagReportFailed" : "tagQueued")));
                     label.setTextIsSelectable(true); rows.addView(label);
                     LinearLayout actions = new LinearLayout(activity);
                     if (!job.has("ticket")) {

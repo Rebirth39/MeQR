@@ -1,0 +1,2237 @@
+{
+  "revision": "2026.10.02.5",
+  "checkedAt": "2026-10-02",
+  "scope": "63 changed entries only; the remaining catalog has not been individually color-verified in this pass",
+  "entries": [
+    {
+      "id": "tag-0038",
+      "name": "MyGO!!!!!",
+      "oldColors": [
+        "#3381B0",
+        "#77BBDD",
+        "#FF8899",
+        "#77DD77",
+        "#FFDD88",
+        "#7777AA"
+      ],
+      "oldSolidColor": "#3381B0",
+      "colors": [
+        "#3388BB",
+        "#77BBDD",
+        "#FF8899",
+        "#77DD77",
+        "#FFDD88",
+        "#7777AA"
+      ],
+      "solidColor": "#3388BB",
+      "provenance": "official-site-color",
+      "sources": [
+        "https://bang-dream-on.bushimo.jp/wordpress/wp-content/themes/bang-dream-on_prod/assets/css/app.css?ver=20261002113350"
+      ],
+      "evidence": {
+        "variables": [
+          "mygo",
+          "tomori",
+          "anon",
+          "rana",
+          "soyo",
+          "taki"
+        ],
+        "composition": "MeQR band + member sequence, not an official palette rule"
+      }
+    },
+    {
+      "id": "tag-0076",
+      "name": "高松灯",
+      "oldColors": [
+        "#3381B0",
+        "#77BBDD"
+      ],
+      "oldSolidColor": "#77BBDD",
+      "colors": [
+        "#3388BB",
+        "#77BBDD"
+      ],
+      "solidColor": "#77BBDD",
+      "provenance": "official-site-color",
+      "sources": [
+        "https://bang-dream-on.bushimo.jp/wordpress/wp-content/themes/bang-dream-on_prod/assets/css/app.css?ver=20261002113350"
+      ],
+      "evidence": {
+        "variables": [
+          "mygo",
+          "tomori"
+        ],
+        "composition": "MeQR band + personal color"
+      }
+    },
+    {
+      "id": "tag-0077",
+      "name": "千早爱音",
+      "oldColors": [
+        "#3381B0",
+        "#FF8899"
+      ],
+      "oldSolidColor": "#FF8899",
+      "colors": [
+        "#3388BB",
+        "#FF8899"
+      ],
+      "solidColor": "#FF8899",
+      "provenance": "official-site-color",
+      "sources": [
+        "https://bang-dream-on.bushimo.jp/wordpress/wp-content/themes/bang-dream-on_prod/assets/css/app.css?ver=20261002113350"
+      ],
+      "evidence": {
+        "variables": [
+          "mygo",
+          "anon"
+        ],
+        "composition": "MeQR band + personal color"
+      }
+    },
+    {
+      "id": "tag-0078",
+      "name": "要乐奈",
+      "oldColors": [
+        "#3381B0",
+        "#77DD77"
+      ],
+      "oldSolidColor": "#77DD77",
+      "colors": [
+        "#3388BB",
+        "#77DD77"
+      ],
+      "solidColor": "#77DD77",
+      "provenance": "official-site-color",
+      "sources": [
+        "https://bang-dream-on.bushimo.jp/wordpress/wp-content/themes/bang-dream-on_prod/assets/css/app.css?ver=20261002113350"
+      ],
+      "evidence": {
+        "variables": [
+          "mygo",
+          "rana"
+        ],
+        "composition": "MeQR band + personal color"
+      }
+    },
+    {
+      "id": "tag-0079",
+      "name": "长崎素世",
+      "oldColors": [
+        "#3381B0",
+        "#FFDD88"
+      ],
+      "oldSolidColor": "#FFDD88",
+      "colors": [
+        "#3388BB",
+        "#FFDD88"
+      ],
+      "solidColor": "#FFDD88",
+      "provenance": "official-site-color",
+      "sources": [
+        "https://bang-dream-on.bushimo.jp/wordpress/wp-content/themes/bang-dream-on_prod/assets/css/app.css?ver=20261002113350"
+      ],
+      "evidence": {
+        "variables": [
+          "mygo",
+          "soyo"
+        ],
+        "composition": "MeQR band + personal color"
+      }
+    },
+    {
+      "id": "tag-0080",
+      "name": "椎名立希",
+      "oldColors": [
+        "#3381B0",
+        "#7777AA"
+      ],
+      "oldSolidColor": "#7777AA",
+      "colors": [
+        "#3388BB",
+        "#7777AA"
+      ],
+      "solidColor": "#7777AA",
+      "provenance": "official-site-color",
+      "sources": [
+        "https://bang-dream-on.bushimo.jp/wordpress/wp-content/themes/bang-dream-on_prod/assets/css/app.css?ver=20261002113350"
+      ],
+      "evidence": {
+        "variables": [
+          "mygo",
+          "taki"
+        ],
+        "composition": "MeQR band + personal color"
+      }
+    },
+    {
+      "id": "tag-0039",
+      "name": "Ave Mujica",
+      "oldColors": [
+        "#881144",
+        "#CC4466",
+        "#884499",
+        "#66AA66",
+        "#336699",
+        "#DDBB66"
+      ],
+      "oldSolidColor": "#881144",
+      "colors": [
+        "#881144",
+        "#BB9955",
+        "#7799CC",
+        "#779977",
+        "#335566",
+        "#AA4477"
+      ],
+      "solidColor": "#881144",
+      "provenance": "official-site-color",
+      "sources": [
+        "https://bang-dream-on.bushimo.jp/wordpress/wp-content/themes/bang-dream-on_prod/assets/css/app.css?ver=20261002113350"
+      ],
+      "evidence": {
+        "variables": [
+          "avemujica",
+          "uika",
+          "sakiko",
+          "mutsumi",
+          "umiri",
+          "nyamu"
+        ],
+        "composition": "MeQR band + member sequence, not an official palette rule"
+      }
+    },
+    {
+      "id": "tag-0081",
+      "name": "三角初华",
+      "oldColors": [
+        "#881144",
+        "#CC4466"
+      ],
+      "oldSolidColor": "#CC4466",
+      "colors": [
+        "#881144",
+        "#BB9955"
+      ],
+      "solidColor": "#BB9955",
+      "provenance": "official-site-color",
+      "sources": [
+        "https://bang-dream-on.bushimo.jp/wordpress/wp-content/themes/bang-dream-on_prod/assets/css/app.css?ver=20261002113350"
+      ],
+      "evidence": {
+        "variables": [
+          "avemujica",
+          "uika"
+        ],
+        "composition": "MeQR band + personal color"
+      }
+    },
+    {
+      "id": "tag-0082",
+      "name": "丰川祥子",
+      "oldColors": [
+        "#881144",
+        "#884499"
+      ],
+      "oldSolidColor": "#884499",
+      "colors": [
+        "#881144",
+        "#7799CC"
+      ],
+      "solidColor": "#7799CC",
+      "provenance": "official-site-color",
+      "sources": [
+        "https://bang-dream-on.bushimo.jp/wordpress/wp-content/themes/bang-dream-on_prod/assets/css/app.css?ver=20261002113350"
+      ],
+      "evidence": {
+        "variables": [
+          "avemujica",
+          "sakiko"
+        ],
+        "composition": "MeQR band + personal color"
+      }
+    },
+    {
+      "id": "tag-0083",
+      "name": "若叶睦",
+      "oldColors": [
+        "#881144",
+        "#66AA66"
+      ],
+      "oldSolidColor": "#66AA66",
+      "colors": [
+        "#881144",
+        "#779977"
+      ],
+      "solidColor": "#779977",
+      "provenance": "official-site-color",
+      "sources": [
+        "https://bang-dream-on.bushimo.jp/wordpress/wp-content/themes/bang-dream-on_prod/assets/css/app.css?ver=20261002113350"
+      ],
+      "evidence": {
+        "variables": [
+          "avemujica",
+          "mutsumi"
+        ],
+        "composition": "MeQR band + personal color"
+      }
+    },
+    {
+      "id": "tag-0084",
+      "name": "八幡海铃",
+      "oldColors": [
+        "#881144",
+        "#336699"
+      ],
+      "oldSolidColor": "#336699",
+      "colors": [
+        "#881144",
+        "#335566"
+      ],
+      "solidColor": "#335566",
+      "provenance": "official-site-color",
+      "sources": [
+        "https://bang-dream-on.bushimo.jp/wordpress/wp-content/themes/bang-dream-on_prod/assets/css/app.css?ver=20261002113350"
+      ],
+      "evidence": {
+        "variables": [
+          "avemujica",
+          "umiri"
+        ],
+        "composition": "MeQR band + personal color"
+      }
+    },
+    {
+      "id": "tag-0085",
+      "name": "祐天寺若麦",
+      "oldColors": [
+        "#881144",
+        "#DDBB66"
+      ],
+      "oldSolidColor": "#DDBB66",
+      "colors": [
+        "#881144",
+        "#AA4477"
+      ],
+      "solidColor": "#AA4477",
+      "provenance": "official-site-color",
+      "sources": [
+        "https://bang-dream-on.bushimo.jp/wordpress/wp-content/themes/bang-dream-on_prod/assets/css/app.css?ver=20261002113350"
+      ],
+      "evidence": {
+        "variables": [
+          "avemujica",
+          "nyamu"
+        ],
+        "composition": "MeQR band + personal color"
+      }
+    },
+    {
+      "id": "tag-0040",
+      "name": "梦限大 Mewtype",
+      "oldColors": [
+        "#7D4CFF",
+        "#FF66AA",
+        "#66CCFF"
+      ],
+      "oldSolidColor": "#7D4CFF",
+      "colors": [
+        "#EC7384",
+        "#FFEE55",
+        "#FFBBCC",
+        "#4477CC",
+        "#9977CC",
+        "#EE5577"
+      ],
+      "solidColor": "#EC7384",
+      "provenance": "official-site-color",
+      "sources": [
+        "https://bang-dream-on.bushimo.jp/wordpress/wp-content/themes/bang-dream-on_prod/assets/css/app.css?ver=20261002113350"
+      ],
+      "evidence": {
+        "variables": [
+          "yumemita",
+          "arale",
+          "nonoka",
+          "ritsu",
+          "miyako",
+          "yuno"
+        ],
+        "composition": "MeQR band + member sequence, not an official palette rule"
+      }
+    },
+    {
+      "id": "tag-0086",
+      "name": "仲町阿拉蕾",
+      "oldColors": [
+        "#7D4CFF",
+        "#FF66AA"
+      ],
+      "oldSolidColor": "#FF66AA",
+      "colors": [
+        "#EC7384",
+        "#FFEE55"
+      ],
+      "solidColor": "#FFEE55",
+      "provenance": "official-site-color",
+      "sources": [
+        "https://bang-dream-on.bushimo.jp/wordpress/wp-content/themes/bang-dream-on_prod/assets/css/app.css?ver=20261002113350"
+      ],
+      "evidence": {
+        "variables": [
+          "yumemita",
+          "arale"
+        ],
+        "composition": "MeQR band + personal color"
+      }
+    },
+    {
+      "id": "tag-0087",
+      "name": "宫永野乃花",
+      "oldColors": [
+        "#7D4CFF",
+        "#66CCFF"
+      ],
+      "oldSolidColor": "#66CCFF",
+      "colors": [
+        "#EC7384",
+        "#FFBBCC"
+      ],
+      "solidColor": "#FFBBCC",
+      "provenance": "official-site-color",
+      "sources": [
+        "https://bang-dream-on.bushimo.jp/wordpress/wp-content/themes/bang-dream-on_prod/assets/css/app.css?ver=20261002113350"
+      ],
+      "evidence": {
+        "variables": [
+          "yumemita",
+          "nonoka"
+        ],
+        "composition": "MeQR band + personal color"
+      }
+    },
+    {
+      "id": "tag-0088",
+      "name": "峰月律",
+      "oldColors": [
+        "#7D4CFF",
+        "#FFCC66"
+      ],
+      "oldSolidColor": "#FFCC66",
+      "colors": [
+        "#EC7384",
+        "#4477CC"
+      ],
+      "solidColor": "#4477CC",
+      "provenance": "official-site-color",
+      "sources": [
+        "https://bang-dream-on.bushimo.jp/wordpress/wp-content/themes/bang-dream-on_prod/assets/css/app.css?ver=20261002113350"
+      ],
+      "evidence": {
+        "variables": [
+          "yumemita",
+          "ritsu"
+        ],
+        "composition": "MeQR band + personal color"
+      }
+    },
+    {
+      "id": "tag-0089",
+      "name": "藤都子",
+      "oldColors": [
+        "#7D4CFF",
+        "#99DD66"
+      ],
+      "oldSolidColor": "#99DD66",
+      "colors": [
+        "#EC7384",
+        "#9977CC"
+      ],
+      "solidColor": "#9977CC",
+      "provenance": "official-site-color",
+      "sources": [
+        "https://bang-dream-on.bushimo.jp/wordpress/wp-content/themes/bang-dream-on_prod/assets/css/app.css?ver=20261002113350"
+      ],
+      "evidence": {
+        "variables": [
+          "yumemita",
+          "miyako"
+        ],
+        "composition": "MeQR band + personal color"
+      }
+    },
+    {
+      "id": "tag-0090",
+      "name": "千石由乃",
+      "oldColors": [
+        "#7D4CFF",
+        "#CC99FF"
+      ],
+      "oldSolidColor": "#CC99FF",
+      "colors": [
+        "#EC7384",
+        "#EE5577"
+      ],
+      "solidColor": "#EE5577",
+      "provenance": "official-site-color",
+      "sources": [
+        "https://bang-dream-on.bushimo.jp/wordpress/wp-content/themes/bang-dream-on_prod/assets/css/app.css?ver=20261002113350"
+      ],
+      "evidence": {
+        "variables": [
+          "yumemita",
+          "yuno"
+        ],
+        "composition": "MeQR band + personal color"
+      }
+    },
+    {
+      "id": "tag-0406",
+      "name": "明星昴流",
+      "oldColors": [
+        "#F6B51D"
+      ],
+      "oldSolidColor": "#F6B51D",
+      "colors": [
+        "#F3981D"
+      ],
+      "solidColor": "#F3981D",
+      "provenance": "official-character-data",
+      "sources": [
+        "https://ensemble-stars.jp/characters/akehoshi_subaru/"
+      ],
+      "evidence": {
+        "archive": "ensemble-payload.json",
+        "field": "character.color",
+        "slug": "akehoshi_subaru"
+      }
+    },
+    {
+      "id": "tag-0407",
+      "name": "冰鹰北斗",
+      "oldColors": [
+        "#F6B51D"
+      ],
+      "oldSolidColor": "#F6B51D",
+      "colors": [
+        "#0068B7"
+      ],
+      "solidColor": "#0068B7",
+      "provenance": "official-character-data",
+      "sources": [
+        "https://ensemble-stars.jp/characters/hidaka_hokuto/"
+      ],
+      "evidence": {
+        "archive": "ensemble-payload.json",
+        "field": "character.color",
+        "slug": "hidaka_hokuto"
+      }
+    },
+    {
+      "id": "tag-0408",
+      "name": "游木真",
+      "oldColors": [
+        "#F6B51D"
+      ],
+      "oldSolidColor": "#F6B51D",
+      "colors": [
+        "#65AB31"
+      ],
+      "solidColor": "#65AB31",
+      "provenance": "official-character-data",
+      "sources": [
+        "https://ensemble-stars.jp/characters/yuuki_makoto/"
+      ],
+      "evidence": {
+        "archive": "ensemble-payload.json",
+        "field": "character.color",
+        "slug": "yuuki_makoto"
+      }
+    },
+    {
+      "id": "tag-0409",
+      "name": "衣更真绪",
+      "oldColors": [
+        "#F6B51D"
+      ],
+      "oldSolidColor": "#F6B51D",
+      "colors": [
+        "#941F57"
+      ],
+      "solidColor": "#941F57",
+      "provenance": "official-character-data",
+      "sources": [
+        "https://ensemble-stars.jp/characters/isara_mao/"
+      ],
+      "evidence": {
+        "archive": "ensemble-payload.json",
+        "field": "character.color",
+        "slug": "isara_mao"
+      }
+    },
+    {
+      "id": "tag-0410",
+      "name": "朔间零",
+      "oldColors": [
+        "#F6B51D"
+      ],
+      "oldSolidColor": "#F6B51D",
+      "colors": [
+        "#47266E"
+      ],
+      "solidColor": "#47266E",
+      "provenance": "official-character-data",
+      "sources": [
+        "https://ensemble-stars.jp/characters/sakuma_rei/"
+      ],
+      "evidence": {
+        "archive": "ensemble-rei.txt",
+        "field": "character.color",
+        "slug": "sakuma_rei"
+      }
+    },
+    {
+      "id": "tag-0411",
+      "name": "羽风薰",
+      "oldColors": [
+        "#F6B51D"
+      ],
+      "oldSolidColor": "#F6B51D",
+      "colors": [
+        "#FDD35C"
+      ],
+      "solidColor": "#FDD35C",
+      "provenance": "official-character-data",
+      "sources": [
+        "https://ensemble-stars.jp/characters/hakaze_kaoru/"
+      ],
+      "evidence": {
+        "archive": "ensemble-rei.txt",
+        "field": "character.color",
+        "slug": "hakaze_kaoru"
+      }
+    },
+    {
+      "id": "tag-0412",
+      "name": "濑名泉",
+      "oldColors": [
+        "#F6B51D"
+      ],
+      "oldSolidColor": "#F6B51D",
+      "colors": [
+        "#BBDBF3"
+      ],
+      "solidColor": "#BBDBF3",
+      "provenance": "official-character-data",
+      "sources": [
+        "https://ensemble-stars.jp/characters/sena_izumi/"
+      ],
+      "evidence": {
+        "archive": "ensemble-izumi.txt",
+        "field": "character.color",
+        "slug": "sena_izumi"
+      }
+    },
+    {
+      "id": "tag-0413",
+      "name": "月永雷欧",
+      "oldColors": [
+        "#F6B51D"
+      ],
+      "oldSolidColor": "#F6B51D",
+      "colors": [
+        "#EC6D51"
+      ],
+      "solidColor": "#EC6D51",
+      "provenance": "official-character-data",
+      "sources": [
+        "https://ensemble-stars.jp/characters/tsukinaga_leo/"
+      ],
+      "evidence": {
+        "archive": "ensemble-izumi.txt",
+        "field": "character.color",
+        "slug": "tsukinaga_leo"
+      }
+    },
+    {
+      "id": "tag-0414",
+      "name": "朱樱司",
+      "oldColors": [
+        "#F6B51D"
+      ],
+      "oldSolidColor": "#F6B51D",
+      "colors": [
+        "#942343"
+      ],
+      "solidColor": "#942343",
+      "provenance": "official-character-data",
+      "sources": [
+        "https://ensemble-stars.jp/characters/suou_tsukasa/"
+      ],
+      "evidence": {
+        "archive": "ensemble-izumi.txt",
+        "field": "character.color",
+        "slug": "suou_tsukasa"
+      }
+    },
+    {
+      "id": "tag-0415",
+      "name": "天城一彩",
+      "oldColors": [
+        "#F6B51D"
+      ],
+      "oldSolidColor": "#F6B51D",
+      "colors": [
+        "#BA2636"
+      ],
+      "solidColor": "#BA2636",
+      "provenance": "official-character-data",
+      "sources": [
+        "https://ensemble-stars.jp/characters/amagi_hiiro/"
+      ],
+      "evidence": {
+        "archive": "ensemble-hiiro.txt",
+        "field": "character.color",
+        "slug": "amagi_hiiro"
+      }
+    },
+    {
+      "id": "tag-0416",
+      "name": "天城燐音",
+      "oldColors": [
+        "#F6B51D"
+      ],
+      "oldSolidColor": "#F6B51D",
+      "colors": [
+        "#B7282E"
+      ],
+      "solidColor": "#B7282E",
+      "provenance": "official-character-data",
+      "sources": [
+        "https://ensemble-stars.jp/characters/amagi_rinne/"
+      ],
+      "evidence": {
+        "archive": "ensemble-rei.txt",
+        "field": "character.color",
+        "slug": "amagi_rinne"
+      }
+    },
+    {
+      "id": "tag-0417",
+      "name": "白鸟蓝良",
+      "oldColors": [
+        "#F6B51D"
+      ],
+      "oldSolidColor": "#F6B51D",
+      "colors": [
+        "#FFF1CF"
+      ],
+      "solidColor": "#FFF1CF",
+      "provenance": "official-character-data",
+      "sources": [
+        "https://ensemble-stars.jp/characters/shiratori_aira/"
+      ],
+      "evidence": {
+        "archive": "ensemble-hiiro.txt",
+        "field": "character.color",
+        "slug": "shiratori_aira"
+      }
+    },
+    {
+      "id": "tag-0422",
+      "name": "天海春香",
+      "oldColors": [
+        "#F34E7B"
+      ],
+      "oldSolidColor": "#F34E7B",
+      "colors": [
+        "#E22B30"
+      ],
+      "solidColor": "#E22B30",
+      "provenance": "fan-database-personal-color",
+      "sources": [
+        "https://github.com/imas/imasparql/blob/master/RDFs/765AS.rdf"
+      ],
+      "evidence": {
+        "field": "imas:Color",
+        "name": "Haruka Amami",
+        "database": "im@sparql; fan-maintained, not a claim of independent official HEX certification"
+      }
+    },
+    {
+      "id": "tag-0423",
+      "name": "如月千早",
+      "oldColors": [
+        "#F34E7B"
+      ],
+      "oldSolidColor": "#F34E7B",
+      "colors": [
+        "#2743D2"
+      ],
+      "solidColor": "#2743D2",
+      "provenance": "fan-database-personal-color",
+      "sources": [
+        "https://github.com/imas/imasparql/blob/master/RDFs/765AS.rdf"
+      ],
+      "evidence": {
+        "field": "imas:Color",
+        "name": "Chihaya Kisaragi",
+        "database": "im@sparql; fan-maintained, not a claim of independent official HEX certification"
+      }
+    },
+    {
+      "id": "tag-0424",
+      "name": "星井美希",
+      "oldColors": [
+        "#F34E7B"
+      ],
+      "oldSolidColor": "#F34E7B",
+      "colors": [
+        "#B4E04B"
+      ],
+      "solidColor": "#B4E04B",
+      "provenance": "fan-database-personal-color",
+      "sources": [
+        "https://github.com/imas/imasparql/blob/master/RDFs/765AS.rdf"
+      ],
+      "evidence": {
+        "field": "imas:Color",
+        "name": "Miki Hoshii",
+        "database": "im@sparql; fan-maintained, not a claim of independent official HEX certification"
+      }
+    },
+    {
+      "id": "tag-0425",
+      "name": "岛村卯月",
+      "oldColors": [
+        "#F34E7B"
+      ],
+      "oldSolidColor": "#F34E7B",
+      "colors": [
+        "#EC7092"
+      ],
+      "solidColor": "#EC7092",
+      "provenance": "fan-database-personal-color",
+      "sources": [
+        "https://github.com/imas/imasparql/blob/master/RDFs/CinderellaGirls.rdf"
+      ],
+      "evidence": {
+        "field": "imas:Color",
+        "name": "Uzuki Shimamura",
+        "database": "im@sparql; fan-maintained, not a claim of independent official HEX certification"
+      }
+    },
+    {
+      "id": "tag-0426",
+      "name": "涩谷凛",
+      "oldColors": [
+        "#F34E7B"
+      ],
+      "oldSolidColor": "#F34E7B",
+      "colors": [
+        "#1C90CD"
+      ],
+      "solidColor": "#1C90CD",
+      "provenance": "fan-database-personal-color",
+      "sources": [
+        "https://github.com/imas/imasparql/blob/master/RDFs/CinderellaGirls.rdf"
+      ],
+      "evidence": {
+        "field": "imas:Color",
+        "name": "Rin Shibuya",
+        "database": "im@sparql; fan-maintained, not a claim of independent official HEX certification"
+      }
+    },
+    {
+      "id": "tag-0427",
+      "name": "本田未央",
+      "oldColors": [
+        "#F34E7B"
+      ],
+      "oldSolidColor": "#F34E7B",
+      "colors": [
+        "#F6B128"
+      ],
+      "solidColor": "#F6B128",
+      "provenance": "fan-database-personal-color",
+      "sources": [
+        "https://github.com/imas/imasparql/blob/master/RDFs/CinderellaGirls.rdf"
+      ],
+      "evidence": {
+        "field": "imas:Color",
+        "name": "Mio Honda",
+        "database": "im@sparql; fan-maintained, not a claim of independent official HEX certification"
+      }
+    },
+    {
+      "id": "tag-0428",
+      "name": "春日未来",
+      "oldColors": [
+        "#F34E7B"
+      ],
+      "oldSolidColor": "#F34E7B",
+      "colors": [
+        "#EA5B76"
+      ],
+      "solidColor": "#EA5B76",
+      "provenance": "fan-database-personal-color",
+      "sources": [
+        "https://github.com/imas/imasparql/blob/master/RDFs/765MillionStars.rdf"
+      ],
+      "evidence": {
+        "field": "imas:Color",
+        "name": "Mirai Kasuga",
+        "database": "im@sparql; fan-maintained, not a claim of independent official HEX certification"
+      }
+    },
+    {
+      "id": "tag-0429",
+      "name": "最上静香",
+      "oldColors": [
+        "#F34E7B"
+      ],
+      "oldSolidColor": "#F34E7B",
+      "colors": [
+        "#6495CF"
+      ],
+      "solidColor": "#6495CF",
+      "provenance": "fan-database-personal-color",
+      "sources": [
+        "https://github.com/imas/imasparql/blob/master/RDFs/765MillionStars.rdf"
+      ],
+      "evidence": {
+        "field": "imas:Color",
+        "name": "Shizuka Mogami",
+        "database": "im@sparql; fan-maintained, not a claim of independent official HEX certification"
+      }
+    },
+    {
+      "id": "tag-0430",
+      "name": "伊吹翼",
+      "oldColors": [
+        "#F34E7B"
+      ],
+      "oldSolidColor": "#F34E7B",
+      "colors": [
+        "#FED552"
+      ],
+      "solidColor": "#FED552",
+      "provenance": "fan-database-personal-color",
+      "sources": [
+        "https://github.com/imas/imasparql/blob/master/RDFs/765MillionStars.rdf"
+      ],
+      "evidence": {
+        "field": "imas:Color",
+        "name": "Tsubasa Ibuki",
+        "database": "im@sparql; fan-maintained, not a claim of independent official HEX certification"
+      }
+    },
+    {
+      "id": "tag-0431",
+      "name": "樱木真乃",
+      "oldColors": [
+        "#F34E7B"
+      ],
+      "oldSolidColor": "#F34E7B",
+      "colors": [
+        "#FFBAD6"
+      ],
+      "solidColor": "#FFBAD6",
+      "provenance": "fan-database-personal-color",
+      "sources": [
+        "https://github.com/imas/imasparql/blob/master/RDFs/283.rdf"
+      ],
+      "evidence": {
+        "field": "imas:Color",
+        "name": "Mano Sakuragi",
+        "database": "im@sparql; fan-maintained, not a claim of independent official HEX certification"
+      }
+    },
+    {
+      "id": "tag-0432",
+      "name": "风野灯织",
+      "oldColors": [
+        "#F34E7B"
+      ],
+      "oldSolidColor": "#F34E7B",
+      "colors": [
+        "#144384"
+      ],
+      "solidColor": "#144384",
+      "provenance": "fan-database-personal-color",
+      "sources": [
+        "https://github.com/imas/imasparql/blob/master/RDFs/283.rdf"
+      ],
+      "evidence": {
+        "field": "imas:Color",
+        "name": "Hiori Kazano",
+        "database": "im@sparql; fan-maintained, not a claim of independent official HEX certification"
+      }
+    },
+    {
+      "id": "tag-0433",
+      "name": "八宫巡",
+      "oldColors": [
+        "#F34E7B"
+      ],
+      "oldSolidColor": "#F34E7B",
+      "colors": [
+        "#FFE012"
+      ],
+      "solidColor": "#FFE012",
+      "provenance": "fan-database-personal-color",
+      "sources": [
+        "https://github.com/imas/imasparql/blob/master/RDFs/283.rdf"
+      ],
+      "evidence": {
+        "field": "imas:Color",
+        "name": "Meguru Hachimiya",
+        "database": "im@sparql; fan-maintained, not a claim of independent official HEX certification"
+      }
+    },
+    {
+      "id": "tag-0364",
+      "name": "博士",
+      "oldColors": [
+        "#F2A900"
+      ],
+      "oldSolidColor": "#F2A900",
+      "colors": [
+        "#212233"
+      ],
+      "solidColor": "#212233",
+      "provenance": "artwork-representative-color",
+      "sources": [
+        "https://prts.wiki/w/%E5%8D%9A%E5%A3%AB",
+        "https://media.prts.wiki/a/aa/Npc_doctor.png"
+      ],
+      "evidence": {
+        "image": "prts-doctor.png",
+        "imageSHA256": "4a966f1f81e231e439f486903c1bea4a39c19700d0eaf1071933220aafa7b461",
+        "method": "MeQR-selected HSV ranges, per-channel RGB median of opaque pixels; not official cheering colors",
+        "samples": [
+          {
+            "part": "hood/coat navy",
+            "roiPixels": [
+              0,
+              0,
+              1024,
+              1024
+            ],
+            "hsv": [
+              200,
+              250,
+              0.2,
+              1,
+              0.08,
+              0.35
+            ],
+            "pixelCount": 100021,
+            "color": "#212233"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tag-0365",
+      "name": "银灰",
+      "oldColors": [
+        "#F2A900"
+      ],
+      "oldSolidColor": "#F2A900",
+      "colors": [
+        "#B4AEA7",
+        "#202023"
+      ],
+      "solidColor": "#B4AEA7",
+      "provenance": "artwork-representative-color",
+      "sources": [
+        "https://prts.wiki/w/%E9%93%B6%E7%81%B0",
+        "https://media.prts.wiki/0/03/%E7%AB%8B%E7%BB%98_%E9%93%B6%E7%81%B0_1.png"
+      ],
+      "evidence": {
+        "image": "prts-银灰.png",
+        "imageSHA256": "1202f26f9dee3ed36f421f0ab88e073c3f3e8053e19461dff1033a4af45891b8",
+        "method": "MeQR-selected HSV ranges, per-channel RGB median of opaque pixels; not official cheering colors",
+        "samples": [
+          {
+            "part": "silver fur",
+            "roiPixels": [
+              0,
+              0,
+              1460,
+              1460
+            ],
+            "hsv": [
+              0,
+              360,
+              0,
+              0.18,
+              0.5,
+              0.9
+            ],
+            "pixelCount": 31658,
+            "color": "#B4AEA7"
+          },
+          {
+            "part": "black coat",
+            "roiPixels": [
+              0,
+              0,
+              1460,
+              1460
+            ],
+            "hsv": [
+              0,
+              360,
+              0,
+              0.25,
+              0.08,
+              0.25
+            ],
+            "pixelCount": 320084,
+            "color": "#202023"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tag-0366",
+      "name": "斯卡蒂",
+      "oldColors": [
+        "#F2A900"
+      ],
+      "oldSolidColor": "#F2A900",
+      "colors": [
+        "#1A354B",
+        "#AAADB1"
+      ],
+      "solidColor": "#1A354B",
+      "provenance": "artwork-representative-color",
+      "sources": [
+        "https://prts.wiki/w/%E6%96%AF%E5%8D%A1%E8%92%82",
+        "https://media.prts.wiki/4/45/%E7%AB%8B%E7%BB%98_%E6%96%AF%E5%8D%A1%E8%92%82_1.png"
+      ],
+      "evidence": {
+        "image": "prts-斯卡蒂.png",
+        "imageSHA256": "e2c6397440273b3a54d9efdb1b289fa80ab9c5f7cf623ade7d6ac33be7ff451b",
+        "method": "MeQR-selected HSV ranges, per-channel RGB median of opaque pixels; not official cheering colors",
+        "samples": [
+          {
+            "part": "blue hat/clothing",
+            "roiPixels": [
+              0,
+              0,
+              1024,
+              1024
+            ],
+            "hsv": [
+              195,
+              230,
+              0.35,
+              1,
+              0.15,
+              0.6
+            ],
+            "pixelCount": 11546,
+            "color": "#1A354B"
+          },
+          {
+            "part": "silver hair",
+            "roiPixels": [
+              0,
+              0,
+              1024,
+              1024
+            ],
+            "hsv": [
+              0,
+              360,
+              0,
+              0.15,
+              0.6,
+              0.95
+            ],
+            "pixelCount": 23461,
+            "color": "#AAADB1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tag-0367",
+      "name": "W",
+      "oldColors": [
+        "#F2A900"
+      ],
+      "oldSolidColor": "#F2A900",
+      "colors": [
+        "#7F1319",
+        "#242426"
+      ],
+      "solidColor": "#7F1319",
+      "provenance": "artwork-representative-color",
+      "sources": [
+        "https://prts.wiki/w/W",
+        "https://media.prts.wiki/4/44/%E7%AB%8B%E7%BB%98_W_1.png"
+      ],
+      "evidence": {
+        "image": "prts-W.png",
+        "imageSHA256": "528791ef55b567c72e53b82c0b9d465c2493400d1a8519c67978d30a902db4b3",
+        "method": "MeQR-selected HSV ranges, per-channel RGB median of opaque pixels; not official cheering colors",
+        "samples": [
+          {
+            "part": "red clothing accents",
+            "roiPixels": [
+              0,
+              0,
+              1352,
+              1352
+            ],
+            "hsv": [
+              345,
+              375,
+              0.5,
+              1,
+              0.3,
+              0.85
+            ],
+            "pixelCount": 26511,
+            "color": "#7F1319"
+          },
+          {
+            "part": "dark clothing",
+            "roiPixels": [
+              0,
+              0,
+              1352,
+              1352
+            ],
+            "hsv": [
+              0,
+              360,
+              0,
+              0.2,
+              0.08,
+              0.25
+            ],
+            "pixelCount": 89550,
+            "color": "#242426"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tag-0368",
+      "name": "开拓者",
+      "oldColors": [
+        "#5D7EDB"
+      ],
+      "oldSolidColor": "#5D7EDB",
+      "colors": [
+        "#CBA861",
+        "#353132"
+      ],
+      "solidColor": "#CBA861",
+      "provenance": "artwork-representative-color",
+      "sources": [
+        "https://github.com/Mar-7th/StarRailRes",
+        "https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/image/character_portrait/8001.png"
+      ],
+      "evidence": {
+        "image": "sr-8001.png",
+        "imageSHA256": "442c9af300361f9486062283500416987a3c696590ee8133d39c2c84258393e6",
+        "method": "MeQR-selected HSV ranges, per-channel RGB median of opaque pixels; not official cheering colors",
+        "samples": [
+          {
+            "part": "gold details",
+            "roiPixels": [
+              410,
+              307,
+              1638,
+              1741
+            ],
+            "hsv": [
+              35,
+              55,
+              0.35,
+              1,
+              0.5,
+              0.95
+            ],
+            "pixelCount": 8886,
+            "color": "#CBA861"
+          },
+          {
+            "part": "charcoal clothing",
+            "roiPixels": [
+              410,
+              307,
+              1638,
+              1741
+            ],
+            "hsv": [
+              0,
+              360,
+              0,
+              0.2,
+              0.12,
+              0.3
+            ],
+            "pixelCount": 168230,
+            "color": "#353132"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tag-0369",
+      "name": "三月七",
+      "oldColors": [
+        "#5D7EDB"
+      ],
+      "oldSolidColor": "#5D7EDB",
+      "colors": [
+        "#E7A1E8",
+        "#5EB9F1"
+      ],
+      "solidColor": "#E7A1E8",
+      "provenance": "artwork-representative-color",
+      "sources": [
+        "https://github.com/Mar-7th/StarRailRes",
+        "https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/image/character_portrait/1001.png"
+      ],
+      "evidence": {
+        "image": "sr-1001.png",
+        "imageSHA256": "faf16b576963b56c0da702c3a7974eddd38a833c7f717601e1fa17d7f95cb6fd",
+        "method": "MeQR-selected HSV ranges, per-channel RGB median of opaque pixels; not official cheering colors",
+        "samples": [
+          {
+            "part": "pink hair/ice motif",
+            "roiPixels": [
+              0,
+              0,
+              2048,
+              2048
+            ],
+            "hsv": [
+              290,
+              345,
+              0.12,
+              0.55,
+              0.65,
+              0.95
+            ],
+            "pixelCount": 76395,
+            "color": "#E7A1E8"
+          },
+          {
+            "part": "blue ice motif",
+            "roiPixels": [
+              0,
+              0,
+              2048,
+              2048
+            ],
+            "hsv": [
+              185,
+              210,
+              0.35,
+              0.8,
+              0.6,
+              0.95
+            ],
+            "pixelCount": 200303,
+            "color": "#5EB9F1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tag-0370",
+      "name": "丹恒",
+      "oldColors": [
+        "#5D7EDB"
+      ],
+      "oldSolidColor": "#5D7EDB",
+      "colors": [
+        "#396B71"
+      ],
+      "solidColor": "#396B71",
+      "provenance": "artwork-representative-color",
+      "sources": [
+        "https://github.com/Mar-7th/StarRailRes",
+        "https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/image/character_portrait/1002.png"
+      ],
+      "evidence": {
+        "image": "sr-1002.png",
+        "imageSHA256": "ecb49fbe2e4f1e0dfb85da2844243c7893df9407ccbb0deadfef6c1a9ba65ad4",
+        "method": "MeQR-selected HSV ranges, per-channel RGB median of opaque pixels; not official cheering colors",
+        "samples": [
+          {
+            "part": "teal outfit",
+            "roiPixels": [
+              410,
+              410,
+              1638,
+              1741
+            ],
+            "hsv": [
+              165,
+              190,
+              0.3,
+              0.9,
+              0.2,
+              0.75
+            ],
+            "pixelCount": 60463,
+            "color": "#396B71"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tag-0371",
+      "name": "姬子",
+      "oldColors": [
+        "#5D7EDB"
+      ],
+      "oldSolidColor": "#5D7EDB",
+      "colors": [
+        "#A03B36",
+        "#EDE6D4"
+      ],
+      "solidColor": "#A03B36",
+      "provenance": "artwork-representative-color",
+      "sources": [
+        "https://github.com/Mar-7th/StarRailRes",
+        "https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/image/character_portrait/1003.png"
+      ],
+      "evidence": {
+        "image": "sr-1003.png",
+        "imageSHA256": "3410bfcb78a516257b103c133738765f39296b6bb1178d36843304b56f8e8345",
+        "method": "MeQR-selected HSV ranges, per-channel RGB median of opaque pixels; not official cheering colors",
+        "samples": [
+          {
+            "part": "red hair/clothing",
+            "roiPixels": [
+              410,
+              410,
+              1638,
+              1946
+            ],
+            "hsv": [
+              350,
+              380,
+              0.5,
+              1,
+              0.35,
+              0.85
+            ],
+            "pixelCount": 151950,
+            "color": "#A03B36"
+          },
+          {
+            "part": "cream dress",
+            "roiPixels": [
+              410,
+              410,
+              1638,
+              1946
+            ],
+            "hsv": [
+              30,
+              55,
+              0.08,
+              0.25,
+              0.75,
+              0.98
+            ],
+            "pixelCount": 1767,
+            "color": "#EDE6D4"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tag-0372",
+      "name": "瓦尔特",
+      "oldColors": [
+        "#5D7EDB"
+      ],
+      "oldSolidColor": "#5D7EDB",
+      "colors": [
+        "#5B4840"
+      ],
+      "solidColor": "#5B4840",
+      "provenance": "artwork-representative-color",
+      "sources": [
+        "https://github.com/Mar-7th/StarRailRes",
+        "https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/image/character_portrait/1004.png"
+      ],
+      "evidence": {
+        "image": "sr-1004.png",
+        "imageSHA256": "b808f147668489c3edf4a680e84fdfa06d376e306bdcc2fd1c557c2fcaa75dca",
+        "method": "MeQR-selected HSV ranges, per-channel RGB median of opaque pixels; not official cheering colors",
+        "samples": [
+          {
+            "part": "brown coat/hair",
+            "roiPixels": [
+              819,
+              614,
+              1229,
+              1434
+            ],
+            "hsv": [
+              15,
+              45,
+              0.15,
+              0.5,
+              0.18,
+              0.55
+            ],
+            "pixelCount": 1735,
+            "color": "#5B4840"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tag-0373",
+      "name": "银狼",
+      "oldColors": [
+        "#5D7EDB"
+      ],
+      "oldSolidColor": "#5D7EDB",
+      "colors": [
+        "#9482E5",
+        "#C2BDCA"
+      ],
+      "solidColor": "#9482E5",
+      "provenance": "artwork-representative-color",
+      "sources": [
+        "https://github.com/Mar-7th/StarRailRes",
+        "https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/image/character_portrait/1006.png"
+      ],
+      "evidence": {
+        "image": "sr-1006.png",
+        "imageSHA256": "e835099d486095b016b628bf26b89c0b92a474d3107f67178a354ac1b73cc756",
+        "method": "MeQR-selected HSV ranges, per-channel RGB median of opaque pixels; not official cheering colors",
+        "samples": [
+          {
+            "part": "violet digital motif",
+            "roiPixels": [
+              0,
+              0,
+              2048,
+              2048
+            ],
+            "hsv": [
+              240,
+              270,
+              0.25,
+              0.75,
+              0.55,
+              0.95
+            ],
+            "pixelCount": 178262,
+            "color": "#9482E5"
+          },
+          {
+            "part": "silver hair/clothing",
+            "roiPixels": [
+              0,
+              0,
+              2048,
+              2048
+            ],
+            "hsv": [
+              0,
+              360,
+              0,
+              0.16,
+              0.6,
+              0.9
+            ],
+            "pixelCount": 82482,
+            "color": "#C2BDCA"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tag-0374",
+      "name": "刃",
+      "oldColors": [
+        "#5D7EDB"
+      ],
+      "oldSolidColor": "#5D7EDB",
+      "colors": [
+        "#6B181A",
+        "#2B3248"
+      ],
+      "solidColor": "#6B181A",
+      "provenance": "artwork-representative-color",
+      "sources": [
+        "https://github.com/Mar-7th/StarRailRes",
+        "https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/image/character_portrait/1205.png"
+      ],
+      "evidence": {
+        "image": "sr-1205.png",
+        "imageSHA256": "08bcfc539e148c57b990427b530fd88545572ba361aa886940cc6b1bca181d4c",
+        "method": "MeQR-selected HSV ranges, per-channel RGB median of opaque pixels; not official cheering colors",
+        "samples": [
+          {
+            "part": "red coat/flowers",
+            "roiPixels": [
+              0,
+              0,
+              2048,
+              2048
+            ],
+            "hsv": [
+              345,
+              375,
+              0.55,
+              1,
+              0.25,
+              0.65
+            ],
+            "pixelCount": 367655,
+            "color": "#6B181A"
+          },
+          {
+            "part": "navy clothing",
+            "roiPixels": [
+              0,
+              0,
+              2048,
+              2048
+            ],
+            "hsv": [
+              210,
+              240,
+              0.35,
+              0.85,
+              0.12,
+              0.4
+            ],
+            "pixelCount": 162061,
+            "color": "#2B3248"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tag-0375",
+      "name": "景元",
+      "oldColors": [
+        "#5D7EDB"
+      ],
+      "oldSolidColor": "#5D7EDB",
+      "colors": [
+        "#A9865B",
+        "#CFC6BF"
+      ],
+      "solidColor": "#A9865B",
+      "provenance": "artwork-representative-color",
+      "sources": [
+        "https://github.com/Mar-7th/StarRailRes",
+        "https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/image/character_portrait/1204.png"
+      ],
+      "evidence": {
+        "image": "sr-1204.png",
+        "imageSHA256": "8a8c2a1d784659cdf1a090886ef1961efd961ceb7c695b93daf692c4112203b6",
+        "method": "MeQR-selected HSV ranges, per-channel RGB median of opaque pixels; not official cheering colors",
+        "samples": [
+          {
+            "part": "gold armor/motif",
+            "roiPixels": [
+              0,
+              0,
+              2048,
+              2048
+            ],
+            "hsv": [
+              30,
+              50,
+              0.35,
+              0.8,
+              0.4,
+              0.9
+            ],
+            "pixelCount": 70083,
+            "color": "#A9865B"
+          },
+          {
+            "part": "silver hair/lion",
+            "roiPixels": [
+              0,
+              0,
+              2048,
+              2048
+            ],
+            "hsv": [
+              0,
+              360,
+              0,
+              0.15,
+              0.65,
+              0.95
+            ],
+            "pixelCount": 460852,
+            "color": "#CFC6BF"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tag-0376",
+      "name": "丹恒·饮月",
+      "oldColors": [
+        "#5D7EDB"
+      ],
+      "oldSolidColor": "#5D7EDB",
+      "colors": [
+        "#3D7B7B"
+      ],
+      "solidColor": "#3D7B7B",
+      "provenance": "artwork-representative-color",
+      "sources": [
+        "https://github.com/Mar-7th/StarRailRes",
+        "https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/image/character_portrait/1213.png"
+      ],
+      "evidence": {
+        "image": "sr-1213.png",
+        "imageSHA256": "99072b90e06cc432bffd57d75e0324c42f1729a67583dd8dc4ce3d69bd9aff41",
+        "method": "MeQR-selected HSV ranges, per-channel RGB median of opaque pixels; not official cheering colors",
+        "samples": [
+          {
+            "part": "jade dragon/clothing",
+            "roiPixels": [
+              0,
+              0,
+              2048,
+              2048
+            ],
+            "hsv": [
+              155,
+              185,
+              0.3,
+              0.8,
+              0.35,
+              0.8
+            ],
+            "pixelCount": 136337,
+            "color": "#3D7B7B"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tag-0377",
+      "name": "黄泉",
+      "oldColors": [
+        "#5D7EDB"
+      ],
+      "oldSolidColor": "#5D7EDB",
+      "colors": [
+        "#3A338A",
+        "#8D1A27"
+      ],
+      "solidColor": "#3A338A",
+      "provenance": "artwork-representative-color",
+      "sources": [
+        "https://github.com/Mar-7th/StarRailRes",
+        "https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/image/character_portrait/1308.png"
+      ],
+      "evidence": {
+        "image": "sr-1308.png",
+        "imageSHA256": "61f5471762c9cbc917348bdf57d9abf8399a9af2ba9cc600d96e20a3abfd5756",
+        "method": "MeQR-selected HSV ranges, per-channel RGB median of opaque pixels; not official cheering colors",
+        "samples": [
+          {
+            "part": "violet hair/clothing",
+            "roiPixels": [
+              0,
+              0,
+              2048,
+              2048
+            ],
+            "hsv": [
+              235,
+              275,
+              0.5,
+              1,
+              0.25,
+              0.85
+            ],
+            "pixelCount": 35755,
+            "color": "#3A338A"
+          },
+          {
+            "part": "red blade/moon",
+            "roiPixels": [
+              0,
+              0,
+              2048,
+              2048
+            ],
+            "hsv": [
+              345,
+              375,
+              0.6,
+              1,
+              0.35,
+              0.8
+            ],
+            "pixelCount": 91693,
+            "color": "#8D1A27"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tag-0378",
+      "name": "星期日",
+      "oldColors": [
+        "#5D7EDB"
+      ],
+      "oldSolidColor": "#5D7EDB",
+      "colors": [
+        "#49548A",
+        "#CBAC72"
+      ],
+      "solidColor": "#49548A",
+      "provenance": "artwork-representative-color",
+      "sources": [
+        "https://github.com/Mar-7th/StarRailRes",
+        "https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/image/character_portrait/1313.png"
+      ],
+      "evidence": {
+        "image": "sr-1313.png",
+        "imageSHA256": "fa6401a8acf050c1d0bd4147eebbba14936718225ea5f762e983253adbaed294",
+        "method": "MeQR-selected HSV ranges, per-channel RGB median of opaque pixels; not official cheering colors",
+        "samples": [
+          {
+            "part": "blue clothing/motif",
+            "roiPixels": [
+              0,
+              0,
+              2048,
+              2048
+            ],
+            "hsv": [
+              210,
+              245,
+              0.3,
+              0.85,
+              0.3,
+              0.75
+            ],
+            "pixelCount": 433349,
+            "color": "#49548A"
+          },
+          {
+            "part": "gold ornament",
+            "roiPixels": [
+              0,
+              0,
+              2048,
+              2048
+            ],
+            "hsv": [
+              35,
+              55,
+              0.25,
+              0.7,
+              0.55,
+              0.95
+            ],
+            "pixelCount": 52283,
+            "color": "#CBAC72"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tag-0443",
+      "name": "十六夜咲夜",
+      "oldColors": [
+        "#E60012"
+      ],
+      "oldSolidColor": "#E60012",
+      "colors": [
+        "#443F73",
+        "#FFFFFF"
+      ],
+      "solidColor": "#443F73",
+      "provenance": "artwork-representative-color",
+      "sources": [
+        "https://thbwiki.cc/%E5%8D%81%E5%85%AD%E5%A4%9C%E5%92%B2%E5%A4%9C",
+        "https://upload.thbwiki.cc/4/4b/%E5%8D%81%E5%85%AD%E5%A4%9C%E5%92%B2%E5%A4%9C%EF%BC%88%E7%BB%AF%E6%83%B3%E5%A4%A9%E7%AB%8B%E7%BB%98%EF%BC%89.png"
+      ],
+      "evidence": {
+        "image": "th-sakuya.png",
+        "imageSHA256": "106d6d9725ef7599ce8c646961ae0c69ac8e67f584961ebd5849dd267626c06a",
+        "method": "MeQR-selected HSV ranges, per-channel RGB median of opaque pixels; not official cheering colors",
+        "samples": [
+          {
+            "part": "blue maid dress",
+            "roiPixels": [
+              0,
+              0,
+              428,
+              480
+            ],
+            "hsv": [
+              215,
+              265,
+              0.3,
+              0.8,
+              0.18,
+              0.6
+            ],
+            "pixelCount": 10307,
+            "color": "#443F73"
+          },
+          {
+            "part": "white apron",
+            "roiPixels": [
+              0,
+              0,
+              428,
+              480
+            ],
+            "hsv": [
+              0,
+              360,
+              0,
+              0.12,
+              0.85,
+              1
+            ],
+            "pixelCount": 30251,
+            "color": "#FFFFFF"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tag-0444",
+      "name": "魂魄妖梦",
+      "oldColors": [
+        "#E60012"
+      ],
+      "oldSolidColor": "#E60012",
+      "colors": [
+        "#3A917C",
+        "#C8C6C6"
+      ],
+      "solidColor": "#3A917C",
+      "provenance": "artwork-representative-color",
+      "sources": [
+        "https://thbwiki.cc/%E9%AD%82%E9%AD%84%E5%A6%96%E6%A2%A6",
+        "https://upload.thbwiki.cc/3/3d/%E9%AD%82%E9%AD%84%E5%A6%96%E6%A2%A6%EF%BC%88%E7%BB%AF%E6%83%B3%E5%A4%A9%E7%AB%8B%E7%BB%98%EF%BC%89.png"
+      ],
+      "evidence": {
+        "image": "th-youmu.png",
+        "imageSHA256": "f638372d9a92cee387b6a9f551445e89b857b2237f488194927b249ae8e6c70f",
+        "method": "MeQR-selected HSV ranges, per-channel RGB median of opaque pixels; not official cheering colors",
+        "samples": [
+          {
+            "part": "green clothing",
+            "roiPixels": [
+              0,
+              0,
+              488,
+              466
+            ],
+            "hsv": [
+              135,
+              175,
+              0.35,
+              0.9,
+              0.25,
+              0.7
+            ],
+            "pixelCount": 19671,
+            "color": "#3A917C"
+          },
+          {
+            "part": "silver hair",
+            "roiPixels": [
+              0,
+              0,
+              488,
+              466
+            ],
+            "hsv": [
+              0,
+              360,
+              0,
+              0.12,
+              0.7,
+              0.95
+            ],
+            "pixelCount": 6284,
+            "color": "#C8C6C6"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tag-0445",
+      "name": "蕾米莉亚·斯卡蕾特",
+      "oldColors": [
+        "#E60012"
+      ],
+      "oldSolidColor": "#E60012",
+      "colors": [
+        "#FFB4B4",
+        "#D1092E"
+      ],
+      "solidColor": "#FFB4B4",
+      "provenance": "artwork-representative-color",
+      "sources": [
+        "https://thbwiki.cc/%E8%95%BE%E7%B1%B3%E8%8E%89%E4%BA%9A%C2%B7%E6%96%AF%E5%8D%A1%E8%95%BE%E7%89%B9",
+        "https://upload.thbwiki.cc/d/d1/%E8%95%BE%E7%B1%B3%E8%8E%89%E4%BA%9A%C2%B7%E6%96%AF%E5%8D%A1%E8%95%BE%E7%89%B9%EF%BC%88%E7%BB%AF%E6%83%B3%E5%A4%A9%E7%AB%8B%E7%BB%98%EF%BC%89.png"
+      ],
+      "evidence": {
+        "image": "th-remilia.png",
+        "imageSHA256": "6f4d55912204c3c67b279c5a5804e55a5b52fd0d5dc31d34532e2b47ca0d313b",
+        "method": "MeQR-selected HSV ranges, per-channel RGB median of opaque pixels; not official cheering colors",
+        "samples": [
+          {
+            "part": "pink dress",
+            "roiPixels": [
+              0,
+              0,
+              462,
+              480
+            ],
+            "hsv": [
+              345,
+              365,
+              0.15,
+              0.5,
+              0.75,
+              1
+            ],
+            "pixelCount": 26786,
+            "color": "#FFB4B4"
+          },
+          {
+            "part": "scarlet ribbon",
+            "roiPixels": [
+              0,
+              0,
+              462,
+              480
+            ],
+            "hsv": [
+              340,
+              375,
+              0.7,
+              1,
+              0.4,
+              0.9
+            ],
+            "pixelCount": 13826,
+            "color": "#D1092E"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tag-0446",
+      "name": "芙兰朵露·斯卡蕾特",
+      "oldColors": [
+        "#E60012"
+      ],
+      "oldSolidColor": "#E60012",
+      "colors": [
+        "#FA0000",
+        "#F6EC88"
+      ],
+      "solidColor": "#FA0000",
+      "provenance": "artwork-representative-color",
+      "sources": [
+        "https://thbwiki.cc/%E8%8A%99%E5%85%B0%E6%9C%B5%E9%9C%B2%C2%B7%E6%96%AF%E5%8D%A1%E8%95%BE%E7%89%B9",
+        "https://upload.thbwiki.cc/4/4d/%E8%8A%99%E5%85%B0%E6%9C%B5%E9%9C%B2%C2%B7%E6%96%AF%E5%8D%A1%E8%95%BE%E7%89%B9%EF%BC%88%E7%BA%A2%E9%AD%94%E4%B9%A1%E7%AB%8B%E7%BB%98%EF%BC%89.png"
+      ],
+      "evidence": {
+        "image": "th-flandre.png",
+        "imageSHA256": "652df9efb93bc6201fb8232b1ad5bf5f38543c62f98c3300c0e38da664970b48",
+        "method": "MeQR-selected HSV ranges, per-channel RGB median of opaque pixels; not official cheering colors",
+        "samples": [
+          {
+            "part": "scarlet dress",
+            "roiPixels": [
+              0,
+              0,
+              256,
+              256
+            ],
+            "hsv": [
+              350,
+              375,
+              0.75,
+              1,
+              0.5,
+              1
+            ],
+            "pixelCount": 5553,
+            "color": "#FA0000"
+          },
+          {
+            "part": "gold hair",
+            "roiPixels": [
+              0,
+              0,
+              256,
+              256
+            ],
+            "hsv": [
+              40,
+              65,
+              0.35,
+              1,
+              0.7,
+              1
+            ],
+            "pixelCount": 1767,
+            "color": "#F6EC88"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tag-0447",
+      "name": "琪露诺",
+      "oldColors": [
+        "#E60012"
+      ],
+      "oldSolidColor": "#E60012",
+      "colors": [
+        "#6ECAE1",
+        "#21006A"
+      ],
+      "solidColor": "#6ECAE1",
+      "provenance": "artwork-representative-color",
+      "sources": [
+        "https://thbwiki.cc/%E7%90%AA%E9%9C%B2%E8%AF%BA",
+        "https://upload.thbwiki.cc/1/1e/%E7%90%AA%E9%9C%B2%E8%AF%BA%EF%BC%88%E8%8A%B1%E6%98%A0%E5%A1%9A%E7%AB%8B%E7%BB%98%EF%BC%89.png"
+      ],
+      "evidence": {
+        "image": "th-cirno.png",
+        "imageSHA256": "3f95e34fb0213f6aa020c9c26965ad6d2cefcdcf4938646cec1a35a523da529e",
+        "method": "MeQR-selected HSV ranges, per-channel RGB median of opaque pixels; not official cheering colors",
+        "samples": [
+          {
+            "part": "ice blue hair/wings",
+            "roiPixels": [
+              0,
+              0,
+              247,
+              283
+            ],
+            "hsv": [
+              180,
+              205,
+              0.25,
+              0.85,
+              0.6,
+              1
+            ],
+            "pixelCount": 1797,
+            "color": "#6ECAE1"
+          },
+          {
+            "part": "blue dress",
+            "roiPixels": [
+              0,
+              0,
+              247,
+              283
+            ],
+            "hsv": [
+              235,
+              265,
+              0.65,
+              1,
+              0.25,
+              0.8
+            ],
+            "pixelCount": 11050,
+            "color": "#21006A"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tag-0448",
+      "name": "古明地恋",
+      "oldColors": [
+        "#E60012"
+      ],
+      "oldSolidColor": "#E60012",
+      "colors": [
+        "#3E7A38",
+        "#F3C465"
+      ],
+      "solidColor": "#3E7A38",
+      "provenance": "artwork-representative-color",
+      "sources": [
+        "https://thbwiki.cc/%E5%8F%A4%E6%98%8E%E5%9C%B0%E6%81%8B",
+        "https://upload.thbwiki.cc/c/cb/%E5%8F%A4%E6%98%8E%E5%9C%B0%E6%81%8B%EF%BC%88%E5%9C%B0%E7%81%B5%E6%AE%BF%E7%AB%8B%E7%BB%98%EF%BC%89.png"
+      ],
+      "evidence": {
+        "image": "th-koishi.png",
+        "imageSHA256": "e0310242c57dadaa3369b2d54bc72e57175d7481c6f983b750f0a6f32c3a45e4",
+        "method": "MeQR-selected HSV ranges, per-channel RGB median of opaque pixels; not official cheering colors",
+        "samples": [
+          {
+            "part": "green skirt",
+            "roiPixels": [
+              0,
+              0,
+              249,
+              428
+            ],
+            "hsv": [
+              75,
+              150,
+              0.3,
+              0.85,
+              0.3,
+              0.85
+            ],
+            "pixelCount": 7925,
+            "color": "#3E7A38"
+          },
+          {
+            "part": "yellow shirt",
+            "roiPixels": [
+              0,
+              0,
+              249,
+              428
+            ],
+            "hsv": [
+              35,
+              55,
+              0.35,
+              0.9,
+              0.7,
+              1
+            ],
+            "pixelCount": 9998,
+            "color": "#F3C465"
+          }
+        ]
+      }
+    }
+  ]
+}

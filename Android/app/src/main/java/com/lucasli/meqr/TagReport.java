@@ -6,6 +6,7 @@ import android.text.InputFilter;
 import android.text.InputType;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -38,8 +39,30 @@ final class TagReport {
     }
 
     static String submit(JSONObject payload) throws Exception {
+        JSONObject outgoing = new JSONObject(payload.toString());
+        boolean includeSupportCode = "true".equals(payload.optString("_include_support_code"));
+        outgoing.remove("_include_support_code");
+        outgoing.remove("_bound_support_code");
+        outgoing.remove("_next_support_code");
+        if (!includeSupportCode && payload.has("_include_support_code")) {
+            outgoing.remove("device_id");
+            outgoing.remove("support_code");
+        }
+        if (includeSupportCode && outgoing.optString("support_code").isEmpty()) {
+            JSONObject issued = request("https://report.meqrcode.cn/api/support-code", null,
+                    new JSONObject().put("device_id", outgoing.optString("device_id")));
+            String code = issued.optString("support_code");
+            if (!code.matches("[A-HJ-KM-NP-Z2-9]{6}")) throw new IllegalStateException("support_code_unavailable");
+            outgoing.put("support_code", code);
+            payload.put("support_code", code);
+        }
         String token = request(ENDPOINT + "/token", null, null).getString("token");
-        return request(ENDPOINT, token, payload).getString("ticket_id");
+        JSONObject receipt = request(ENDPOINT, token, outgoing);
+        String boundCode = receipt.optString("support_code");
+        String nextCode = receipt.optString("next_support_code");
+        if (!boundCode.isEmpty()) payload.put("_bound_support_code", boundCode);
+        if (!nextCode.isEmpty()) payload.put("_next_support_code", nextCode);
+        return receipt.getString("ticket_id");
     }
 
     private static EditText field(Activity activity, LinearLayout content, I18n i18n, String key, int limit) {
@@ -81,6 +104,12 @@ final class TagReport {
         contact.setSingleLine(true);
         contact.setFilters(new InputFilter[]{new InputFilter.LengthFilter(120)});
         content.addView(contact);
+        CheckBox includeSupportCode = new CheckBox(activity);
+        includeSupportCode.setText(i18n.t("tagReportIncludeSupportCode"));
+        includeSupportCode.setChecked(true);
+        content.addView(includeSupportCode);
+        TextView supportCodeHint = Ui.text(activity, i18n.t("tagReportIncludeSupportCodeHint"), Ui.MUTED, 12);
+        content.addView(supportCodeHint);
         TextView error = new TextView(activity);
         error.setTextColor(0xFFB3261E);
         content.addView(error);
@@ -89,7 +118,7 @@ final class TagReport {
         content.addView(progress);
         ScrollView scroll = new ScrollView(activity);
         scroll.addView(content);
-        AlertDialog dialog = new AlertDialog.Builder(activity).setTitle(i18n.t(isNew ? "tagRequestNew" : "tagReport"))
+        AlertDialog dialog = new AlertDialog.Builder(Ui.dialogContext(activity)).setTitle(i18n.t(isNew ? "tagRequestNew" : "tagReport"))
                 .setView(scroll).setNegativeButton(i18n.t("cancel"), null)
                 .setPositiveButton(i18n.t("tagReportSubmit"), null).create();
         dialog.setCanceledOnTouchOutside(false);
@@ -101,7 +130,7 @@ final class TagReport {
         dialog.setOnShowListener(ignored -> {
             dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v -> {
                 if (details.length() == 0 && contact.length() == 0 && work.length() == 0 && colors.length() == 0 && reference.length() == 0 && requestedName.getText().toString().equals(tag) && reason.getSelectedItemPosition() == 0) { dialog.dismiss(); return; }
-                new AlertDialog.Builder(activity).setMessage(i18n.t("tagReportDiscard"))
+                new AlertDialog.Builder(Ui.dialogContext(activity)).setMessage(i18n.t("tagReportDiscard"))
                         .setNegativeButton(i18n.t("cancel"), null)
                         .setPositiveButton(i18n.t("delete"), (d, which) -> dialog.dismiss()).show();
             });
@@ -132,6 +161,12 @@ final class TagReport {
                             .put("app_version", activity.getPackageManager().getPackageInfo(activity.getPackageName(), 0).versionName);
                     if (isNew) payload.put("tag_name", requestedName.getText().toString()).put("tag_id", "").put("reason", "request")
                             .put("work", work.getText().toString()).put("suggested_colors", colors.getText().toString()).put("reference_url", reference.getText().toString());
+                    payload.put("_include_support_code", includeSupportCode.isChecked() ? "true" : "false");
+                    if (includeSupportCode.isChecked()) {
+                        payload.put("device_id", SupportTickets.deviceId(activity));
+                        String blankCode = SupportTickets.cachedBlankCode(activity);
+                        if (!blankCode.isEmpty()) payload.put("support_code", blankCode);
+                    }
                     String body = payload.toString();
                     if (!body.equals(lastBody[0])) { requestID[0] = UUID.randomUUID().toString(); lastBody[0] = body; }
                     payload.put("request_id", requestID[0]);
@@ -140,13 +175,23 @@ final class TagReport {
                     try {
                         TagReportOutbox outbox = TagReportOutbox.get(activity);
                         outbox.enqueue(payload); outbox.kick(); dialog.dismiss();
-                        new AlertDialog.Builder(activity).setMessage(i18n.t("tagQueueSaved"))
-                                .setPositiveButton(i18n.t("done"), null)
-                                .setNeutralButton(i18n.t("tagOutbox"), (d, which) -> TagReportOutbox.show(activity, i18n)).show();
+                        String boundCode = payload.optString("support_code");
+                        if (!boundCode.isEmpty()) {
+                            new AlertDialog.Builder(Ui.dialogContext(activity)).setTitle(i18n.t("tagReportSent"))
+                                    .setMessage(i18n.tf("supportCodeAssigned", boundCode))
+                                    .setPositiveButton(i18n.t("done"), null)
+                                    .setNeutralButton(i18n.t("myTickets"), (d, which) -> SupportTickets.show(activity, i18n)).show();
+                        } else {
+                            String queued = i18n.t("tagQueueSaved");
+                            if (!includeSupportCode.isChecked()) queued += "\n\n" + i18n.t("ticketAnonymousHint");
+                            new AlertDialog.Builder(Ui.dialogContext(activity)).setMessage(queued)
+                                    .setPositiveButton(i18n.t("done"), null)
+                                    .setNeutralButton(i18n.t("tagOutbox"), (d, which) -> TagReportOutbox.show(activity, i18n)).show();
+                        }
                     } catch (Exception failure) { error.setText(i18n.t("tagQueueSaveFailed")); }
                     return;
                 }
-                setBusy(dialog, progress, details, contact, reason, true);
+                setBusy(dialog, progress, details, contact, reason, includeSupportCode, true);
                 error.setText("");
                 new Thread(() -> {
                     String ticket = null, failure = null;
@@ -159,28 +204,32 @@ final class TagReport {
                     String receipt = ticket, message = failure;
                     activity.runOnUiThread(() -> {
                         if (activity.isFinishing() || activity.isDestroyed() || !dialog.isShowing()) return;
-                        setBusy(dialog, progress, details, contact, reason, false);
+                        setBusy(dialog, progress, details, contact, reason, includeSupportCode, false);
                         if (message != null) { error.setText(message); return; }
                         dialog.dismiss();
                         TextView result = new TextView(activity);
-                        result.setText(receipt);
+                        String boundCode = payload.optString("_bound_support_code", payload.optString("support_code"));
+                        SupportTickets.blankCodeConsumed(activity, boundCode, payload.optString("_next_support_code"));
+                        result.setText(boundCode.isEmpty() ? receipt : receipt + "\n" + i18n.tf("supportCodeIs", boundCode));
                         result.setTextIsSelectable(true);
                         result.setPadding(padding, padding, padding, padding);
-                        new AlertDialog.Builder(activity).setTitle(i18n.t("tagReportSent"))
+                        new AlertDialog.Builder(Ui.dialogContext(activity)).setTitle(i18n.t("tagReportSent"))
                                 .setView(result).setPositiveButton(i18n.t("done"), null).show();
                     });
                 }, "tag-report").start();
             });
         });
+        if (submitter == null) SupportTickets.prepareBlankCode(activity, null);
         dialog.show();
     }
 
-    private static void setBusy(AlertDialog dialog, ProgressBar progress, EditText details, EditText contact, Spinner reason, boolean busy) {
+    private static void setBusy(AlertDialog dialog, ProgressBar progress, EditText details, EditText contact, Spinner reason, CheckBox includeSupportCode, boolean busy) {
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(!busy);
         dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setEnabled(!busy);
         details.setEnabled(!busy);
         contact.setEnabled(!busy);
         reason.setEnabled(!busy);
+        includeSupportCode.setEnabled(!busy);
         progress.setVisibility(busy ? View.VISIBLE : View.GONE);
     }
 
@@ -197,7 +246,7 @@ final class TagReport {
                 connection.setRequestMethod("POST");
                 connection.setDoOutput(true);
                 connection.setRequestProperty("Content-Type", "application/json");
-                connection.setRequestProperty("Authorization", "Bearer " + token);
+                if (token != null) connection.setRequestProperty("Authorization", "Bearer " + token);
                 byte[] body = payload.toString().getBytes(StandardCharsets.UTF_8);
                 connection.setFixedLengthStreamingMode(body.length);
                 try (java.io.OutputStream output = connection.getOutputStream()) { output.write(body); }

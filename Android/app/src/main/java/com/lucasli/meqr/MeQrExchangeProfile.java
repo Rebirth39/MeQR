@@ -45,6 +45,9 @@ final class MeQrExchangeProfile {
         profile.subtitle = object.optString("s", object.optString("subtitle", ""));
         profile.intro = object.optString("u", object.optString("intro", profile.subtitle));
         profile.avatarBase64 = object.optString("a", object.optString("avatarJPEGBase64", ""));
+        if (profile.avatarBase64.isEmpty()) {
+            profile.avatarBase64 = MeQrAvatarThumbnail.decodeToJpegBase64(object.optString("at", ""));
+        }
         profile.backgroundBase64 = object.optString("b", object.optString("backgroundJPEGBase64", ""));
         profile.bannerBase64 = object.optString("bn", object.optString("bannerJPEGBase64", ""));
         profile.textColorHex = object.optString("tc", object.optString("textColorHex", ""));

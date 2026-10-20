@@ -5,3 +5,12 @@ local.properties
 *.iml
 .idea/
 .DS_Store
+keystore.properties
+*.keystore
+*.jks
+*.p12
+*.pfx
+*.apk
+*.aab
+.cxx/
+.externalNativeBuild/

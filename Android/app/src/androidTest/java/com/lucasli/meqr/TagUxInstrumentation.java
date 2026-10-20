@@ -36,7 +36,7 @@ public final class TagUxInstrumentation extends Instrumentation {
             check(!RemoteTagCatalog.install(maintenance, RemoteTagCatalog.Source.ONLINE), "Maintenance library accepted");
             check(RemoteTagCatalog.revision().equals(originalRevision) && RemoteTagCatalog.entries().size() == originalCount, "Maintenance replaced valid data");
             org.json.JSONObject online = new org.json.JSONObject(new String(original, java.nio.charset.StandardCharsets.UTF_8));
-            online.put("revision", "test-online");
+            online.put("revision", originalRevision);
             online.remove("changelog");
             check(RemoteTagCatalog.install(online.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8), RemoteTagCatalog.Source.ONLINE), "Online library rejected");
             I18n i18n = new I18n(getTargetContext());

@@ -18,16 +18,59 @@ final class Ui {
     static final int SKY = Color.rgb(161, 209, 234);
 
     // Surfaces (deep, calm dark theme)
-    static final int BG = Color.rgb(13, 17, 23);
-    static final int BG_TOP = Color.rgb(22, 38, 52);
-    static final int SURFACE = Color.rgb(23, 29, 38);
-    static final int SURFACE_2 = Color.rgb(31, 39, 50);
-    static final int BORDER = Color.rgb(43, 54, 68);
-    static final int TEXT = Color.rgb(242, 245, 249);
-    static final int MUTED = Color.rgb(150, 162, 178);
-    static final int DIM = Color.rgb(108, 120, 138);
+    static int BG = Color.rgb(13, 17, 23);
+    static int BG_TOP = Color.rgb(22, 38, 52);
+    static int SURFACE = Color.rgb(23, 29, 38);
+    static int SURFACE_2 = Color.rgb(31, 39, 50);
+    static int BORDER = Color.rgb(43, 54, 68);
+    static int TEXT = Color.rgb(242, 245, 249);
+    static int MUTED = Color.rgb(150, 162, 178);
+    static int DIM = Color.rgb(108, 120, 138);
+
+    // Light palette
+    private static final int LIGHT_BG = Color.rgb(244, 246, 248);
+    private static final int LIGHT_BG_TOP = Color.rgb(255, 255, 255);
+    private static final int LIGHT_SURFACE = Color.rgb(255, 255, 255);
+    private static final int LIGHT_SURFACE_2 = Color.rgb(247, 249, 251);
+    private static final int LIGHT_BORDER = Color.rgb(227, 231, 236);
+    private static final int LIGHT_TEXT = Color.rgb(27, 31, 36);
+    private static final int LIGHT_MUTED = Color.rgb(100, 112, 127);
+    private static final int LIGHT_DIM = Color.rgb(154, 164, 176);
+
+    private static final int DARK_BG = Color.rgb(13, 17, 23);
+    private static final int DARK_BG_TOP = Color.rgb(22, 38, 52);
+    private static final int DARK_SURFACE = Color.rgb(23, 29, 38);
+    private static final int DARK_SURFACE_2 = Color.rgb(31, 39, 50);
+    private static final int DARK_BORDER = Color.rgb(43, 54, 68);
+    private static final int DARK_TEXT = Color.rgb(242, 245, 249);
+    private static final int DARK_MUTED = Color.rgb(150, 162, 178);
+    private static final int DARK_DIM = Color.rgb(108, 120, 138);
+
+    static void applyTheme(boolean dark) {
+        BG = dark ? DARK_BG : LIGHT_BG;
+        BG_TOP = dark ? DARK_BG_TOP : LIGHT_BG_TOP;
+        SURFACE = dark ? DARK_SURFACE : LIGHT_SURFACE;
+        SURFACE_2 = dark ? DARK_SURFACE_2 : LIGHT_SURFACE_2;
+        BORDER = dark ? DARK_BORDER : LIGHT_BORDER;
+        TEXT = dark ? DARK_TEXT : LIGHT_TEXT;
+        MUTED = dark ? DARK_MUTED : LIGHT_MUTED;
+        DIM = dark ? DARK_DIM : LIGHT_DIM;
+    }
 
     private Ui() {
+    }
+
+    static Context dialogContext(Context context) {
+        boolean dark = TEXT == DARK_TEXT;
+        android.content.res.Configuration configuration = new android.content.res.Configuration(
+                context.getResources().getConfiguration());
+        configuration.uiMode = (configuration.uiMode & ~android.content.res.Configuration.UI_MODE_NIGHT_MASK)
+                | (dark ? android.content.res.Configuration.UI_MODE_NIGHT_YES
+                        : android.content.res.Configuration.UI_MODE_NIGHT_NO);
+        android.view.ContextThemeWrapper themed = new android.view.ContextThemeWrapper(context,
+                dark ? R.style.AppDialogDark : R.style.AppDialogLight);
+        themed.applyOverrideConfiguration(configuration);
+        return themed;
     }
 
     static GradientDrawable rounded(int color, int radius) {

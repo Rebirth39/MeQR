@@ -24,7 +24,7 @@ public final class TagCatalogInstrumentation extends Instrumentation {
             }
             RemoteTagCatalog.install(data, RemoteTagCatalog.Source.BUNDLED);
             JSONArray entries = new JSONObject(new String(data, java.nio.charset.StandardCharsets.UTF_8)).getJSONArray("entries");
-            check(entries.length() == 450, "Entry count");
+            check(entries.length() > 0 && RemoteTagCatalog.entries().size() == entries.length(), "Complete entry count");
             for (int i = 0; i < entries.length(); i++) {
                 RemoteTagCatalog.Entry entry = RemoteTagCatalog.Entry.from(entries.getJSONObject(i));
                 check(entry.colors.length > 0 && entry.colors.length <= 6, "Complete preset: " + entry.id);
@@ -58,7 +58,8 @@ public final class TagCatalogInstrumentation extends Instrumentation {
             outbox();
             check(new TagTextContrast(new int[]{0xFF000000, 0xFFFFFFFF}).needsOutline, "Mixed extrema require outline");
             check(!new TagTextContrast(new int[]{0xFFFFFFFF, 0xFFFFFFAA}).needsOutline, "Light palette uses plain dark ink");
-            result.putString("stream", "PASS: 450 entries x 5 names, palettes, identity, solid/custom modes, ambiguous aliases, six colors\n");
+            TagCatalogIntegrityChecks.run(data, new I18n(getTargetContext()));
+            result.putString("stream", "PASS: " + entries.length() + " entries x 5 names, palettes, identity, modes, catalog integrity and downgrade protection\n");
             finish(Activity.RESULT_OK, result);
         } catch (Throwable error) {
             result.putString("stream", android.util.Log.getStackTraceString(error));
@@ -93,6 +94,11 @@ public final class TagCatalogInstrumentation extends Instrumentation {
         renamed.tagColorOverrides.remove("Renamed Sekai");
         serialized = renamed.toJson();
         for (int i = entries.length() - 1; i >= 0; i--) if (entries.getJSONObject(i).getString("id").equals("tag-0001")) entries.remove(i);
+        // A valid removal also removes dangling parent links from the fixture.
+        for (int i = 0; i < entries.length(); i++) {
+            JSONObject entry = entries.getJSONObject(i);
+            if (entry.optString("parentID").equals("tag-0001")) entry.remove("parentID");
+        }
         RemoteTagCatalog.install(document.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8), RemoteTagCatalog.Source.BUNDLED);
         MeQrProfile removed = MeQrProfile.fromJson(serialized); removed.reconcileTags("ja");
         check(removed.tags.get(0).equals("Renamed Sekai"), "Removed name retained");

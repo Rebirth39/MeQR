@@ -20,8 +20,8 @@ import java.util.Map;
 import java.util.Set;
 
 final class RemoteTagCatalog {
-    // Enable in the September 12 release after online catalog maintenance is complete.
-    static final boolean ONLINE_ENABLED = false;
+    // Enabled in the 1.2.0 release: online catalog maintenance is complete.
+    static final boolean ONLINE_ENABLED = true;
     private static final String CATALOG_URL = "https://meqrcode.cn/config/tags-v1.json";
     enum Source { BUNDLED, CACHED, ONLINE }
     private static volatile Source source = Source.BUNDLED;
@@ -31,6 +31,7 @@ final class RemoteTagCatalog {
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
     private static volatile List<Entry> entries = Collections.emptyList();
     private static volatile List<Category> categories = Collections.emptyList();
+    private static volatile List<Group> groups = Collections.emptyList();
     private static volatile Map<String, Entry> entriesByKey = Collections.emptyMap();
     private static volatile Set<String> ambiguousKeys = Collections.emptySet();
     private static volatile Map<Category, List<Entry>> entriesByCategory = Collections.emptyMap();
@@ -73,13 +74,16 @@ final class RemoteTagCatalog {
     static String revision() {
         return revision;
     }
+    static List<Group> groups(String categoryID) { List<Group> out=new ArrayList<>(); for(Group g:groups) if(g.categoryID.equals(categoryID)) out.add(g); return out; }
+
+    static Group groupFor(String entryID) { for(Group g:groups) if(g.contains(entryID)) return g; return null; }
 
     static synchronized void refresh(Context context, boolean force, Runnable completion) {
         if (loading) {
             if (completion != null) completions.add(completion);
             return;
         }
-        if (!force && !entries.isEmpty() && android.os.SystemClock.elapsedRealtime() - lastAttempt < 900000) {
+        if (!force && !entries.isEmpty() && android.os.SystemClock.elapsedRealtime() - lastAttempt < 5000) {
             if (completion != null) {
                 MAIN.post(completion);
             }
@@ -165,6 +169,10 @@ final class RemoteTagCatalog {
             throw new IllegalStateException("Unsupported Tag catalog");
         }
         if (document.optString("revision").toLowerCase(java.util.Locale.ROOT).startsWith("maintenance")) return false;
+        validate(document);
+        if (!revision.isEmpty() && compareRevisions(document.getString("revision"), revision) < 0) {
+            throw new IllegalStateException("Older Tag catalog");
+        }
         JSONArray rawEntries = document.optJSONArray("entries");
         if (rawEntries == null || rawEntries.length() == 0) {
             throw new IllegalStateException("Empty Tag catalog");
@@ -200,6 +208,9 @@ final class RemoteTagCatalog {
         }
 
         Map<String, Entry> parsedByKey = new HashMap<>();
+        List<Group> parsedGroups = new ArrayList<>();
+        JSONArray rawGroups = document.optJSONArray("groups");
+        if (rawGroups != null) for (int i=0;i<rawGroups.length();i++) { Group g=Group.from(rawGroups.optJSONObject(i)); if(g!=null) parsedGroups.add(g); }
         Set<String> displayKeys = new HashSet<>();
         Set<String> parsedAmbiguous = new HashSet<>();
         // Full names take priority; shared nicknames remain search-only.
@@ -230,15 +241,23 @@ final class RemoteTagCatalog {
         }
         for (Entry entry : parsed) {
             List<String> context = new ArrayList<>();
+            Set<String> visited = new HashSet<>();
+            String parentID = entry.parentID;
+            while (!parentID.isEmpty() && visited.add(parentID)) {
+                Entry parent = null;
+                for (Entry candidate : parsed) if (candidate.id.equals(parentID)) { parent = candidate; break; }
+                if (parent == null) break;
+                context.addAll(parent.searchableValues());
+                parentID = parent.parentID;
+            }
             for (Category category : parsedCategories) {
                 if (!category.contains(entry.id)) continue;
                 context.addAll(category.names.all());
+                List<Entry> works = new ArrayList<>();
                 for (Entry work : parsedByCategory.get(category)) {
-                    if (work.kind.equals("work")) context.addAll(work.searchableValues());
+                    if (work.kind.equals("work")) works.add(work);
                 }
-            }
-            for (Entry parent : parsed) {
-                if (parent.id.equals(entry.parentID)) context.addAll(parent.searchableValues());
+                if (visited.isEmpty() && works.size() == 1) context.addAll(works.get(0).searchableValues());
             }
             for (String value : context) entry.contextKeys.add(CardTagIndex.normalizedKey(value));
         }
@@ -253,6 +272,7 @@ final class RemoteTagCatalog {
         changelog = Collections.unmodifiableList(parsedChanges);
         entries = Collections.unmodifiableList(parsed);
         categories = Collections.unmodifiableList(parsedCategories);
+        groups = Collections.unmodifiableList(parsedGroups);
         entriesByKey = Collections.unmodifiableMap(parsedByKey);
         ambiguousKeys = Collections.unmodifiableSet(parsedAmbiguous);
         entriesByCategory = Collections.unmodifiableMap(parsedByCategory);
@@ -260,6 +280,103 @@ final class RemoteTagCatalog {
         source = origin;
         errorMessage = null;
         return true;
+    }
+
+    // Validate raw values before forgiving display parsers can skip or repair them.
+    private static void validate(JSONObject document) throws Exception {
+        require(document.getString("revision").matches("[0-9]+(?:\\.[0-9]+)+"));
+        JSONArray raw = document.getJSONArray("entries");
+        require(raw.length() > 0);
+        Map<String, JSONObject> byID = new HashMap<>();
+        for (int i = 0; i < raw.length(); i++) {
+            JSONObject entry = raw.getJSONObject(i);
+            String id = entry.getString("id");
+            require(!id.trim().isEmpty() && !byID.containsKey(id));
+            byID.put(id, entry);
+            validateNames(entry.getJSONObject("names"));
+            JSONArray colors = entry.getJSONArray("colors");
+            require(colors.length() >= 1 && colors.length() <= 6);
+            Set<String> palette = new HashSet<>();
+            for (int j = 0; j < colors.length(); j++) {
+                String color = colors.getString(j);
+                require(color.matches("#[0-9a-fA-F]{6}"));
+                palette.add(color.toUpperCase(java.util.Locale.ROOT));
+            }
+            if (entry.has("solidColor") && !entry.isNull("solidColor"))
+                require(palette.contains(entry.getString("solidColor").toUpperCase(java.util.Locale.ROOT)));
+        }
+        JSONArray categoryArray = document.getJSONArray("categories");
+        require(categoryArray.length() > 0);
+        Map<String, Category> categoryMap = new HashMap<>();
+        for (int i = 0; i < categoryArray.length(); i++) {
+            JSONObject rawCategory = categoryArray.getJSONObject(i);
+            validateNames(rawCategory.getJSONObject("names"));
+            validateRanges(rawCategory.getJSONArray("ranges"));
+            Category category = Category.from(rawCategory);
+            require(category != null && !category.id.trim().isEmpty() && !categoryMap.containsKey(category.id));
+            categoryMap.put(category.id, category);
+        }
+        for (String id : byID.keySet()) {
+            int coverage = 0;
+            for (Category category : categoryMap.values()) if (category.contains(id)) coverage++;
+            require(coverage == 1);
+            Set<String> visited = new HashSet<>();
+            String cursor = id;
+            while (!cursor.isEmpty()) {
+                require(visited.add(cursor) && byID.containsKey(cursor));
+                cursor = byID.get(cursor).optString("parentID", "");
+            }
+        }
+        Set<String> groupIDs = new HashSet<>();
+        JSONArray groupArray = document.optJSONArray("groups");
+        if (document.has("groups")) require(groupArray != null);
+        if (groupArray != null) for (int i = 0; i < groupArray.length(); i++) {
+            JSONObject rawGroup = groupArray.getJSONObject(i);
+            validateNames(rawGroup.getJSONObject("names"));
+            validateRanges(rawGroup.getJSONArray("ranges"));
+            Group group = Group.from(rawGroup);
+            require(group != null && !group.id.trim().isEmpty() && groupIDs.add(group.id));
+            Category category = categoryMap.get(group.categoryID);
+            require(category != null);
+            for (String id : byID.keySet()) if (group.contains(id)) require(category.contains(id));
+        }
+    }
+
+    private static void validateNames(JSONObject names) throws Exception {
+        for (String key : new String[]{"zhHans", "zhHantHK", "zhHantTW", "en", "ja"})
+            require(!names.getString(key).trim().isEmpty());
+    }
+
+    private static void validateRanges(JSONArray ranges) throws Exception {
+        require(ranges.length() > 0);
+        for (int i = 0; i < ranges.length(); i++) {
+            JSONObject range = ranges.getJSONObject(i);
+            String start = range.getString("start"), end = range.getString("end");
+            require(!start.trim().isEmpty() && start.compareTo(end) <= 0);
+        }
+    }
+
+    private static void require(boolean valid) {
+        if (!valid) throw new IllegalStateException("Invalid Tag catalog");
+    }
+
+    private static int compareRevisions(String left, String right) {
+        String[] a = left.split("\\."), b = right.split("\\.");
+        for (int i = 0; i < Math.max(a.length, b.length); i++) {
+            java.math.BigInteger x = new java.math.BigInteger(i < a.length ? a[i] : "0");
+            java.math.BigInteger y = new java.math.BigInteger(i < b.length ? b[i] : "0");
+            int result = x.compareTo(y);
+            if (result != 0) return result;
+        }
+        return 0;
+    }
+
+    static final class Group {
+        final String id, categoryID; final Names names; final List<Category.Range> ranges;
+        Group(String i,String c,Names n,List<Category.Range> r){id=i;categoryID=c;names=n;ranges=r;}
+        static Group from(JSONObject o){if(o==null)return null; String i=o.optString("id",""),c=o.optString("categoryID",""); JSONObject n=o.optJSONObject("names"); JSONArray a=o.optJSONArray("ranges"); if(i.isEmpty()||c.isEmpty()||n==null||a==null)return null; List<Category.Range> r=new ArrayList<>();for(int j=0;j<a.length();j++){Category.Range x=Category.Range.from(a.optJSONObject(j));if(x!=null)r.add(x);}return r.isEmpty()?null:new Group(i,c,Names.from(n),r);}
+        boolean contains(String id){for(Category.Range r:ranges)if(r.contains(id))return true;return false;}
+        String display(String l){return names.display(l);}
     }
 
     private static void addExactKey(Map<String, Entry> index, Set<String> ambiguous, String key, Entry entry) {
@@ -319,8 +436,10 @@ final class RemoteTagCatalog {
             if (category.contains(entry.id)) { categoryName = category.display(i18n.resolvedLanguage()); break; }
         }
         Entry parent = entryByID(entry.parentID);
+        Group group = groupFor(entry.id);
         String kind = i18n.t(entry.kind.equals("work") ? "tagKindWork" : entry.kind.equals("group") ? "tagKindGroup" : entry.kind.equals("rating") ? "tagKindRating" : "tagKindCharacter");
-        return entry.kind.equals("work") ? kind : categoryName + " · " + (parent == null ? kind : parent.display(i18n.resolvedLanguage()));
+        String detail = group != null ? group.display(i18n.resolvedLanguage()) : parent == null ? kind : parent.display(i18n.resolvedLanguage());
+        return entry.kind.equals("work") ? kind : categoryName + " · " + detail;
     }
 
     static int[] colorsFor(String tag) {
@@ -363,9 +482,9 @@ final class RemoteTagCatalog {
     static final class Category {
         final String id;
         final Names names;
-        final List<Range> ranges;
+        final List<Category.Range> ranges;
 
-        Category(String id, Names names, List<Range> ranges) {
+        Category(String id, Names names, List<Category.Range> ranges) {
             this.id = id;
             this.names = names;
             this.ranges = ranges;
@@ -381,7 +500,7 @@ final class RemoteTagCatalog {
             if (names.zhHans.isEmpty()) {
                 return null;
             }
-            List<Range> ranges = new ArrayList<>();
+            List<Category.Range> ranges = new ArrayList<>();
             JSONArray rawRanges = object.optJSONArray("ranges");
             if (rawRanges != null) {
                 for (int index = 0; index < rawRanges.length(); index++) {
@@ -468,6 +587,9 @@ final class RemoteTagCatalog {
                 if (normalized != null && parsedColors.size() < 6) {
                     parsedColors.add(android.graphics.Color.parseColor(normalized));
                 }
+            }
+            if (parsedColors.isEmpty()) {
+                parsedColors.add(0xFF6F7582);
             }
             this.colors = new int[parsedColors.size()];
             for (int index = 0; index < parsedColors.size(); index++) {

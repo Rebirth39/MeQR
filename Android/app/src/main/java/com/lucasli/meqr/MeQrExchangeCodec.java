@@ -24,11 +24,38 @@ final class MeQrExchangeCodec {
     }
 
     static String offlinePayload(MeQrProfile profile, I18n i18n) throws Exception {
-        return encodePayload(profileJson(profile, i18n, 1, 0));
+        return offlinePayload(profile, i18n, null);
+    }
+
+    static String offlinePayload(MeQrProfile profile, I18n i18n, MeQrExchangeSettings settings) throws Exception {
+        java.util.List<MeQrItem> selected = null;
+        if (settings != null) {
+            selected = new java.util.ArrayList<>();
+            MeQrItem item = settings.offlineItem(profile);
+            if (item != null) selected.add(item);
+        }
+        return encodePayload(profileJson(profile, i18n, settings == null ? null : settings.shortIntroduction,
+                selected, 1, 0));
+    }
+
+    static JSONObject offlineProfile(MeQrProfile profile, I18n i18n) throws Exception {
+        return profileJson(profile, i18n, null, null, 1, 0);
+    }
+
+    static JSONObject offlineProfile(MeQrProfile profile, I18n i18n, MeQrExchangeSettings settings) throws Exception {
+        java.util.List<MeQrItem> selected = new java.util.ArrayList<>();
+        MeQrItem item = settings.offlineItem(profile);
+        if (item != null) selected.add(item);
+        return profileJson(profile, i18n, settings.shortIntroduction, selected, 1, 0);
     }
 
     static JSONObject onlineProfile(MeQrProfile profile, I18n i18n) throws Exception {
-        JSONObject root = profileJson(profile, i18n, 3, ONLINE_AVATAR_TARGET_BYTES);
+        return onlineProfile(profile, i18n, null);
+    }
+
+    static JSONObject onlineProfile(MeQrProfile profile, I18n i18n, MeQrExchangeSettings settings) throws Exception {
+        JSONObject root = profileJson(profile, i18n, null,
+                settings == null ? null : settings.onlineItems(profile), 3, ONLINE_AVATAR_TARGET_BYTES);
         String banner = imageBase64(profile.bannerPath, 80_000, 1280);
         if (!banner.isEmpty()) root.put("bn", banner);
         // Base64 expands image bytes; leave room below the server's 900 KiB limit.
@@ -139,22 +166,29 @@ final class MeQrExchangeCodec {
         }
     }
 
-    private static JSONObject profileJson(MeQrProfile profile, I18n i18n, int maxProfiles, int avatarTargetBytes) throws Exception {
+    private static JSONObject profileJson(MeQrProfile profile, I18n i18n, String shortIntroduction,
+                                          java.util.List<MeQrItem> selectedItems, int maxProfiles, int avatarTargetBytes) throws Exception {
         JSONObject root = new JSONObject();
         root.put("i", safeUuid(profile.id));
         root.put("v", 1);
         root.put("n", safe(profile.name));
-        root.put("s", maxProfiles == 1 ? shortSubtitle(profile.subtitle) : safe(profile.subtitle));
+        root.put("s", maxProfiles == 1
+                ? (shortIntroduction == null ? shortSubtitle(profile.subtitle) : MeQrExchangeSettings.limitedShortIntroduction(shortIntroduction))
+                : safe(profile.subtitle));
 
         String avatar = avatarTargetBytes > 0 ? tinyAvatarBase64(profile.avatarPath, avatarTargetBytes) : "";
         if (!avatar.isEmpty()) {
             root.put("a", avatar);
+        } else if (avatarTargetBytes == 0) {
+            String thumbnail = MeQrAvatarThumbnail.encodeBase64(profile.avatarPath);
+            if (!thumbnail.isEmpty()) root.put("at", thumbnail);
         }
 
         JSONArray platforms = new JSONArray();
-        int itemLimit = Math.min(maxProfiles, profile.qrItems.size());
+        java.util.List<MeQrItem> items = selectedItems == null ? profile.qrItems : selectedItems;
+        int itemLimit = Math.min(maxProfiles, items.size());
         for (int i = 0; i < itemLimit; i++) {
-            MeQrItem item = profile.qrItems.get(i);
+            MeQrItem item = items.get(i);
             JSONObject platform = new JSONObject();
             platform.put("t", safe(item.platform));
             platform.put("n", safe(item.platformDisplayName(i18n)));

@@ -14,6 +14,7 @@ final class TagReference {
     int solid;
     String override;
     int textWeight = TagTextWeight.REGULAR;
+    TagPair pairing;
 
     TagReference(String name) {
         fallbackName = lastName = name;
@@ -24,11 +25,13 @@ final class TagReference {
     }
 
     String display(String language) {
+        if (pairing != null) return pairing.display(language);
         RemoteTagCatalog.Entry entry = RemoteTagCatalog.entryByID(catalogID);
         return entry == null ? fallbackName : entry.display(language);
     }
 
     String modeFor(String value) {
+        if (pairing != null) return "preset";
         if (CardTagColorPalette.isSolidOverride(value)) return "solid";
         if (value != null && (value.equals("@preset") || value.startsWith("@preset|"))) return "preset";
         if (CardTagColorPalette.parseColors(value).length > 0) return "custom";
@@ -43,6 +46,7 @@ final class TagReference {
     }
 
     int[] colors(String value) {
+        if (pairing != null) return pairing.colors();
         if (CardTagColorPalette.modeFor(lastName, value).equals("custom")) return CardTagColorPalette.colorsFor(lastName, value);
         RemoteTagCatalog.Entry entry = RemoteTagCatalog.entryByID(catalogID);
         if (CardTagColorPalette.isSolidOverride(value)) return new int[]{entry == null || entry.solidColor == null ? solid : entry.solidColor};
@@ -53,7 +57,7 @@ final class TagReference {
         JSONArray palette = new JSONArray(); for (int color : colors) palette.put(CardTagColorPalette.hex(color));
         return new JSONObject().put("catalogID", catalogID).put("localID", localID).put("fallbackName", fallbackName)
                 .put("lastName", lastName).put("colors", palette).put("solidColor", CardTagColorPalette.hex(solid)).put("override", override)
-                .put("textWeight", TagTextWeight.normalize(textWeight));
+                .put("textWeight", TagTextWeight.normalize(textWeight)).put("pairing", pairing == null ? null : pairing.toJson());
     }
 
     static TagReference fromJson(JSONObject object) {
@@ -68,6 +72,7 @@ final class TagReference {
         value.solid = CardTagColorPalette.parseHex(object.optString("solidColor"), value.colors[0]);
         value.override = object.has("override") ? object.optString("override", null) : null;
         value.textWeight = TagTextWeight.normalize(object.optInt("textWeight", TagTextWeight.REGULAR));
+        value.pairing = TagPair.fromJson(object.optJSONObject("pairing"));
         return value;
     }
 }
