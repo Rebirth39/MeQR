@@ -46,6 +46,9 @@ struct EditClusterView: View {
     @State private var saveError: String?
     @State private var showSaveError = false
     @State private var pendingDeletedProfileIDs: Set<UUID> = []
+    @State private var isDirty = false
+    @State private var isLoading = false
+    @State private var showDiscardConfirmation = false
 
     private var sortedProfiles: [QRProfile] {
         cluster.profiles
@@ -66,9 +69,15 @@ struct EditClusterView: View {
             }
             .navigationTitle(L.editCluster)
             .navigationBarTitleDisplayMode(.inline)
+            .alert(L.discardChangesTitle, isPresented: $showDiscardConfirmation) {
+                Button(L.discardChanges, role: .destructive) { isDirty = false; dismiss() }
+                Button(L.keepEditing, role: .cancel) {}
+            } message: {
+                Text(L.discardChangesMessage)
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(L.cancel) { dismiss() }
+                    Button(L.cancel) { attemptCancel() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(L.save) { save() }
@@ -76,6 +85,26 @@ struct EditClusterView: View {
                 }
             }
             .onAppear { loadCluster() }
+            .interactiveDismissDisabled(isDirty)
+            .onChange(of: name) { _, _ in markDirty() }
+            .onChange(of: subtitle) { _, _ in markDirty() }
+            .onChange(of: textColor) { _, _ in markDirty() }
+            .onChange(of: backgroundColor) { _, _ in markDirty() }
+            .onChange(of: qrColor) { _, _ in markDirty() }
+            .onChange(of: templateStyle) { _, _ in markDirty() }
+            .onChange(of: passSubtitle) { _, _ in markDirty() }
+            .onChange(of: tagInput) { _, _ in markDirty() }
+            .onChange(of: tagColorOverrides) { _, _ in markDirty() }
+            .onChange(of: cornerRadius) { _, _ in markDirty() }
+            .onChange(of: cardOpacity) { _, _ in markDirty() }
+            .onChange(of: cardGlassEnabled) { _, _ in markDirty() }
+            .onChange(of: cardGlassStrength) { _, _ in markDirty() }
+            .onChange(of: widgetProfileIndex) { _, _ in markDirty() }
+            .onChange(of: widgetUseClusterBackground) { _, _ in markDirty() }
+            .onChange(of: widgetOpacity) { _, _ in markDirty() }
+            .onChange(of: widgetUseCustomBackground) { _, _ in markDirty() }
+            .onChange(of: pendingDeletedProfileIDs) { _, _ in markDirty() }
+            .onChange(of: sortedProfiles.count) { _, _ in markDirty() }
             .onChange(of: avatarPhotosItem) { _, newItem in
                 Task {
                     guard let newItem else { return }
@@ -108,6 +137,7 @@ struct EditClusterView: View {
                     sourceImage: item.image,
                     onDone: { cropped in
                         avatarImage = cropped
+                        markDirty()
                         rawAvatarImage = nil
                     },
                     onCancel: {
@@ -121,6 +151,7 @@ struct EditClusterView: View {
                     cropAspectRatio: nil,
                     onDone: { cropped in
                         backgroundImage = cropped
+                        markDirty()
                         rawBackgroundImage = nil
                     },
                     onCancel: {
@@ -134,6 +165,7 @@ struct EditClusterView: View {
                     cropAspectRatio: 16.0 / 9.0,
                     onDone: { cropped in
                         rhodesBannerImage = cropped
+                        markDirty()
                         rawRhodesBannerImage = nil
                     },
                     onCancel: {
@@ -384,6 +416,7 @@ struct EditClusterView: View {
                     Button(L.removeBackgroundImage) {
                         backgroundImage = nil
                         backgroundPhotosItem = nil
+                        markDirty()
                     }
                     .foregroundStyle(.red)
                 }
@@ -401,6 +434,7 @@ struct EditClusterView: View {
                         Button(L.removePassBanner) {
                             rhodesBannerImage = nil
                             rhodesBannerPhotosItem = nil
+                            markDirty()
                         }
                         .foregroundStyle(.red)
                     }
@@ -469,7 +503,16 @@ struct EditClusterView: View {
 
     // MARK: - Actions
 
+    private func markDirty() {
+        if !isLoading { isDirty = true }
+    }
+
+    private func attemptCancel() {
+        if isDirty { showDiscardConfirmation = true } else { dismiss() }
+    }
+
     private func loadCluster() {
+        isLoading = true
         name = cluster.name
         subtitle = cluster.subtitle
         textColor = cluster.textColor
@@ -500,6 +543,8 @@ struct EditClusterView: View {
             widgetBackgroundImage = UIImage(data: data)
             widgetUseCustomBackground = true
         }
+        isDirty = false
+        DispatchQueue.main.async { isLoading = false; isDirty = false }
     }
 
     private func save() {

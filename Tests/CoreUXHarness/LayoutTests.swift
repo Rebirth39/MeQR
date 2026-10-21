@@ -33,7 +33,7 @@ final class LayoutTests: XCTestCase {
         openMenu(app, action: "编辑卡片")
         deleteRow(app, content: "https://u.wechat.com/audit")
         XCTAssertTrue(app.staticTexts["audit-store"].label.contains("profiles=4"))
-        app.navigationBars["编辑卡片"].buttons["取消"].tap()
+        cancelAndDiscard(app)
         XCTAssertTrue(app.staticTexts["Audit One"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.buttons["微信"].exists)
         openMenu(app, action: "编辑卡片")
@@ -62,7 +62,7 @@ final class LayoutTests: XCTestCase {
         deleteRow(app, content: "https://qm.qq.com/q/audit")
         XCTAssertTrue(app.navigationBars["编辑卡片"].exists)
         XCTAssertTrue(app.staticTexts["audit-store"].label.contains("clusters=2;profiles=2"))
-        app.navigationBars["编辑卡片"].buttons["取消"].tap()
+        cancelAndDiscard(app)
         XCTAssertTrue(app.staticTexts["Audit One"].waitForExistence(timeout: 3))
         capture("last-qr-cancel-keeps-card", app)
     }
@@ -89,8 +89,34 @@ final class LayoutTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["audit-store"].label.contains("clusters=2;profiles=2"))
         capture("synced-card-delete-blocked", app)
         app.alerts.buttons.firstMatch.tap()
+        cancelAndDiscard(app)
+        XCTAssertTrue(app.staticTexts["Audit One"].waitForExistence(timeout: 3))
+    }
+
+    func testEditCancelConfirmsDiscard() {
+        let app = launch()
+        openMenu(app, action: "编辑卡片")
+        XCTAssertTrue(app.navigationBars["编辑卡片"].waitForExistence(timeout: 3))
         app.navigationBars["编辑卡片"].buttons["取消"].tap()
         XCTAssertTrue(app.staticTexts["Audit One"].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.alerts.firstMatch.exists, "A clean edit must close without a prompt")
+
+        openMenu(app, action: "编辑卡片")
+        let name = app.textFields.firstMatch
+        XCTAssertTrue(name.waitForExistence(timeout: 3))
+        name.tap()
+        name.typeText("X")
+        app.navigationBars["编辑卡片"].buttons["取消"].tap()
+        XCTAssertTrue(app.alerts.firstMatch.waitForExistence(timeout: 3))
+        app.alerts.buttons["继续编辑"].tap()
+        XCTAssertTrue(app.navigationBars["编辑卡片"].exists)
+        app.swipeDown()
+        XCTAssertTrue(app.navigationBars["编辑卡片"].exists, "Dirty edits must not dismiss by swipe")
+        app.navigationBars["编辑卡片"].buttons["取消"].tap()
+        XCTAssertTrue(app.alerts.firstMatch.waitForExistence(timeout: 3))
+        app.alerts.buttons["放弃更改"].tap()
+        XCTAssertTrue(app.staticTexts["Audit One"].waitForExistence(timeout: 3))
+        capture("edit-cancel-confirms-discard", app)
     }
 
     private func launch(_ arguments: [String] = []) -> XCUIApplication {
@@ -116,6 +142,15 @@ final class LayoutTests: XCTestCase {
         )).firstMatch
         menu.tap()
         app.buttons[action].tap()
+    }
+
+    private func cancelAndDiscard(_ app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+        app.navigationBars["编辑卡片"].buttons["取消"].tap()
+        if app.alerts.firstMatch.waitForExistence(timeout: 1.5) {
+            let discard = app.alerts.buttons["放弃更改"].exists
+                ? app.alerts.buttons["放弃更改"] : app.alerts.buttons.element(boundBy: 0)
+            discard.tap()
+        }
     }
 
     private func row(_ app: XCUIApplication, content: String) -> XCUIElement {

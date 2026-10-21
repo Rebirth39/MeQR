@@ -46,6 +46,10 @@ struct L {
     static var tagReportTicket: String { tr("工单号", "工單編號", "工單編號", "Ticket ID", "受付番号") }
     static var tagReportFailed: String { tr("未能确认提交结果，请重试。当前内容已保留。", "未能確認提交結果，請重試。目前內容已保留。", "未能確認送出結果，請重試。目前內容已保留。", "Could not confirm submission. Your text is retained; please retry.", "送信結果を確認できませんでした。入力内容は保持されています。再試行してください。") }
     static var tagReportLimited: String { tr("提交过于频繁，请稍后重试。", "提交過於頻繁，請稍後重試。", "送出過於頻繁，請稍後重試。", "Too many submissions. Please try again later.", "送信回数が多すぎます。しばらくしてから再試行してください。") }
+    static var discardChangesTitle: String { tr("放弃未保存的更改？", "放棄未儲存的變更？", "放棄未儲存的變更？", "Discard Unsaved Changes?", "未保存の変更を破棄しますか？") }
+    static var discardChangesMessage: String { tr("退出后，本次编辑的内容不会保存。", "退出後，本次編輯的內容不會儲存。", "退出後，本次編輯的內容不會儲存。", "Your edits will not be saved if you leave.", "終了すると、今回の編集内容は保存されません。") }
+    static var discardChanges: String { tr("放弃更改", "放棄變更", "放棄變更", "Discard Changes", "変更を破棄") }
+    static var keepEditing: String { tr("继续编辑", "繼續編輯", "繼續編輯", "Keep Editing", "編集を続ける") }
     static var tagReportDiscard: String { tr("放弃本次上报？", "放棄本次回報？", "放棄本次回報？", "Discard This Report?", "報告を破棄しますか？") }
 
     static var tagAppearance: String { tr("标签样式", "標籤樣式", "標籤樣式", "Tag style", "タグのスタイル") }

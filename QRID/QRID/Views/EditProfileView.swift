@@ -18,6 +18,9 @@ struct EditProfileView: View {
     @State private var showDecodeError = false
     @State private var saveError: String?
     @State private var showSaveError = false
+    @State private var isDirty = false
+    @State private var isLoading = false
+    @State private var showDiscardConfirmation = false
 
     var body: some View {
         NavigationStack {
@@ -29,9 +32,15 @@ struct EditProfileView: View {
             }
             .navigationTitle(L.editQRInCluster)
             .navigationBarTitleDisplayMode(.inline)
+            .alert(L.discardChangesTitle, isPresented: $showDiscardConfirmation) {
+                Button(L.discardChanges, role: .destructive) { isDirty = false; dismiss() }
+                Button(L.keepEditing, role: .cancel) {}
+            } message: {
+                Text(L.discardChangesMessage)
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(L.cancel) { dismiss() }
+                    Button(L.cancel) { attemptCancel() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(L.save) { save() }
@@ -39,6 +48,10 @@ struct EditProfileView: View {
                 }
             }
             .onAppear { loadProfile() }
+            .interactiveDismissDisabled(isDirty)
+            .onChange(of: platformType) { _, _ in markDirty() }
+            .onChange(of: customPlatformName) { _, _ in markDirty() }
+            .onChange(of: qrContent) { _, _ in markDirty() }
             .onChange(of: qrPhotosItem) { _, newItem in
                 Task {
                     guard let newItem else { return }
@@ -215,10 +228,21 @@ struct EditProfileView: View {
 
     // MARK: - Actions
 
+    private func markDirty() {
+        if !isLoading { isDirty = true }
+    }
+
+    private func attemptCancel() {
+        if isDirty { showDiscardConfirmation = true } else { dismiss() }
+    }
+
     private func loadProfile() {
+        isLoading = true
         platformType = profile.platformType
         customPlatformName = profile.customPlatformName ?? ""
         qrContent = profile.qrContent
+        isDirty = false
+        DispatchQueue.main.async { isLoading = false; isDirty = false }
     }
 
     @MainActor
