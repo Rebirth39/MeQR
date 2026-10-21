@@ -1,8 +1,52 @@
 {
   "schemaVersion": 1,
-  "revision": "2026.10.08.1",
-  "updatedAt": "2026-10-08",
+  "revision": "2026.10.16.1",
+  "updatedAt": "2026-10-16",
   "changelog": [
+    {
+      "revision": "2026.10.16.1",
+      "date": "2026-10-16",
+      "summary": {
+        "zhHans": "新增崩坏：星穹铁道角色青雀与绯英。",
+        "zhHantHK": "新增崩壞：星穹鐵道角色青雀與緋英。",
+        "zhHantTW": "新增崩壞：星穹鐵道角色青雀與緋英。",
+        "en": "Added Honkai: Star Rail characters Qingque and Evanescia.",
+        "ja": "崩壊：スターレイルのキャラクター「青雀」と「緋英」を追加。"
+      }
+    },
+    {
+      "revision": "2026.10.14.1",
+      "date": "2026-10-14",
+      "summary": {
+        "zhHans": "新增崩坏：星穹铁道角色虚照（Nihilux）。",
+        "zhHantHK": "新增崩壞：星穹鐵道角色虛照（Nihilux）。",
+        "zhHantTW": "新增崩壞：星穹鐵道角色虛照（Nihilux）。",
+        "en": "Added the Honkai: Star Rail character Nihilux.",
+        "ja": "崩壊：スターレイルのキャラクター「虚照」を追加。"
+      }
+    },
+    {
+      "revision": "2026.10.13.1",
+      "date": "2026-10-13",
+      "summary": {
+        "zhHans": "新增崩坏：星穹铁道角色火花、爻光。火花配色取官方立绘红裙与白毛；爻光配色取官方立绘孔雀青蓝与鎏金。均为 MeQR 代表色，非官方 HEX。",
+        "zhHantHK": "新增崩壞：星穹鐵道角色火花、爻光。火花配色取官方立繪紅裙與白毛；爻光配色取官方立繪孔雀青藍與鎏金。均為 MeQR 代表色，非官方 HEX。",
+        "zhHantTW": "新增崩壞：星穹鐵道角色火花、爻光。火花配色取官方立繪紅裙與白毛；爻光配色取官方立繪孔雀青藍與鎏金。均為 MeQR 代表色，非官方 HEX。",
+        "en": "Added Honkai: Star Rail characters Sparxie and Yao Guang. Sparxie's palette comes from the official artwork's red dress and white hair; Yao Guang's from the peacock teal and gold. These are MeQR representative colors, not official HEX values.",
+        "ja": "崩壊：スターレイルの火花、爻光を追加。火花の配色は公式立ち絵の赤い衣装と白髪、爻光は孔雀の青と金から採取。いずれもMeQRの代表色であり、公式HEXではありません。"
+      }
+    },
+    {
+      "revision": "2026.10.11.1",
+      "date": "2026-10-11",
+      "summary": {
+        "zhHans": "新增换装游戏闪耀暖暖标签，名称与代表色参考官方 SHINING NIKKI 标志。",
+        "zhHantHK": "新增換裝遊戲閃耀暖暖標籤，名稱與代表色參考官方 SHINING NIKKI 標誌。",
+        "zhHantTW": "新增換裝遊戲閃耀暖暖標籤，名稱與代表色參考官方 SHINING NIKKI 標誌。",
+        "en": "Added the dress-up game Shining Nikki tag, using the official SHINING NIKKI logo for naming and representative colors.",
+        "ja": "着せ替えゲーム「シャイニングニキ」のタグを追加。名称と代表色は公式SHINING NIKKIロゴを参考に設定。"
+      }
+    },
     {
       "revision": "2026.10.08.1",
       "date": "2026-10-08",
@@ -444,6 +488,18 @@
         {
           "start": "tag-0527",
           "end": "tag-0527"
+        },
+        {
+          "start": "tag-0531",
+          "end": "tag-0532"
+        },
+        {
+          "start": "tag-0533",
+          "end": "tag-0533"
+        },
+        {
+          "start": "tag-0534",
+          "end": "tag-0535"
         }
       ]
     },
@@ -1060,6 +1116,22 @@
         {
           "start": "tag-0526",
           "end": "tag-0526"
+        }
+      ]
+    },
+    {
+      "id": "ip-shining-nikki",
+      "names": {
+        "zhHans": "闪耀暖暖",
+        "zhHantHK": "閃耀暖暖",
+        "zhHantTW": "閃耀暖暖",
+        "en": "Shining Nikki",
+        "ja": "シャイニングニキ"
+      },
+      "ranges": [
+        {
+          "start": "tag-0530",
+          "end": "tag-0530"
         }
       ]
     }
@@ -12882,6 +12954,149 @@
       ],
       "solidColor": "#D32F2F",
       "kind": "group"
+    },
+    {
+      "id": "tag-0530",
+      "names": {
+        "zhHans": "闪耀暖暖",
+        "zhHantHK": "閃耀暖暖",
+        "zhHantTW": "閃耀暖暖",
+        "en": "Shining Nikki",
+        "ja": "シャイニングニキ"
+      },
+      "aliases": [
+        "闪暖",
+        "閃暖",
+        "暖暖",
+        "Shining Nikki",
+        "shiningnikki",
+        "シャイニングニキ"
+      ],
+      "colors": [
+        "#FF597A",
+        "#E2B77D"
+      ],
+      "solidColor": "#FF597A",
+      "kind": "work"
+    },
+    {
+      "id": "tag-0531",
+      "names": {
+        "zhHans": "火花",
+        "zhHantHK": "火花",
+        "zhHantTW": "火花",
+        "en": "Sparxie",
+        "ja": "ひばな"
+      },
+      "aliases": [
+        "sparxie",
+        "hibana",
+        "花奈咪",
+        "ハナミ",
+        "hanami"
+      ],
+      "colors": [
+        "#D71247",
+        "#F2E8DE"
+      ],
+      "solidColor": "#D71247",
+      "kind": "character",
+      "parentID": "tag-0103"
+    },
+    {
+      "id": "tag-0532",
+      "names": {
+        "zhHans": "爻光",
+        "zhHantHK": "爻光",
+        "zhHantTW": "爻光",
+        "en": "Yao Guang",
+        "ja": "爻光"
+      },
+      "aliases": [
+        "Yao Guang",
+        "yaoguang",
+        "こうこう",
+        "戎韬将军",
+        "戎韬將軍",
+        "爻老板"
+      ],
+      "colors": [
+        "#2070A0",
+        "#C48F5A"
+      ],
+      "solidColor": "#2070A0",
+      "kind": "character",
+      "parentID": "tag-0103"
+    },
+    {
+      "id": "tag-0533",
+      "names": {
+        "zhHans": "虚照",
+        "zhHantHK": "虛照",
+        "zhHantTW": "虛照",
+        "en": "Nihilux",
+        "ja": "虚照"
+      },
+      "aliases": [
+        "虚照",
+        "虛照",
+        "Nihilux",
+        "nihilux",
+        "ステラ",
+        "模糊二维马",
+        "模糊二維馬",
+        "高清条形马",
+        "高清條形馬"
+      ],
+      "colors": [
+        "#7166EC",
+        "#FFFFFF",
+        "#000000"
+      ],
+      "solidColor": "#7166EC",
+      "kind": "character",
+      "parentID": "tag-0103"
+    },
+    {
+      "id": "tag-0534",
+      "names": {
+        "zhHans": "青雀",
+        "zhHantHK": "青雀",
+        "zhHantTW": "青雀",
+        "en": "Qingque",
+        "ja": "青雀"
+      },
+      "aliases": [
+        "Qingque",
+        "qing que",
+        "セイジャク"
+      ],
+      "colors": [
+        "#84ABAB"
+      ],
+      "solidColor": "#84ABAB",
+      "kind": "character",
+      "parentID": "tag-0103"
+    },
+    {
+      "id": "tag-0535",
+      "names": {
+        "zhHans": "绯英",
+        "zhHantHK": "緋英",
+        "zhHantTW": "緋英",
+        "en": "Evanescia",
+        "ja": "緋英"
+      },
+      "aliases": [
+        "Evanescia",
+        "ヒエイ"
+      ],
+      "colors": [
+        "#E6A2B9"
+      ],
+      "solidColor": "#E6A2B9",
+      "kind": "character",
+      "parentID": "tag-0103"
     }
   ],
   "groups": [

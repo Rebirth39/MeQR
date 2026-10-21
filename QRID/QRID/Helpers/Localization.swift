@@ -48,6 +48,13 @@ struct L {
     static var tagReportLimited: String { tr("提交过于频繁，请稍后重试。", "提交過於頻繁，請稍後重試。", "送出過於頻繁，請稍後重試。", "Too many submissions. Please try again later.", "送信回数が多すぎます。しばらくしてから再試行してください。") }
     static var tagReportDiscard: String { tr("放弃本次上报？", "放棄本次回報？", "放棄本次回報？", "Discard This Report?", "報告を破棄しますか？") }
 
+    static var tagAppearance: String { tr("标签样式", "標籤樣式", "標籤樣式", "Tag style", "タグのスタイル") }
+    static var tagFilled: String { tr("实心", "實心", "實心", "Filled", "塗りつぶし") }
+    static var tagWhiteBackground: String { tr("白底", "白底", "白底", "White", "白背景") }
+    static var tagPairSwapSides: String { tr("交换左右位", "交換左右位", "交換左右位", "Swap left and right", "左右を入れ替える") }
+    static var tagPairType: String { tr("CP / CB Tag", "CP / CB Tag", "CP / CB Tag", "CP / CB Tag", "CP / CB タグ") }
+    static var tagPairHint: String { tr("将世界计划角色 Tag 拖到另一角色 Tag 的中间，可组成 CP / CB，拖动的角色在左。", "將世界計畫角色 Tag 拖到另一角色 Tag 的中間，可組成 CP / CB，拖動的角色在左。", "將世界計畫角色 Tag 拖到另一角色 Tag 的中間，可組成 CP / CB，拖動的角色在左。", "Drop a Project Sekai character tag onto the center of another to create a CP / CB tag, with the dragged character on the left.", "プロセカのキャラクタータグを別のキャラクタータグの中央に重ねると、CP / CB タグを作れます。ドラッグしたキャラクターが左側になります。") }
+    static var tagPairChoice: String { tr("CP：双色实心；CB：双色描边。可在「Tag 颜色」中随时切换。", "CP：雙色實心；CB：雙色描邊。可在「Tag 顏色」中隨時切換。", "CP：雙色實心；CB：雙色描邊。可在「Tag 顏色」中隨時切換。", "CP: filled with both colors. CB: colored outline and text. Change this anytime in Tag Colors.", "CP：2色の塗りつぶし。CB：2色の枠線と文字。「Tag Colors」でいつでも変更できます。") }
     // 支持码 / 我的工单
     static var myTickets: String { tr("我的工单", "我的工單", "我的工單", "My Tickets", "マイチケット") }
     static var supportCode: String { tr("支持码", "支持碼", "支援碼", "Support Code", "サポートコード") }
@@ -204,6 +211,7 @@ struct L {
     static var useCustomImage: String { tr("使用自定义图片", "使用自訂圖片", "使用自訂圖片", "Use Custom Image", "カスタム画像を使う") }
     static var removeBackgroundImage: String { tr("移除背景图片", "移除背景圖片", "移除背景圖片", "Remove Background Image", "背景画像を削除") }
     static var cardOpacity: String { tr("卡片不透明度", "卡片不透明度", "卡片不透明度", "Card Opacity", "カードの不透明度") }
+    static var cardGlassStrength: String { tr("磨砂强度", "磨砂強度", "磨砂強度", "Frosting Strength", "すりガラスの強さ") }
     static var cardGlassEffect: String { tr("毛玻璃效果", "毛玻璃效果", "毛玻璃效果", "Frosted Glass", "すりガラス効果") }
     static var customPlatformName: String { tr("平台名称", "平台名稱", "平台名稱", "Platform Name", "プラットフォーム名") }
     static var reorderClusters: String { tr("排序卡片", "排序卡片", "排序卡片", "Reorder Cards", "カードを並べ替え") }

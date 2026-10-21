@@ -9,6 +9,8 @@
 
 ## 功能 / Features
 
+1.7.0 的功能汇总、双端差异及发布前清单见 [发布准备](Documentation/release-1.7.0.md)。源码版本尚未递增。See the release preparation document for feature parity and outstanding checks; source version numbers have not been bumped.
+
 - **卡片管理 / Card Management**: 将多个二维码归类到一张卡片中，支持自定义名称、介绍、头像和标签。Group multiple QR codes into one card with a custom name, description, avatar, and tags.
 - **卡片模板 / Card Templates**: 支持标准卡片和明日方舟通行证风格，并可设置标签颜色。Choose between the standard card and Rhodes-pass style, with customizable tag colors.
 - **二维码统一颜色 / Unified QR Color**: 在卡片级别设置所有二维码的颜色，无需逐个修改。Set one QR color for all codes on a card.
@@ -49,7 +51,7 @@
 ### iOS
 
 - iOS 17.0+
-- iPhone only
+- iPhone and iPad
 
 ### Android
 
@@ -94,9 +96,9 @@ cd Android
 ```
 
 ## 隐私 / Privacy
-卡片、二维码和认识记录通常保存在设备本地。只有在用户主动生成在线 MeQR 交换码时，所选择的名称、介绍、头像及平台资料才会上传，用于让其他用户读取该交换码。App 不包含广告 SDK、第三方统计 SDK或跨 App 追踪。
+卡片、二维码和认识记录通常保存在设备本地。生成在线交换码会上传所选择的分享资料，启用云同步会上传该卡片的同步资料。自有活跃统计默认自动运行，不增加应用内提示或控制入口；同步卡片复用云端编号去重，未同步安装仅上传日／月计数标记。统计口径及数据处理见 [活跃统计](Documentation/activity-statistics.md)。App 不包含广告 SDK、第三方统计 SDK或跨 App 追踪。
 
-Cards, QR codes, and encounter records are generally stored on device. When the user explicitly creates an online MeQR exchange code, the selected name, description, avatar, and platform data are uploaded so other users can retrieve that shared profile. The app contains no advertising SDKs, third-party analytics SDKs, or cross-app tracking.
+Cards, QR codes, and encounter records are generally stored on device. Online exchange codes upload the selected shared profile; cloud sync uploads the enabled card's sync data. First-party activity counts run automatically without an in-app prompt or control. Synced cards use their existing cloud profile ID for deduplication; unsynced installations send day/month count flags. See the activity statistics document for details. The app contains no advertising SDKs, third-party analytics SDKs, or cross-app tracking.
 
 Privacy Policy URL:
 https://rebirth39.github.io/MeQR/privacy.html

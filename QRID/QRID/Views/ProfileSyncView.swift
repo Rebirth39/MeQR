@@ -119,6 +119,7 @@ struct ProfileSyncView: View {
             }
         }
         .refreshable { try? await refreshDevices() }
+        .onDisappear { Task { await AppActivity.report(clusters: clusters) } }
         .confirmationDialog(L.syncConflictTitle, isPresented: $conflict, titleVisibility: .visible) {
             Button(L.syncConflictLocal) { resolve("local") }
             Button(L.syncConflictRemote, role: .destructive) { resolve("remote") }

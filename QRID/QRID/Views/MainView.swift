@@ -9,6 +9,7 @@ struct MainView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Query(sort: \QRCluster.sortOrder, order: .forward) private var clusters: [QRCluster]
     @State private var currentPage = 0
+    @State private var cardBackdrop = CardBackdrop()
     @State private var showingAddToExisting = false
     @State private var showingEditCluster = false
     @State private var showingEditQR = false
@@ -76,8 +77,16 @@ struct MainView: View {
                 }
             }
             .navigationTitle(L.qrID)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text(L.qrID)
+                        .font(.system(size: 24, weight: .bold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .accessibilityAddTraits(.isHeader)
+                }
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     scanAction
                     shareAction
@@ -269,6 +278,7 @@ struct MainView: View {
     private var contentView: some View {
         ClusterCardPager(clusters: clusters, currentPage: $currentPage,
                          onProfileSelected: { _ in }, profileSelections: $selectedProfileIDs)
+        .environment(\.cardBackdrop, cardBackdrop)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
@@ -278,15 +288,22 @@ struct MainView: View {
             let imageData = isExpanded && currentCluster?.templateStyle == .rhodesPass
                 ? currentCluster?.rhodesBannerImageData
                 : currentCluster?.backgroundImageData
-            if let data = imageData,
-               let uiImage = UIImage(data: data) {
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: geo.size.width, height: geo.size.height)
-                    .clipped()
-            } else {
-                currentCluster?.backgroundColor ?? .white
+            Group {
+                if let data = imageData,
+                   let uiImage = UIImage(data: data) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: geo.size.width, height: geo.size.height)
+                        .clipped()
+                } else {
+                    currentCluster?.backgroundColor ?? .white
+                }
+            }
+            .onGeometryChange(for: CardBackdrop.self) { _ in
+                CardBackdrop(frame: geo.frame(in: .global), imageData: imageData)
+            } action: { value in
+                cardBackdrop = value
             }
         }
     }
@@ -467,6 +484,8 @@ struct ShareableCard: View {
                     Image(uiImage: uiImage)
                         .resizable()
                         .scaledToFill()
+                        .frame(width: geo.size.width, height: geo.size.height)
+                        .clipped()
                 } else {
                     cluster.backgroundColor
                 }
@@ -475,6 +494,7 @@ struct ShareableCard: View {
                     Spacer()
 
                     ClusterCardView(cluster: cluster, size: 180, containerWidth: geo.size.width)
+                        .environment(\.cardBackdrop, CardBackdrop(frame: geo.frame(in: .global), imageData: cluster.backgroundImageData))
                         .padding(.horizontal, 16)
                         .frame(height: cardHeight)
 

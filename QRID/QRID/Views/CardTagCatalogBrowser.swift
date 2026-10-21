@@ -77,13 +77,14 @@ struct CardTagCatalogBrowser: View {
             trimmedQuery.isEmpty || CardTagIndex.normalizedKey(usage.displayName(for: $0))
                 .contains(CardTagIndex.normalizedKey(trimmedQuery))
         }
+        let selection = CardTagCatalogSelection(text: text)
         return List {
             if records.isEmpty {
                 Text(trimmedQuery.isEmpty ? L.tagHistoryEmpty : L.noTagResults)
                     .foregroundStyle(.secondary)
             }
             ForEach(records) { record in
-                CardTagCatalogRow(tag: usage.displayName(for: record), text: $text, colorOverrides: colorOverrides)
+                CardTagCatalogRow(tag: usage.displayName(for: record), text: $text, colorOverrides: colorOverrides, selection: selection)
             }
             if mode != 3 && !usage.records.isEmpty {
                 Button(L.tagClearHistory, role: .destructive) { clearingHistory = true }
@@ -93,6 +94,7 @@ struct CardTagCatalogBrowser: View {
 
     @ViewBuilder
     private var categoryList: some View {
+        let selection = CardTagCatalogSelection(text: text)
         if CardTagIndex.categories.isEmpty {
             VStack(spacing: 12) {
                 if remoteCatalog.isLoading {
@@ -116,7 +118,8 @@ struct CardTagCatalogBrowser: View {
                             CardTagCatalogRow(
                                 tag: entry.names.value(for: language),
                                 text: $text,
-                                colorOverrides: colorOverrides
+                                colorOverrides: colorOverrides,
+                                selection: selection
                             )
                         } else {
                             NavigationLink {
@@ -148,11 +151,13 @@ struct CardTagCatalogBrowser: View {
     }
 
     private func tagList(_ entries: [RemoteTagEntry]) -> some View {
-        List(entries) { entry in
+        let selection = CardTagCatalogSelection(text: text)
+        return List(entries) { entry in
             CardTagCatalogRow(
                 tag: entry.names.value(for: language),
                 text: $text,
-                colorOverrides: colorOverrides
+                colorOverrides: colorOverrides,
+                selection: selection
             )
         }
     }
@@ -190,9 +195,10 @@ private struct CardTagCategoryView: View {
     }
 
     var body: some View {
-        List { ForEach(Array(sections.enumerated()), id: \.offset) { _, section in
+        let selection = CardTagCatalogSelection(text: text)
+        return List { ForEach(Array(sections.enumerated()), id: \.offset) { _, section in
             Section(section.0.isEmpty ? category.displayName(for: language) : "— \(section.0) —") {
-                ForEach(section.1) { entry in CardTagCatalogRow(tag: entry.names.value(for: language), text: $text, colorOverrides: colorOverrides) }
+                ForEach(section.1) { entry in CardTagCatalogRow(tag: entry.names.value(for: language), text: $text, colorOverrides: colorOverrides, selection: selection) }
             }
         }}
         .navigationTitle(category.displayName(for: language))
@@ -200,21 +206,31 @@ private struct CardTagCategoryView: View {
     }
 }
 
+private struct CardTagCatalogSelection {
+    let keys: Set<String>
+    let count: Int
+
+    init(text: String) {
+        let tags = CardTagLimiter.tags(from: text)
+        keys = Set(tags.map(CardTagIndex.selectionKey))
+        count = tags.count
+    }
+}
+
 private struct CardTagCatalogRow: View {
     let tag: String
     @Binding var text: String
     var colorOverrides: [String: CardTagColorOverride]
+    let selection: CardTagCatalogSelection
     @StateObject private var usage = CardTagUsageStore.shared
     @State private var showingLimitAlert = false
 
     private var language: AppLanguage { AppSettings.shared.resolvedLanguage }
     private var displayName: String { tag }
-    private var tags: [String] { CardTagLimiter.tags(from: text) }
     private var isSelected: Bool {
-        let key = CardTagIndex.selectionKey(displayName)
-        return tags.contains { CardTagIndex.selectionKey($0) == key }
+        selection.keys.contains(CardTagIndex.selectionKey(displayName))
     }
-    private var canAdd: Bool { isSelected || tags.count < CardTagLimiter.maxTags }
+    private var canAdd: Bool { isSelected || selection.count < CardTagLimiter.maxTags }
 
     var body: some View {
         Button(action: toggleSelection) {
@@ -251,8 +267,8 @@ private struct CardTagCatalogRow: View {
 
     private func toggleSelection() {
         let selectedKey = CardTagIndex.selectionKey(displayName)
-        var nextTags = tags
-        if isSelected {
+        var nextTags = CardTagLimiter.tags(from: text)
+        if nextTags.contains(where: { CardTagIndex.selectionKey($0) == selectedKey }) {
             nextTags.removeAll { CardTagIndex.selectionKey($0) == selectedKey }
         } else if nextTags.count < CardTagLimiter.maxTags {
             nextTags.append(displayName)

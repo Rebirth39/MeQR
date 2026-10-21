@@ -23,6 +23,13 @@ struct Host: View {
     @State private var library = false
     @State private var persistence = ""
     init() {
+        if ProcessInfo.processInfo.arguments.contains("pairs") {
+            _tags = State(initialValue: "星乃一歌\n天马咲希\n世界计划\n高松灯")
+        }
+        if ProcessInfo.processInfo.arguments.contains("white") {
+            _tags = State(initialValue: "星乃一歌\n世界计划\nPure White")
+            _overrides = State(initialValue: ["purewhite": CardTagColorOverride(mode: .custom, hexes: ["#FFFFFF"])])
+        }
         if ProcessInfo.processInfo.arguments.contains("palette") {
             _overrides = State(initialValue: ["projectsekai": CardTagColorOverride(mode: .custom, hexes: ["#123456", "#ABCDEF", "#FF9900", "#EE1166", "#FFFFFF"])])
         }
@@ -31,12 +38,24 @@ struct Host: View {
         NavigationStack {
             Form {
                 Section {
-                    CardTagInputView(text: $tags, colorOverrides: overrides)
+                    CardTagInputView(text: $tags, colorOverrides: $overrides)
                     Button("Library") { library = true }
                     Button("New Request") { report = true }
                 }
-                CardTagColorEditor(tagInput: tags, colorOverrides: $overrides)
+                CardTagColorEditor(tagInput: $tags, colorOverrides: $overrides)
                 Section {
+                    Text(tags).accessibilityIdentifier("pair-state")
+                    Text(CardTagLimiter.tags(from: tags).map { tag in
+                        let style = CardTagColorPalette.colorStyle(for: tag, overrides: overrides)
+                        return tag + ":" + (style.isWhiteBackground ? "white" : "filled") + ":" + String(style.segmentHexes.count)
+                    }.joined(separator: "\n")).accessibilityIdentifier("appearance-state")
+                    Button("Reopen Stored Tags") {
+                        let names = CardTagLimiter.tags(from: tags)
+                        let raw = CardTagReference.encode(CardTagReference.reconcile(names: names, overrides: overrides, previous: []))
+                        let refs = CardTagReference.decode(raw) ?? []
+                        tags = refs.map(\.displayName).joined(separator: "\n")
+                        overrides = refs.reduce(into: [:]) { $0[CardTagColorPalette.normalized($1.displayName)] = $1.displayOverride }
+                    }
                     Text(overrides["projectsekai"]?.hexes.joined(separator: ",") ?? "").accessibilityIdentifier("stored-palette")
                     Text(overrides["hatsunemiku"]?.hexes.joined(separator: ",") ?? "").accessibilityIdentifier("copied-palette")
                     Text(persistence).accessibilityIdentifier("persistence")
@@ -70,4 +89,13 @@ struct Host: View {
         .environment(\.dynamicTypeSize, ProcessInfo.processInfo.arguments.contains("large") ? .accessibility1 : .large)
         .preferredColorScheme(.light)
     }
+}
+
+enum DeviceIdentity { static var id: String { "pair-fixture" } }
+@MainActor final class SupportTicketStore {
+    static let shared = SupportTicketStore()
+    struct Ticket { let supportCode: String? }
+    func ticket(forRequestID: String) -> Ticket? { nil }
+    func obtainBlankCode() async throws -> String { "ABC234" }
+    func noteSubmitted(requestID: String?, ticketID: String, supportCode: String?, title: String, nextCode: String?) {}
 }

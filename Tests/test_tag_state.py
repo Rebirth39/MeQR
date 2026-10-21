@@ -31,6 +31,7 @@ enum DeviceIdentity { static var id: String { "fixture-device-id" } }
     func noteSubmitted(requestID: String?, ticketID: String, supportCode: String?, title: String, nextCode: String? = nil) {}
 }
 '''
+        fixtures += (SOURCE / "Helpers/ColorExtensions.swift").read_text().split("    func toHex()")[0] + "\n}\n"
         fixtures += "enum L {\n" + "\n".join(f'static let {key} = "{key}"' for key in keys) + "\n}\n"
         with tempfile.TemporaryDirectory() as folder:
             path = pathlib.Path(folder)

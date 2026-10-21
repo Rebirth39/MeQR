@@ -2,6 +2,40 @@ import XCTest
 import CoreImage
 
 final class LayoutTests: XCTestCase {
+    func testOriginalFlipExpandsWithoutClippingItsTop() throws {
+        // The angle-driven layout reservation was removed after it pushed the
+        // card down mid-flip. Clipping is now handled by extending the pager's
+        // page viewport up under the navigation bar instead.
+        throw XCTSkip("Flip clipping is covered by the pager viewport test on a device.")
+    }
+
+    func testGlassCardRepeatedFlipsKeepHiddenFaceInactive() {
+        continueAfterFailure = false
+        XCUIDevice.shared.orientation = .portrait
+        let app = XCUIApplication()
+        app.launchArguments = ["rhodes-front", "tags", "glass", "long"]
+        app.launch()
+        let qr = app.images["rhodes-qr-panel"]
+        XCTAssertTrue(qr.waitForExistence(timeout: 5))
+        let strip = app.staticTexts["#01"]
+        let originalStrip = strip.frame
+        let originalQR = qr.frame
+        for _ in 0..<6 {
+            strip.tap()
+            XCTAssertTrue(app.otherElements["pass-back-identity"].waitForExistence(timeout: 5))
+            XCTAssertFalse(qr.exists)
+            XCTAssertFalse(app.buttons["微信"].exists)
+            XCTAssertEqual(strip.frame.minY, originalStrip.minY, accuracy: 1)
+            strip.tap()
+            XCTAssertTrue(qr.waitForExistence(timeout: 5))
+            XCTAssertFalse(app.otherElements["pass-back-identity"].exists)
+            XCTAssertEqual(qr.frame.minY, originalQR.minY, accuracy: 1)
+        }
+        app.buttons["微信"].tap()
+        XCTAssertTrue(qr.exists)
+        capture("glass-card-after-repeated-flips")
+    }
+
     func testCachedColorCode() throws {
         try XCTSkipUnless(FileManager.default.fileExists(atPath: "COLOR_FIXTURE_DIRECTORY/record.json"))
         let app = XCUIApplication()

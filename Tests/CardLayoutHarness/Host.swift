@@ -31,6 +31,7 @@ struct Host: View {
     @State private var exchangeResult = ""
     @State private var subtitleResult = ""
     @State private var showingExchange = false
+    @State private var cardBackdrop = CardBackdrop()
 
     private var fixtureSize: CGSize? {
         let arguments = ProcessInfo.processInfo.arguments
@@ -61,6 +62,10 @@ struct Host: View {
                                 QRProfile(platformType: "wechat", qrContent: "https://u.wechat.com/fixture"),
                                 QRProfile(platformType: "github", qrContent: "https://github.com/fixture")]
         }
+        if arguments.contains("glass") {
+            cluster.cardGlassEnabled = true
+            cluster.cardGlassStrength = 0.8
+        }
         if arguments.contains("preview-images") {
             cluster.profiles = [QRProfile(platformType: "qq", qrContent: "https://qm.qq.com/q/fixture"),
                                 QRProfile(platformType: "wechat", qrContent: "https://u.wechat.com/fixture"),
@@ -73,7 +78,9 @@ struct Host: View {
     }
 
     var body: some View {
-        if ProcessInfo.processInfo.arguments.contains("cached-color-test") {
+        if ProcessInfo.processInfo.arguments.contains("flip-bounds") {
+            FlipBoundsFixture()
+        } else if ProcessInfo.processInfo.arguments.contains("cached-color-test") {
             Text(exchangeResult).accessibilityIdentifier("color-result").task {
                 exchangeResult = await ColorLayerChecks.cachedCode()
             }
@@ -105,7 +112,26 @@ struct Host: View {
         } else {
         NavigationStack {
             ClusterCardPager(clusters: clusters, currentPage: $page) { _ in }
+                .environment(\.cardBackdrop, cardBackdrop)
                 .frame(width: fixtureSize?.width, height: fixtureSize?.height)
+                .background {
+                    if ProcessInfo.processInfo.arguments.contains("glass"),
+                       let data = clusters[0].backgroundImageData,
+                       let background = UIImage(data: data) {
+                        GeometryReader { geometry in
+                            Image(uiImage: background)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: geometry.size.width, height: geometry.size.height)
+                                .clipped()
+                                .onGeometryChange(for: CGRect.self) { _ in
+                                    geometry.frame(in: .global)
+                                } action: { frame in
+                                    cardBackdrop = CardBackdrop(frame: frame, imageData: data)
+                                }
+                        }
+                    }
+                }
                 .transformEnvironment(\.horizontalSizeClass) { sizeClass in
                     if let fixtureSize {
                         sizeClass = fixtureSize.width >= 520 ? .regular : .compact
@@ -236,10 +262,10 @@ struct Host: View {
 
 struct QRScannerRepresentable: View {
     static var payload = "https://profile.meqrcode.cn/encounter-sessions/NativeSheet01"
-    let onScan: (String, UIImage?) -> Void
+    let onScan: (String, UIImage?, [CGPoint]?) -> Void
     var body: some View {
         Button("Scan session fixture") {
-            onScan(Self.payload, nil)
+            onScan(Self.payload, nil, nil)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

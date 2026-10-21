@@ -15,11 +15,12 @@ const files = ['Models/QRCluster.swift', 'Models/QRProfile.swift', 'Helpers/Remo
   'Views/CardTagReorderView.swift', 'Views/CardTagReportView.swift', 'Views/ClusterCardView.swift',
   'Views/ClusterCardPager.swift', 'Helpers/MeQRExchange.swift', 'Helpers/MeQRExchangeCodeStore.swift',
   'Helpers/MeQRRemoteService.swift', 'Helpers/EncounterStore.swift', 'Views/MeQRProfileCodeView.swift',
-  'Views/EncountersView.swift', 'Views/QRLinkReviewView.swift'];
+  'Views/EncountersView.swift', 'Views/QRLinkReviewView.swift', 'Helpers/SupportTicketStore.swift'];
 fs.writeFileSync(path.join(output, 'Production.swift'), files.map(file => {
   const content = fs.readFileSync(path.join(source, file), 'utf8');
   return content.replaceAll('tagGradientStops(', path.basename(file, '.swift') + 'TagGradientStops(');
 }).join('\n'));
+fs.appendFileSync(path.join(output, 'Production.swift'), '\n' + fs.readFileSync(path.join(__dirname, 'FlipBoundsFixture.swift'), 'utf8'));
 // Exercise the exact App Store 1.1.0 decoder against today's confirmation JSON.
 const releaseSource = file => execFileSync('git', ['show', '2313ac7:QRID/QRID/' + file], {cwd: root, encoding: 'utf8'});
 const legacyColor = execFileSync('git', ['show', '899ebd1:QRID/QRID/Helpers/QRCodeGenerator.swift'], {cwd: root, encoding: 'utf8'})

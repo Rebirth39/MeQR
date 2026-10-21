@@ -56,6 +56,7 @@ final class QRCluster {
     var cornerRadius: Double
     var cardOpacity: Double?
     var cardGlassEnabled: Bool?
+    var cardGlassStrength: Double?
     var createdAt: Date
     var sortOrder: Int
     var widgetProfileIndex: Int?
@@ -90,6 +91,7 @@ final class QRCluster {
         cornerRadius: Double = 16,
         cardOpacity: Double? = nil,
         cardGlassEnabled: Bool? = nil,
+        cardGlassStrength: Double? = nil,
         sortOrder: Int = 0,
         widgetProfileIndex: Int? = nil,
         widgetUseClusterBackground: Bool? = nil,
@@ -120,6 +122,7 @@ final class QRCluster {
         self.cornerRadius = cornerRadius
         self.cardOpacity = cardOpacity
         self.cardGlassEnabled = cardGlassEnabled
+        self.cardGlassStrength = cardGlassStrength
         self.createdAt = Date()
         self.sortOrder = sortOrder
         self.widgetProfileIndex = widgetProfileIndex
@@ -136,6 +139,12 @@ final class QRCluster {
         if !RemoteTagCatalogSnapshot.value().isEmpty {
             migrateTagReferences()
         }
+    }
+
+    // Older cards retain the original radius-12 frosting at the midpoint.
+    var resolvedCardGlassStrength: Double {
+        guard let value = cardGlassStrength, value.isFinite else { return 0.5 }
+        return min(1, max(0, value))
     }
 
     var backgroundColor: Color {
@@ -547,7 +556,18 @@ enum CardTagColorPalette {
     }
 
     nonisolated static func colorStyle(for tag: String, overrides: [String: CardTagColorOverride] = [:]) -> CardTagColorStyle {
+        var style = paletteStyle(for: tag, overrides: overrides)
+        style.appearance = overrides[normalized(tag)]?.appearance ?? .filled
+        let kind = RemoteTagCatalogSnapshot.entry(matchingNormalizedKey: normalized(tag))?.kind ?? overrides[normalized(tag)]?.referenceKind
+        style.whiteTextUsesFirstColor = kind == "work" || kind == "group"
+        return style
+    }
+
+    private nonisolated static func paletteStyle(for tag: String, overrides: [String: CardTagColorOverride]) -> CardTagColorStyle {
         let key = normalized(tag)
+        if let pair = overrides[key]?.pairing, pair.isValid {
+            return CardTagColorStyle(segmentHexes: pair.colors, pairing: pair)
+        }
         if let override = overrides[key], override.mode == .custom,
            !normalizedHexes(override.hexes).isEmpty {
             return CardTagColorStyle(segmentHexes: normalizedHexes(override.hexes))
@@ -605,7 +625,7 @@ enum CardTagColorPalette {
 
             let hexes = normalizedHexes(override.hexes)
             if !hexes.isEmpty || override.mode != .custom {
-                normalizedOverrides[key] = CardTagColorOverride(mode: override.mode, hexes: hexes, textWeight: override.textWeight)
+                normalizedOverrides[key] = CardTagColorOverride(mode: override.mode, hexes: hexes, textWeight: override.textWeight, pairing: override.pairing, appearance: override.appearance)
             }
         }
 
@@ -656,24 +676,39 @@ enum CardTagColorPalette {
 
         let key = normalized(tag)
 
-        for entry in multiDefaults {
-            if entry.keywords.contains(where: { key == normalized($0) }) {
-                let hexes = normalizedPresetHexes(entry.hexes)
-                let solidHex = entry.keywords.contains("projectsekai") ? "#00A0E9" : (hexes.first ?? fallbackHex)
-                return (CardTagColorStyle(segmentHexes: hexes), solidHex)
-            }
-        }
-
-        for entry in splitDefaults {
-            if entry.keywords.contains(where: { key == normalized($0) }) {
-                let leadingHex = normalizedHex(entry.leadingHex) ?? fallbackHex
-                let trailingHex = normalizedHex(entry.trailingHex) ?? fallbackHex
-                return (CardTagColorStyle(segmentHexes: [leadingHex, trailingHex]), trailingHex)
-            }
-        }
-
-        return nil
+        return legacyPresetByKey[key]
     }
+
+    // Immutable fallback indexes preserve the original first-match precedence.
+    // Remote catalog colors are still looked up first and refresh independently.
+    private nonisolated static let legacyPresetByKey: [String: (style: CardTagColorStyle, solidHex: String)] = {
+        var result: [String: (style: CardTagColorStyle, solidHex: String)] = [:]
+        for entry in multiDefaults {
+            let hexes = normalizedPresetHexes(entry.hexes)
+            let solid = entry.keywords.contains("projectsekai") ? "#00A0E9" : (hexes.first ?? fallbackHex)
+            for keyword in entry.keywords where result[normalized(keyword)] == nil {
+                result[normalized(keyword)] = (CardTagColorStyle(segmentHexes: hexes), solid)
+            }
+        }
+        for entry in splitDefaults {
+            let leading = normalizedHex(entry.leadingHex) ?? fallbackHex
+            let trailing = normalizedHex(entry.trailingHex) ?? fallbackHex
+            for keyword in entry.keywords where result[normalized(keyword)] == nil {
+                result[normalized(keyword)] = (CardTagColorStyle(segmentHexes: [leading, trailing]), trailing)
+            }
+        }
+        return result
+    }()
+
+    private nonisolated static let legacyHexByKey: [String: String] = {
+        var result: [String: String] = [:]
+        for entry in defaults {
+            for keyword in entry.keywords where result[normalized(keyword)] == nil {
+                result[normalized(keyword)] = normalizedHex(entry.hex) ?? fallbackHex
+            }
+        }
+        return result
+    }()
 
     private nonisolated static func defaultHex(for tag: String) -> String {
         defaultHexMatch(for: tag) ?? fallbackHex
@@ -685,16 +720,11 @@ enum CardTagColorPalette {
         }
 
         let key = normalized(tag)
-        for entry in defaults {
-            if entry.keywords.contains(where: { key == normalized($0) }) {
-                return normalizedHex(entry.hex) ?? fallbackHex
-            }
-        }
-        return nil
+        return legacyHexByKey[key]
     }
 
     private nonisolated static func normalized(_ override: CardTagColorOverride) -> CardTagColorOverride {
-        CardTagColorOverride(mode: override.mode, hexes: normalizedHexes(override.hexes), textWeight: override.textWeight)
+        CardTagColorOverride(mode: override.mode, hexes: normalizedHexes(override.hexes), textWeight: override.textWeight, pairing: override.pairing, appearance: override.appearance)
     }
 
     nonisolated static func textWeight(for tag: String, overrides: [String: CardTagColorOverride]) -> CardTagTextWeight {
@@ -731,11 +761,16 @@ struct CardTagColorOverride: Codable, Equatable {
         case custom
     }
 
+    enum Appearance: String, Codable, CaseIterable { case filled, white }
+
     var mode: Mode
     var hexes: [String]
     var textWeight: CardTagTextWeight? = nil
     var referenceColors: [String]? = nil
     var referenceSolid: String? = nil
+    var referenceKind: String? = nil
+    var pairing: CardTagPair? = nil
+    var appearance: Appearance? = nil
 }
 
 enum CardTagTextWeight: String, Codable, CaseIterable {
@@ -760,6 +795,28 @@ enum CardTagTextWeight: String, Codable, CaseIterable {
 
 struct CardTagColorStyle {
     let segmentHexes: [String]
+    var pairing: CardTagPair? = nil
+    var appearance: CardTagColorOverride.Appearance = .filled
+    var whiteTextUsesFirstColor = false
+
+    nonisolated var isWhiteBackground: Bool {
+        if let pairing { return pairing.kind == .cb }
+        return appearance == .white
+    }
+
+    nonisolated var whiteTextHex: String {
+        if whiteTextUsesFirstColor,
+           let color = segmentHexes.first(where: { CardTagColorPalette.normalizedHex($0) != "#FFFFFF" }) {
+            return color
+        }
+        let darkest = segmentHexes.min { CardTagInk.luminance($0) < CardTagInk.luminance($1) } ?? leadingHex
+        return CardTagInk.darkenedForWhite(darkest, minimumContrast: 4.5)
+    }
+
+    nonisolated var whiteOutlineHexes: [String] {
+        segmentHexes.map { CardTagInk.darkenedForWhite($0, minimumContrast: 1.5) }
+    }
+
 
     nonisolated init(leadingHex: String, trailingHex: String?) {
         if let trailingHex {
@@ -769,7 +826,8 @@ struct CardTagColorStyle {
         }
     }
 
-    nonisolated init(segmentHexes: [String]) {
+    nonisolated init(segmentHexes: [String], pairing: CardTagPair? = nil) {
+        self.pairing = pairing
         self.segmentHexes = segmentHexes.isEmpty ? [CardTagColorPalette.fallbackHex] : segmentHexes
     }
 
@@ -796,15 +854,34 @@ struct CardTagInk {
     let white: Bool
     let outlined: Bool
 
-    nonisolated init(hexes: [String]) {
-        let luminances = hexes.map { hex -> Double in
-            let value = UInt32(hex.trimmingCharacters(in: CharacterSet(charactersIn: "#")), radix: 16) ?? 0
-            func channel(_ shift: UInt32) -> Double {
-                let c = Double((value >> shift) & 255) / 255
-                return c <= 0.04045 ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4)
-            }
-            return 0.2126 * channel(16) + 0.7152 * channel(8) + 0.0722 * channel(0)
+    nonisolated static func luminance(_ hex: String) -> Double {
+        let value = UInt32(hex.trimmingCharacters(in: CharacterSet(charactersIn: "#")), radix: 16) ?? 0
+        func channel(_ shift: UInt32) -> Double {
+            let c = Double((value >> shift) & 255) / 255
+            return c <= 0.04045 ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4)
         }
+        return 0.2126 * channel(16) + 0.7152 * channel(8) + 0.0722 * channel(0)
+    }
+
+    // Derive display ink only; keep catalog/custom palette values unchanged.
+    nonisolated static func darkenedForWhite(_ hex: String, minimumContrast: Double) -> String {
+        guard 1.05 / (luminance(hex) + 0.05) < minimumContrast else { return hex }
+        let value = UInt32(hex.trimmingCharacters(in: CharacterSet(charactersIn: "#")), radix: 16) ?? 0
+        let channels = [16, 8, 0].map { Double((value >> $0) & 255) }
+        var low = 0.0, high = 1.0
+        var result = "#000000"
+        for _ in 0..<12 {
+            let scale = (low + high) / 2
+            let candidate = String(format: "#%02X%02X%02X", Int(channels[0] * scale), Int(channels[1] * scale), Int(channels[2] * scale))
+            if 1.05 / (luminance(candidate) + 0.05) >= minimumContrast {
+                result = candidate; low = scale
+            } else { high = scale }
+        }
+        return result
+    }
+
+    nonisolated init(hexes: [String]) {
+        let luminances = hexes.map(Self.luminance)
         let blackContrast = luminances.map { ($0 + 0.05) / 0.05 }.min() ?? 21
         let whiteContrast = luminances.map { 1.05 / ($0 + 0.05) }.min() ?? 1
         white = whiteContrast > blackContrast
@@ -820,7 +897,7 @@ struct CardTagInkModifier: ViewModifier {
     func body(content: Content) -> some View {
         let ink = style.ink
         let outline = ink.outlined ? ink.outline.opacity(0.8) : .clear
-        content.foregroundStyle(ink.foreground)
-            .shadow(color: outline, radius: 0.8, x: 0, y: 0)
+        content.foregroundStyle(style.isWhiteBackground ? Color(hex: style.whiteTextHex) : ink.foreground)
+            .shadow(color: style.isWhiteBackground ? .clear : outline, radius: 0.8, x: 0, y: 0)
     }
 }

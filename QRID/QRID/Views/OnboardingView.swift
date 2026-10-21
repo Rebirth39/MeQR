@@ -98,6 +98,7 @@ struct OnboardingView: View {
     @State private var rawRhodesBannerImage: CroppableImage?
     @State private var rhodesBannerPhotosItem: PhotosPickerItem?
     @State private var tagInput = ""
+    @State private var tagColorOverrides: [String: CardTagColorOverride] = [:]
 
     @FocusState private var isSubtitleFocused: Bool
 
@@ -735,7 +736,10 @@ struct OnboardingView: View {
                 .padding(.vertical, 6)
                 .background(Color.secondary.opacity(0.1), in: Capsule())
 
-            CardTagInputView(text: $tagInput)
+            VStack(alignment: .leading, spacing: 12) {
+                CardTagInputView(text: $tagInput, colorOverrides: $tagColorOverrides)
+                CardTagColorEditor(tagInput: $tagInput, colorOverrides: $tagColorOverrides)
+            }
                 .padding(16)
                 .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
 
@@ -1027,6 +1031,7 @@ struct OnboardingView: View {
                     containerWidth: geometry.size.width,
                     previewProfiles: [draft.profile]
                 )
+                .environment(\.cardBackdrop, CardBackdrop(frame: geometry.frame(in: .global), imageData: draft.cluster.backgroundImageData))
                 .frame(height: stageHeight - 34)
                 .padding(.vertical, 17)
             }
@@ -1058,7 +1063,7 @@ struct OnboardingView: View {
                 ? rhodesBannerImage?.jpegData(compressionQuality: 0.9)
                 : nil,
             tagListRawValue: CardTagLimiter.normalizedRawValue(tagInput),
-            tagColorOverridesRawValue: CardTagColorPalette.rawValue(from: [:], tags: tags),
+            tagColorOverridesRawValue: CardTagColorPalette.rawValue(from: tagColorOverrides, tags: tags),
             cornerRadius: templateStyle == .rhodesPass ? 12 : 16,
             cardOpacity: 0.76,
             sortOrder: 0
@@ -1460,7 +1465,7 @@ struct OnboardingView: View {
                 ? rhodesBannerImage?.jpegData(compressionQuality: 0.9)
                 : nil,
             tagListRawValue: CardTagLimiter.normalizedRawValue(tagInput),
-            tagColorOverridesRawValue: CardTagColorPalette.rawValue(from: [:], tags: tags),
+            tagColorOverridesRawValue: CardTagColorPalette.rawValue(from: tagColorOverrides, tags: tags),
             cornerRadius: templateStyle == .rhodesPass ? 12 : 16,
             sortOrder: (clusters.map(\.sortOrder).max() ?? -1) + 1
         )

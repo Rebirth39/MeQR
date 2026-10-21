@@ -3,6 +3,23 @@ import CoreImage
 import CoreImage.CIFilterBuiltins
 import ImageIO
 
+// The background and card must use the same viewport and image, including safe areas.
+nonisolated struct CardBackdrop: Equatable, Sendable {
+    var frame: CGRect = .zero
+    var imageData: Data?
+}
+
+private struct CardBackdropKey: EnvironmentKey {
+    static let defaultValue = CardBackdrop()
+}
+
+extension EnvironmentValues {
+    var cardBackdrop: CardBackdrop {
+        get { self[CardBackdropKey.self] }
+        set { self[CardBackdropKey.self] = newValue }
+    }
+}
+
 struct ClusterCardView: View {
     let cluster: QRCluster
     var size: CGFloat = 180
@@ -12,6 +29,9 @@ struct ClusterCardView: View {
     var profileSelection: Binding<UUID?>? = nil
     // Draft previews provide unpersisted profiles without creating inverse relationships.
     var previewProfiles: [QRProfile]? = nil
+
+    @Environment(\.cardBackdrop) private var backdrop
+    @State private var cardFrame: CGRect = .zero
 
     @State private var localSelectedProfileID: UUID?
     @State private var isShowingPassBack = false
@@ -53,6 +73,12 @@ struct ClusterCardView: View {
             case .rhodesPass:
                 rhodesPassCard
             }
+        }
+        // Measure outside the flipping surfaces so rotation cannot distort the crop.
+        .onGeometryChange(for: CGPoint.self) { geometry in
+            geometry.frame(in: .global).origin
+        } action: { origin in
+            cardFrame.origin = origin
         }
         .onChange(of: selectedIndex) { _, newIndex in
             onProfileSelected?(newIndex)
@@ -242,24 +268,29 @@ struct ClusterCardView: View {
     }
 
     private var frostedBlurImage: UIImage? {
-        let sourceData: Data?
-        if landscapeTabletPresentation && cluster.templateStyle == .rhodesPass {
-            sourceData = cluster.rhodesBannerImageData
-        } else {
-            sourceData = cluster.backgroundImageData
-        }
-        guard let data = sourceData else { return nil }
-        let key = MeQRExchangeCodeRecord.digest(data) as NSString
+        // Zero frosting is the actual transparent backdrop, with no second image.
+        guard cluster.resolvedCardGlassStrength > 0,
+              backdrop.frame.width > 0, backdrop.frame.height > 0,
+              let data = backdrop.imageData else { return nil }
+        // Quantize to the slider steps so repeat visits reuse bounded cached images.
+        let step = Int((cluster.resolvedCardGlassStrength * 20).rounded())
+        let radius = Float(step) * 1.2
+        let key = "\(MeQRExchangeCodeRecord.digest(data)):frost:\(step)" as NSString
         if let cached = Self.blurCache.object(forKey: key) { return cached }
-        guard let image = Self.renderFrostedBlur(data: data) else { return nil }
-        Self.blurCache.setObject(image, forKey: key)
+        guard let image = Self.renderFrostedBlur(data: data, radius: radius) else { return nil }
+        Self.blurCache.setObject(image, forKey: key, cost: (image.cgImage?.bytesPerRow ?? 0) * (image.cgImage?.height ?? 0))
         return image
     }
 
-    private static let blurCache = NSCache<NSString, UIImage>()
+    private static let blurCache: NSCache<NSString, UIImage> = {
+        let cache = NSCache<NSString, UIImage>()
+        cache.countLimit = 32
+        cache.totalCostLimit = 16 * 1024 * 1024
+        return cache
+    }()
     private static let blurContext = CIContext(options: [.useSoftwareRenderer: false])
 
-    private static func renderFrostedBlur(data: Data) -> UIImage? {
+    private static func renderFrostedBlur(data: Data, radius: Float) -> UIImage? {
         guard let source = CGImageSourceCreateWithData(data as CFData, nil),
               let cg = CGImageSourceCreateThumbnailAtIndex(source, 0, [
                 kCGImageSourceCreateThumbnailFromImageAlways: true,
@@ -268,10 +299,11 @@ struct ClusterCardView: View {
               ] as CFDictionary) else { return nil }
         let input = CIImage(cgImage: cg)
         let filter = CIFilter.gaussianBlur()
-        filter.inputImage = input
-        filter.radius = 12
+        // Keep the image framing fixed as the blur grows and avoid transparent edges.
+        filter.inputImage = input.clampedToExtent()
+        filter.radius = radius
         guard let output = filter.outputImage,
-              let outCG = blurContext.createCGImage(output, from: output.extent) else { return nil }
+              let outCG = blurContext.createCGImage(output, from: input.extent) else { return nil }
         return UIImage(cgImage: outCG)
     }
 
@@ -282,10 +314,18 @@ struct ClusterCardView: View {
                 ZStack {
                     cluster.backgroundColor.opacity(rhodesGlassOpacity)
                     if let blurred = frostedBlurImage {
-                        Image(uiImage: blurred)
-                            .resizable()
-                            .scaledToFill()
-                            .opacity(rhodesGlassOpacity)
+                        GeometryReader { geometry in
+                            Image(uiImage: blurred)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: backdrop.frame.width, height: backdrop.frame.height)
+                                .clipped()
+                                .offset(x: backdrop.frame.minX - cardFrame.minX,
+                                        y: backdrop.frame.minY - cardFrame.minY)
+                                .frame(width: geometry.size.width, height: geometry.size.height,
+                                       alignment: .topLeading)
+                        }
+                        .opacity(rhodesGlassOpacity)
                     }
                     Color.white.opacity(0.55 * rhodesGlassOpacity)
                 }
@@ -623,14 +663,20 @@ struct ClusterCardView: View {
 
     private func passFlipCard<Front: View, Back: View>(front: Front, back: Back) -> some View {
         front
-        .modifier(PassFlipModifier(angle: passFlipRotation, back: back))
-        .contentShape(RoundedRectangle(cornerRadius: max(18, cluster.cornerRadius)))
-        .onTapGesture {
-            guard !isPassFlipAnimating else { return }
-            let impact = UIImpactFeedbackGenerator(style: .light)
-            impact.impactOccurred()
-            flipPassCard()
-        }
+            .modifier(PassFaceVisibility(angle: passFlipRotation, isBack: false))
+            .overlay(alignment: .top) {
+                back
+                    .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0), perspective: 0)
+                    .modifier(PassFaceVisibility(angle: passFlipRotation, isBack: true))
+            }
+            .modifier(PassFlipEffect(angle: passFlipRotation))
+            .contentShape(RoundedRectangle(cornerRadius: max(18, cluster.cornerRadius)))
+            .onTapGesture {
+                guard !isPassFlipAnimating else { return }
+                let impact = UIImpactFeedbackGenerator(style: .light)
+                impact.impactOccurred()
+                flipPassCard()
+            }
     }
 
     private func passBackCard(cornerRadius: CGFloat) -> some View {
@@ -738,20 +784,22 @@ struct ClusterCardView: View {
         CardTagFlowLayout(spacing: 7, rowSpacing: 6) {
             ForEach(cluster.tags, id: \.self) { tag in
                 let tagStyle = cluster.tagColorStyle(for: tag)
-                Text(tag)
+                Group {
+                    if let pair = tagStyle.pairing { CardTagPairLabel(pair: pair) }
+                    else { Text(tag).modifier(CardTagInkModifier(style: tagStyle)) }
+                }
                     .font(.system(size: largeRhodesText ? 14 : 11,
                                   weight: CardTagColorPalette.textWeight(for: tag, overrides: cluster.tagColorOverrides).fontWeight))
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
                     .padding(.horizontal, 9)
                     .padding(.vertical, 5)
-                    .modifier(CardTagInkModifier(style: tagStyle))
                     .background {
                         cardTagBackground(for: tagStyle)
                     }
                     .overlay(
                         Capsule()
-                            .stroke(.white.opacity(0.32), lineWidth: 1)
+                            .stroke(tagStyle.pairing == nil && !tagStyle.isWhiteBackground ? .white.opacity(0.32) : .clear, lineWidth: 1)
                     )
             }
         }
@@ -761,7 +809,9 @@ struct ClusterCardView: View {
 
     @ViewBuilder
     private func cardTagBackground(for style: CardTagColorStyle) -> some View {
-        if style.isMulticolor {
+        if let pair = style.pairing { CardTagPairBackground(pair: pair) }
+        else if style.isWhiteBackground { CardTagWhiteBackground(style: style) }
+        else if style.isMulticolor {
             LinearGradient(
                 stops: tagGradientStops(for: style, opacity: 0.86),
                 startPoint: .leading,
@@ -1019,38 +1069,38 @@ private struct PassBackLayout: Layout {
     }
 }
 
-private struct PassFlipModifier<Back: View>: AnimatableModifier {
+private struct PassFaceVisibility: AnimatableModifier {
     var angle: Double
-    let back: Back
+    let isBack: Bool
 
     var animatableData: Double {
         get { angle }
         set { angle = newValue }
     }
 
-    private var flipProgress: CGFloat {
-        CGFloat(abs(sin(angle * .pi / 180)))
+    private var isVisible: Bool {
+        (angle > 90) == isBack
     }
 
     func body(content: Content) -> some View {
         content
-            .hidden()
-            .overlay(alignment: .top) {
-                if angle <= 90 {
-                    content
-                } else {
-                    back
-                        .rotation3DEffect(
-                            .degrees(180),
-                            axis: (x: 0, y: 1, z: 0)
-                        )
-                }
-            }
-        .scaleEffect(1 - 0.055 * flipProgress)
-        .rotation3DEffect(
-            .degrees(angle),
-            axis: (x: 0, y: 1, z: 0),
-            perspective: 0.72
-        )
+            .opacity(isVisible ? 1 : 0)
+            .accessibilityHidden(!isVisible)
+            .allowsHitTesting(isVisible)
+    }
+}
+
+private struct PassFlipEffect: AnimatableModifier {
+    var angle: Double
+
+    var animatableData: Double {
+        get { angle }
+        set { angle = newValue }
+    }
+
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(1 - 0.055 * abs(sin(angle * .pi / 180)))
+            .rotation3DEffect(.degrees(angle), axis: (x: 0, y: 1, z: 0), perspective: 0.72)
     }
 }

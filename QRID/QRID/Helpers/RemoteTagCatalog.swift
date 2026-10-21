@@ -25,7 +25,7 @@ nonisolated struct RemoteTagCatalogChange: Decodable, Identifiable, Sendable {
 }
 
 nonisolated struct RemoteTagEntry: Decodable, Identifiable, Sendable {
-    nonisolated struct Names: Decodable, Sendable {
+    nonisolated struct Names: Codable, Equatable, Sendable {
         let zhHans: String
         let zhHantHK: String
         let zhHantTW: String

@@ -7,6 +7,7 @@ struct CardTagReorderView: UIViewRepresentable {
     let colorOverrides: [String: CardTagColorOverride]
     let onReorder: ([String]) -> Void
     let onRemove: (String) -> Void
+    var onCombine: ((String, String) -> Void)? = nil
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
@@ -119,6 +120,7 @@ struct CardTagReorderView: UIViewRepresentable {
         func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "tag", for: indexPath) as! TagCell
             let tag = parent.tags[indexPath.item]
+            cell.layer.borderWidth = 0
             cell.configure(tag: tag, style: CardTagColorPalette.colorStyle(for: tag, overrides: parent.colorOverrides), font: font(for: tag))
             cell.onRemove = { [weak self] in self?.parent.onRemove(tag) }
             cell.label.accessibilityCustomActions = [
@@ -164,6 +166,13 @@ struct CardTagReorderView: UIViewRepresentable {
             guard session.localDragSession?.localContext as? Coordinator === self else {
                 return UICollectionViewDropProposal(operation: .forbidden)
             }
+            let target = combineTarget(in: collectionView, session: session)
+            for cell in collectionView.visibleCells {
+                let highlighted = target.map { collectionView.indexPath(for: cell) == $0 } ?? false
+                cell.layer.borderWidth = highlighted ? 2 : 0
+                cell.layer.borderColor = UIColor.tintColor.cgColor
+                cell.layer.cornerRadius = cell.bounds.height / 2
+            }
             return UICollectionViewDropProposal(operation: .move, intent: .insertAtDestinationIndexPath)
         }
 
@@ -171,6 +180,13 @@ struct CardTagReorderView: UIViewRepresentable {
             guard let item = coordinator.items.first, let source = item.sourceIndexPath,
                   let tag = item.dragItem.localObject as? String,
                   parent.tags.indices.contains(source.item), parent.tags[source.item] == tag else { return }
+            if let target = combineTarget(in: collectionView, session: coordinator.session) {
+                let other = parent.tags[target.item]
+                coordinator.drop(item.dragItem, toItemAt: target)
+                for cell in collectionView.visibleCells { cell.layer.borderWidth = 0 }
+                parent.onCombine?(tag, other)
+                return
+            }
             let destination = IndexPath(item: min(coordinator.destinationIndexPath?.item ?? parent.tags.count - 1,
                                                    parent.tags.count - 1), section: 0)
             var reordered = parent.tags
@@ -178,13 +194,28 @@ struct CardTagReorderView: UIViewRepresentable {
             reordered.insert(tag, at: destination.item)
             // Update the data source before UIKit applies its item-level move animation.
             parent = CardTagReorderView(tags: reordered, colorOverrides: parent.colorOverrides,
-                                       onReorder: parent.onReorder, onRemove: parent.onRemove)
+                                       onReorder: parent.onReorder, onRemove: parent.onRemove, onCombine: parent.onCombine)
             collectionView.performBatchUpdates {
                 collectionView.deleteItems(at: [source])
                 collectionView.insertItems(at: [destination])
             }
             coordinator.drop(item.dragItem, toItemAt: destination)
             parent.onReorder(reordered)
+        }
+
+        func collectionView(_ collectionView: UICollectionView, dropSessionDidEnd session: UIDropSession) {
+            for cell in collectionView.visibleCells { cell.layer.borderWidth = 0 }
+        }
+
+        private func combineTarget(in collection: UICollectionView, session: UIDropSession) -> IndexPath? {
+            guard parent.onCombine != nil,
+                  let dragged = session.items.first?.localObject as? String,
+                  let index = collection.indexPathForItem(at: session.location(in: collection)),
+                  parent.tags.indices.contains(index.item),
+                  let cell = collection.cellForItem(at: index),
+                  cell.frame.insetBy(dx: cell.frame.width * 0.22, dy: 0).contains(session.location(in: collection)),
+                  CardTagPair.make(dragged, parent.tags[index.item], kind: .cp) != nil else { return nil }
+            return index
         }
 
         private func move(_ tag: String, by offset: Int) -> Bool {
@@ -200,6 +231,8 @@ struct CardTagReorderView: UIViewRepresentable {
         let label = UILabel()
         private let removeButton = UIButton(type: .system)
         private let background = CAGradientLayer()
+        private let outlineMask = CAShapeLayer()
+        private var outlinedTag = false
         var onRemove: (() -> Void)?
 
         override init(frame: CGRect) {
@@ -225,21 +258,40 @@ struct CardTagReorderView: UIViewRepresentable {
         func configure(tag: String, style: CardTagColorStyle, font: UIFont) {
             label.font = font
             let ink = style.ink
-            label.textColor = ink.white ? .white : .black
+            label.textColor = style.isWhiteBackground && style.pairing == nil ? UIColor(Color(hex: style.whiteTextHex)) : (ink.white ? .white : .black)
             label.attributedText = nil
-            label.text = tag
+            if let pair = style.pairing {
+                let attributed = NSMutableAttributedString()
+                for (index, member) in pair.members.enumerated() {
+                    if index > 0 { attributed.append(NSAttributedString(string: "&", attributes: [.foregroundColor: pair.kind == .cp ? UIColor.white : UIColor.gray])) }
+                    attributed.append(NSAttributedString(string: member.displayName, attributes: [.foregroundColor: pair.kind == .cp ? UIColor.white : UIColor(Color(hex: pair.colors[index]))]))
+                }
+                label.attributedText = attributed
+                label.accessibilityLabel = tag + " " + pair.kind.rawValue
+            } else {
+                label.text = tag
+                label.accessibilityLabel = tag
+            }
+            outlinedTag = style.isWhiteBackground
+            background.mask = outlinedTag ? outlineMask : nil
+            contentView.layer.backgroundColor = outlinedTag ? UIColor.white.cgColor : UIColor.clear.cgColor
+            background.borderWidth = style.pairing == nil && !outlinedTag ? 1 : 0
             label.layer.shadowColor = (ink.white ? UIColor.black : UIColor.white).cgColor
             label.layer.shadowOffset = .zero
             label.layer.shadowRadius = 0.8
-            label.layer.shadowOpacity = ink.outlined ? 0.8 : 0
+            label.layer.shadowOpacity = ink.outlined && !outlinedTag ? 0.8 : 0
+            if let pair = style.pairing {
+                label.layer.shadowColor = UIColor.black.cgColor
+                label.layer.shadowOpacity = pair.kind == .cp ? 0.45 : 0
+            }
             label.accessibilityIdentifier = "tag-label-" + tag
-            removeButton.tintColor = label.textColor
+            removeButton.tintColor = outlinedTag ? .gray : label.textColor
             removeButton.accessibilityLabel = "\(L.delete) \(tag)"
             removeButton.accessibilityIdentifier = "tag-remove-" + tag
             accessibilityIdentifier = "tag-chip-" + tag
-            let colors = style.segmentHexes
+            let colors = outlinedTag && style.pairing == nil ? style.whiteOutlineHexes : style.segmentHexes
             let cgColors: [CGColor] = colors.flatMap { hex -> [CGColor] in
-                let color = UIColor(Color(hex: hex)).withAlphaComponent(0.86).cgColor
+                let color = UIColor(Color(hex: hex)).withAlphaComponent(style.pairing == nil && !outlinedTag ? 0.86 : 1).cgColor
                 return [color, color]
             }
             background.colors = cgColors
@@ -254,6 +306,12 @@ struct CardTagReorderView: UIViewRepresentable {
             CATransaction.setDisableActions(true)
             background.frame = contentView.bounds
             background.cornerRadius = bounds.height / 2
+            contentView.layer.cornerRadius = bounds.height / 2
+            outlineMask.frame = contentView.bounds
+            outlineMask.path = UIBezierPath(roundedRect: contentView.bounds.insetBy(dx: 1, dy: 1), cornerRadius: max(0, bounds.height / 2 - 1)).cgPath
+            outlineMask.fillColor = UIColor.clear.cgColor
+            outlineMask.strokeColor = UIColor.black.cgColor
+            outlineMask.lineWidth = 2
             CATransaction.commit()
             label.frame = CGRect(x: 8, y: 0, width: max(0, bounds.width - 34), height: bounds.height)
             removeButton.frame = CGRect(x: bounds.width - 24, y: 0, width: 24, height: bounds.height)

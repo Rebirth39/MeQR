@@ -32,6 +32,9 @@ struct SyncDocument: Codable, Equatable {
         var presetColors: [String]
         var solidColor: String
         var weight: Int
+        var pairing: CardTagPair? = nil
+        var appearance: CardTagColorOverride.Appearance? = nil
+        var catalogKind: String? = nil
     }
 }
 struct SyncSnapshot: Codable {
@@ -144,7 +147,7 @@ enum ProfileSync {
             let colors = c.tagColorStyle(for: name).segmentHexes
             let weight = override?.textWeight ?? .regular
             return .init(name: ref?.fallbackName ?? name, catalogID: ref?.catalogID ?? "", mode: override?.mode.rawValue ?? (colors.count > 1 ? "preset" : "solid"), colors: colors,
-                         presetColors: ref?.colors ?? colors, solidColor: ref?.solidColor ?? colors[0], weight: weight == .bold ? 900 : weight == .medium ? 600 : 400)
+                         presetColors: ref?.colors ?? colors, solidColor: ref?.solidColor ?? colors[0], weight: weight == .bold ? 900 : weight == .medium ? 600 : 400, pairing: override?.pairing, appearance: override?.appearance, catalogKind: ref?.catalogKind ?? RemoteTagCatalogSnapshot.entry(id: ref?.catalogID ?? "")?.kind)
         }
         return .init(name: c.name, subtitle: c.subtitle, passSubtitle: c.passSubtitle ?? "", template: c.templateStyle.rawValue,
                      backgroundColor: c.backgroundColorHex, borderColor: c.borderColorHex, textColor: c.textColorHex ?? "#000000", qrColor: c.qrColorHex ?? "#000000",
@@ -184,7 +187,7 @@ enum ProfileSync {
         c.profiles = updated
         let refs: [CardTagReference] = doc.tags.map { t in
             .init(catalogID: t.catalogID.isEmpty ? nil : t.catalogID, fallbackName: t.name, colors: t.presetColors, solidColor: t.solidColor,
-                  override: .init(mode: CardTagColorOverride.Mode(rawValue: t.mode) ?? .custom, hexes: t.colors, textWeight: t.weight == 900 ? .bold : t.weight == 600 ? .medium : .regular))
+                  override: .init(mode: CardTagColorOverride.Mode(rawValue: t.mode) ?? .custom, hexes: t.colors, textWeight: t.weight == 900 ? .bold : t.weight == 600 ? .medium : .regular, pairing: t.pairing, appearance: t.appearance), catalogKind: t.catalogKind)
         }
         c.tagReferencesRawValue = CardTagReference.encode(refs); c.tagListRawValue = doc.tags.map(\.name).joined(separator: "\n")
         do { try context.save() } catch { context.rollback(); throw error }

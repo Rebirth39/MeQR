@@ -33,6 +33,7 @@ enum BackupManager {
         let cornerRadius: Double
         let cardOpacity: Double?
         let cardGlassEnabled: Bool?
+        let cardGlassStrength: Double?
         let sortOrder: Int
         let widgetProfileIndex: Int?
         let widgetUseClusterBackground: Bool?
@@ -76,6 +77,7 @@ enum BackupManager {
             cornerRadius: cluster.cornerRadius,
             cardOpacity: cluster.cardOpacity,
             cardGlassEnabled: cluster.cardGlassEnabled,
+            cardGlassStrength: cluster.cardGlassStrength,
             sortOrder: cluster.sortOrder,
             widgetProfileIndex: cluster.widgetProfileIndex,
             widgetUseClusterBackground: cluster.widgetUseClusterBackground,
@@ -171,6 +173,7 @@ enum BackupManager {
                     cornerRadius: clusterBackup.cornerRadius,
                     cardOpacity: clusterBackup.cardOpacity,
                     cardGlassEnabled: clusterBackup.cardGlassEnabled,
+                    cardGlassStrength: clusterBackup.cardGlassStrength,
                     sortOrder: clusterBackup.sortOrder,
                     widgetProfileIndex: clusterBackup.widgetProfileIndex,
                     widgetUseClusterBackground: clusterBackup.widgetUseClusterBackground,

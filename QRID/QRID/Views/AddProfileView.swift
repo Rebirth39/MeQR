@@ -52,7 +52,7 @@ struct AddProfileView: View {
             Form {
                 if !isAddingToExisting {
                     clusterInfoSection
-                    CardTagColorEditor(tagInput: tagInput, colorOverrides: $tagColorOverrides)
+                    CardTagColorEditor(tagInput: $tagInput, colorOverrides: $tagColorOverrides)
                     templateSection
                     clusterAppearanceSection
                     backgroundImageSection
@@ -167,7 +167,7 @@ struct AddProfileView: View {
             TextField(L.subtitleInfo, text: $subtitle, axis: .vertical)
                 .lineLimit(1...3)
 
-            CardTagInputView(text: $tagInput, colorOverrides: tagColorOverrides)
+            CardTagInputView(text: $tagInput, colorOverrides: $tagColorOverrides)
         }
     }
 

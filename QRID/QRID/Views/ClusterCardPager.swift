@@ -35,9 +35,13 @@ struct ClusterCardPager: View {
                         }, landscapeTabletPresentation: expanded,
                                         profileSelection: selection(for: cluster.id))
                         .padding(.horizontal, horizontalPadding)
-                        .padding(.vertical, 16)
+                        .padding(.top, 60)
+                        .padding(.bottom, 16)
                         .frame(maxWidth: .infinity, alignment: .top)
                     }
+                    // Cards that fit the page should not be draggable up and down;
+                    // only content taller than the viewport scrolls.
+                    .scrollBounceBehavior(.basedOnSize)
                     .tag(index)
                 }
             }

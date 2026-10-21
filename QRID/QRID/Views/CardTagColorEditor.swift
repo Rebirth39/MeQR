@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct CardTagColorEditor: View {
-    let tagInput: String
+    @Binding var tagInput: String
     @Binding var colorOverrides: [String: CardTagColorOverride]
     @State private var isExpanded = false
     @State private var draggedColor: (tag: String, index: Int)?
@@ -53,18 +53,57 @@ struct CardTagColorEditor: View {
                 .accessibilityValue(textWeightLabel(for: tag))
                 .accessibilityIdentifier("tag-weight-" + tag)
                 .help(textWeightLabel(for: tag))
-            }
-
-            Picker(L.tagColors, selection: presetModeBinding(for: tag)) {
-                Text(L.tagColorSolid).tag(CardTagColorOverride.Mode.solid)
-                if CardTagColorPalette.hasPresetSplitStyle(for: tag, overrides: colorOverrides) {
-                    Text(L.tagColorMixed).tag(CardTagColorOverride.Mode.preset)
+                if colorOverrides[CardTagColorPalette.normalized(tag)]?.pairing?.isValid == true {
+                    Button {
+                        guard let swapped = CardTagPair.swapSides(tags: tags, overrides: colorOverrides, tag: tag) else { return }
+                        colorOverrides = swapped.overrides
+                        tagInput = swapped.tags.joined(separator: "\n")
+                    } label: {
+                        Image(systemName: "arrow.left.arrow.right")
+                            .font(.system(size: 14, weight: .medium))
+                            .frame(width: 32, height: 32)
+                            .background(Color.secondary.opacity(0.08), in: Circle())
+                    }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel(L.tagPairSwapSides)
+                    .accessibilityIdentifier("tag-pair-swap-" + tag)
+                    .help(L.tagPairSwapSides)
+                    .disabled(CardTagPair.swapSides(tags: tags, overrides: colorOverrides, tag: tag) == nil)
                 }
-                Text(L.tagColorCustom).tag(CardTagColorOverride.Mode.custom)
             }
-            .pickerStyle(.segmented)
 
-            if presetModeBinding(for: tag).wrappedValue == .custom {
+            if let pair = colorOverrides[CardTagColorPalette.normalized(tag)]?.pairing, pair.isValid {
+                Picker(L.tagPairType, selection: Binding(get: { pair.kind }, set: { kind in
+                    let key = CardTagColorPalette.normalized(tag)
+                    var value = colorOverrides[key]!
+                    value.pairing?.kind = kind
+                    colorOverrides[key] = value
+                })) {
+                    Text("CP").tag(CardTagPair.Kind.cp)
+                    Text("CB").tag(CardTagPair.Kind.cb)
+                }
+                .pickerStyle(.segmented)
+                .accessibilityIdentifier("tag-pair-kind-" + tag)
+                CardTagPairLabel(pair: pair)
+                    .font(.caption.weight(textWeight(for: tag).fontWeight))
+                    .padding(.horizontal, 10).padding(.vertical, 5)
+                    .background { CardTagPairBackground(pair: pair) }
+            } else {
+                Picker(L.tagAppearance, selection: appearanceBinding(for: tag)) {
+                    Text(L.tagFilled).tag(CardTagColorOverride.Appearance.filled)
+                    Text(L.tagWhiteBackground).tag(CardTagColorOverride.Appearance.white)
+                }
+                .pickerStyle(.segmented)
+                .accessibilityIdentifier("tag-appearance-" + tag)
+                Picker(L.tagColors, selection: presetModeBinding(for: tag)) {
+                    Text(L.tagColorSolid).tag(CardTagColorOverride.Mode.solid)
+                    if CardTagColorPalette.hasPresetSplitStyle(for: tag, overrides: colorOverrides) {
+                        Text(L.tagColorMixed).tag(CardTagColorOverride.Mode.preset)
+                    }
+                    Text(L.tagColorCustom).tag(CardTagColorOverride.Mode.custom)
+                }
+                .pickerStyle(.segmented)
+
                 let style = CardTagColorPalette.colorStyle(for: tag, overrides: colorOverrides)
                 Text(tag)
                     .font(.caption.weight(textWeight(for: tag).fontWeight))
@@ -72,7 +111,9 @@ struct CardTagColorEditor: View {
                     .modifier(CardTagInkModifier(style: style))
                     .background { colorPreview(for: tag) }
                     .accessibilityLabel(L.tagPreview + ": " + tag)
-                customColorControls(for: tag)
+                if presetModeBinding(for: tag).wrappedValue == .custom {
+                    customColorControls(for: tag)
+                }
             }
         }
         .padding(.vertical, 4)
@@ -163,6 +204,19 @@ struct CardTagColorEditor: View {
         hexDrafts = [:]
     }
 
+    private func appearanceBinding(for tag: String) -> Binding<CardTagColorOverride.Appearance> {
+        Binding {
+            colorOverrides[CardTagColorPalette.normalized(tag)]?.appearance ?? .filled
+        } set: { appearance in
+            let key = CardTagColorPalette.normalized(tag)
+            guard colorOverrides[key]?.pairing?.isValid != true else { return }
+            var value = colorOverrides[key] ?? CardTagColorOverride(
+                mode: CardTagColorPalette.presetMode(for: tag, overrides: colorOverrides), hexes: [])
+            value.appearance = appearance
+            colorOverrides[key] = value
+        }
+    }
+
     private func presetModeBinding(for tag: String) -> Binding<CardTagColorOverride.Mode> {
         Binding {
             CardTagColorPalette.presetMode(for: tag, overrides: colorOverrides)
@@ -233,13 +287,17 @@ struct CardTagColorEditor: View {
         var updated = value
         updated.referenceColors = colorOverrides[key]?.referenceColors
         updated.referenceSolid = colorOverrides[key]?.referenceSolid
+        updated.pairing = colorOverrides[key]?.pairing
+        updated.appearance = colorOverrides[key]?.appearance
         colorOverrides[key] = updated
     }
 
     @ViewBuilder
     private func colorPreview(for tag: String) -> some View {
         let style = CardTagColorPalette.colorStyle(for: tag, overrides: colorOverrides)
-        if style.isMulticolor {
+        if let pair = style.pairing { CardTagPairBackground(pair: pair) }
+        else if style.isWhiteBackground { CardTagWhiteBackground(style: style) }
+        else if style.isMulticolor {
             LinearGradient(
                 stops: tagGradientStops(for: style),
                 startPoint: .leading,
@@ -292,12 +350,13 @@ private struct CardTagColorDragHandle: UIViewRepresentable {
 
 struct CardTagInputView: View {
     @Binding var text: String
-    var colorOverrides: [String: CardTagColorOverride] = [:]
+    @Binding var colorOverrides: [String: CardTagColorOverride]
     @StateObject private var remoteCatalog = RemoteTagCatalog.shared
     @State private var draft = ""
     @State private var suggestions: [String] = []
     @State private var showingCatalog = false
     @State private var showingInfo = false
+    @State private var pendingPair: [String]?
 
     private var tags: [String] {
         CardTagLimiter.tags(from: text)
@@ -307,10 +366,14 @@ struct CardTagInputView: View {
         VStack(alignment: .leading, spacing: 8) {
             if !tags.isEmpty {
                 CardTagReorderView(tags: tags, colorOverrides: colorOverrides,
-                                   onReorder: { text = $0.joined(separator: "\n") }, onRemove: removeTag)
+                                   onReorder: { text = $0.joined(separator: "\n") }, onRemove: removeTag,
+                                   onCombine: { pendingPair = [$0, $1] })
                 .padding(.vertical, 2)
             }
 
+            if tags.filter({ CardTagPair.character($0) != nil }).count >= 2 {
+                Text(L.tagPairHint).font(.caption).foregroundStyle(.secondary)
+            }
             HStack(spacing: 8) {
                 TextField(L.tagInputHint, text: $draft)
                     .font(.caption)
@@ -415,6 +478,20 @@ struct CardTagInputView: View {
             CardTagCatalogBrowser(text: $text, colorOverrides: colorOverrides)
         }
         .sheet(isPresented: $showingInfo) { CardTagCatalogInfoView() }
+        .alert(L.tagPairType, isPresented: Binding(get: { pendingPair != nil }, set: { if !$0 { pendingPair = nil } })) {
+            Button("CP") { combinePendingPair(kind: .cp) }
+            Button("CB") { combinePendingPair(kind: .cb) }
+            Button(L.cancel, role: .cancel) { pendingPair = nil }
+        } message: { Text(L.tagPairChoice) }
+    }
+
+    private func combinePendingPair(kind: CardTagPair.Kind) {
+        guard let pending = pendingPair else { return }
+        defer { pendingPair = nil }
+        guard let combined = CardTagPair.combine(tags: tags, overrides: colorOverrides,
+                                                first: pending[0], second: pending[1], kind: kind) else { return }
+        colorOverrides = combined.overrides
+        text = combined.tags.joined(separator: "\n")
     }
 
     private func commitDraft() {
@@ -554,5 +631,59 @@ struct CardTagFlowLayout: Layout {
     private struct Item {
         let index: Int
         let size: CGSize
+    }
+}
+
+
+struct CardTagPairLabel: View {
+    let pair: CardTagPair
+    var body: some View {
+        HStack(spacing: 1) {
+            Text(pair.members[0].displayName).foregroundStyle(ink(at: 0))
+            Text("&").foregroundStyle(pair.kind == .cp ? Color.white : Color.gray)
+            Text(pair.members[1].displayName).foregroundStyle(ink(at: 1))
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(pair.displayName + " " + pair.kind.rawValue)
+    }
+    private func ink(at index: Int) -> Color {
+        pair.kind == .cp ? .white : Color(hex: pair.colors[index])
+    }
+}
+
+struct CardTagPairBackground: View {
+    let pair: CardTagPair
+    private var gradient: LinearGradient {
+        LinearGradient(stops: [
+            .init(color: Color(hex: pair.colors[0]), location: 0),
+            .init(color: Color(hex: pair.colors[0]), location: 0.5),
+            .init(color: Color(hex: pair.colors[1]), location: 0.5),
+            .init(color: Color(hex: pair.colors[1]), location: 1),
+        ], startPoint: .leading, endPoint: .trailing)
+    }
+    var body: some View {
+        if pair.kind == .cp { Capsule().fill(gradient) }
+        else {
+            Capsule().fill(Color.white)
+                .overlay { Capsule().strokeBorder(gradient, lineWidth: 2) }
+        }
+    }
+}
+
+
+struct CardTagWhiteBackground: View {
+    let style: CardTagColorStyle
+    private var gradient: LinearGradient {
+        let colors = style.whiteOutlineHexes
+        let count = Double(colors.count)
+        let stops = colors.enumerated().flatMap { index, hex in
+            [Gradient.Stop(color: Color(hex: hex), location: Double(index) / count),
+             Gradient.Stop(color: Color(hex: hex), location: Double(index + 1) / count)]
+        }
+        return LinearGradient(stops: stops, startPoint: .leading, endPoint: .trailing)
+    }
+    var body: some View {
+        Capsule().fill(Color.white)
+            .overlay { Capsule().strokeBorder(gradient, lineWidth: 2) }
     }
 }

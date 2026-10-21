@@ -22,6 +22,7 @@ struct EditClusterView: View {
     @State private var cornerRadius: Double = 16
     @State private var cardOpacity: Double = 0.7
     @State private var cardGlassEnabled = false
+    @State private var cardGlassStrength: Double = 0.5
     @State private var avatarImage: UIImage?
     @State private var avatarPhotosItem: PhotosPickerItem?
     @State private var rawAvatarImage: CroppableImage?
@@ -56,7 +57,7 @@ struct EditClusterView: View {
         NavigationStack {
             Form {
                 clusterInfoSection
-                CardTagColorEditor(tagInput: tagInput, colorOverrides: $tagColorOverrides)
+                CardTagColorEditor(tagInput: $tagInput, colorOverrides: $tagColorOverrides)
                 templateSection
                 appearanceSection
                 widgetSection
@@ -183,7 +184,7 @@ struct EditClusterView: View {
             TextField(L.subtitleInfo, text: $subtitle, axis: .vertical)
                 .lineLimit(1...3)
 
-            CardTagInputView(text: $tagInput, colorOverrides: tagColorOverrides)
+            CardTagInputView(text: $tagInput, colorOverrides: $tagColorOverrides)
         }
     }
 
@@ -245,9 +246,22 @@ struct EditClusterView: View {
                     Text("\(L.cardOpacity): \(Int(cardOpacity * 100))%")
                         .font(.subheadline)
                     Slider(value: $cardOpacity, in: 0.2...1.0, step: 0.05)
+                        .accessibilityLabel(L.cardOpacity)
+                        .accessibilityIdentifier("card-opacity")
                 }
 
                 Toggle(L.cardGlassEffect, isOn: $cardGlassEnabled)
+                    .accessibilityIdentifier("card-glass-enabled")
+
+                if cardGlassEnabled {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("\(L.cardGlassStrength): \(Int((cardGlassStrength * 100).rounded()))%")
+                            .font(.subheadline)
+                        Slider(value: $cardGlassStrength, in: 0...1, step: 0.05)
+                            .accessibilityLabel(L.cardGlassStrength)
+                            .accessibilityIdentifier("card-glass-strength")
+                    }
+                }
             }
         }
     }
@@ -469,6 +483,7 @@ struct EditClusterView: View {
         cornerRadius = cluster.cornerRadius
         cardOpacity = cluster.cardOpacity ?? 0.7
         cardGlassEnabled = cluster.cardGlassEnabled ?? false
+        cardGlassStrength = cluster.resolvedCardGlassStrength
         if let data = cluster.avatarImageData {
             avatarImage = UIImage(data: data)
         }
@@ -517,6 +532,7 @@ struct EditClusterView: View {
         cluster.cornerRadius = cornerRadius
         cluster.cardOpacity = cardOpacity
         cluster.cardGlassEnabled = cardGlassEnabled
+        cluster.cardGlassStrength = cardGlassStrength
 
         let newQRColorHex = cluster.qrColorHex ?? "#000000"
         for profile in sortedProfiles {

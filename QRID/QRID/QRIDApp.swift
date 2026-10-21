@@ -193,12 +193,14 @@ struct WidgetSyncView: View {
                 WidgetDataHelper.sync(clusters: clusters)
                 Task { await EncounterStore.shared.syncPendingSessions() }
                 Task { await SupportTicketStore.shared.refresh() }
+                Task { await AppActivity.report(clusters: clusters) }
             }
             .onChange(of: scenePhase) { _, newValue in
                 if newValue == .active {
                     Task { await CardTagOutbox.shared.drain() }
                     Task { await EncounterStore.shared.syncPendingSessions() }
                     Task { await SupportTicketStore.shared.refresh() }
+                    Task { await AppActivity.report(clusters: clusters) }
                     WidgetDataHelper.sync(clusters: clusters)
                     announcementManager.refresh()
                 }

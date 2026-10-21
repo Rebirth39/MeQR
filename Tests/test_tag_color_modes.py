@@ -1,4 +1,5 @@
 import pathlib
+import re
 import subprocess
 import tempfile
 import unittest
@@ -9,18 +10,21 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 class TagColorModesTests(unittest.TestCase):
     def test_production_palette(self):
         model = (ROOT / "QRID/QRID/Models/QRCluster.swift").read_text()
-        palette = model[model.index("enum CardTagColorPalette {"):]
-        fixtures = '''
+        palette = model[model.index("enum CardTagLimiter {"): ]
+        catalog = (ROOT / "QRID/QRID/Helpers/RemoteTagCatalog.swift").read_text()
+        keys = sorted(set(re.findall(r"L\.(\w+)", palette + catalog)))
+        fixtures = """
 import Foundation
 import SwiftUI
-enum CardTagIndex {
-    static func normalizedKey(_ tag: String) -> String { tag.lowercased().replacingOccurrences(of: " ", with: "") }
+enum AppLanguage: Sendable { case system, zhHans, zhHantHK, zhHantTW, en, ja
+    static func preferredSystemLanguage() -> Self { .en }
 }
-enum RemoteTagCatalogSnapshot {
-    static func colorPreset(for tag: String) -> (colors: [String], solidColor: String?)? { nil }
-    static func colors(for tag: String) -> [String]? { nil }
+enum AppSettings { static let shared = Settings()
+    final class Settings { var resolvedLanguage: AppLanguage = .en }
 }
-'''
+"""
+        fixtures += ((ROOT / "QRID/QRID") / "Helpers/ColorExtensions.swift").read_text().split("    func toHex()")[0] + "\n}\n"
+        fixtures += "enum L {\n" + "\n".join(f'static let {key} = "{key}"' for key in keys) + "\n}\n"
         checks = '''
 let tag = "projectsekai"
 let colors = ["#112233", "#223344", "#334455", "#445566", "#556677", "#667788"]
@@ -68,5 +72,6 @@ assert(CardTagColorPalette.colorStyle(for: tag, overrides: restoredWeight).segme
             source = pathlib.Path(folder) / "main.swift"
             source.write_text(fixtures + palette + checks)
             binary = pathlib.Path(folder) / "palette-tests"
-            subprocess.run(["swiftc", str(source), "-o", str(binary)], check=True)
+            subprocess.run(["swiftc", str(source), str(ROOT / "QRID/QRID/Helpers/RemoteTagCatalog.swift"),
+                            str(ROOT / "QRID/QRID/Helpers/CardTagReference.swift"), "-o", str(binary)], check=True)
             subprocess.run([str(binary)], check=True)
