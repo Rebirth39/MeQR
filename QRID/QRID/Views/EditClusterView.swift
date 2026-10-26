@@ -32,6 +32,8 @@ struct EditClusterView: View {
     @State private var rhodesBannerImage: UIImage?
     @State private var rawRhodesBannerImage: CroppableImage?
     @State private var rhodesBannerPhotosItem: PhotosPickerItem?
+    @State private var cardDecorations: [CardDecoration] = []
+    @State private var importingDecoration = false
     @State private var showingAddQR = false
     @State private var editingProfile: QRProfile?
     @State private var widgetProfileIndex: Int = 0
@@ -62,6 +64,7 @@ struct EditClusterView: View {
                 clusterInfoSection
                 CardTagColorEditor(tagInput: $tagInput, colorOverrides: $tagColorOverrides)
                 templateSection
+                CardDecorationEditor(cluster: decorationPreview, sourceClusterID: cluster.id, decorations: $cardDecorations, importing: $importingDecoration)
                 appearanceSection
                 widgetSection
                 backgroundImageSection
@@ -81,7 +84,7 @@ struct EditClusterView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(L.save) { save() }
-                        .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
+                        .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty || importingDecoration)
                 }
             }
             .onAppear { loadCluster() }
@@ -99,6 +102,7 @@ struct EditClusterView: View {
             .onChange(of: cardOpacity) { _, _ in markDirty() }
             .onChange(of: cardGlassEnabled) { _, _ in markDirty() }
             .onChange(of: cardGlassStrength) { _, _ in markDirty() }
+            .onChange(of: cardDecorations) { _, _ in markDirty() }
             .onChange(of: widgetProfileIndex) { _, _ in markDirty() }
             .onChange(of: widgetUseClusterBackground) { _, _ in markDirty() }
             .onChange(of: widgetOpacity) { _, _ in markDirty() }
@@ -507,6 +511,23 @@ struct EditClusterView: View {
         if !isLoading { isDirty = true }
     }
 
+    private var decorationPreview: QRCluster {
+        let draft = QRCluster(
+            name: name, subtitle: subtitle,
+            avatarImageData: avatarImage?.pngData(),
+            backgroundColorHex: backgroundColor.toHex() ?? "#FFFFFF",
+            textColorHex: textColor.toHex(), qrColorHex: qrColor.toHex(),
+            templateStyleRawValue: templateStyle.rawValue,
+            rhodesBannerImageData: rhodesBannerImage?.pngData(),
+            passSubtitle: passSubtitle, tagListRawValue: tagInput,
+            tagColorOverridesRawValue: CardTagColorPalette.rawValue(from: tagColorOverrides, tags: CardTagLimiter.tags(from: tagInput)),
+            cornerRadius: cornerRadius, cardOpacity: cardOpacity,
+            cardGlassEnabled: cardGlassEnabled, cardGlassStrength: cardGlassStrength
+        )
+        draft.cardDecorations = cardDecorations
+        return draft
+    }
+
     private func attemptCancel() {
         if isDirty { showDiscardConfirmation = true } else { dismiss() }
     }
@@ -527,6 +548,7 @@ struct EditClusterView: View {
         cardOpacity = cluster.cardOpacity ?? 0.7
         cardGlassEnabled = cluster.cardGlassEnabled ?? false
         cardGlassStrength = cluster.resolvedCardGlassStrength
+        cardDecorations = cluster.cardDecorations
         if let data = cluster.avatarImageData {
             avatarImage = UIImage(data: data)
         }
@@ -578,6 +600,7 @@ struct EditClusterView: View {
         cluster.cardOpacity = cardOpacity
         cluster.cardGlassEnabled = cardGlassEnabled
         cluster.cardGlassStrength = cardGlassStrength
+        cluster.cardDecorations = cardDecorations
 
         let newQRColorHex = cluster.qrColorHex ?? "#000000"
         for profile in sortedProfiles {

@@ -7,6 +7,8 @@ struct ClusterCardPager: View {
     var landscapeTabletPresentation: Bool = false
     var profileSelections: Binding<[UUID: UUID]>? = nil
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @State private var editingClusterID: UUID?
+    @State private var cardZones: [UUID: [CardZoneKind: CGRect]] = [:]
 
     var body: some View {
         GeometryReader { geometry in
@@ -33,7 +35,25 @@ struct ClusterCardPager: View {
                                 onProfileSelected(profileIndex)
                             }
                         }, landscapeTabletPresentation: expanded,
+                                        showsDecorations: editingClusterID != cluster.id,
+                                        reportsDecorationZones: editingClusterID == cluster.id,
+                                        onDecorationZonesChange: { zones in
+                                            cardZones[cluster.id] = zones
+                                        },
                                         profileSelection: selection(for: cluster.id))
+                        .allowsHitTesting(editingClusterID != cluster.id)
+                        .overlay {
+                            if editingClusterID == cluster.id {
+                                InlineCardDecorationEditor(
+                                    decorations: Binding(
+                                        get: { cluster.cardDecorations },
+                                        set: { cluster.cardDecorations = $0 }
+                                    ),
+                                    zones: cardZones[cluster.id] ?? [:],
+                                    onDone: { editingClusterID = nil }
+                                )
+                            }
+                        }
                         .padding(.horizontal, horizontalPadding)
                         .padding(.top, 60)
                         .padding(.bottom, 16)
@@ -42,11 +62,18 @@ struct ClusterCardPager: View {
                     // Cards that fit the page should not be draggable up and down;
                     // only content taller than the viewport scrolls.
                     .scrollBounceBehavior(.basedOnSize)
+                    .scrollDisabled(true)
                     .tag(index)
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             .padding(.bottom, clusters.count > 1 ? 44 : 0)
+            .onReceive(NotificationCenter.default.publisher(for: .meqrEditDecorationsOnCard)) { note in
+                guard let id = note.object as? UUID,
+                      let index = clusters.firstIndex(where: { $0.id == id }) else { return }
+                currentPage = index
+                editingClusterID = id
+            }
             .overlay(alignment: .bottom) {
                 if clusters.count > 1 {
                     HStack(spacing: 8) {

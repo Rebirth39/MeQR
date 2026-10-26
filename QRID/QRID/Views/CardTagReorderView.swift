@@ -94,6 +94,7 @@ struct CardTagReorderView: UIViewRepresentable {
 
     final class Coordinator: NSObject, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout,
                              UICollectionViewDragDelegate, UICollectionViewDropDelegate {
+        private static let pairDropEdgeFraction: CGFloat = 0.15
         var parent: CardTagReorderView
         var renderedPalette: [[String]] = []
         var font = tagFont
@@ -213,7 +214,7 @@ struct CardTagReorderView: UIViewRepresentable {
                   let index = collection.indexPathForItem(at: session.location(in: collection)),
                   parent.tags.indices.contains(index.item),
                   let cell = collection.cellForItem(at: index),
-                  cell.frame.insetBy(dx: cell.frame.width * 0.22, dy: 0).contains(session.location(in: collection)),
+                  cell.frame.insetBy(dx: cell.frame.width * Self.pairDropEdgeFraction, dy: 0).contains(session.location(in: collection)),
                   CardTagPair.make(dragged, parent.tags[index.item], kind: .cp) != nil else { return nil }
             return index
         }

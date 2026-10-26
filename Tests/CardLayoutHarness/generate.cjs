@@ -12,7 +12,7 @@ const files = ['Models/QRCluster.swift', 'Models/QRProfile.swift', 'Helpers/Remo
   'Helpers/CardTagReference.swift', 'Helpers/CardTagUsageStore.swift', 'Helpers/CardTagOutbox.swift',
   'Helpers/Localization.swift', 'Helpers/ColorExtensions.swift', 'Helpers/QRCodeGenerator.swift',
   'Helpers/QRLinkPolicy.swift', 'Views/CardTagColorEditor.swift', 'Views/CardTagCatalogBrowser.swift',
-  'Views/CardTagReorderView.swift', 'Views/CardTagReportView.swift', 'Views/ClusterCardView.swift',
+  'Views/CardTagReorderView.swift', 'Views/CardTagReportView.swift', 'Views/ClusterCardView.swift', 'Views/CardDecorations.swift',
   'Views/ClusterCardPager.swift', 'Helpers/MeQRExchange.swift', 'Helpers/MeQRExchangeCodeStore.swift',
   'Helpers/MeQRRemoteService.swift', 'Helpers/EncounterStore.swift', 'Views/MeQRProfileCodeView.swift',
   'Views/EncountersView.swift', 'Views/QRLinkReviewView.swift', 'Helpers/SupportTicketStore.swift'];

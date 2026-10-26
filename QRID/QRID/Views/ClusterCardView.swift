@@ -26,6 +26,9 @@ struct ClusterCardView: View {
     var containerWidth: CGFloat
     var onProfileSelected: ((Int) -> Void)? = nil
     var landscapeTabletPresentation: Bool = false
+    var showsDecorations: Bool = true
+    var reportsDecorationZones: Bool = false
+    var onDecorationZonesChange: (([CardZoneKind: CGRect]) -> Void)? = nil
     var profileSelection: Binding<UUID?>? = nil
     // Draft previews provide unpersisted profiles without creating inverse relationships.
     var previewProfiles: [QRProfile]? = nil
@@ -74,6 +77,11 @@ struct ClusterCardView: View {
                 rhodesPassCard
             }
         }
+        .coordinateSpace(name: "meqrCard")
+        .onPreferenceChange(CardZonePreferenceKey.self) { zones in
+            guard reportsDecorationZones else { return }
+            onDecorationZonesChange?(zones)
+        }
         // Measure outside the flipping surfaces so rotation cannot distort the crop.
         .onGeometryChange(for: CGPoint.self) { geometry in
             geometry.frame(in: .global).origin
@@ -93,6 +101,7 @@ struct ClusterCardView: View {
             passFlipRotation = 0
             isPassFlipAnimating = false
         }
+        .modifier(CardDecorationSurface(decorations: showsDecorations ? cluster.cardDecorations : [], template: cluster.templateStyle))
     }
 
     private var standardCard: some View {
@@ -130,9 +139,11 @@ struct ClusterCardView: View {
                 }
             }
             .fixedSize(horizontal: false, vertical: true)
+            .cardZone(.header, enabled: reportsDecorationZones)
 
             if !landscapeTabletPresentation && !cluster.tags.isEmpty {
                 cardTagChips
+                    .cardZone(.tags, enabled: reportsDecorationZones)
             }
 
             // QR code
@@ -143,6 +154,7 @@ struct ClusterCardView: View {
                     .background(.white, in: RoundedRectangle(cornerRadius: 14))
                     .clipped()
                     .accessibilityIdentifier("standard-card-qr")
+                    .cardZone(.qr, enabled: reportsDecorationZones)
             } else {
                 Image(systemName: "qrcode")
                     .resizable()
@@ -154,6 +166,7 @@ struct ClusterCardView: View {
             // Platform picker
             if sortedProfiles.count > 1 {
                 platformPicker
+                    .cardZone(.platform, enabled: reportsDecorationZones)
             }
         }
         .padding(.horizontal, 16)
@@ -471,10 +484,12 @@ struct ClusterCardView: View {
                 }
             } else {
                 rhodesHeroPanel
+                    .cardZone(.header, enabled: reportsDecorationZones)
                 rhodesDetailsRow
                 if !cluster.tags.isEmpty {
                     cardTagChips
                         .accessibilityIdentifier("rhodes-front-tags")
+                        .cardZone(.tags, enabled: reportsDecorationZones)
                 }
             }
         }
@@ -539,12 +554,15 @@ struct ClusterCardView: View {
             VStack(alignment: .leading, spacing: 10) {
                 rhodesQRPanel
                     .frame(maxWidth: .infinity)
-                if sortedProfiles.count > 1 { platformPicker }
+                    .cardZone(.qr, enabled: reportsDecorationZones)
+                if sortedProfiles.count > 1 { platformPicker.cardZone(.platform, enabled: reportsDecorationZones) }
             }
         } else {
             HStack(alignment: .top, spacing: 10) {
                 rhodesQRPanel
+                    .cardZone(.qr, enabled: reportsDecorationZones)
                 rhodesInfoBlock
+                    .cardZone(.platform, enabled: reportsDecorationZones)
             }
         }
     }

@@ -26,6 +26,7 @@ enum BackupManager {
         let qrColorHex: String?
         let templateStyleRawValue: String?
         let rhodesBannerImageData: Data?
+        let cardDecorationsData: Data?
         let passSubtitle: String?
         let tagListRawValue: String?
         let tagColorOverridesRawValue: String?
@@ -69,6 +70,7 @@ enum BackupManager {
             qrColorHex: cluster.qrColorHex,
             templateStyleRawValue: cluster.templateStyleRawValue,
             rhodesBannerImageData: cluster.rhodesBannerImageData,
+            cardDecorationsData: cluster.cardDecorationsData,
             passSubtitle: cluster.passSubtitle,
             tagListRawValue: cluster.tagListRawValue,
             tagColorOverridesRawValue: cluster.tagColorOverridesRawValue,
@@ -167,6 +169,7 @@ enum BackupManager {
                     qrColorHex: clusterBackup.qrColorHex,
                     templateStyleRawValue: clusterBackup.templateStyleRawValue,
                     rhodesBannerImageData: clusterBackup.rhodesBannerImageData,
+                    cardDecorationsData: clusterBackup.cardDecorationsData,
                     passSubtitle: clusterBackup.passSubtitle,
                     tagListRawValue: clusterBackup.tagListRawValue,
                     tagColorOverridesRawValue: clusterBackup.tagColorOverridesRawValue,

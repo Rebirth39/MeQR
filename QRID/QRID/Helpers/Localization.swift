@@ -1,6 +1,22 @@
 import Foundation
 
 struct L {
+    static var cardDecorations: String { tr("QQ人装饰", "QQ人裝飾", "QQ人裝飾", "Character Stickers", "キャラクターステッカー") }
+    static var cardDecoration: String { tr("装饰图", "裝飾圖", "裝飾圖", "Sticker", "ステッカー") }
+    static var cardDecorationsHint: String { tr("最多放 3 张透明底人物图，可分别调整角度和大小。原型仅保存在本机，不参与同步或在线交换。", "最多放 3 張透明底人物圖，可分別調整角度和大小。原型僅儲存在本機，不參與同步或線上交換。", "最多放 3 張透明底人物圖，可分別調整角度和大小。原型僅儲存在本機，不參與同步或線上交換。", "Add up to 3 transparent character images and adjust each one's angle and size. This prototype saves them on this device only, without sync or online exchange.", "背景透過のキャラクター画像を3枚まで追加し、それぞれ角度とサイズを調整できます。この試作機能は端末内のみに保存され、同期やオンライン交換には含まれません。") }
+    static var cardDecorationRotation: String { tr("旋转角度", "旋轉角度", "旋轉角度", "Rotation", "回転角度") }
+    static var cardDecorationSize: String { tr("大小", "大小", "大小", "Size", "サイズ") }
+    static var cardDecorationReset: String { tr("恢复角度与大小", "還原角度與大小", "還原角度與大小", "Reset Angle and Size", "角度とサイズをリセット") }
+    static var cardDecorationImportFailed: String { tr("这张图片无法读取，请换一张试试。", "這張圖片無法讀取，請換一張試試。", "這張圖片無法讀取，請換一張試試。", "Could not read this image. Try another one.", "この画像を読み込めません。別の画像をお試しください。") }
+    static var cardDecorationEmptyHint: String { tr("还没有图片，点「选择图片」添加一张透明底人物图。", "還沒有圖片，點「選擇圖片」新增一張透明底人物圖。", "還沒有圖片，點「選擇圖片」新增一張透明底人物圖。", "No image yet. Tap Choose Image to add a transparent character image.", "まだ画像がありません。「画像を選択」から背景透過のキャラクター画像を追加してください。") }
+    static var cardDecorationOnCard: String { tr("在卡面上调整", "在卡面上調整", "在卡面上調整", "Adjust on Card", "カード上で調整") }
+    static var cardDecorationOnCardHint: String { tr("拖动卡片上的 QQ 人调整位置；每张图落在安全区内的面积不超过自身的 30%。", "拖動卡片上的 QQ 人調整位置；每張圖落在安全區內的面積不超過自身的 30%。", "拖動卡片上的 QQ 人調整位置；每張圖落在安全區內的面積不超過自身的 30%。", "Drag the character stickers on the card. Each image may cover at most 30% of its own area inside the safe zones.", "カード上のキャラクターをドラッグして位置を調整します。各画像はセーフエリア内に自身の面積の30%まで置けます。") }
+    static var cardDecorationShowZones: String { tr("显示安全区", "顯示安全區", "顯示安全區", "Show Safe Zones", "セーフエリアを表示") }
+    static var cardDecorationOverlap: String { tr("安全区内", "安全區內", "安全區內", "In safe zones", "セーフエリア内") }
+    static var cardDecorationOverlapLimit: String { tr("上限 30%", "上限 30%", "上限 30%", "limit 30%", "上限 30%") }
+    static var cardDecorationDropRejected: String { tr("超出安全区限制，已放回原位。", "超出安全區限制，已放回原位。", "超出安全區限制，已放回原位。", "Over the safe-zone limit. Moved back.", "セーフエリアの上限を超えたため、元の位置に戻しました。") }
+    static var cardDecorationHomeHint: String { tr("点「在卡面上调整」后，直接在首页卡片上拖动 QQ 人。", "點「在卡面上調整」後，直接在首頁卡片上拖動 QQ 人。", "點「在卡面上調整」後，直接在首頁卡片上拖動 QQ 人。", "Tap Adjust on Card, then drag the character stickers directly on the home card.", "「カード上で調整」をタップし、ホーム画面のカード上でキャラクターを直接ドラッグします。") }
+    static var cardDecorationDragHint: String { tr("拖动摆放 · 双指缩放旋转", "拖動擺放 · 雙指縮放旋轉", "拖動擺放 · 雙指縮放旋轉", "Drag to place · Pinch to scale and rotate", "ドラッグで配置 · ピンチで拡大縮小・回転") }
     static var tagKindWork: String { tr("作品", "作品", "作品", "Work", "作品") }
     static var tagKindCharacter: String { tr("角色", "角色", "角色", "Character", "キャラクター") }
     static var tagKindGroup: String { tr("组合", "組合", "組合", "Group", "グループ") }
@@ -57,7 +73,7 @@ struct L {
     static var tagWhiteBackground: String { tr("白底", "白底", "白底", "White", "白背景") }
     static var tagPairSwapSides: String { tr("交换左右位", "交換左右位", "交換左右位", "Swap left and right", "左右を入れ替える") }
     static var tagPairType: String { tr("CP / CB Tag", "CP / CB Tag", "CP / CB Tag", "CP / CB Tag", "CP / CB タグ") }
-    static var tagPairHint: String { tr("将世界计划角色 Tag 拖到另一角色 Tag 的中间，可组成 CP / CB，拖动的角色在左。", "將世界計畫角色 Tag 拖到另一角色 Tag 的中間，可組成 CP / CB，拖動的角色在左。", "將世界計畫角色 Tag 拖到另一角色 Tag 的中間，可組成 CP / CB，拖動的角色在左。", "Drop a Project Sekai character tag onto the center of another to create a CP / CB tag, with the dragged character on the left.", "プロセカのキャラクタータグを別のキャラクタータグの中央に重ねると、CP / CB タグを作れます。ドラッグしたキャラクターが左側になります。") }
+    static var tagPairHint: String { tr("将世界计划角色 Tag 拖到另一角色 Tag 的中间区域，可组成 CP / CB；靠近左右边缘则是调整顺序，拖动的角色在左。", "將世界計畫角色 Tag 拖到另一角色 Tag 的中間區域，可組成 CP / CB；靠近左右邊緣則是調整順序，拖動的角色在左。", "將世界計畫角色 Tag 拖到另一角色 Tag 的中間區域，可組成 CP / CB；靠近左右邊緣則是調整順序，拖動的角色在左。", "Drop a Project Sekai character tag in the wider center area of another tag to create a CP / CB tag. The edges reorder tags, and the dragged character stays on the left.", "プロセカのキャラクタータグを別のタグの中央の広い範囲に重ねると、CP / CB タグを作れます。端では並べ替えになり、ドラッグしたキャラクターが左側になります。") }
     static var tagPairChoice: String { tr("CP：双色实心；CB：双色描边。可在「Tag 颜色」中随时切换。", "CP：雙色實心；CB：雙色描邊。可在「Tag 顏色」中隨時切換。", "CP：雙色實心；CB：雙色描邊。可在「Tag 顏色」中隨時切換。", "CP: filled with both colors. CB: colored outline and text. Change this anytime in Tag Colors.", "CP：2色の塗りつぶし。CB：2色の枠線と文字。「Tag Colors」でいつでも変更できます。") }
     // 支持码 / 我的工单
     static var myTickets: String { tr("我的工单", "我的工單", "我的工單", "My Tickets", "マイチケット") }

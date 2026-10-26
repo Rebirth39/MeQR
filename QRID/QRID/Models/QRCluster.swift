@@ -2,6 +2,33 @@ import Foundation
 import SwiftData
 import SwiftUI
 
+struct CardDecoration: Codable, Equatable, Identifiable, Sendable {
+    var slot: Int
+    var imageData: Data
+    var rotation: Double = 0
+    var scale: Double = 1
+    /// Free position of the decoration's center, normalized to the card (0...1).
+    /// nil keeps the legacy per-slot anchor.
+    var x: Double? = nil
+    var y: Double? = nil
+    var id: Int { slot }
+
+    static func normalized(_ values: [CardDecoration]) -> [CardDecoration] {
+        var slots = Set<Int>()
+        return values.compactMap { value in
+            guard (0..<3).contains(value.slot), !value.imageData.isEmpty,
+                  value.imageData.count <= 6 * 1024 * 1024,
+                  slots.insert(value.slot).inserted else { return nil }
+            var result = value
+            result.rotation = value.rotation.isFinite ? min(180, max(-180, value.rotation)) : 0
+            result.scale = value.scale.isFinite ? min(1.25, max(0.6, value.scale)) : 1
+            if let x = value.x, x.isFinite { result.x = min(1.1, max(-0.1, x)) } else { result.x = nil }
+            if let y = value.y, y.isFinite { result.y = min(1.1, max(-0.1, y)) } else { result.y = nil }
+            return result
+        }.sorted { $0.slot < $1.slot }
+    }
+}
+
 enum ClusterTemplateStyle: String, CaseIterable, Identifiable {
     case standard
     case conventionPass
@@ -49,6 +76,7 @@ final class QRCluster {
     var qrColorHex: String?
     var templateStyleRawValue: String?
     var rhodesBannerImageData: Data?
+    var cardDecorationsData: Data?
     var passSubtitle: String?
     var tagListRawValue: String?
     var tagColorOverridesRawValue: String?
@@ -85,6 +113,7 @@ final class QRCluster {
         qrColorHex: String? = nil,
         templateStyleRawValue: String? = nil,
         rhodesBannerImageData: Data? = nil,
+        cardDecorationsData: Data? = nil,
         passSubtitle: String? = nil,
         tagListRawValue: String? = nil,
         tagColorOverridesRawValue: String? = nil,
@@ -116,6 +145,7 @@ final class QRCluster {
         self.qrColorHex = qrColorHex
         self.templateStyleRawValue = templateStyleRawValue
         self.rhodesBannerImageData = rhodesBannerImageData
+        self.cardDecorationsData = cardDecorationsData
         self.passSubtitle = passSubtitle
         self.tagListRawValue = tagListRawValue
         self.tagColorOverridesRawValue = tagColorOverridesRawValue
@@ -138,6 +168,18 @@ final class QRCluster {
         self.widgetLargeOffsetY = widgetLargeOffsetY
         if !RemoteTagCatalogSnapshot.value().isEmpty {
             migrateTagReferences()
+        }
+    }
+
+    var cardDecorations: [CardDecoration] {
+        get {
+            guard let data = cardDecorationsData,
+                  let values = try? JSONDecoder().decode([CardDecoration].self, from: data) else { return [] }
+            return CardDecoration.normalized(values)
+        }
+        set {
+            let values = CardDecoration.normalized(newValue)
+            cardDecorationsData = values.isEmpty ? nil : try? JSONEncoder().encode(values)
         }
     }
 
