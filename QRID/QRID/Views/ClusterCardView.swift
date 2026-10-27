@@ -463,10 +463,13 @@ struct ClusterCardView: View {
                 HStack(alignment: .top, spacing: 14) {
                     VStack(alignment: .leading, spacing: 16) {
                         rhodesLandscapeIdentity
+                            .cardZone(.header, enabled: reportsDecorationZones)
 
                         HStack(alignment: .top, spacing: 14) {
                             rhodesQRPanel
+                                .cardZone(.qr, enabled: reportsDecorationZones)
                             rhodesLandscapePlatformPanel
+                                .cardZone(.platform, enabled: reportsDecorationZones)
                                 .frame(width: 170, alignment: .topLeading)
                         }
                     }
@@ -481,6 +484,7 @@ struct ClusterCardView: View {
                     cardTagChips
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .accessibilityIdentifier("rhodes-front-tags")
+                        .cardZone(.tags, enabled: reportsDecorationZones)
                 }
             } else {
                 rhodesHeroPanel

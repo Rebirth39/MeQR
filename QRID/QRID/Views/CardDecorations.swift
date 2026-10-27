@@ -51,10 +51,10 @@ struct CardDecorationSurface: ViewModifier {
     let template: ClusterTemplateStyle
     @State private var cardSize: CGSize = .zero
 
-    private var baseSize: CGFloat { min(88, cardSize.width * 0.22) }
+    private var baseSize: CGFloat { min(180, cardSize.width * 0.22) }
     // Reserve just enough vertical room for the top/bottom decorations to draw outside the card
     // without being clipped, while the negative offset keeps the card itself in place.
-    private var inset: CGFloat { decorations.isEmpty ? 0 : baseSize * 0.9 + 8 }
+    private var inset: CGFloat { decorations.isEmpty ? 0 : min(baseSize * 0.9 + 8, 120) }
 
     func body(content: Content) -> some View {
         content
@@ -167,7 +167,7 @@ struct InlineCardDecorationEditor: View {
     var body: some View {
         GeometryReader { geo in
             let cardSize = geo.size
-            let side = min(88, cardSize.width * 0.22)
+            let side = min(180, cardSize.width * 0.22)
             ZStack(alignment: .topLeading) {
                 ForEach(CardZoneKind.allCases) { kind in
                     if let rect = zones[kind] {
