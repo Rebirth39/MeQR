@@ -17,6 +17,7 @@ struct MainView: View {
     @State private var showingReorderClusters = false
     @State private var showingMoreSettings = false
     @State private var showingMeQRProfileCode = false
+    @State private var showingShareCardGenerator = false
     @State private var showingMeQRScanner = false
     @State private var showingEncounters = false
     @State private var showingEvents = false
@@ -129,6 +130,7 @@ struct MainView: View {
                 }
             }
             .toolbarColorScheme(navigationColorScheme, for: .navigationBar)
+            // Re-render on language change so L.* strings resolve again.
             .onChange(of: settings.language) { _, _ in }
             .sheet(isPresented: $showAddNewCluster) {
                 AddProfileView()
@@ -158,6 +160,11 @@ struct MainView: View {
             .sheet(isPresented: $showingMeQRProfileCode) {
                 if let cluster = currentCluster {
                     MeQRProfileCodeView(cluster: cluster)
+                }
+            }
+            .sheet(isPresented: $showingShareCardGenerator) {
+                if let cluster = currentCluster {
+                    ShareCardGeneratorView(cluster: cluster)
                 }
             }
             .sheet(isPresented: $showingMeQRScanner) {
@@ -232,6 +239,11 @@ struct MainView: View {
     private var shareAction: some View {
         if !clusters.isEmpty {
             Menu {
+                Button {
+                    showingShareCardGenerator = true
+                } label: {
+                    Label(L.shareCardGenerate, systemImage: "photo.on.rectangle.angled")
+                }
                 Button {
                     showingMeQRProfileCode = true
                 } label: {
@@ -430,81 +442,6 @@ struct MainView: View {
             saveError = error.localizedDescription
             showSaveError = true
         }
-    }
-
-    private func saveCardToPhotos() {
-        guard let cluster = currentCluster else { return }
-        let renderer = ImageRenderer(content: ShareableCard(cluster: cluster))
-        renderer.scale = 3
-        guard let image = renderer.uiImage else { return }
-
-        let save: () -> Void = {
-            PHPhotoLibrary.shared().performChanges({
-                PHAssetChangeRequest.creationRequestForAsset(from: image)
-            }) { success, error in
-                DispatchQueue.main.async {
-                    if success {
-                        showSavedAlert = true
-                    }
-                }
-            }
-        }
-
-        let status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
-        switch status {
-        case .notDetermined:
-            PHPhotoLibrary.requestAuthorization(for: .addOnly) { newStatus in
-                DispatchQueue.main.async {
-                    if newStatus == .authorized || newStatus == .limited {
-                        save()
-                    }
-                }
-            }
-        case .authorized, .limited:
-            save()
-        case .denied, .restricted:
-            break
-        @unknown default:
-            break
-        }
-    }
-}
-
-// MARK: - Shareable Card
-
-struct ShareableCard: View {
-    let cluster: QRCluster
-    let cardHeight: CGFloat = 520
-
-    var body: some View {
-        GeometryReader { geo in
-            ZStack {
-                if let data = cluster.backgroundImageData,
-                   let uiImage = UIImage(data: data) {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: geo.size.width, height: geo.size.height)
-                        .clipped()
-                } else {
-                    cluster.backgroundColor
-                }
-
-                VStack(spacing: 0) {
-                    Spacer()
-
-                    ClusterCardView(cluster: cluster, size: 180, containerWidth: geo.size.width)
-                        .environment(\.cardBackdrop, CardBackdrop(frame: geo.frame(in: .global), imageData: cluster.backgroundImageData))
-                        .padding(.horizontal, 16)
-                        .frame(height: cardHeight)
-
-                    Spacer(minLength: 32)
-                }
-            }
-            .frame(width: geo.size.width, height: geo.size.height)
-        }
-        .frame(width: 393, height: 852)
-        .ignoresSafeArea()
     }
 }
 
