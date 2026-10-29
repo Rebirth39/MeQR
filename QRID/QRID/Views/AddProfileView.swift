@@ -207,7 +207,7 @@ struct AddProfileView: View {
             if templateStyle == .rhodesPass {
                 TextField(L.passSubtitleLabel, text: $passSubtitle)
                     .onChange(of: passSubtitle) { _, newValue in
-                        let limited = PassSubtitleLimiter.limited(newValue)
+                        let limited = HalfWidthLimiter.limited(newValue, maxUnits: 20, flattenNewlines: true)
                         if limited != newValue {
                             passSubtitle = limited
                         }
@@ -522,7 +522,7 @@ struct AddProfileView: View {
                 textColorHex: textColor.toHex() ?? "#000000",
                 qrColorHex: qrColorHex,
                 templateStyleRawValue: templateStyle.rawValue,
-                passSubtitle: PassSubtitleLimiter.limited(passSubtitle),
+                passSubtitle: HalfWidthLimiter.limited(passSubtitle, maxUnits: 20, flattenNewlines: true),
                 tagListRawValue: CardTagLimiter.normalizedRawValue(tagInput),
                 tagColorOverridesRawValue: CardTagColorPalette.rawValue(
                     from: tagColorOverrides,

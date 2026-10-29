@@ -192,15 +192,15 @@ struct MeQRProfileCodeView: View {
     }
 
     private var selectionStorageKey: String {
-        "meqr.exchange.selectedProfiles.\(cluster.id.uuidString)"
+        ExchangeStorageKeys.selectedProfiles(clusterID: cluster.id)
     }
 
     private var offlineSelectionStorageKey: String {
-        "meqr.exchange.offlineProfile.\(cluster.id.uuidString)"
+        ExchangeStorageKeys.offlineProfile(clusterID: cluster.id)
     }
 
     private var exchangeSubtitleStorageKey: String {
-        "meqr.exchange.subtitle.\(cluster.id.uuidString)"
+        ExchangeStorageKeys.subtitle(clusterID: cluster.id)
     }
 
     @ViewBuilder
@@ -992,49 +992,18 @@ private enum ExchangeSubtitleLimiter {
     private static let maxHalfWidthUnits = 50
 
     static func limited(_ value: String) -> String {
-        let normalized = value
-            .replacingOccurrences(of: "\r\n", with: "\n")
-            .replacingOccurrences(of: "\r", with: "\n")
-            .replacingOccurrences(of: "\n", with: " ")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-
-        var units = 0
-        var result = ""
-
-        for character in normalized {
-            let nextUnits = units + halfWidthUnits(for: character)
-            if nextUnits > maxHalfWidthUnits {
-                break
-            }
-            result.append(character)
-            units = nextUnits
-        }
-
-        return result
+        HalfWidthLimiter.limited(value, maxUnits: maxHalfWidthUnits, flattenNewlines: true)
     }
 
     static func isOverLimit(_ value: String) -> Bool {
-        halfWidthUnitCount(value) > maxHalfWidthUnits
+        HalfWidthLimiter.unitCount(value) > maxHalfWidthUnits
     }
 
     static func usageText(for value: String) -> String {
-        let halfUnits = halfWidthUnitCount(value)
+        let halfUnits = HalfWidthLimiter.unitCount(value)
         let whole = halfUnits / 2
         let suffix = halfUnits % 2 == 0 ? "" : ".5"
         return L.exchangeIntroUsage("\(whole)\(suffix)")
-    }
-
-    private static func halfWidthUnitCount(_ value: String) -> Int {
-        value.reduce(0) { partial, character in
-            partial + halfWidthUnits(for: character)
-        }
-    }
-
-    private static func halfWidthUnits(for character: Character) -> Int {
-        if character.isNewline {
-            return 0
-        }
-        return character.unicodeScalars.allSatisfy(\.isASCII) ? 1 : 2
     }
 }
 

@@ -28,25 +28,26 @@ struct CardTagColorEditor: View {
     @ViewBuilder
     private func tagColorRow(for tag: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
+            let weight = textWeight(for: tag)
             HStack(spacing: 8) {
                 colorPreview(for: tag)
                     .frame(width: 28, height: 14)
                 Text(tag)
-                    .fontWeight(textWeight(for: tag).fontWeight)
+                    .fontWeight(weight.fontWeight)
                     .lineLimit(1)
                 Spacer(minLength: 8)
                 Button {
                     let key = CardTagColorPalette.normalized(tag)
                     var override = colorOverrides[key] ?? CardTagColorOverride(
                         mode: CardTagColorPalette.presetMode(for: tag, overrides: colorOverrides), hexes: [])
-                    override.textWeight = textWeight(for: tag).next
+                    override.textWeight = weight.next
                     colorOverrides[key] = override
                 } label: {
                     Image(systemName: "bold")
-                        .font(.system(size: 14, weight: textWeight(for: tag).fontWeight))
-                        .foregroundStyle(textWeight(for: tag) == .regular ? Color.secondary : Color.accentColor)
+                        .font(.system(size: 14, weight: weight.fontWeight))
+                        .foregroundStyle(weight == .regular ? Color.secondary : Color.accentColor)
                         .frame(width: 32, height: 32)
-                        .background(Color.secondary.opacity(textWeight(for: tag) == .bold ? 0.2 : 0.08), in: Circle())
+                        .background(Color.secondary.opacity(weight == .bold ? 0.2 : 0.08), in: Circle())
                 }
                 .buttonStyle(.borderless)
                 .accessibilityLabel(L.tagTextWeight)
@@ -406,12 +407,6 @@ struct CardTagInputView: View {
             .padding(.vertical, 8)
             .background(.quaternary.opacity(0.55), in: RoundedRectangle(cornerRadius: 8))
 
-            if tags.count >= CardTagLimiter.maxTags {
-                Text(L.cardTagsHint)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
             if !suggestions.isEmpty {
                 VStack(alignment: .leading, spacing: 0) {
                     ForEach(suggestions, id: \.self) { suggestion in
@@ -456,11 +451,9 @@ struct CardTagInputView: View {
                 .foregroundStyle(.secondary)
             }
 
-            if tags.count < CardTagLimiter.maxTags {
-                Text(L.cardTagsHint)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            Text(L.cardTagsHint)
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
         .task {
             await remoteCatalog.refreshIfNeeded()

@@ -27,6 +27,7 @@ struct ClusterCardView: View {
     var onProfileSelected: ((Int) -> Void)? = nil
     var landscapeTabletPresentation: Bool = false
     var showsDecorations: Bool = true
+    var isLandscapeLayout: Bool = false
     var reportsDecorationZones: Bool = false
     var onDecorationZonesChange: (([CardZoneKind: CGRect]) -> Void)? = nil
     var profileSelection: Binding<UUID?>? = nil
@@ -101,7 +102,7 @@ struct ClusterCardView: View {
             passFlipRotation = 0
             isPassFlipAnimating = false
         }
-        .modifier(CardDecorationSurface(decorations: showsDecorations ? cluster.cardDecorations : [], template: cluster.templateStyle))
+        .modifier(CardDecorationSurface(decorations: showsDecorations ? cluster.cardDecorations : [], template: cluster.templateStyle, isLandscape: isLandscapeLayout))
     }
 
     private var standardCard: some View {

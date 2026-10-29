@@ -9,11 +9,13 @@ struct ClusterCardPager: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var editingClusterID: UUID?
     @State private var cardZones: [UUID: [CardZoneKind: CGRect]] = [:]
+    @State private var orientationHint: String?
 
     var body: some View {
         GeometryReader { geometry in
             let width = geometry.size.width
             let height = geometry.size.height
+            let isLandscape = width > height
             let regularWidth = horizontalSizeClass == .regular
             // Size classes can remain regular in a narrow iPad window.
             let expanded = regularWidth && width >= 800 && width > height
@@ -36,6 +38,7 @@ struct ClusterCardPager: View {
                             }
                         }, landscapeTabletPresentation: expanded,
                                         showsDecorations: editingClusterID != cluster.id,
+                                        isLandscapeLayout: isLandscape,
                                         reportsDecorationZones: editingClusterID == cluster.id,
                                         onDecorationZonesChange: { zones in
                                             cardZones[cluster.id] = zones
@@ -50,7 +53,8 @@ struct ClusterCardPager: View {
                                         set: { cluster.cardDecorations = $0 }
                                     ),
                                     zones: cardZones[cluster.id] ?? [:],
-                                    onDone: { editingClusterID = nil }
+                                    isLandscape: isLandscape,
+                                    onDone: { finishEditing(cluster: cluster, isLandscape: isLandscape) }
                                 )
                             }
                         }
@@ -74,6 +78,18 @@ struct ClusterCardPager: View {
                 currentPage = index
                 editingClusterID = id
             }
+            .overlay(alignment: .top) {
+                if let orientationHint {
+                    Text(orientationHint)
+                        .font(.caption2)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
+                        .background(.ultraThinMaterial, in: Capsule())
+                        .padding(.top, 6)
+                        .padding(.horizontal, 20)
+                }
+            }
             .overlay(alignment: .bottom) {
                 if clusters.count > 1 {
                     HStack(spacing: 8) {
@@ -92,6 +108,23 @@ struct ClusterCardPager: View {
                     .accessibilityLabel("\(currentPage + 1) / \(clusters.count)")
                 }
             }
+        }
+    }
+
+    private func finishEditing(cluster: QRCluster, isLandscape: Bool) {
+        editingClusterID = nil
+        guard CardLayoutSupport.supportsOrientationVariants, !cluster.cardDecorations.isEmpty else { return }
+        let missingOther: Bool
+        if isLandscape {
+            missingOther = cluster.cardDecorations.contains { $0.x == nil || $0.y == nil }
+        } else {
+            missingOther = cluster.cardDecorations.contains { $0.landscapeX == nil || $0.landscapeY == nil }
+        }
+        guard missingOther else { return }
+        orientationHint = isLandscape ? L.cardDecorationSetPortraitHint : L.cardDecorationSetLandscapeHint
+        Task {
+            try? await Task.sleep(nanoseconds: 3_500_000_000)
+            await MainActor.run { orientationHint = nil }
         }
     }
 

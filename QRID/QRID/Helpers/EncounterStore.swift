@@ -510,6 +510,8 @@ private extension JSONEncoder {
         encoder.dateEncodingStrategy = .iso8601
         return encoder
     }
+
+    static var meqrEncounter: JSONEncoder { meqrEvents }
 }
 
 private extension JSONDecoder {
@@ -518,20 +520,6 @@ private extension JSONDecoder {
         decoder.dateDecodingStrategy = .iso8601
         return decoder
     }
-}
 
-private extension JSONEncoder {
-    static var meqrEncounter: JSONEncoder {
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        return encoder
-    }
-}
-
-private extension JSONDecoder {
-    static var meqrEncounter: JSONDecoder {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        return decoder
-    }
+    static var meqrEncounter: JSONDecoder { meqrEvents }
 }

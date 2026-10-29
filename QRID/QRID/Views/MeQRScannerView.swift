@@ -483,12 +483,10 @@ private struct ScannerGlassButtonStyle: ButtonStyle {
 
     @MainActor
     private func openWeChatScan() {
-        guard let scanURL = URL(string: "weixin://scanqrcode") else { return }
-        if UIApplication.shared.canOpenURL(scanURL) {
-            UIApplication.shared.open(scanURL)
-        } else {
-            errorMessage = L.wechatNotInstalled
-            showError = true
+        Task {
+            let error = await Self.openTrustedDestination(URL(string: "weixin://scanqrcode")!, destination: .wechatScan)
+            guard !Task.isCancelled, isScannerActive else { return }
+            if let error { errorMessage = error; showError = true }
         }
     }
 
@@ -506,14 +504,14 @@ private struct ScannerGlassButtonStyle: ButtonStyle {
     private func localProfile(forOffline isOffline: Bool) -> MeQRExchangeProfile? {
         guard let localCluster else { return nil }
         let sorted = localCluster.profiles.sorted { $0.createdAt < $1.createdAt }
-        let savedIDs = UserDefaults.standard.stringArray(forKey: "meqr.exchange.selectedProfiles.\(localCluster.id.uuidString)") ?? []
+        let savedIDs = UserDefaults.standard.stringArray(forKey: ExchangeStorageKeys.selectedProfiles(clusterID: localCluster.id)) ?? []
         let selected = sorted.filter { savedIDs.contains($0.id.uuidString) }
         let included = Array((selected.isEmpty ? sorted : selected).prefix(3))
         if isOffline {
-            let savedID = UserDefaults.standard.string(forKey: "meqr.exchange.offlineProfile.\(localCluster.id.uuidString)")
+            let savedID = UserDefaults.standard.string(forKey: ExchangeStorageKeys.offlineProfile(clusterID: localCluster.id))
             let platform = included.first { $0.id.uuidString == savedID } ?? included.first
             var profile = MeQRExchangeProfile(offlineCluster: localCluster, profile: platform)
-            if let subtitle = UserDefaults.standard.string(forKey: "meqr.exchange.subtitle.\(localCluster.id.uuidString)") {
+            if let subtitle = UserDefaults.standard.string(forKey: ExchangeStorageKeys.subtitle(clusterID: localCluster.id)) {
                 profile.subtitle = subtitle
             }
             return profile

@@ -54,6 +54,7 @@ enum DeviceIdentity { static var id: String { "fixture-device-id" } }
         compile_result = subprocess.run([
             "swiftc", "-module-cache-path", str(ARTIFACTS / "module-cache"),
             str(generated), str(SOURCE / "Models/QRCluster.swift"),
+            str(SOURCE / "Helpers/HalfWidthLimiter.swift"),
             str(SOURCE / "Helpers/RemoteTagCatalog.swift"),
             str(SOURCE / "Helpers/CardTagReference.swift"),
             str(ROOT / "Tests/TagAudit20260909Tests.swift"), "-o", str(binary),

@@ -35,6 +35,7 @@ enum AppSettings { static let shared = Settings()
             generated.write_text(fixtures + sync)
             binary = folder / "tag-pair-tests"
             subprocess.run(["swiftc", str(generated), str(SOURCE / "Models/QRCluster.swift"),
+                            str(SOURCE / "Helpers/HalfWidthLimiter.swift"),
                             str(SOURCE / "Helpers/RemoteTagCatalog.swift"), str(SOURCE / "Helpers/CardTagReference.swift"),
                             str(ROOT / "Tests/TagPairTests.swift"),
                             "-o", str(binary)], check=True)

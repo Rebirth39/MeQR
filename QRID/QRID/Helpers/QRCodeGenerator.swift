@@ -102,19 +102,6 @@ struct QRCodeGenerator {
         return UIImage(cgImage: cropped, scale: image.scale, orientation: image.imageOrientation)
     }
 
-    static func quietZoneCompensationScale(for image: UIImage) -> CGFloat {
-        let finalWidth = image.size.width
-        guard finalWidth > 32 else { return 1.0 }
-
-        let contentRatio: CGFloat
-        if finalWidth > 224 {
-            contentRatio = 6.0 / 7.0
-        } else {
-            contentRatio = max((finalWidth - 32) / finalWidth, 0.01)
-        }
-
-        return 1.0 / contentRatio
-    }
 
     static func generate(from string: String, foreground: Color, background: Color, correctionLevel: String = "M") -> UIImage? {
         let context = CIContext()
@@ -654,15 +641,6 @@ struct QRCodeGenerator {
         return 1
     }
 
-    private static func nearestPaletteSymbol(red: UInt8, green: UInt8, blue: UInt8) -> UInt8 {
-        let color = UIColor(red: CGFloat(red) / 255, green: CGFloat(green) / 255, blue: CGFloat(blue) / 255, alpha: 1)
-        var hue: CGFloat = 0
-        var saturation: CGFloat = 0
-        var brightness: CGFloat = 0
-        color.getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: nil)
-        return nearestPaletteSymbol(red: red, green: green, blue: blue, targetHues: [0.61, 0.47, 0.93, 0.75])
-    }
-
     private static func nearestPaletteSymbol(
         red: UInt8,
         green: UInt8,
@@ -748,9 +726,9 @@ struct QRCodeGenerator {
         var errorDescription: String? {
             switch self {
             case .invalidImage:
-                return "Could not process the image."
+                return L.couldNotDecodeQR
             case .noQRCodeFound:
-                return "No QR code found in this image."
+                return L.noQRFound
             }
         }
     }

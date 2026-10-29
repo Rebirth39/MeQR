@@ -30,6 +30,15 @@ enum CardDecorationImages {
     }
 }
 
+enum CardLayoutSupport {
+    /// iPad and foldables can present the card in both portrait and landscape.
+    static var supportsOrientationVariants: Bool {
+        if UIDevice.current.userInterfaceIdiom == .pad { return true }
+        let supported = UIApplication.shared.supportedInterfaceOrientations(for: nil)
+        return supported.contains(.portrait) && supported.contains(.landscape)
+    }
+}
+
 enum CardDecorationLayout {
     /// Default anchors used when a decoration has no free position yet.
     static func defaultPoint(for slot: Int) -> CGPoint {
@@ -40,8 +49,11 @@ enum CardDecorationLayout {
         }
     }
 
-    static func point(for decoration: CardDecoration) -> CGPoint {
+    static func point(for decoration: CardDecoration, isLandscape: Bool = false) -> CGPoint {
         let fallback = defaultPoint(for: decoration.slot)
+        if isLandscape {
+            return CGPoint(x: decoration.landscapeX ?? fallback.x, y: decoration.landscapeY ?? fallback.y)
+        }
         return CGPoint(x: decoration.x ?? fallback.x, y: decoration.y ?? fallback.y)
     }
 }
@@ -49,6 +61,7 @@ enum CardDecorationLayout {
 struct CardDecorationSurface: ViewModifier {
     let decorations: [CardDecoration]
     let template: ClusterTemplateStyle
+    var isLandscape: Bool = false
     @State private var cardSize: CGSize = .zero
 
     private var baseSize: CGFloat { min(180, cardSize.width * 0.22) }
@@ -67,7 +80,7 @@ struct CardDecorationSurface: ViewModifier {
                         ForEach(decorations) { decoration in
                             if let image = CardDecorationImages.image(decoration.imageData) {
                                 let side = s * decoration.scale
-                                let point = CardDecorationLayout.point(for: decoration)
+                                let point = CardDecorationLayout.point(for: decoration, isLandscape: isLandscape)
                                 Image(uiImage: image)
                                     .resizable()
                                     .scaledToFit()
@@ -152,6 +165,7 @@ extension Notification.Name {
 struct InlineCardDecorationEditor: View {
     @Binding var decorations: [CardDecoration]
     var zones: [CardZoneKind: CGRect] = [:]
+    var isLandscape: Bool = false
     var onDone: () -> Void
 
     @State private var livePositions: [Int: CGPoint] = [:]
@@ -190,7 +204,7 @@ struct InlineCardDecorationEditor: View {
 
                 ForEach(decorations) { decoration in
                     if let image = CardDecorationImages.image(decoration.imageData) {
-                        let point = livePositions[decoration.slot] ?? CardDecorationLayout.point(for: decoration)
+                        let point = livePositions[decoration.slot] ?? CardDecorationLayout.point(for: decoration, isLandscape: isLandscape)
                         let currentScale = liveScales[decoration.slot] ?? decoration.scale
                         let currentRotation = liveRotations[decoration.slot] ?? decoration.rotation
                         let dimension = side * currentScale
@@ -219,6 +233,15 @@ struct InlineCardDecorationEditor: View {
                 }
             }
         }
+        .overlay(alignment: .topLeading) {
+            Label(isLandscape ? L.cardDecorationLandscape : L.cardDecorationPortrait,
+                  systemImage: isLandscape ? "rectangle.landscape" : "rectangle.portrait")
+                .font(.caption2.weight(.semibold))
+                .padding(.horizontal, 9)
+                .padding(.vertical, 5)
+                .background(.ultraThinMaterial, in: Capsule())
+                .padding(8)
+        }
         .overlay(alignment: .topTrailing) {
             Button(L.done) { onDone() }
                 .buttonStyle(.borderedProminent)
@@ -238,7 +261,7 @@ struct InlineCardDecorationEditor: View {
                 selectedSlot = decoration.slot
                 let start = dragStarts[decoration.slot]
                     ?? livePositions[decoration.slot]
-                    ?? CardDecorationLayout.point(for: decoration)
+                    ?? CardDecorationLayout.point(for: decoration, isLandscape: isLandscape)
                 if dragStarts[decoration.slot] == nil { dragStarts[decoration.slot] = start }
                 let x = min(1.05, max(-0.05, start.x + value.translation.width / cardSize.width))
                 let y = min(1.05, max(-0.05, start.y + value.translation.height / cardSize.height))
@@ -251,7 +274,7 @@ struct InlineCardDecorationEditor: View {
                 warning = nil
             }
             .onEnded { _ in
-                let point = livePositions[decoration.slot] ?? CardDecorationLayout.point(for: decoration)
+                let point = livePositions[decoration.slot] ?? CardDecorationLayout.point(for: decoration, isLandscape: isLandscape)
                 let currentScale = liveScales[decoration.slot] ?? decoration.scale
                 let ratio = CardSafeZones.ratio(center: point,
                                                 side: side * currentScale,
@@ -283,7 +306,7 @@ struct InlineCardDecorationEditor: View {
                 let base = scaleStarts[decoration.slot] ?? decoration.scale
                 let scale = min(1.25, max(0.6, base * value.magnification))
                 liveScales[decoration.slot] = scale
-                let point = livePositions[decoration.slot] ?? CardDecorationLayout.point(for: decoration)
+                let point = livePositions[decoration.slot] ?? CardDecorationLayout.point(for: decoration, isLandscape: isLandscape)
                 overlap = CardSafeZones.ratio(center: point,
                                               side: side * scale,
                                               cardSize: cardSize,
@@ -292,7 +315,7 @@ struct InlineCardDecorationEditor: View {
             }
             .onEnded { _ in
                 let scale = liveScales[decoration.slot] ?? decoration.scale
-                let point = livePositions[decoration.slot] ?? CardDecorationLayout.point(for: decoration)
+                let point = livePositions[decoration.slot] ?? CardDecorationLayout.point(for: decoration, isLandscape: isLandscape)
                 let ratio = CardSafeZones.ratio(center: point,
                                                 side: side * scale,
                                                 cardSize: cardSize,
@@ -343,8 +366,15 @@ struct InlineCardDecorationEditor: View {
 
     private func commit(_ slot: Int, _ point: CGPoint) {
         guard let index = decorations.firstIndex(where: { $0.slot == slot }) else { return }
-        decorations[index].x = Double(min(1.1, max(-0.1, point.x)))
-        decorations[index].y = Double(min(1.1, max(-0.1, point.y)))
+        let x = Double(min(1.1, max(-0.1, point.x)))
+        let y = Double(min(1.1, max(-0.1, point.y)))
+        if isLandscape {
+            decorations[index].landscapeX = x
+            decorations[index].landscapeY = y
+        } else {
+            decorations[index].x = x
+            decorations[index].y = y
+        }
     }
 
     private var statusBar: some View {
@@ -426,6 +456,9 @@ struct CardDecorationEditor: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(L.cardDecorationsHint)
                 Text(L.cardDecorationHomeHint)
+                if CardLayoutSupport.supportsOrientationVariants {
+                    Text(L.cardDecorationOrientationGuide)
+                }
             }
         }
         .onDisappear { importTask?.cancel(); importing = false }

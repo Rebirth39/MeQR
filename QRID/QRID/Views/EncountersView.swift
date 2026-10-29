@@ -8,7 +8,6 @@ struct EncounterPreviewView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var store = EncounterStore.shared
     @ObservedObject private var eventStore = EventStore.shared
-    @State private var saved = false
     @State private var selectedPlatformIndex = 0
 
     private var textColor: Color { Color(hex: profile.textColorHex ?? "#000000") }
@@ -264,17 +263,15 @@ struct EncounterPreviewView: View {
                                      sessionID: sessionID, peerProfile: localProfile)
             guard store.persistenceErrorMessage == nil else { return }
             Task { await store.syncConfirmations() }
-            saved = true
             dismiss()
         } label: {
-            Label(saved ? L.saved : L.saveEncounter, systemImage: saved ? "checkmark" : "person.badge.plus")
+            Label(L.saveEncounter, systemImage: "person.badge.plus")
                 .font(.headline)
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)
         }
         .buttonStyle(.borderedProminent)
         .clipShape(Capsule())
-        .disabled(saved)
     }
 }
 

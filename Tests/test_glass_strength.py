@@ -63,7 +63,7 @@ import SwiftData
     }
 }
 ''')
-            shared = [str(fixture), str(SOURCE / "Helpers/RemoteTagCatalog.swift"), str(SOURCE / "Helpers/CardTagReference.swift")]
+            shared = [str(fixture), str(SOURCE / "Helpers/RemoteTagCatalog.swift"), str(SOURCE / "Helpers/HalfWidthLimiter.swift"), str(SOURCE / "Helpers/CardTagReference.swift")]
             store = folder / "legacy.store"
             subprocess.run(["swiftc", *shared, str(legacy), str(writer), "-o", str(folder / "writer")], check=True)
             subprocess.run([str(folder / "writer"), str(store)], check=True)

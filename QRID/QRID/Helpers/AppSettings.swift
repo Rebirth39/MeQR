@@ -125,19 +125,6 @@ final class AppSettings {
         selectedLanguage == .system ? AppLanguage.preferredSystemLanguage() : selectedLanguage
     }
 
-    var isChinese: Bool {
-        switch resolvedLanguage {
-        case .zhHans, .zhHantHK, .zhHantTW:
-            return true
-        case .system, .en, .ja:
-            return false
-        }
-    }
-
-    func toggleLanguage() {
-        selectedLanguage = resolvedLanguage == .en ? .zhHans : .en
-    }
-
     private init() {
         language = UserDefaults.standard.string(forKey: "app_language") ?? AppLanguage.system.rawValue
         theme = UserDefaults.standard.string(forKey: "app_theme") ?? AppTheme.light.rawValue

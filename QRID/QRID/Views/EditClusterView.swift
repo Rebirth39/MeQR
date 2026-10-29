@@ -58,6 +58,40 @@ struct EditClusterView: View {
             .sorted { $0.createdAt < $1.createdAt }
     }
 
+    private struct DirtyFingerprint: Equatable {
+        var name: String
+        var subtitle: String
+        var textColor: Color
+        var backgroundColor: Color
+        var qrColor: Color
+        var templateStyle: ClusterTemplateStyle
+        var passSubtitle: String
+        var tagInput: String
+        var tagColorOverrides: [String: CardTagColorOverride]
+        var cornerRadius: Double
+        var cardOpacity: Double
+        var cardGlassEnabled: Bool
+        var cardGlassStrength: Double
+        var cardDecorations: [CardDecoration]
+        var widgetProfileIndex: Int
+        var widgetUseClusterBackground: Bool
+        var widgetOpacity: Double
+        var widgetUseCustomBackground: Bool
+        var pendingDeletedProfileIDs: Set<UUID>
+        var profileCount: Int
+    }
+
+    private var dirtyFingerprint: DirtyFingerprint {
+        DirtyFingerprint(name: name, subtitle: subtitle, textColor: textColor, backgroundColor: backgroundColor,
+                         qrColor: qrColor, templateStyle: templateStyle, passSubtitle: passSubtitle, tagInput: tagInput,
+                         tagColorOverrides: tagColorOverrides, cornerRadius: cornerRadius, cardOpacity: cardOpacity,
+                         cardGlassEnabled: cardGlassEnabled, cardGlassStrength: cardGlassStrength,
+                         cardDecorations: cardDecorations, widgetProfileIndex: widgetProfileIndex,
+                         widgetUseClusterBackground: widgetUseClusterBackground, widgetOpacity: widgetOpacity,
+                         widgetUseCustomBackground: widgetUseCustomBackground,
+                         pendingDeletedProfileIDs: pendingDeletedProfileIDs, profileCount: sortedProfiles.count)
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -89,26 +123,7 @@ struct EditClusterView: View {
             }
             .onAppear { loadCluster() }
             .interactiveDismissDisabled(isDirty)
-            .onChange(of: name) { _, _ in markDirty() }
-            .onChange(of: subtitle) { _, _ in markDirty() }
-            .onChange(of: textColor) { _, _ in markDirty() }
-            .onChange(of: backgroundColor) { _, _ in markDirty() }
-            .onChange(of: qrColor) { _, _ in markDirty() }
-            .onChange(of: templateStyle) { _, _ in markDirty() }
-            .onChange(of: passSubtitle) { _, _ in markDirty() }
-            .onChange(of: tagInput) { _, _ in markDirty() }
-            .onChange(of: tagColorOverrides) { _, _ in markDirty() }
-            .onChange(of: cornerRadius) { _, _ in markDirty() }
-            .onChange(of: cardOpacity) { _, _ in markDirty() }
-            .onChange(of: cardGlassEnabled) { _, _ in markDirty() }
-            .onChange(of: cardGlassStrength) { _, _ in markDirty() }
-            .onChange(of: cardDecorations) { _, _ in markDirty() }
-            .onChange(of: widgetProfileIndex) { _, _ in markDirty() }
-            .onChange(of: widgetUseClusterBackground) { _, _ in markDirty() }
-            .onChange(of: widgetOpacity) { _, _ in markDirty() }
-            .onChange(of: widgetUseCustomBackground) { _, _ in markDirty() }
-            .onChange(of: pendingDeletedProfileIDs) { _, _ in markDirty() }
-            .onChange(of: sortedProfiles.count) { _, _ in markDirty() }
+            .onChange(of: dirtyFingerprint) { _, _ in markDirty() }
             .onChange(of: avatarPhotosItem) { _, newItem in
                 Task {
                     guard let newItem else { return }
@@ -239,7 +254,7 @@ struct EditClusterView: View {
             if templateStyle == .rhodesPass {
                 TextField(L.passSubtitleLabel, text: $passSubtitle)
                     .onChange(of: passSubtitle) { _, newValue in
-                        let limited = PassSubtitleLimiter.limited(newValue)
+                        let limited = HalfWidthLimiter.limited(newValue, maxUnits: 20, flattenNewlines: true)
                         if limited != newValue {
                             passSubtitle = limited
                         }
@@ -594,7 +609,7 @@ struct EditClusterView: View {
         cluster.backgroundColorHex = backgroundColor.toHex() ?? "#FFFFFF"
         cluster.qrColorHex = qrColor.toHex() ?? "#000000"
         cluster.templateStyle = templateStyle
-        cluster.passSubtitle = PassSubtitleLimiter.limited(passSubtitle)
+        cluster.passSubtitle = HalfWidthLimiter.limited(passSubtitle, maxUnits: 20, flattenNewlines: true)
         cluster.setTags(CardTagLimiter.tags(from: tagInput), overrides: tagColorOverrides)
         cluster.cornerRadius = cornerRadius
         cluster.cardOpacity = cardOpacity

@@ -39,6 +39,7 @@ enum DeviceIdentity { static var id: String { "fixture-device-id" } }
             generated.write_text(real + fixtures)
             binary = path / "tag-state-tests"
             subprocess.run(["swiftc", str(generated), str(SOURCE / "Helpers/RemoteTagCatalog.swift"),
+                            str(SOURCE / "Helpers/HalfWidthLimiter.swift"),
                             str(SOURCE / "Helpers/CardTagReference.swift"), str(ROOT / "Tests/TagStateTests.swift"),
                             "-o", str(binary)], check=True)
             subprocess.run([str(binary), str(SOURCE / "tags-v1.json")], check=True)

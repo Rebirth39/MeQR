@@ -424,12 +424,14 @@ class ReviewRegressionTests(unittest.TestCase):
         self.assertIn('QRLinkPolicy.platformID(url)', profile)
         self.assertIn('("testflight", ["testflight.apple.com"])', read("QRID/QRID/Helpers/QRLinkPolicy.swift"))
 
+        visible_options = "".join(extract_computed_property_body(profile, name)
+                                  for name in ("commonPlatforms", "socialPlatforms", "professionalPlatforms"))
         for removed_visible_option in [
             ".paypal", ".venmo", ".cashapp", ".email", ".phone",
             ".telegram", ".discord", ".youtube", ".pinterest",
             ".signal", ".mastodon", ".bluesky", ".linktree",
         ]:
-            self.assertNotIn(removed_visible_option, extract_computed_property_body(profile, "selectablePlatforms"))
+            self.assertNotIn(removed_visible_option, visible_options)
 
         for source in [add_profile, edit_profile]:
             self.assertIn("Section(L.commonPlatforms)", source)
@@ -537,7 +539,7 @@ class ReviewRegressionTests(unittest.TestCase):
             self.assertTrue(change["date"])
             for language in ("zhHans", "zhHantHK", "zhHantTW", "en", "ja"):
                 self.assertTrue(change["summary"][language])
-        self.assertEqual(len(tag_catalog["entries"]), 527)
+        self.assertEqual(len(tag_catalog["entries"]), 533)
         self.assertIn('let categories: [RemoteTagCategory]?', remote_catalog)
         self.assertIn('let solidColor: String?', remote_catalog)
         self.assertIn('searchRecords = records', remote_catalog)
@@ -625,10 +627,10 @@ class ReviewRegressionTests(unittest.TestCase):
         self.assertNotIn('"weibo"', cluster)
         self.assertNotIn('"wechat"', cluster)
         self.assertIn("static func rawValue(from overrides:", cluster)
-        self.assertIn("CardTagInputView(text: $tagInput, colorOverrides: tagColorOverrides)", add_profile)
-        self.assertIn("CardTagInputView(text: $tagInput, colorOverrides: tagColorOverrides)", edit_cluster)
-        self.assertIn("CardTagColorEditor(tagInput: tagInput, colorOverrides: $tagColorOverrides)", add_profile)
-        self.assertIn("CardTagColorEditor(tagInput: tagInput, colorOverrides: $tagColorOverrides)", edit_cluster)
+        self.assertIn("CardTagInputView(text: $tagInput, colorOverrides: $tagColorOverrides)", add_profile)
+        self.assertIn("CardTagInputView(text: $tagInput, colorOverrides: $tagColorOverrides)", edit_cluster)
+        self.assertIn("CardTagColorEditor(tagInput: $tagInput, colorOverrides: $tagColorOverrides)", add_profile)
+        self.assertIn("CardTagColorEditor(tagInput: $tagInput, colorOverrides: $tagColorOverrides)", edit_cluster)
         self.assertIn("DisclosureGroup(L.tagColors", editor)
         self.assertIn("DisclosureGroup(L.appearance", add_profile)
         self.assertIn("DisclosureGroup(L.backgroundImage", add_profile)

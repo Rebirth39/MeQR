@@ -11,6 +11,9 @@ struct CardDecoration: Codable, Equatable, Identifiable, Sendable {
     /// nil keeps the legacy per-slot anchor.
     var x: Double? = nil
     var y: Double? = nil
+    /// Separate free position for landscape layouts (iPad / foldables).
+    var landscapeX: Double? = nil
+    var landscapeY: Double? = nil
     var id: Int { slot }
 
     static func normalized(_ values: [CardDecoration]) -> [CardDecoration] {
@@ -24,6 +27,8 @@ struct CardDecoration: Codable, Equatable, Identifiable, Sendable {
             result.scale = value.scale.isFinite ? min(1.25, max(0.6, value.scale)) : 1
             if let x = value.x, x.isFinite { result.x = min(1.1, max(-0.1, x)) } else { result.x = nil }
             if let y = value.y, y.isFinite { result.y = min(1.1, max(-0.1, y)) } else { result.y = nil }
+            if let x = value.landscapeX, x.isFinite { result.landscapeX = min(1.1, max(-0.1, x)) } else { result.landscapeX = nil }
+            if let y = value.landscapeY, y.isFinite { result.landscapeY = min(1.1, max(-0.1, y)) } else { result.landscapeY = nil }
             return result
         }.sorted { $0.slot < $1.slot }
     }
@@ -299,24 +304,7 @@ enum CardTagLimiter {
     }
 
     static func limited(_ value: String) -> String {
-        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
-        var units = 0
-        var result = ""
-
-        for character in trimmed {
-            let nextUnits = units + halfWidthUnits(for: character)
-            if nextUnits > maxHalfWidthUnits {
-                break
-            }
-            result.append(character)
-            units = nextUnits
-        }
-
-        return result
-    }
-
-    private static func halfWidthUnits(for character: Character) -> Int {
-        character.unicodeScalars.allSatisfy(\.isASCII) ? 1 : 2
+        HalfWidthLimiter.limited(value, maxUnits: maxHalfWidthUnits)
     }
 }
 

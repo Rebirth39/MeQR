@@ -4,25 +4,6 @@ enum MeQRRemoteService {
     private static let apiBaseURL = URL(string: "https://api.meqrcode.cn")!
     private static let meqrHosts: Set<String> = ["api.meqrcode.cn", "profile.meqrcode.cn"]
 
-    static func uploadProfile(_ profile: MeQRExchangeProfile) async throws -> String {
-        var request = URLRequest(url: apiBaseURL.appendingPathComponent("profiles"))
-        request.httpMethod = "POST"
-        request.timeoutInterval = 15
-        request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.httpBody = try JSONEncoder().encode(ProfileUploadRequest(profile: profile))
-
-        request.cachePolicy = .reloadIgnoringLocalCacheData
-        let (data, response) = try await URLSession.shared.data(for: request)
-        try validate(response: response, data: data)
-
-        let uploadResponse = try JSONDecoder().decode(ProfileUploadResponse.self, from: data)
-        guard !uploadResponse.url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw MeQRRemoteServiceError.missingURL
-        }
-        return uploadResponse.url
-    }
-
     static func publishExchangeCode(_ record: MeQRExchangeCodeRecord) async throws {
         var request = URLRequest(url: apiBaseURL.appendingPathComponent("encounter-sessions/\(record.sessionID)"))
         request.httpMethod = "POST"
@@ -74,22 +55,6 @@ enum MeQRRemoteService {
         return id
     }
 
-    static func createEncounterSession(creatorProfile: MeQRExchangeProfile, eventID: UUID?) async throws -> MeQREncounterSessionCreation {
-        var request = URLRequest(url: apiBaseURL.appendingPathComponent("encounter-sessions"))
-        request.httpMethod = "POST"
-        request.timeoutInterval = 15
-        request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.httpBody = try JSONEncoder().encode(EncounterSessionCreationRequest(
-            creatorProfile: creatorProfile,
-            eventID: eventID?.uuidString
-        ))
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-        try validate(response: response, data: data)
-        return try JSONDecoder().decode(MeQREncounterSessionCreation.self, from: data)
-    }
-
     static func fetchEncounterSession(from string: String, ownerToken: String? = nil) async throws -> MeQREncounterSession {
         guard let url = URL(string: string), canFetchEncounterSession(from: string) else {
             throw MeQRRemoteServiceError.unsupportedURL
@@ -126,16 +91,6 @@ enum MeQRRemoteService {
             }
             throw MeQRRemoteServiceError.httpStatus(httpResponse.statusCode)
         }
-    }
-}
-
-struct MeQREncounterSessionCreation: Decodable {
-    let sessionID: String
-    let url: String
-
-    enum CodingKeys: String, CodingKey {
-        case sessionID = "sessionId"
-        case url
     }
 }
 
@@ -179,21 +134,12 @@ private struct EncounterSessionConfirmationRequest: Encodable {
     let peerProfile: MeQRExchangeProfile
 }
 
-private struct ProfileUploadRequest: Encodable {
-    let profile: MeQRExchangeProfile
-}
-
-private struct ProfileUploadResponse: Decodable {
-    let url: String
-}
-
 private struct ErrorResponse: Decodable {
     let error: String?
 }
 
 enum MeQRRemoteServiceError: LocalizedError {
     case httpStatus(Int)
-    case missingURL
     case server(String)
     case unsupportedURL
 
@@ -201,8 +147,6 @@ enum MeQRRemoteServiceError: LocalizedError {
         switch self {
         case .httpStatus(let status):
             return "HTTP \(status)"
-        case .missingURL:
-            return L.tryAgain
         case .server(let message):
             return message
         case .unsupportedURL:

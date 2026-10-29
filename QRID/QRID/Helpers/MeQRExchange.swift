@@ -466,9 +466,6 @@ enum MeQRExchangeCodec {
         return try JSONDecoder.meqr.decode(MeQRExchangeProfile.self, from: data)
     }
 
-    static func canDecode(_ string: String) -> Bool {
-        (try? decode(string)) != nil
-    }
 }
 
 enum MeQRExchangeError: Error, LocalizedError {
@@ -613,4 +610,10 @@ private extension UIImage {
 
         return smallestJPEG
     }
+}
+
+enum ExchangeStorageKeys {
+    static func selectedProfiles(clusterID: UUID) -> String { "meqr.exchange.selectedProfiles.\(clusterID.uuidString)" }
+    static func offlineProfile(clusterID: UUID) -> String { "meqr.exchange.offlineProfile.\(clusterID.uuidString)" }
+    static func subtitle(clusterID: UUID) -> String { "meqr.exchange.subtitle.\(clusterID.uuidString)" }
 }

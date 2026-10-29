@@ -10,8 +10,7 @@ final class QRProfile {
     var foregroundColorHex: String
     var createdAt: Date
 
-    // Old stored properties — kept temporarily for migration
-    // These will be removed after all profiles have been migrated to clusters
+    // Stored card identity fields (migrated from standalone profiles; still in use).
     var name: String
     var subtitle: String
     var avatarImageData: Data?
@@ -138,10 +137,6 @@ enum Platform: String, CaseIterable, Identifiable {
         [.linkedin, .testflight]
     }
 
-    static var selectablePlatforms: [Platform] {
-        commonPlatforms + socialPlatforms + professionalPlatforms + [.custom]
-    }
-
     static var localizedShortVideoPlatform: Platform {
         switch AppSettings.shared.resolvedLanguage {
         case .zhHans, .zhHantHK:
@@ -225,14 +220,6 @@ enum Platform: String, CaseIterable, Identifiable {
         case .douyin: return "play.square.fill"
         case .weibo: return "antenna.radiowaves.left.and.right"
         }
-    }
-
-    /// Returns true if `domain` appears as a full domain (not a substring) in `text`.
-    private static func isDomain(_ text: String, _ domain: String) -> Bool {
-        guard let range = text.range(of: domain) else { return false }
-        let before = range.lowerBound == text.startIndex || text[text.index(before: range.lowerBound)] == "/" || text[text.index(before: range.lowerBound)] == "@"
-        let after = range.upperBound == text.endIndex || ["/", "?", "#", ":"].contains(text[range.upperBound])
-        return before && after
     }
 
     private static func normalizedPlatformName(_ value: String) -> String {

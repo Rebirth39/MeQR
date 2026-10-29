@@ -73,5 +73,6 @@ assert(CardTagColorPalette.colorStyle(for: tag, overrides: restoredWeight).segme
             source.write_text(fixtures + palette + checks)
             binary = pathlib.Path(folder) / "palette-tests"
             subprocess.run(["swiftc", str(source), str(ROOT / "QRID/QRID/Helpers/RemoteTagCatalog.swift"),
+                            str(ROOT / "QRID/QRID/Helpers/HalfWidthLimiter.swift"),
                             str(ROOT / "QRID/QRID/Helpers/CardTagReference.swift"), "-o", str(binary)], check=True)
             subprocess.run([str(binary)], check=True)
