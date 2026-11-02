@@ -231,6 +231,9 @@ struct ShareCardView: View {
     /// 预解码的图片（编辑器缓存后传入，避免每次 body 求值重复 decode）；nil 时现场解。
     var decodedAvatar: UIImage? = nil
     var decodedCardBackground: UIImage? = nil
+    /// 富文本 runs（选区样式）；nil 时按纯文本渲染（与改动前一致）。
+    var nameRuns: [ShareCardTextRun]? = nil
+    var bioRuns: [ShareCardTextRun]? = nil
 
     private var canvas: CGSize { canvasOverride ?? aspect.pixelSize }
 
@@ -375,22 +378,34 @@ struct ShareCardView: View {
                 .frame(width: unit * 0.14 * density, height: unit * 0.14 * density)
                 .clipShape(Circle())
                 .overlay(Circle().stroke(.white.opacity(0.85), lineWidth: unit * 0.004))
-            Text(cluster.name.isEmpty ? L.qrID : cluster.name)
-                .font(.system(size: unit * 0.052 * density, weight: .heavy, design: .rounded))
-                .foregroundStyle(ink)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            Group {
+                if let nameRuns, !nameRuns.isEmpty {
+                    Text(ShareCardRichText.attributedString(from: nameRuns, baseSize: unit * 0.052 * density, baseColor: ink))
+                } else {
+                    Text(cluster.name.isEmpty ? L.qrID : cluster.name)
+                        .font(.system(size: unit * 0.052 * density, weight: .heavy, design: .rounded))
+                        .foregroundStyle(ink)
+                }
+            }
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
     /// userinfo（签名等详细内容），排在 tag 区下方。
     private func subtitleBlock(density: CGFloat) -> some View {
-        Text(cluster.subtitle)
-            .font(.system(size: unit * 0.029 * density, weight: .medium))
-            .lineSpacing(unit * 0.008 * density)
-            .foregroundStyle(ink.opacity(0.78))
-            .fixedSize(horizontal: false, vertical: true)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        Group {
+            if let bioRuns, !bioRuns.isEmpty {
+                Text(ShareCardRichText.attributedString(from: bioRuns, baseSize: unit * 0.029 * density, baseColor: ink.opacity(0.78)))
+            } else {
+                Text(cluster.subtitle)
+                    .font(.system(size: unit * 0.029 * density, weight: .medium))
+                    .foregroundStyle(ink.opacity(0.78))
+            }
+        }
+        .lineSpacing(unit * 0.008 * density)
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder
@@ -769,6 +784,14 @@ struct ShareCardGeneratorView: View {
     @State private var blurredBackground: UIImage?
     @State private var decodedAvatar: UIImage?
     @State private var decodedCardBackground: UIImage?
+    @State private var nameRuns: [ShareCardTextRun]?
+    @State private var bioRuns: [ShareCardTextRun]?
+    @State private var nameAttr = NSAttributedString()
+    @State private var bioAttr = NSAttributedString()
+    @State private var nameSelection = NSRange()
+    @State private var bioSelection = NSRange()
+    private let nameBox = ShareCardTextViewBox()
+    private let bioBox = ShareCardTextViewBox()
     @State private var isSaving = false
 
     /// 选图与裁切弹窗的单一数据源：item 驱动 fullScreenCover，捕获的一定是本次选中的图。
@@ -779,6 +802,10 @@ struct ShareCardGeneratorView: View {
     @State private var showSaved = false
     @State private var saveError: String?
     @State private var showSaveError = false
+
+    private static func richTextKey(_ field: String, for clusterID: UUID) -> String {
+        "meqr.sharecard.richText.\(field).\(clusterID.uuidString)"
+    }
 
     init(cluster: QRCluster) {
         self.cluster = cluster
@@ -791,6 +818,12 @@ struct ShareCardGeneratorView: View {
         _decodedAvatar = State(initialValue: cluster.avatarImageData.flatMap(UIImage.init(data:)))
         _decodedCardBackground = State(initialValue: cluster.backgroundImageData.flatMap(UIImage.init(data:)))
         _backgroundTransform = State(initialValue: ShareCardBackgroundStore.transform(for: cluster.id))
+        let storedNameRuns = UserDefaults.standard.string(forKey: Self.richTextKey("name", for: cluster.id)).flatMap { ShareCardRichText.runs(from: $0) }.flatMap { $0.isEmpty ? nil : $0 }
+        let storedBioRuns = UserDefaults.standard.string(forKey: Self.richTextKey("bio", for: cluster.id)).flatMap { ShareCardRichText.runs(from: $0) }.flatMap { $0.isEmpty ? nil : $0 }
+        _nameRuns = State(initialValue: storedNameRuns)
+        _bioRuns = State(initialValue: storedBioRuns)
+        _nameAttr = State(initialValue: ShareCardRichText.nsAttributedString(from: storedNameRuns ?? [ShareCardTextRun(t: cluster.name)]))
+        _bioAttr = State(initialValue: ShareCardRichText.nsAttributedString(from: storedBioRuns ?? [ShareCardTextRun(t: cluster.subtitle)]))
     }
 
     private var profiles: [QRProfile] {
@@ -866,7 +899,9 @@ struct ShareCardGeneratorView: View {
                 panelOpacity: panelOpacity,
                 blurredBackground: blurredBackground,
                 decodedAvatar: decodedAvatar,
-                decodedCardBackground: decodedCardBackground
+                decodedCardBackground: decodedCardBackground,
+                nameRuns: nameRuns,
+                bioRuns: bioRuns
             )
             .frame(width: geo.size.width, height: geo.size.height)
         }
@@ -893,6 +928,24 @@ struct ShareCardGeneratorView: View {
                     }
                 }
                 .pickerStyle(.menu)
+            }
+            Section(L.clusterName) {
+                ShareCardRichToolbar(attributed: nameAttr, selection: nameSelection, textView: { nameBox.view }) {
+                    syncAndPersist(field: "name", box: nameBox)
+                }
+                ShareCardRichTextEditor(attributed: $nameAttr, selection: $nameSelection, box: nameBox, minHeight: 34) {
+                    syncAndPersist(field: "name", box: nameBox)
+                }
+                .frame(minHeight: 34, maxHeight: 60)
+            }
+            Section(L.subtitleInfo) {
+                ShareCardRichToolbar(attributed: bioAttr, selection: bioSelection, textView: { bioBox.view }) {
+                    syncAndPersist(field: "bio", box: bioBox)
+                }
+                ShareCardRichTextEditor(attributed: $bioAttr, selection: $bioSelection, box: bioBox, minHeight: 60) {
+                    syncAndPersist(field: "bio", box: bioBox)
+                }
+                .frame(minHeight: 60, maxHeight: 120)
             }
             Section(L.shareCardBackground) {
                 Picker(L.shareCardBackground, selection: $background) {
@@ -1030,7 +1083,7 @@ struct ShareCardGeneratorView: View {
                 }
             }
         }
-        .frame(height: 300)
+        .frame(height: 340)
     }
 
     private var saveBar: some View {
@@ -1048,6 +1101,20 @@ struct ShareCardGeneratorView: View {
         .padding(.horizontal, 22)
         .padding(.vertical, 10)
         .background(.bar)
+    }
+
+    private func syncAndPersist(field: String, box: ShareCardTextViewBox) {
+        guard let view = box.view else { return }
+        let runs = ShareCardRichText.runs(from: view.attributedText)
+        let json = ShareCardRichText.json(from: runs)
+        UserDefaults.standard.set(json, forKey: Self.richTextKey(field, for: cluster.id))
+        if field == "name" {
+            nameAttr = view.attributedText.copy() as! NSAttributedString
+            nameRuns = runs.isEmpty ? nil : runs
+        } else {
+            bioAttr = view.attributedText.copy() as! NSAttributedString
+            bioRuns = runs.isEmpty ? nil : runs
+        }
     }
 
     private func regenerateBlur() {
@@ -1083,7 +1150,9 @@ struct ShareCardGeneratorView: View {
             panelOpacity: panelOpacity,
             blurredBackground: blurredBackground,
             decodedAvatar: decodedAvatar,
-            decodedCardBackground: decodedCardBackground
+            decodedCardBackground: decodedCardBackground,
+            nameRuns: nameRuns,
+            bioRuns: bioRuns
         )
         let renderer = ImageRenderer(content: exportView)
         renderer.proposedSize = ProposedViewSize(aspect.pixelSize)
