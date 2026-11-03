@@ -228,6 +228,9 @@ struct L {
     static var icpFiling: String { tr("备案信息", "備案資訊", "備案資訊", "ICP Filing", "ICP备案") }
     static var contactDeveloper: String { tr("联系开发者", "聯絡開發者", "聯絡開發者", "Contact Developer", "開発者に連絡") }
     // 扩列图生成器
+    static var shareCardAvatar: String { tr("头像", "頭像", "頭像", "Avatar", "アイコン") }
+    static var shareCardAvatarChange: String { tr("更换头像", "更換頭像", "更換頭像", "Change Avatar", "アイコンを変更") }
+    static var shareCardAvatarReset: String { tr("恢复默认头像", "恢復默認頭像", "恢復預設頭像", "Reset Avatar", "デフォルトに戻す") }
     static var shareCardBackground: String { tr("背景", "背景", "背景", "Background", "背景") }
     static var shareCardBgGradient: String { tr("主题渐变", "主題漸層", "主題漸層", "Gradient", "グラデーション") }
     static var shareCardBgCardImage: String { tr("卡片背景图", "卡片背景圖", "卡片背景圖", "Card Image", "カード背景") }
@@ -246,6 +249,7 @@ struct L {
 
     static var shareCardGenerate: String { tr("生成扩列图", "生成擴列圖", "生成擴列圖", "Create Share Card", "拡列カードを作成") }
     static var shareCardTitle: String { tr("扩列图", "擴列圖", "擴列圖", "Share Card", "拡列カード") }
+    static var shareCardAdjust: String { tr("调整", "調整", "調整", "Adjust", "調整") }
     static var shareCardAspect: String { tr("画幅", "畫幅", "畫幅", "Aspect Ratio", "アスペクト比") }
     static var shareCardPortrait: String { tr("竖版", "豎版", "直式", "Portrait", "縦") }
     static var shareCardLandscape: String { tr("横版", "橫版", "橫式", "Landscape", "横") }

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import Photos
 import PhotosUI
 import CoreImage
@@ -151,8 +152,8 @@ struct ShareCardBackgroundTransform: Codable, Equatable {
 }
 
 enum ShareCardBackgroundStore {
-    private static var fileURL: URL {
-        URL.applicationSupportDirectory.appendingPathComponent("meqr-sharecard-background.jpg")
+    private static func fileURL(for clusterID: UUID) -> URL {
+        URL.applicationSupportDirectory.appendingPathComponent("meqr-sharecard-background-\(clusterID.uuidString).jpg")
     }
 
     private static func transformKey(for clusterID: UUID) -> String {
@@ -191,19 +192,44 @@ enum ShareCardBackgroundStore {
         return UIImage(cgImage: cropped, scale: image.scale, orientation: image.imageOrientation)
     }
 
-    static func loadImage() -> UIImage? {
-        guard let data = try? Data(contentsOf: fileURL) else { return nil }
+    static func loadImage(for clusterID: UUID) -> UIImage? {
+        guard let data = try? Data(contentsOf: fileURL(for: clusterID)) else { return nil }
         return UIImage(data: data)
     }
 
-    static func saveImage(_ image: UIImage?) {
+    static func saveImage(_ image: UIImage?, for clusterID: UUID) {
         let fileManager = FileManager.default
+        let fileURL = fileURL(for: clusterID)
         if let image, let data = image.jpegData(compressionQuality: 0.9) {
             try? fileManager.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
             try? data.write(to: fileURL, options: .atomic)
         } else {
             try? fileManager.removeItem(at: fileURL)
         }
+    }
+}
+
+// MARK: - 头像覆盖图（按卡片独立存储）
+
+enum ShareCardAvatarStore {
+    private static func fileURL(for clusterID: UUID) -> URL {
+        URL.applicationSupportDirectory.appendingPathComponent("meqr-sharecard-avatar-\(clusterID.uuidString).jpg")
+    }
+
+    static func load(for clusterID: UUID) -> UIImage? {
+        guard let data = try? Data(contentsOf: fileURL(for: clusterID)) else { return nil }
+        return UIImage(data: data)
+    }
+
+    static func save(_ image: UIImage, for clusterID: UUID) {
+        let url = fileURL(for: clusterID)
+        guard let data = image.jpegData(compressionQuality: 0.9) else { return }
+        try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try? data.write(to: url, options: .atomic)
+    }
+
+    static func delete(for clusterID: UUID) {
+        try? FileManager.default.removeItem(at: fileURL(for: clusterID))
     }
 }
 
@@ -235,6 +261,11 @@ struct ShareCardView: View {
     var nameRuns: [ShareCardTextRun]? = nil
     var bioRuns: [ShareCardTextRun]? = nil
 
+    var onTapAvatar: (() -> Void)? = nil
+    var onTapName: (() -> Void)? = nil
+    var onTapBio: (() -> Void)? = nil
+    var onTapBackground: (() -> Void)? = nil
+
     private var canvas: CGSize { canvasOverride ?? aspect.pixelSize }
 
     private var decorations: [CardDecoration] { cluster.cardDecorations }
@@ -242,6 +273,8 @@ struct ShareCardView: View {
     var body: some View {
         ZStack {
             backgroundGradient
+                .contentShape(Rectangle())
+                .onTapGesture { onTapBackground?() }
             Group {
                 if aspect.isLandscape { landscapeContent } else { portraitContent }
             }
@@ -249,8 +282,10 @@ struct ShareCardView: View {
             // background and decoration gestures stay in fitted preview coordinates.
             .scaleEffect(contentScale)
             .frame(width: canvas.width, height: canvas.height)
-            decorationLayer
             watermark
+                .allowsHitTesting(false)
+            // 装饰位于最上层，手势不会传递给下方编辑区域。
+            decorationLayer
         }
         .frame(width: canvas.width, height: canvas.height)
         .clipped()
@@ -303,7 +338,7 @@ struct ShareCardView: View {
                 VStack(alignment: .leading, spacing: unit * 0.035 * density) {
                     identityBlock(density: density)
                     if showTags && !cluster.tags.isEmpty { tagsBlock(density: density) }
-                    if !cluster.subtitle.isEmpty { subtitleBlock(density: density) }
+                    if hasSubtitle { subtitleBlock(density: density) }
                     qrBlock
                         .frame(maxWidth: .infinity)
                         .padding(.top, unit * 0.015)
@@ -348,6 +383,8 @@ struct ShareCardView: View {
             shape.stroke(.white.opacity(0.45), lineWidth: unit * 0.0015)
         }
         .shadow(color: .black.opacity(0.06), radius: unit * 0.035, y: unit * 0.018)
+        .contentShape(Rectangle())
+        .onTapGesture {} // 卡面内部空白不触发背景编辑
     }
 
     private var landscapeContent: some View {
@@ -357,7 +394,7 @@ struct ShareCardView: View {
                     VStack(alignment: .leading, spacing: unit * 0.035 * density) {
                         identityBlock(density: density)
                         if showTags && !cluster.tags.isEmpty { tagsBlock(density: density) }
-                        if !cluster.subtitle.isEmpty { subtitleBlock(density: density) }
+                        if hasSubtitle { subtitleBlock(density: density) }
                     }
                     .fixedSize(horizontal: false, vertical: true)
                 }
@@ -378,8 +415,10 @@ struct ShareCardView: View {
                 .frame(width: unit * 0.14 * density, height: unit * 0.14 * density)
                 .clipShape(Circle())
                 .overlay(Circle().stroke(.white.opacity(0.85), lineWidth: unit * 0.004))
+                .contentShape(Rectangle())
+                .onTapGesture { onTapAvatar?() }
             Group {
-                if let nameRuns, !nameRuns.isEmpty {
+                if let nameRuns {
                     Text(ShareCardRichText.attributedString(from: nameRuns, baseSize: unit * 0.052 * density, baseColor: ink))
                 } else {
                     Text(cluster.name.isEmpty ? L.qrID : cluster.name)
@@ -389,13 +428,15 @@ struct ShareCardView: View {
             }
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+            .onTapGesture { onTapName?() }
         }
     }
 
     /// userinfo（签名等详细内容），排在 tag 区下方。
     private func subtitleBlock(density: CGFloat) -> some View {
         Group {
-            if let bioRuns, !bioRuns.isEmpty {
+            if let bioRuns {
                 Text(ShareCardRichText.attributedString(from: bioRuns, baseSize: unit * 0.029 * density, baseColor: ink.opacity(0.78)))
             } else {
                 Text(cluster.subtitle)
@@ -406,6 +447,13 @@ struct ShareCardView: View {
         .lineSpacing(unit * 0.008 * density)
         .fixedSize(horizontal: false, vertical: true)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .onTapGesture { onTapBio?() }
+    }
+
+    private var hasSubtitle: Bool {
+        if let bioRuns { return !bioRuns.map(\.t).joined().isEmpty }
+        return !cluster.subtitle.isEmpty
     }
 
     @ViewBuilder
@@ -581,6 +629,99 @@ private struct ShareCardTagFlowLayout: Layout {
 
 // MARK: - 单个装饰（编辑器内可拖拽）
 
+private struct DecorationGestureTransform {
+    var translation: CGSize = .zero
+    var scale: CGFloat = 1
+    var rotation: Double = 0
+}
+
+private struct DecorationGestureView: UIViewRepresentable {
+    var onChange: (DecorationGestureTransform) -> Void
+    var onCommit: (DecorationGestureTransform) -> Void
+
+    func makeCoordinator() -> Coordinator { Coordinator(parent: self) }
+
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView()
+        let coordinator = context.coordinator
+        coordinator.pan.minimumNumberOfTouches = 1
+        coordinator.pan.maximumNumberOfTouches = 2
+        for recognizer in coordinator.recognizers {
+            recognizer.delegate = coordinator
+            recognizer.addTarget(coordinator, action: #selector(Coordinator.update(_:)))
+            view.addGestureRecognizer(recognizer)
+        }
+        return view
+    }
+
+    func updateUIView(_ uiView: UIView, context: Context) {
+        context.coordinator.parent = self
+    }
+
+    final class Coordinator: NSObject, UIGestureRecognizerDelegate {
+        var parent: DecorationGestureView
+        let pan = UIPanGestureRecognizer()
+        let pinch = UIPinchGestureRecognizer()
+        let rotation = UIRotationGestureRecognizer()
+        var recognizers: [UIGestureRecognizer] { [pan, pinch, rotation] }
+        private var accumulated = DecorationGestureTransform()
+        private var touchCount = 0
+        private var isTransforming = false
+        private var pendingCommit: DispatchWorkItem?
+
+        init(parent: DecorationGestureView) { self.parent = parent }
+
+        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
+                               shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+            true
+        }
+
+        @objc func update(_ sender: UIGestureRecognizer) {
+            pendingCommit?.cancel()
+            guard let view = pan.view else { return }
+            if !isTransforming {
+                accumulated = DecorationGestureTransform()
+                touchCount = pan.numberOfTouches
+                isTransforming = true
+            }
+
+            let count = pan.numberOfTouches
+            if count == touchCount {
+                // 使用窗口坐标，避免贴纸自身旋转、缩放反过来改变拖动方向和距离。
+                let reference = view.window ?? view
+                let origin = view.convert(CGPoint.zero, to: reference)
+                let unit = view.convert(CGPoint(x: 1, y: 0), to: reference)
+                let coordinateScale = max(0.0001, hypot(unit.x - origin.x, unit.y - origin.y))
+                let translation = pan.translation(in: reference)
+                accumulated.translation.width += translation.x / coordinateScale
+                accumulated.translation.height += translation.y / coordinateScale
+                accumulated.scale *= pinch.scale
+                accumulated.rotation += Double(rotation.rotation) * 180 / .pi
+            }
+            // 换指时沿用上一帧累计基准，丢弃质心切换造成的瞬时位移。
+            // 每次汇总后重置三个识别器，使各自的结束回调不会重复计入增量。
+            touchCount = count
+            pan.setTranslation(.zero, in: view.window ?? view)
+            pinch.scale = 1
+            rotation.rotation = 0
+            parent.onChange(accumulated)
+
+            guard !recognizers.contains(where: { $0.state == .began || $0.state == .changed }) else { return }
+            // 同一触摸事件的结束通知依次到达，下一轮主队列再统一提交。
+            let commit = DispatchWorkItem { [weak self] in
+                guard let self, self.isTransforming,
+                      !self.recognizers.contains(where: { $0.state == .began || $0.state == .changed }) else { return }
+                self.isTransforming = false
+                self.touchCount = 0
+                self.parent.onCommit(self.accumulated)
+                self.accumulated = DecorationGestureTransform()
+            }
+            pendingCommit = commit
+            DispatchQueue.main.async(execute: commit)
+        }
+    }
+}
+
 private struct ShareCardDecorationView: View {
     let decoration: CardDecoration
     @Binding var layout: ShareCardDecorationLayout
@@ -588,50 +729,47 @@ private struct ShareCardDecorationView: View {
     let interactive: Bool
 
     /// 手势进行中只动本地状态，结束时一次性写回绑定，避免逐帧整卡重渲染。
-    @State private var liveOffset: CGSize = .zero
-    @State private var liveMagnification: CGFloat = 1
+    @State private var liveTransform = DecorationGestureTransform()
 
     static let minScale = 0.3
     static let maxScale = 2.5
 
     var body: some View {
         if let image = CardDecorationImages.image(decoration.imageData) {
-            let side = canvas.width * 0.22 * layout.scale * liveMagnification
+            let side = canvas.width * 0.22 * layout.scale * liveTransform.scale
             Image(uiImage: image)
                 .resizable()
                 .scaledToFit()
                 .frame(width: side)
-                .rotationEffect(.degrees(layout.rotation))
+                .overlay {
+                    if interactive {
+                        DecorationGestureView(
+                            onChange: { liveTransform = $0 },
+                            onCommit: commit
+                        )
+                    }
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {} // 吞掉装饰上的点按，避免触发背景或名称编辑。
+                .rotationEffect(.degrees(layout.rotation + liveTransform.rotation))
                 .position(
-                    x: layout.x * canvas.width + liveOffset.width,
-                    y: layout.y * canvas.height + liveOffset.height
+                    x: layout.x * canvas.width + liveTransform.translation.width,
+                    y: layout.y * canvas.height + liveTransform.translation.height
                 )
-                .gesture(interactive ? drag : nil)
-                .simultaneousGesture(interactive ? magnify : nil)
         }
     }
 
-    private var drag: some Gesture {
-        DragGesture()
-            .onChanged { value in
-                liveOffset = value.translation
-            }
-            .onEnded { value in
-                layout.x = min(1, max(0, layout.x + value.translation.width / canvas.width))
-                layout.y = min(1, max(0, layout.y + value.translation.height / canvas.height))
-                liveOffset = .zero
-            }
-    }
-
-    private var magnify: some Gesture {
-        MagnifyGesture()
-            .onChanged { value in
-                liveMagnification = value.magnification
-            }
-            .onEnded { value in
-                layout.scale = min(Self.maxScale, max(Self.minScale, layout.scale * value.magnification))
-                liveMagnification = 1
-            }
+    private func commit(_ transform: DecorationGestureTransform) {
+        var updated = layout
+        updated.x = min(1, max(0, layout.x + transform.translation.width / canvas.width))
+        updated.y = min(1, max(0, layout.y + transform.translation.height / canvas.height))
+        updated.scale = min(Self.maxScale, max(Self.minScale, layout.scale * transform.scale))
+        var degrees = layout.rotation + transform.rotation
+        while degrees > 180 { degrees -= 360 }
+        while degrees < -180 { degrees += 360 }
+        updated.rotation = degrees
+        layout = updated
+        liveTransform = DecorationGestureTransform()
     }
 }
 
@@ -681,9 +819,9 @@ private struct ShareCardBackgroundImage: View {
                 transform.scale = min(ShareCardBackgroundTransform.maxScale,
                                       max(ShareCardBackgroundTransform.minScale,
                                           transform.scale * value.magnification))
+                liveMagnification = 1
                 transform.offsetX = clampedOffset(transform.offsetX)
                 transform.offsetY = clampedOffset(transform.offsetY)
-                liveMagnification = 1
             }
     }
 
@@ -775,8 +913,15 @@ struct ShareCardGeneratorView: View {
     @State private var background: ShareCardBackground = .gradient
     @State private var customBackgroundImage: UIImage?
     @State private var customPhotoItem: PhotosPickerItem?
+    @State private var avatarPhotoItem: PhotosPickerItem?
+    @State private var showAvatarPicker = false
+    @State private var hasAvatarOverride = false
+    private enum FocusSection: Hashable { case name, bio, background }
+    @State private var focusSection: FocusSection?
     @State private var customOriginalImage: UIImage?
     @State private var cropRequest: CropRequest?
+    @State private var showZoomPreview = false
+    @State private var showAdjustPanel = false
     @State private var showPlatformName = true
     @State private var backgroundTransform = ShareCardBackgroundTransform()
     @State private var panelStyle = ShareCardPanelStyle.load()
@@ -794,10 +939,14 @@ struct ShareCardGeneratorView: View {
     private let bioBox = ShareCardTextViewBox()
     @State private var isSaving = false
 
-    /// 选图与裁切弹窗的单一数据源：item 驱动 fullScreenCover，捕获的一定是本次选中的图。
-    private struct CropRequest: Identifiable {
+    /// 选图与裁切弹窗的单一数据源：item 驱动导航推入，捕获的一定是本次选中的图。
+    private struct CropRequest: Identifiable, Hashable {
         let id = UUID()
         let image: UIImage
+        enum Mode { case background, avatar }
+        var mode: Mode = .background
+        static func == (lhs: CropRequest, rhs: CropRequest) -> Bool { lhs.id == rhs.id }
+        func hash(into hasher: inout Hasher) { hasher.combine(id) }
     }
     @State private var showSaved = false
     @State private var saveError: String?
@@ -810,16 +959,20 @@ struct ShareCardGeneratorView: View {
     init(cluster: QRCluster) {
         self.cluster = cluster
         _layouts = State(initialValue: ShareCardDecorationStore.layouts(for: cluster.id))
-        let stored = ShareCardBackgroundStore.loadImage()
+        let stored = ShareCardBackgroundStore.loadImage(for: cluster.id)
         _customOriginalImage = State(initialValue: stored)
         _customBackgroundImage = State(initialValue: stored.map {
             ShareCardBackgroundStore.centerCropped($0, ratio: ShareCardAspect.portrait916.pixelSize.width / ShareCardAspect.portrait916.pixelSize.height)
         })
-        _decodedAvatar = State(initialValue: cluster.avatarImageData.flatMap(UIImage.init(data:)))
+        let avatarOverride = ShareCardAvatarStore.load(for: cluster.id)
+        _hasAvatarOverride = State(initialValue: avatarOverride != nil)
+        _decodedAvatar = State(initialValue: avatarOverride ?? cluster.avatarImageData.flatMap(UIImage.init(data:)))
         _decodedCardBackground = State(initialValue: cluster.backgroundImageData.flatMap(UIImage.init(data:)))
         _backgroundTransform = State(initialValue: ShareCardBackgroundStore.transform(for: cluster.id))
-        let storedNameRuns = UserDefaults.standard.string(forKey: Self.richTextKey("name", for: cluster.id)).flatMap { ShareCardRichText.runs(from: $0) }.flatMap { $0.isEmpty ? nil : $0 }
-        let storedBioRuns = UserDefaults.standard.string(forKey: Self.richTextKey("bio", for: cluster.id)).flatMap { ShareCardRichText.runs(from: $0) }.flatMap { $0.isEmpty ? nil : $0 }
+        let nameKey = Self.richTextKey("name", for: cluster.id)
+        let bioKey = Self.richTextKey("bio", for: cluster.id)
+        let storedNameRuns = UserDefaults.standard.object(forKey: nameKey) == nil ? nil : (UserDefaults.standard.string(forKey: nameKey).flatMap { ShareCardRichText.runs(from: $0) } ?? [])
+        let storedBioRuns = UserDefaults.standard.object(forKey: bioKey) == nil ? nil : (UserDefaults.standard.string(forKey: bioKey).flatMap { ShareCardRichText.runs(from: $0) } ?? [])
         _nameRuns = State(initialValue: storedNameRuns)
         _bioRuns = State(initialValue: storedBioRuns)
         _nameAttr = State(initialValue: ShareCardRichText.nsAttributedString(from: storedNameRuns ?? [ShareCardTextRun(t: cluster.name)]))
@@ -847,10 +1000,8 @@ struct ShareCardGeneratorView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                previewArea
-                controls
-            }
+            previewArea
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(uiColor: .systemGroupedBackground))
             .navigationTitle(L.shareCardTitle)
             .navigationBarTitleDisplayMode(.inline)
@@ -859,7 +1010,10 @@ struct ShareCardGeneratorView: View {
                     Button(L.cancel) { dismiss() }
                 }
             }
-            .safeAreaInset(edge: .bottom) { saveBar }
+            .safeAreaInset(edge: .bottom) {
+                // 裁切页全屏展示时不预留保存栏的高度
+                if cropRequest == nil { saveBar }
+            }
             .alert(L.savedToPhotos, isPresented: $showSaved) {
                 Button(L.ok, role: .cancel) {}
             }
@@ -875,7 +1029,63 @@ struct ShareCardGeneratorView: View {
             .onChange(of: panelStyle) { _, _ in regenerateBlur() }
             .onChange(of: backgroundTransform) { _, _ in regenerateBlur() }
             .onChange(of: customBackgroundImage) { _, _ in regenerateBlur() }
+            .photosPicker(isPresented: $showAvatarPicker, selection: $avatarPhotoItem, matching: .images)
+            .onChange(of: avatarPhotoItem) { _, item in
+                Task {
+                    guard let item,
+                          let data = try? await item.loadTransferable(type: Data.self),
+                          let image = UIImage(data: data) else { return }
+                    // 裁切页固定走主导航栈全屏推入：先收起调整面板，等动画结束再推
+                    showAdjustPanel = false
+                    try? await Task.sleep(for: .milliseconds(350))
+                    cropRequest = CropRequest(image: image, mode: .avatar)
+                    avatarPhotoItem = nil
+                }
+            }
+            .navigationDestination(item: $cropRequest) { request in cropView(for: request) }
+            .sheet(isPresented: $showAdjustPanel) { adjustPanel }
         }
+    }
+
+    private var adjustPanel: some View {
+        NavigationStack {
+            controls
+                .navigationTitle(L.shareCardAdjust)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button(L.done) { showAdjustPanel = false }
+                    }
+                }
+        }
+        .presentationDetents([.medium, .large])
+    }
+
+    private func cropView(for request: CropRequest) -> some View {
+        BackgroundCropView(
+            sourceImage: request.image,
+            cropAspectRatio: request.mode == .avatar ? 1 : aspect.pixelSize.width / aspect.pixelSize.height,
+            onDone: { cropped in
+                if request.mode == .avatar {
+                    ShareCardAvatarStore.save(cropped, for: cluster.id)
+                    decodedAvatar = cropped
+                    hasAvatarOverride = true
+                } else {
+                    customOriginalImage = request.image
+                    customBackgroundImage = cropped
+                    ShareCardBackgroundStore.saveImage(request.image, for: cluster.id)
+                }
+                cropRequest = nil
+            },
+            onCancel: { cropRequest = nil }
+        )
+        .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
+    }
+
+    private func openAdjustPanel(at section: FocusSection? = nil) {
+        focusSection = section
+        showAdjustPanel = true
     }
 
     private var previewArea: some View {
@@ -901,189 +1111,272 @@ struct ShareCardGeneratorView: View {
                 decodedAvatar: decodedAvatar,
                 decodedCardBackground: decodedCardBackground,
                 nameRuns: nameRuns,
-                bioRuns: bioRuns
+                bioRuns: bioRuns,
+                onTapAvatar: { showAvatarPicker = true },
+                onTapName: { openAdjustPanel(at: .name) },
+                onTapBio: { openAdjustPanel(at: .bio) },
+                onTapBackground: { openAdjustPanel(at: .background) }
             )
             .frame(width: geo.size.width, height: geo.size.height)
+            .overlay(alignment: .bottomTrailing) {
+                HStack(spacing: 10) {
+                    Button { openAdjustPanel() } label: {
+                        Image(systemName: "slider.horizontal.3")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .padding(7)
+                            .background(.black.opacity(0.45), in: Circle())
+                    }
+                    .accessibilityLabel(L.shareCardAdjust)
+                    Button { showZoomPreview = true } label: {
+                        Image(systemName: "arrow.up.left.and.arrow.down.right")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .padding(7)
+                            .background(.black.opacity(0.45), in: Circle())
+                    }
+                }
+                .padding(10)
+            }
         }
+        .padding(.horizontal, 14)
         .padding(.top, 8)
+        .fullScreenCover(isPresented: $showZoomPreview) { zoomPreview }
+    }
+
+    /// 全屏放大的预览：双指缩放、单指拖动，右上角关闭。
+    private var zoomPreview: some View {
+        GeometryReader { geo in
+            let design = aspect.pixelSize
+            let scale = min(geo.size.width / design.width, geo.size.height / design.height)
+            ZoomableView {
+                ShareCardView(
+                    cluster: cluster,
+                    profile: selectedProfile ?? QRProfile(platformType: "custom", qrContent: ""),
+                    aspect: aspect,
+                    showTags: showTags,
+                    qrImage: qrImage,
+                    decorationLayouts: .constant(layouts),
+                    canvasOverride: CGSize(width: design.width * scale, height: design.height * scale),
+                    background: background,
+                    customBackground: customBackgroundImage,
+                    showPlatformName: showPlatformName,
+                    backgroundTransform: background == .gradient ? nil : .constant(backgroundTransform),
+                    panelStyle: panelStyle,
+                    panelOpacity: panelOpacity,
+                    blurredBackground: blurredBackground,
+                    decodedAvatar: decodedAvatar,
+                    decodedCardBackground: decodedCardBackground,
+                    nameRuns: nameRuns,
+                    bioRuns: bioRuns
+                )
+            }
+            .frame(width: geo.size.width, height: geo.size.height)
+            .overlay(alignment: .topTrailing) {
+                Button { showZoomPreview = false } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(10)
+                        .background(.black.opacity(0.55), in: Circle())
+                }
+                .padding(16)
+            }
+        }
+        .background(Color.black.ignoresSafeArea())
     }
 
     private var controls: some View {
-        Form {
-            Section(L.shareCardAspect) {
-                Picker(L.shareCardAspect, selection: $aspect) {
-                    ForEach(ShareCardAspect.allCases) { option in
-                        Text(option.label).tag(option)
-                    }
-                }
-                .pickerStyle(.menu)
-            }
-            Section(L.shareCardPlatform) {
-                Picker(L.shareCardPlatform, selection: Binding(
-                    get: { selectedProfile?.id ?? UUID() },
-                    set: { selectedProfileID = $0 }
-                )) {
-                    ForEach(profiles) { profile in
-                        Text(profile.platformDisplayName).tag(profile.id)
-                    }
-                }
-                .pickerStyle(.menu)
-            }
-            Section(L.clusterName) {
-                ShareCardRichToolbar(attributed: nameAttr, selection: nameSelection, textView: { nameBox.view }) {
-                    syncAndPersist(field: "name", box: nameBox)
-                }
-                ShareCardRichTextEditor(attributed: $nameAttr, selection: $nameSelection, box: nameBox, minHeight: 34) {
-                    syncAndPersist(field: "name", box: nameBox)
-                }
-                .frame(minHeight: 34, maxHeight: 60)
-            }
-            Section(L.subtitleInfo) {
-                ShareCardRichToolbar(attributed: bioAttr, selection: bioSelection, textView: { bioBox.view }) {
-                    syncAndPersist(field: "bio", box: bioBox)
-                }
-                ShareCardRichTextEditor(attributed: $bioAttr, selection: $bioSelection, box: bioBox, minHeight: 60) {
-                    syncAndPersist(field: "bio", box: bioBox)
-                }
-                .frame(minHeight: 60, maxHeight: 120)
-            }
-            Section(L.shareCardBackground) {
-                Picker(L.shareCardBackground, selection: $background) {
-                    ForEach(ShareCardBackground.allCases) { option in
-                        Text(option.label).tag(option)
-                    }
-                }
-                .pickerStyle(.segmented)
-                if background == .custom {
-                    HStack(spacing: 12) {
-                        if let customBackgroundImage {
-                            Image(uiImage: customBackgroundImage)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 44, height: 44)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
+        ScrollViewReader { proxy in
+            Form {
+                Section(L.shareCardAspect) {
+                    Picker(L.shareCardAspect, selection: $aspect) {
+                        ForEach(ShareCardAspect.allCases) { option in
+                            Text(option.label).tag(option)
                         }
-                        PhotosPicker(selection: $customPhotoItem, matching: .images) {
-                            Text(customBackgroundImage == nil ? L.selectQRImage : L.changeQRImage)
+                    }
+                    .pickerStyle(.menu)
+                }
+                Section(L.shareCardPlatform) {
+                    Picker(L.shareCardPlatform, selection: Binding(
+                        get: { selectedProfile?.id ?? UUID() },
+                        set: { selectedProfileID = $0 }
+                    )) {
+                        ForEach(profiles) { profile in
+                            Text(profile.platformDisplayName).tag(profile.id)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                }
+                Section(L.shareCardAvatar) {
+                    PhotosPicker(selection: $avatarPhotoItem, matching: .images) {
+                        Text(L.shareCardAvatarChange)
+                    }
+                    if hasAvatarOverride {
+                        Button(L.shareCardAvatarReset) {
+                            ShareCardAvatarStore.delete(for: cluster.id)
+                            decodedAvatar = cluster.avatarImageData.flatMap(UIImage.init(data:))
+                            hasAvatarOverride = false
                         }
                     }
                 }
-            }
-            .onChange(of: customPhotoItem) { _, item in
-                Task {
-                    guard let item,
-                          let data = try? await item.loadTransferable(type: Data.self),
-                          let image = UIImage(data: data) else { return }
-                    customOriginalImage = image
-                    ShareCardBackgroundStore.saveImage(image)
-                    // 让状态先落定，再触发弹窗，规避 "already presenting" 竞态
-                    try? await Task.sleep(for: .milliseconds(80))
-                    cropRequest = CropRequest(image: image)
+                Section(L.clusterName) {
+                    ShareCardRichToolbar(attributed: nameAttr, selection: nameSelection, textView: { nameBox.view }) {
+                        syncAndPersist(field: "name", box: nameBox)
+                    }
+                    ShareCardRichTextEditor(attributed: $nameAttr, selection: $nameSelection, box: nameBox, minHeight: 34) {
+                        syncAndPersist(field: "name", box: nameBox)
+                    }
+                    .frame(minHeight: 34, maxHeight: 60)
                 }
-            }
-            .onChange(of: aspect) { _, newAspect in
-                guard let original = customOriginalImage else { return }
-                let ratio = newAspect.pixelSize.width / newAspect.pixelSize.height
-                customBackgroundImage = ShareCardBackgroundStore.centerCropped(original, ratio: ratio)
-            }
-            .fullScreenCover(item: $cropRequest) { request in
-                BackgroundCropView(
-                    sourceImage: request.image,
-                    cropAspectRatio: aspect.pixelSize.width / aspect.pixelSize.height,
-                    onDone: { cropped in
-                        customBackgroundImage = cropped
-                        cropRequest = nil
-                    },
-                    onCancel: {
-                        cropRequest = nil
-                        if customBackgroundImage == nil, let original = customOriginalImage {
-                            let ratio = aspect.pixelSize.width / aspect.pixelSize.height
-                            customBackgroundImage = ShareCardBackgroundStore.centerCropped(original, ratio: ratio)
+                .id(FocusSection.name)
+                Section(L.subtitleInfo) {
+                    ShareCardRichToolbar(attributed: bioAttr, selection: bioSelection, textView: { bioBox.view }) {
+                        syncAndPersist(field: "bio", box: bioBox)
+                    }
+                    ShareCardRichTextEditor(attributed: $bioAttr, selection: $bioSelection, box: bioBox, minHeight: 60) {
+                        syncAndPersist(field: "bio", box: bioBox)
+                    }
+                    .frame(minHeight: 60, maxHeight: 120)
+                }
+                .id(FocusSection.bio)
+                Section(L.shareCardBackground) {
+                    Picker(L.shareCardBackground, selection: $background) {
+                        ForEach(ShareCardBackground.allCases) { option in
+                            Text(option.label).tag(option)
                         }
                     }
-                )
-            }
-            Section {
-                Toggle(L.shareCardShowTags, isOn: $showTags)
-                Toggle(L.shareCardShowPlatformName, isOn: $showPlatformName)
-            }
-            Section(L.shareCardPanelStyle) {
-                Picker(L.shareCardPanelStyle, selection: $panelStyle) {
-                    ForEach(ShareCardPanelStyle.allCases) { option in
-                        Text(option.label).tag(option)
+                    .pickerStyle(.segmented)
+                    if background == .custom {
+                        HStack(spacing: 12) {
+                            if let customBackgroundImage {
+                                Image(uiImage: customBackgroundImage)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 44, height: 44)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                            }
+                            PhotosPicker(selection: $customPhotoItem, matching: .images) {
+                                Text(customBackgroundImage == nil ? L.selectQRImage : L.changeQRImage)
+                            }
+                        }
                     }
                 }
-                .pickerStyle(.segmented)
-                .onChange(of: panelStyle) { _, value in value.save() }
-                if panelStyle == .glass {
-                    HStack {
-                        Text(L.shareCardPanelOpacity)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .frame(width: 48, alignment: .leading)
-                        Slider(value: $panelOpacity, in: 0.25...0.95, onEditingChanged: { editing in
-                            if !editing { ShareCardPanelStyle.saveOpacity(panelOpacity) }
-                        })
+                .id(FocusSection.background)
+                .onChange(of: customPhotoItem) { _, item in
+                    Task {
+                        guard let item,
+                              let data = try? await item.loadTransferable(type: Data.self),
+                              let image = UIImage(data: data) else { return }
+                        // 裁切页固定走主导航栈全屏推入：先收起调整面板，等动画结束再推
+                        showAdjustPanel = false
+                        try? await Task.sleep(for: .milliseconds(350))
+                        cropRequest = CropRequest(image: image)
                     }
                 }
-            }
-            if !cluster.cardDecorations.isEmpty {
+                .onChange(of: aspect) { _, newAspect in
+                    guard let original = customOriginalImage else { return }
+                    let ratio = newAspect.pixelSize.width / newAspect.pixelSize.height
+                    customBackgroundImage = ShareCardBackgroundStore.centerCropped(original, ratio: ratio)
+                }
                 Section {
-                    ForEach(cluster.cardDecorations) { decoration in
-                        let layout = Binding(
-                            get: { layouts[decoration.slot] ?? .default(for: decoration.slot) },
-                            set: { layouts[decoration.slot] = $0 }
-                        )
-                        VStack(alignment: .leading, spacing: 6) {
-                            HStack(spacing: 12) {
-                                if let image = CardDecorationImages.image(decoration.imageData) {
-                                    Image(uiImage: image)
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 32, height: 32)
+                    Toggle(L.shareCardShowTags, isOn: $showTags)
+                    Toggle(L.shareCardShowPlatformName, isOn: $showPlatformName)
+                }
+                Section(L.shareCardPanelStyle) {
+                    Picker(L.shareCardPanelStyle, selection: $panelStyle) {
+                        ForEach(ShareCardPanelStyle.allCases) { option in
+                            Text(option.label).tag(option)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .onChange(of: panelStyle) { _, value in value.save() }
+                    if panelStyle == .glass {
+                        HStack {
+                            Text(L.shareCardPanelOpacity)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .frame(width: 48, alignment: .leading)
+                            Slider(value: $panelOpacity, in: 0.25...0.95, onEditingChanged: { editing in
+                                if !editing { ShareCardPanelStyle.saveOpacity(panelOpacity) }
+                            })
+                        }
+                    }
+                }
+                if !cluster.cardDecorations.isEmpty {
+                    Section {
+                        ForEach(cluster.cardDecorations) { decoration in
+                            let layout = Binding(
+                                get: { layouts[decoration.slot] ?? .default(for: decoration.slot) },
+                                set: { layouts[decoration.slot] = $0 }
+                            )
+                            VStack(alignment: .leading, spacing: 6) {
+                                HStack(spacing: 12) {
+                                    if let image = CardDecorationImages.image(decoration.imageData) {
+                                        Image(uiImage: image)
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 32, height: 32)
+                                    }
+                                    Toggle(L.shareCardShowDecoration, isOn: Binding(
+                                        get: { !layout.wrappedValue.hidden },
+                                        set: { var value = layout.wrappedValue; value.hidden = !$0; layout.wrappedValue = value }
+                                    ))
                                 }
-                                Toggle(L.shareCardShowDecoration, isOn: Binding(
-                                    get: { !layout.wrappedValue.hidden },
-                                    set: { var value = layout.wrappedValue; value.hidden = !$0; layout.wrappedValue = value }
-                                ))
-                            }
-                            if !layout.wrappedValue.hidden {
-                                HStack {
-                                    Text(L.shareCardDecorationSize)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                        .frame(width: 34, alignment: .leading)
-                                    Slider(value: Binding(
-                                        get: { layout.wrappedValue.scale },
-                                        set: { var value = layout.wrappedValue; value.scale = $0; layout.wrappedValue = value }
-                                    ), in: 0.3...2.5, onEditingChanged: { editing in
-                                        if !editing { ShareCardDecorationStore.save(layouts, for: cluster.id) }
-                                    })
-                                }
-                                HStack {
-                                    Text(L.shareCardDecorationRotation)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                        .frame(width: 34, alignment: .leading)
-                                    Slider(value: Binding(
-                                        get: { layout.wrappedValue.rotation },
-                                        set: { var value = layout.wrappedValue; value.rotation = $0; layout.wrappedValue = value }
-                                    ), in: -180...180, onEditingChanged: { editing in
-                                        if !editing { ShareCardDecorationStore.save(layouts, for: cluster.id) }
-                                    })
+                                if !layout.wrappedValue.hidden {
+                                    HStack {
+                                        Text(L.shareCardDecorationSize)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                            .frame(width: 34, alignment: .leading)
+                                        Slider(value: Binding(
+                                            get: { layout.wrappedValue.scale },
+                                            set: { var value = layout.wrappedValue; value.scale = $0; layout.wrappedValue = value }
+                                        ), in: 0.3...2.5, onEditingChanged: { editing in
+                                            if !editing { ShareCardDecorationStore.save(layouts, for: cluster.id) }
+                                        })
+                                    }
+                                    HStack {
+                                        Text(L.shareCardDecorationRotation)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                            .frame(width: 34, alignment: .leading)
+                                        Slider(value: Binding(
+                                            get: { layout.wrappedValue.rotation },
+                                            set: { var value = layout.wrappedValue; value.rotation = $0; layout.wrappedValue = value }
+                                        ), in: -180...180, onEditingChanged: { editing in
+                                            if !editing { ShareCardDecorationStore.save(layouts, for: cluster.id) }
+                                        })
+                                    }
                                 }
                             }
                         }
+                    } header: {
+                        Text(L.shareCardDecorations)
+                    } footer: {
+                        Text(L.shareCardDecorationsHint)
+                            .font(.caption)
                     }
-                } header: {
-                    Text(L.shareCardDecorations)
-                } footer: {
-                    Text(L.shareCardDecorationsHint)
-                        .font(.caption)
+                }
+            }
+            // 滚动表单时联动收起键盘，避免键盘挡住下方编辑区
+            .scrollDismissesKeyboard(.interactively)
+            .onAppear {
+                guard let section = focusSection else { return }
+                // 等表单布局完成后定位，再唤起富文本输入框。
+                DispatchQueue.main.async {
+                    proxy.scrollTo(section, anchor: .top)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                        guard showAdjustPanel, focusSection == section else { return }
+                        switch section {
+                        case .name: nameBox.view?.becomeFirstResponder()
+                        case .bio: bioBox.view?.becomeFirstResponder()
+                        case .background: break
+                        }
+                    }
                 }
             }
         }
-        .frame(height: 340)
     }
 
     private var saveBar: some View {
@@ -1110,10 +1403,10 @@ struct ShareCardGeneratorView: View {
         UserDefaults.standard.set(json, forKey: Self.richTextKey(field, for: cluster.id))
         if field == "name" {
             nameAttr = view.attributedText.copy() as! NSAttributedString
-            nameRuns = runs.isEmpty ? nil : runs
+            nameRuns = runs
         } else {
             bioAttr = view.attributedText.copy() as! NSAttributedString
-            bioRuns = runs.isEmpty ? nil : runs
+            bioRuns = runs
         }
     }
 
@@ -1135,7 +1428,11 @@ struct ShareCardGeneratorView: View {
         defer { isSaving = false }
         ShareCardDecorationStore.save(layouts, for: cluster.id)
         ShareCardBackgroundStore.saveTransform(backgroundTransform, for: cluster.id)
-        regenerateBlur()
+        let exportBlur = panelStyle == .glass ? ShareCardBlur.make(
+            cluster: cluster, background: background,
+            cardImage: decodedCardBackground, customBackground: customBackgroundImage,
+            transform: backgroundTransform, canvas: aspect.pixelSize
+        ) : nil
         let exportView = ShareCardView(
             cluster: cluster,
             profile: profile,
@@ -1148,7 +1445,7 @@ struct ShareCardGeneratorView: View {
             showPlatformName: showPlatformName,
             panelStyle: panelStyle,
             panelOpacity: panelOpacity,
-            blurredBackground: blurredBackground,
+            blurredBackground: exportBlur,
             decodedAvatar: decodedAvatar,
             decodedCardBackground: decodedCardBackground,
             nameRuns: nameRuns,
@@ -1205,5 +1502,44 @@ struct ShareCardGeneratorView: View {
             case .writeFailed: return L.tryAgain
             }
         }
+    }
+}
+
+
+/// 双指缩放 + 单指拖动的通用容器，用于全屏放大预览。
+private struct ZoomableView<Content: View>: View {
+    @ViewBuilder var content: Content
+    @State private var scale: CGFloat = 1
+    @State private var lastScale: CGFloat = 1
+    @State private var offset: CGSize = .zero
+    @State private var lastOffset: CGSize = .zero
+
+    var body: some View {
+        content
+            .scaleEffect(scale)
+            .offset(offset)
+            .gesture(
+                MagnificationGesture()
+                    .onChanged { value in
+                        scale = min(max(lastScale * value, 1), 6)
+                        if scale <= 1 {
+                            offset = .zero
+                            lastOffset = .zero
+                        }
+                    }
+                    .onEnded { _ in
+                        lastScale = max(scale, 1)
+                        if lastScale <= 1 { lastScale = 1 }
+                    }
+            )
+            .simultaneousGesture(
+                DragGesture()
+                    .onChanged { value in
+                        guard scale > 1 else { return }
+                        offset = CGSize(width: lastOffset.width + value.translation.width,
+                                        height: lastOffset.height + value.translation.height)
+                    }
+                    .onEnded { _ in lastOffset = offset }
+            )
     }
 }

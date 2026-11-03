@@ -148,6 +148,15 @@ struct ShareCardRichTextEditor: UIViewRepresentable {
         view.textContainerInset = UIEdgeInsets(top: 6, left: 4, bottom: 6, right: 4)
         view.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
         view.attributedText = attributed
+        // 自定义 UITextView 吃不到 SwiftUI 的 keyboard toolbar，
+        // 直接在键盘上方挂一个「完成」按钮方便收起键盘
+        let accessory = UIToolbar(frame: CGRect(x: 0, y: 0, width: 0, height: 44))
+        accessory.items = [
+            UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
+            UIBarButtonItem(title: L.done, style: .done, target: view, action: #selector(UIResponder.resignFirstResponder))
+        ]
+        accessory.sizeToFit()
+        view.inputAccessoryView = accessory
         return view
     }
 
